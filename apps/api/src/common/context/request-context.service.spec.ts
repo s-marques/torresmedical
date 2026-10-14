@@ -19,6 +19,7 @@ describe('RequestContextService', () => {
   it('retorna undefined fora de uma requisição', () => {
     expect(service.getRequestId()).toBeUndefined();
     expect(service.getUserId()).toBeUndefined();
+    expect(service.getIp()).toBeUndefined();
   });
 
   it('expõe requestId e userId dentro do contexto', async () => {
@@ -28,6 +29,14 @@ describe('RequestContextService', () => {
 
       expect(service.getRequestId()).toBe('req-1');
       expect(service.getUserId()).toBe('user-1');
+    });
+  });
+
+  it('expõe o ip gravado pelo middleware', async () => {
+    await cls.run(async () => {
+      cls.set('ip', '10.0.0.1');
+
+      expect(service.getIp()).toBe('10.0.0.1');
     });
   });
 });
