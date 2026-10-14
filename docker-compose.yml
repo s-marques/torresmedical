@@ -1,0 +1,111 @@
+name: torresmedical
+
+# Só o web é publicado para fora. API, Postgres e RabbitMQ ficam na rede interna "torres".
+# O front fala com a API por /api (proxy do Vite -> http://api:3000), sem CORS.
+
+x-node-dev: &node-dev
+  build:
+    context: .
+    dockerfile: docker/dev.Dockerfile
+  image: torresmedical-dev:latest
+  env_file: .env
+  networks: [torres]
+  restart: unless-stopped
+
+x-node-volumes: &node-volumes # Código do host montado para hot reload.
+  - .:/app
+  # node_modules e builds ficam em volumes do container, sem misturar com o host.
+  - /app/node_modules
+  - /app/apps/api/node_modules
+  - /app/apps/api/dist
+  - /app/apps/web/node_modules
+  - /app/apps/web/dist
+  - /app/packages/shared/node_modules
+  - /app/packages/shared/dist
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?defina POSTGRES_USER no .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      POSTGRES_DB: ${POSTGRES_DB:?defina POSTGRES_DB no .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks: [torres]
+    # Debug: descomente. A 5432 do host já está em uso por outro projeto, por isso 5433.
+    # ports:
+    #   - '127.0.0.1:5433:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:?defina RABBITMQ_DEFAULT_USER no .env}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?defina RABBITMQ_DEFAULT_PASS no .env}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks: [torres]
+    ports:
+      # Painel de administração só no loopback do servidor (use túnel SSH).
+      - '127.0.0.1:15672:15672'
+      # Debug do AMQP: descomente.
+      # - '127.0.0.1:5672:5672'
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  api:
+    <<: *node-dev
+    environment:
+      NODE_ENV: development
+    volumes: *node-volumes
+    # Sem "ports": a API só é acessível pela rede interna (via proxy do web).
+    command: [pnpm, dev:api]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:$${API_PORT:-3000}/api/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  web:
+    <<: *node-dev
+    environment:
+      NODE_ENV: development
+      API_PROXY_TARGET: http://api:3000
+    volumes: *node-volumes
+    command: [pnpm, dev:web]
+    ports:
+      - '0.0.0.0:${WEB_PORT:-5173}:5173'
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:5173/ > /dev/null || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+networks:
+  torres:
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
