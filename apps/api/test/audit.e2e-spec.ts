@@ -249,11 +249,14 @@ describe('Auditoria (e2e)', () => {
 
     it('não expõe alteração nem exclusão do audit_log', async () => {
       await criar();
-      const { id } = await prisma.auditLog.findFirstOrThrow();
+      const original = await prisma.auditLog.findFirstOrThrow();
+      const { id } = original;
 
       await http().patch(`/api/auditoria/${id}`).send({}).expect(404);
       await http().delete(`/api/auditoria/${id}`).expect(404);
       await http().post('/api/auditoria').send({}).expect(404);
+
+      expect(await prisma.auditLog.findMany()).toEqual([original]);
     });
   });
 
