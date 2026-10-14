@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import type { AuditLogPage, AuditLogQuery } from '@torres/shared';
 import { Prisma, type AuditAction } from '../../generated/prisma/client';
 import { RequestContextService } from '../context/request-context.service';
+import { paginate } from '../pagination/paginate';
 import type { PrismaAdapter } from '../prisma/prisma-transaction';
 import { toAuditJson } from './audit-json';
 import { ANONYMOUS_USER_ID, SYSTEM_USER_ID } from './audit.constants';
@@ -54,24 +55,18 @@ export class AuditService {
       action: query.action,
       occurredAt: query.de || query.ate ? { gte: query.de, lte: query.ate } : undefined,
     };
-    const [rows, total] = await Promise.all([
-      this.txHost.tx.auditLog.findMany({
-        where,
-        orderBy: [{ occurredAt: 'desc' }, { id: 'desc' }],
-        skip: (query.page - 1) * query.pageSize,
-        take: query.pageSize,
-      }),
-      this.txHost.tx.auditLog.count({ where }),
-    ]);
-
+    const page = await paginate(query, {
+      findMany: (args) =>
+        this.txHost.tx.auditLog.findMany({
+          where,
+          orderBy: [{ occurredAt: 'desc' }, { id: 'desc' }],
+          ...args,
+        }),
+      count: () => this.txHost.tx.auditLog.count({ where }),
+    });
     return {
-      data: rows.map((row) => ({ ...row, occurredAt: row.occurredAt.toISOString() })),
-      meta: {
-        page: query.page,
-        pageSize: query.pageSize,
-        total,
-        totalPages: Math.ceil(total / query.pageSize),
-      },
+      ...page,
+      data: page.data.map((row) => ({ ...row, occurredAt: row.occurredAt.toISOString() })),
     };
   }
 

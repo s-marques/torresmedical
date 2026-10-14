@@ -126,8 +126,12 @@ describe('Auditoria (e2e)', () => {
       await criar(body);
       await truncateAuditOnly();
 
-      await http().post(BASE).send(body).expect(500);
+      const res = await http().post(BASE).send(body).expect(409);
 
+      expect(res.body).toMatchObject({
+        code: 'DUPLICATE',
+        details: [{ field: 'documento', message: 'Já existe um registro com este valor' }],
+      });
       await expectNoAudit(prisma, { entity: 'Empresa' });
     });
 
