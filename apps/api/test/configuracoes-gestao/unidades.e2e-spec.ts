@@ -265,8 +265,14 @@ describe('Unidades: padrão de API (e2e)', () => {
       await criarNoBanco('Barra');
       const unidade = await criarNoBanco('Centro');
 
-      const conflito = await http().patch(`${BASE}/${unidade.id}`).send({ nome: 'barra' }).expect(409);
-      const proprio = await http().patch(`${BASE}/${unidade.id}`).send({ nome: 'CENTRO' }).expect(200);
+      const conflito = await http()
+        .patch(`${BASE}/${unidade.id}`)
+        .send({ nome: 'barra' })
+        .expect(409);
+      const proprio = await http()
+        .patch(`${BASE}/${unidade.id}`)
+        .send({ nome: 'CENTRO' })
+        .expect(200);
 
       expect(conflito.body.code).toBe('UNIDADE_DUPLICADA');
       expect(proprio.body.nome).toBe('CENTRO');
