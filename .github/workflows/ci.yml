@@ -36,9 +36,23 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://torres:torres@localhost:5432/torres_test
+      # Storage dos e2e: MinIO (S3), iniciado no passo abaixo.
+      STORAGE_DRIVER: s3
+      STORAGE_S3_ENDPOINT: http://localhost:9000
+      STORAGE_S3_BUCKET: torres-arquivos-test
+      STORAGE_S3_ACCESS_KEY: torres
+      STORAGE_S3_SECRET_KEY: torres-minio
 
     steps:
       - uses: actions/checkout@v4
+
+      # Service container não aceita o comando "server" do MinIO: sobe com docker run.
+      - name: Iniciar MinIO
+        run: |
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER=torres -e MINIO_ROOT_PASSWORD=torres-minio \
+            pgsty/minio:RELEASE.2026-08-04T00-00-00Z server /data
+          timeout 60 sh -c 'until curl -fsS http://localhost:9000/minio/health/live; do sleep 2; done'
 
       - uses: pnpm/action-setup@v4
 

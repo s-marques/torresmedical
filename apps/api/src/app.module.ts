@@ -6,6 +6,7 @@ import { AllExceptionsFilter } from './common/errors/all-exceptions.filter';
 import { ExportModule } from './common/export/export.module';
 import { LoggerModule } from './common/logger/logger.module';
 import { PrismaModule } from './common/prisma/prisma.module';
+import { StorageModule } from './common/storage/storage.module';
 import { HealthModule } from './health/health.module';
 import { ConfiguracoesGestaoModule } from './modules/configuracoes-gestao/configuracoes-gestao.module';
 
@@ -16,6 +17,7 @@ import { ConfiguracoesGestaoModule } from './modules/configuracoes-gestao/config
     PrismaModule,
     AuditModule,
     ExportModule,
+    StorageModule,
     HealthModule,
     ConfiguracoesGestaoModule,
   ],

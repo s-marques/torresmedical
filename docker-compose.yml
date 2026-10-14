@@ -1,6 +1,6 @@
 name: torresmedical
 
-# Só o web é publicado para fora. API, Postgres e RabbitMQ ficam na rede interna "torres".
+# Só o web é publicado para fora. API, Postgres, RabbitMQ e MinIO ficam na rede interna "torres".
 # O front fala com a API por /api (proxy do Vite -> http://api:3000), sem CORS.
 
 x-node-dev: &node-dev
@@ -67,6 +67,28 @@ services:
       retries: 10
       start_period: 30s
 
+  # Armazenamento de arquivos S3-compatível. A imagem oficial minio/minio saiu do Docker Hub:
+  # usamos o fork comunitário pgsty/minio, com versão fixa. O bucket é criado pela API e é privado.
+  minio:
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    restart: unless-stopped
+    command: [server, /data, --console-address, ':9001']
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?defina MINIO_ROOT_USER no .env}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?defina MINIO_ROOT_PASSWORD no .env}
+    volumes:
+      - minio_data:/data
+    networks: [torres]
+    ports:
+      # Console só no loopback do servidor (use túnel SSH). A API S3 (9000) fica na rede interna.
+      - '127.0.0.1:9001:9001'
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:9000/minio/health/live']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
   api:
     <<: *node-dev
     environment:
@@ -82,6 +104,8 @@ services:
       postgres:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:$${API_PORT:-3000}/api/health || exit 1']
@@ -115,3 +139,4 @@ networks:
 volumes:
   postgres_data:
   rabbitmq_data:
+  minio_data:

@@ -27,3 +27,5 @@ auth.json
 !.vscode/extensions.json
 *.log
 .pnpm-store/
+# arquivos do driver local de storage (STORAGE_DRIVER=local)
+/apps/api/storage/
