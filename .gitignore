@@ -1,0 +1,27 @@
+# dependências e builds
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# segredos
+.env
+.env.*
+!.env.example
+auth.json
+*.pem
+*.key
+*.pfx
+*.p12
+*.sql.gz
+*.backup
+*.dump
+
+# editores e SO
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.log
+.pnpm-store/
