@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { applySeed, buildSeedData } from '../prisma/seed-data';
 import { PrismaModule } from '../src/common/prisma/prisma.module';
 import { PrismaService } from '../src/common/prisma/prisma.service';
+import { truncateAll } from './utils/database';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -15,9 +16,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await prisma.$executeRawUnsafe(
-      'TRUNCATE TABLE audit_log, usuarios, unidades, empresas RESTART IDENTITY CASCADE',
-    );
+    await truncateAll(prisma);
   });
 
   afterAll(async () => {

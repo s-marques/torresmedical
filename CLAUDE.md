@@ -173,7 +173,7 @@ Tabela `audit_log`:
 | `id` | uuid |
 | `user_id` | usuário autenticado (do contexto da requisição) |
 | `occurred_at` | data/hora (timestamptz, UTC) |
-| `action` | `CREATE` \| `UPDATE` \| `DELETE` |
+| `action` | `CREATE` \| `UPDATE` \| `DELETE` \| `EXPORT` |
 | `entity` | nome da entidade (ex.: `ContaReceber`) |
 | `entity_id` | id do registro |
 | `before` | jsonb: valores antes (null em CREATE) |
@@ -182,6 +182,10 @@ Tabela `audit_log`:
 
 Como usar:
 - O `AuditInterceptor` é global. Cada endpoint de escrita é decorado com `@Audit({ entity: 'ContaReceber' })`.
+- **Acesso ao banco nos services:** injete `TransactionHost<PrismaAdapter>` (`common/prisma/prisma-transaction.ts`)
+  e use `this.txHost.tx`, não o `PrismaService` direto. Nos endpoints com `@Audit`, o interceptor abre uma
+  transação: a escrita e o `audit_log` são gravados juntos, e qualquer erro desfaz os dois.
+  Fora de `@Audit`, use `@Transactional()` ou `txHost.withTransaction(...)` quando precisar de transação.
 - Em `UPDATE`/`DELETE`, o interceptor carrega o estado anterior pelo `:id` antes do handler.
   O handler deve retornar a entidade resultante, que vira o `after`.
 - Campos sensíveis de autenticação (`password`, `passwordHash`, `token`, `secret`) são removidos
@@ -191,6 +195,8 @@ Como usar:
 - Operações em lote ou disparadas por consumidor de fila (sem request HTTP) usam
   `AuditService.record(...)` diretamente, com o usuário do evento ou `system`.
 - **Teste obrigatório:** o e2e de cada endpoint de escrita verifica o registro gravado em `audit_log`.
+  Use `expectAudit`/`expectNoAudit` (`apps/api/test/utils/expect-audit.ts`) e `createE2eApp`
+  (`apps/api/test/utils/create-e2e-app.ts`).
 
 ## 5. Mensageria (RabbitMQ)
 
