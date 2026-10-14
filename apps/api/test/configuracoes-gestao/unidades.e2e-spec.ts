@@ -207,7 +207,10 @@ describe('Unidades: padrão de API (e2e)', () => {
     it('permite reutilizar o nome de uma unidade excluída', async () => {
       await criarNoBanco('Matriz', { deletedAt: new Date() });
 
-      await http().post(BASE).send({ empresaId, nome: 'Matriz' }).expect(201);
+      const res = await http().post(BASE).send({ empresaId, nome: 'Matriz' }).expect(201);
+
+      expect(await prisma.unidade.count({ where: { nome: 'Matriz', deletedAt: null } })).toBe(1);
+      expect(res.body.nome).toBe('Matriz');
     });
 
     it('422 EMPRESA_NAO_ENCONTRADA', async () => {
@@ -262,8 +265,11 @@ describe('Unidades: padrão de API (e2e)', () => {
       await criarNoBanco('Barra');
       const unidade = await criarNoBanco('Centro');
 
-      await http().patch(`${BASE}/${unidade.id}`).send({ nome: 'barra' }).expect(409);
-      await http().patch(`${BASE}/${unidade.id}`).send({ nome: 'CENTRO' }).expect(200);
+      const conflito = await http().patch(`${BASE}/${unidade.id}`).send({ nome: 'barra' }).expect(409);
+      const proprio = await http().patch(`${BASE}/${unidade.id}`).send({ nome: 'CENTRO' }).expect(200);
+
+      expect(conflito.body.code).toBe('UNIDADE_DUPLICADA');
+      expect(proprio.body.nome).toBe('CENTRO');
     });
   });
 
