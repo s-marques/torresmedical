@@ -26,6 +26,9 @@ export const SENSITIVE_KEYS = [
   'diagnostico',
   'observacoes',
   'mensagem',
+  // Nome original de arquivo enviado (pode trazer o nome do paciente).
+  'nomeOriginal',
+  'originalname',
   'password',
   'passwordHash',
   'senha',

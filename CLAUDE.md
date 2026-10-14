@@ -22,7 +22,7 @@ pedido de uma issue, pare e pergunte ao dev.
 | Banco | PostgreSQL + Prisma (schema e migrations em `apps/api/prisma`) |
 | Mensageria | RabbitMQ (`@golevelup/nestjs-rabbitmq` ou `amqplib` encapsulado em `MessagingModule`) |
 | Validação compartilhada | Zod, com schemas em `packages/shared`, usados no front e no back |
-| Ambiente local | Docker Compose (postgres, rabbitmq, api, web) |
+| Ambiente local | Docker Compose (postgres, rabbitmq, minio, api, web) |
 | CI | GitHub Actions: lint, typecheck, testes, build e análise Sonar |
 | Qualidade | SonarQube Cloud, com Quality Gate obrigatório em todo PR |
 | Gerenciador de pacotes | pnpm workspaces |

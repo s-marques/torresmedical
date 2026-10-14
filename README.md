@@ -33,6 +33,7 @@ docker compose up -d --build
 | `api`      | só pela rede interna; o front acessa por `/api` (proxy do Vite → `http://api:3000`) |
 | `postgres` | só pela rede interna (debug: descomente `127.0.0.1:5433:5432` no compose)           |
 | `rabbitmq` | AMQP só pela rede interna; painel em `http://127.0.0.1:15672` (use túnel SSH)       |
+| `minio`    | S3 só pela rede interna; console em `http://127.0.0.1:9001` (use túnel SSH)         |
 
 Health da API: `http://<host>:5173/api/health`.
 
@@ -54,6 +55,13 @@ O `.env` nunca é commitado. O [`.env.example`](.env.example) lista as variávei
 | `RABBITMQ_URL`                                      | Conexão da API com o RabbitMQ (host `rabbitmq`)   |
 | `API_PORT`                                          | Porta interna da API (padrão 3000)                |
 | `LOG_LEVEL`                                         | Nível do log da API (`info`, `debug`…)            |
+| `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`            | Credenciais do MinIO                              |
+| `STORAGE_DRIVER`                                    | `s3` (MinIO, no Docker) ou `local` (disco)        |
+| `STORAGE_S3_*`                                      | Endpoint, bucket e chaves do S3/MinIO             |
+| `STORAGE_S3_BUCKET_TEST`                            | Bucket dos testes (nome termina com `-test`)      |
+| `STORAGE_LOCAL_DIR`                                 | Pasta do driver `local` (padrão `storage`)        |
+| `STORAGE_URL_SECRET`                                | Segredo das URLs temporárias de download          |
+| `STORAGE_URL_TTL_SECONDS`                           | Validade dessas URLs (padrão 300)                 |
 
 ## Banco de dados (Prisma)
 

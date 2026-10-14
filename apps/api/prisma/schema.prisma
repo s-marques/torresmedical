@@ -89,3 +89,21 @@ model AuditLog {
   @@index([userId])
   @@map("audit_log")
 }
+
+/// Metadados dos arquivos enviados. O conteúdo fica no storage (S3/MinIO ou disco), sob `chave`.
+/// `uso` é validado pelo catálogo de `packages/shared`. Sem FK em criado_por: aceita "system".
+model Arquivo {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  uso          String
+  nomeOriginal String    @map("nome_original")
+  contentType  String    @map("content_type")
+  /// Tamanho em bytes.
+  tamanho      Int
+  chave        String    @unique
+  criadoPor    String?   @map("criado_por")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([uso])
+  @@map("arquivos")
+}
