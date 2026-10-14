@@ -16,4 +16,6 @@ module.exports = {
   // Caminhos relativos à raiz do repo, como o Sonar espera.
   coverageReporters: ['text-summary', ['lcov', { projectRoot: '../..' }]],
   testEnvironment: 'node',
+  // Os e2e compartilham o banco de teste e limpam as tabelas entre os testes: não podem rodar em paralelo.
+  maxWorkers: 1,
 };

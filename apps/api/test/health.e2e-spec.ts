@@ -1,19 +1,14 @@
 import type { INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
 import { healthResponseSchema } from '@torres/shared';
 import request from 'supertest';
-import { AppModule } from '../src/app.module';
 import { REQUEST_ID_HEADER } from '../src/common/context/request-id';
-import { setupApp } from '../src/setup-app';
+import { createE2eApp } from './utils/create-e2e-app';
 
 describe('GET /api/health (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-    app = moduleRef.createNestApplication({ logger: false });
-    setupApp(app);
-    await app.init();
+    app = await createE2eApp();
   });
 
   afterAll(async () => {
