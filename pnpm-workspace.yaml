@@ -3,7 +3,9 @@ packages:
   - packages/*
 
 onlyBuiltDependencies:
+  - '@prisma/engines'
   - esbuild
+  - prisma
 
 ignoredBuiltDependencies:
   - '@nestjs/core'

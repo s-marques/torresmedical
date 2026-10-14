@@ -8,13 +8,13 @@
   "scripts": {
     "dev:api": "concurrently -n shared,api \"pnpm --filter @torres/shared dev\" \"pnpm --filter @torres/api dev\"",
     "dev:web": "concurrently -n shared,web \"pnpm --filter @torres/shared dev\" \"pnpm --filter @torres/web dev\"",
-    "build": "pnpm -r build",
+    "build": "pnpm --filter @torres/api db:generate && pnpm -r build",
     "lint": "eslint . --max-warnings=0 && prettier --check .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "pnpm --filter @torres/shared build && pnpm -r typecheck",
-    "test": "pnpm --filter @torres/shared build && pnpm -r test",
-    "test:cov": "pnpm --filter @torres/shared build && pnpm -r test:cov"
+    "typecheck": "pnpm --filter @torres/shared build && pnpm --filter @torres/api db:generate && pnpm -r typecheck",
+    "test": "pnpm --filter @torres/shared build && pnpm --filter @torres/api db:generate && pnpm -r test",
+    "test:cov": "pnpm --filter @torres/shared build && pnpm --filter @torres/api db:generate && pnpm -r test:cov"
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",

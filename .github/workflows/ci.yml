@@ -19,7 +19,7 @@ jobs:
     timeout-minutes: 20
 
     services:
-      # Banco de teste para os e2e (usado a partir da issue do Prisma).
+      # Banco de teste para os e2e (as migrations rodam antes dos testes).
       postgres:
         image: postgres:17-alpine
         env:
@@ -55,6 +55,9 @@ jobs:
 
       - name: Typecheck
         run: pnpm typecheck
+
+      - name: Migrations no banco de teste
+        run: pnpm --filter @torres/api db:deploy
 
       - name: Testes (com cobertura)
         run: pnpm test:cov
