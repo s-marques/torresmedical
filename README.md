@@ -1,5 +1,8 @@
 # Torres Medical
 
+[![Quality gate status](https://sonarcloud.io/api/project_badges/measure?project=s-marques_torresmedical&metric=alert_status&token=217b73ab738358867f75a9ed7d744aa2f9612581)](https://sonarcloud.io/summary/new_code?id=s-marques_torresmedical)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=s-marques_torresmedical&metric=coverage&token=217b73ab738358867f75a9ed7d744aa2f9612581)](https://sonarcloud.io/summary/new_code?id=s-marques_torresmedical)
+
 Reconstrução do sistema de gestão da clínica Torres Medical. Padrões, fluxo de trabalho e
 regras do projeto estão no [`CLAUDE.md`](CLAUDE.md). O inventário do sistema atual fica em
 [`docs/inventario/`](docs/inventario/README.md).
@@ -64,4 +67,6 @@ pnpm build
 ## CI
 
 `.github/workflows/ci.yml` roda em todo PR e push na `main`: install, lint, typecheck,
-testes e build.
+testes e build. Em seguida, o job **SonarQube Cloud** envia a análise e a cobertura (lcov do
+Jest e do Vitest) e falha quando o Quality Gate reprova. A configuração fica em
+[`sonar-project.properties`](sonar-project.properties) e o token no secret `SONAR_TOKEN`.

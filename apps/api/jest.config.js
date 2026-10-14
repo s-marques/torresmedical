@@ -6,5 +6,7 @@ module.exports = {
   transform: { '^.+\\.ts$': 'ts-jest' },
   collectCoverageFrom: ['src/**/*.ts', '!src/main.ts'],
   coverageDirectory: 'coverage',
+  // Caminhos relativos à raiz do repo, como o Sonar espera.
+  coverageReporters: ['text-summary', ['lcov', { projectRoot: '../..' }]],
   testEnvironment: 'node',
 };

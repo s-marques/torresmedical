@@ -19,5 +19,12 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     restoreMocks: true,
+    coverage: {
+      provider: 'v8',
+      // Caminhos relativos à raiz do repo, como o Sonar espera.
+      reporter: ['text-summary', ['lcov', { projectRoot: '../..' }]],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/main.tsx', 'src/test/**', 'src/**/*.test.{ts,tsx}'],
+    },
   },
 });
