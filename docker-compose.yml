@@ -18,6 +18,8 @@ x-node-volumes: &node-volumes # Código do host montado para hot reload.
   - /app/node_modules
   - /app/apps/api/node_modules
   - /app/apps/api/dist
+  # Client gerado do Prisma: cada lado (host e container) gera o seu.
+  - /app/apps/api/src/generated
   - /app/apps/web/node_modules
   - /app/apps/web/dist
   - /app/packages/shared/node_modules
@@ -71,7 +73,11 @@ services:
       NODE_ENV: development
     volumes: *node-volumes
     # Sem "ports": a API só é acessível pela rede interna (via proxy do web).
-    command: [pnpm, dev:api]
+    # Gera o client do Prisma e aplica as migrations pendentes antes de subir.
+    command:
+      - sh
+      - -c
+      - pnpm --filter @torres/api db:generate && pnpm --filter @torres/api db:deploy && exec pnpm dev:api
     depends_on:
       postgres:
         condition: service_healthy

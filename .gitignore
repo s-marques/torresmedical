@@ -3,6 +3,8 @@ node_modules/
 dist/
 build/
 coverage/
+# client gerado do Prisma (pnpm --filter @torres/api db:generate)
+apps/api/src/generated/
 *.tsbuildinfo
 
 # segredos

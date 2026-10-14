@@ -1,0 +1,91 @@
+// Convenções (CLAUDE.md, seção 3): model PascalCase singular, tabela snake_case plural
+// via @@map, colunas snake_case via @map, ids uuid e timestamps com fuso (UTC).
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Empresa {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String
+  /// CNPJ ou CPF, somente dígitos.
+  documento String    @unique
+  email     String?
+  telefone  String?
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  unidades Unidade[]
+  usuarios Usuario[]
+
+  @@map("empresas")
+}
+
+model Unidade {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId String    @map("empresa_id") @db.Uuid
+  nome      String
+  ativo     Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+
+  @@index([empresaId])
+  @@map("unidades")
+}
+
+/// Sem credenciais nem perfil: ficam para a issue de Autenticação.
+model Usuario {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId     String    @map("empresa_id") @db.Uuid
+  nome          String
+  email         String    @unique
+  telefone      String?
+  ativo         Boolean   @default(true)
+  ultimoLoginEm DateTime? @map("ultimo_login_em") @db.Timestamptz(3)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+
+  @@index([empresaId])
+  @@map("usuarios")
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  EXPORT
+
+  @@map("audit_action")
+}
+
+/// Somente inserção (CLAUDE.md, seção 4). Sem FK em user_id: aceita "system".
+model AuditLog {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String      @map("user_id")
+  occurredAt DateTime    @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  action     AuditAction
+  entity     String
+  entityId   String      @map("entity_id")
+  before     Json?
+  after      Json?
+  requestId  String?     @map("request_id")
+  ip         String?
+
+  @@index([entity, entityId])
+  @@index([occurredAt])
+  @@index([userId])
+  @@map("audit_log")
+}

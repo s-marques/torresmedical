@@ -49,10 +49,52 @@ O `.env` nunca é commitado. O [`.env.example`](.env.example) lista as variávei
 | `WEB_PORT`                                          | Porta externa do front (padrão 5173)              |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Credenciais do PostgreSQL                         |
 | `DATABASE_URL`                                      | Conexão da API com o PostgreSQL (host `postgres`) |
+| `DATABASE_URL_TEST`                                 | Banco dos testes (nome termina com `_test`)       |
 | `RABBITMQ_DEFAULT_USER`, `RABBITMQ_DEFAULT_PASS`    | Credenciais do RabbitMQ                           |
 | `RABBITMQ_URL`                                      | Conexão da API com o RabbitMQ (host `rabbitmq`)   |
 | `API_PORT`                                          | Porta interna da API (padrão 3000)                |
 | `LOG_LEVEL`                                         | Nível do log da API (`info`, `debug`…)            |
+
+## Banco de dados (Prisma)
+
+Schema, migrations e seed ficam em `apps/api/prisma`. O client gerado vai para
+`apps/api/src/generated/prisma` (fora do git). Ao subir, o container da API gera o client e
+aplica as migrations pendentes (`prisma migrate deploy`).
+
+O Postgres só é acessível pela rede interna, então os comandos rodam dentro do container:
+
+```bash
+docker compose exec api pnpm --filter api prisma migrate dev --name <descricao>  # nova migration
+docker compose exec api pnpm --filter @torres/api db:seed                        # dados fictícios
+```
+
+| Script (`apps/api`) | Uso                                                         |
+| ------------------- | ----------------------------------------------------------- |
+| `db:generate`       | Gera o client do Prisma (os scripts da raiz já rodam antes) |
+| `db:migrate`        | `prisma migrate dev`: cria e aplica migrations (só local)   |
+| `db:deploy`         | `prisma migrate deploy`: aplica as migrations pendentes     |
+| `db:seed`           | Grava os dados fictícios do seed (idempotente)              |
+| `db:studio`         | Prisma Studio                                               |
+
+O seed usa somente dados gerados pelo faker (semente fixa) e e-mails `@example.com`. Nunca
+copie nomes, CPFs ou telefones do inventário.
+
+**Prisma Studio:** ele escuta só no `localhost` de onde roda. Descomente a porta de debug do
+Postgres (`127.0.0.1:5433:5432`) no compose e rode no host, apontando para ela:
+
+```bash
+DATABASE_URL=postgresql://<usuario>:<senha>@127.0.0.1:5433/<banco> pnpm --filter @torres/api db:studio
+```
+
+### Testes com banco
+
+Os e2e apagam dados, por isso só rodam em banco cujo nome termina com `_test`
+(`DATABASE_URL_TEST`; no CI, `DATABASE_URL`). Prepare o banco de teste e rode os testes no container:
+
+```bash
+docker compose exec api sh -c 'DATABASE_URL=$DATABASE_URL_TEST pnpm --filter @torres/api db:deploy'
+docker compose exec api pnpm test
+```
 
 ## Scripts (na raiz)
 
@@ -67,6 +109,6 @@ pnpm build
 ## CI
 
 `.github/workflows/ci.yml` roda em todo PR e push na `main`: install, lint, typecheck,
-testes e build. Em seguida, o job **SonarQube Cloud** envia a análise e a cobertura (lcov do
+migrations no banco de teste (Postgres de serviço do job), testes e build. Em seguida, o job **SonarQube Cloud** envia a análise e a cobertura (lcov do
 Jest e do Vitest) e falha quando o Quality Gate reprova. A configuração fica em
 [`sonar-project.properties`](sonar-project.properties) e o token no secret `SONAR_TOKEN`.
