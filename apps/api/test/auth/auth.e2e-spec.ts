@@ -57,6 +57,11 @@ describe('Autenticação (e2e)', () => {
     return cookie;
   }
 
+  /** A sessão criada pelo login (a do `criarUsuarioTeste` não tem IP). */
+  function sessaoDoLogin() {
+    return prisma.sessao.findFirstOrThrow({ where: { usuarioId: usuario.id, ip: { not: null } } });
+  }
+
   function valorDoCookie(cookie: string): string {
     return cookie.split(';')[0] ?? '';
   }
@@ -162,6 +167,8 @@ describe('Autenticação (e2e)', () => {
         .get(`${AUTH}/me`)
         .auth(sessaoSchema.parse(res.body).accessToken, { type: 'bearer' })
         .expect(401);
+      const sessao = await sessaoDoLogin();
+      expect(sessao.revogadaEm).toBeInstanceOf(Date);
     });
 
     it('sem cookie ou com cookie inválido: 401 e o cookie é apagado', async () => {
@@ -179,14 +186,20 @@ describe('Autenticação (e2e)', () => {
       const cookie = valorDoCookie(cookieDe(await login().expect(200)));
       await prisma.sessao.updateMany({ data: { expiraEm: new Date(Date.now() - 1000) } });
 
-      await http().post(`${AUTH}/refresh`).set('Cookie', cookie).expect(401);
+      const res = await http().post(`${AUTH}/refresh`).set('Cookie', cookie).expect(401);
+
+      expect(res.body).toMatchObject({ code: 'SESSAO_INVALIDA' });
     });
 
     it('usuário desativado não renova', async () => {
       const cookie = valorDoCookie(cookieDe(await login().expect(200)));
       await prisma.usuario.update({ where: { id: usuario.id }, data: { ativo: false } });
 
-      await http().post(`${AUTH}/refresh`).set('Cookie', cookie).expect(401);
+      const res = await http().post(`${AUTH}/refresh`).set('Cookie', cookie).expect(401);
+
+      expect(res.body).toMatchObject({ code: 'SESSAO_INVALIDA' });
+      const sessao = await sessaoDoLogin();
+      expect(sessao.revogadaEm).toBeInstanceOf(Date);
     });
   });
 
@@ -247,8 +260,13 @@ describe('Autenticação (e2e)', () => {
       });
       const semIds = await app.get(JwtService).signAsync({ sub: 'qualquer' });
 
-      await http().get(`${AUTH}/me`).auth(outroSegredo, { type: 'bearer' }).expect(401);
-      await http().get(`${AUTH}/me`).auth(semIds, { type: 'bearer' }).expect(401);
+      const res1 = await http()
+        .get(`${AUTH}/me`)
+        .auth(outroSegredo, { type: 'bearer' })
+        .expect(401);
+      const res2 = await http().get(`${AUTH}/me`).auth(semIds, { type: 'bearer' }).expect(401);
+
+      expect([res1.body.code, res2.body.code]).toEqual(['SESSAO_INVALIDA', 'SESSAO_INVALIDA']);
     });
 
     it('401 quando o usuário é desativado ou excluído depois do login', async () => {
@@ -256,8 +274,13 @@ describe('Autenticação (e2e)', () => {
       await prisma.usuario.update({ where: { id: usuario.id }, data: { ativo: false } });
       await prisma.usuario.update({ where: { id: excluido.id }, data: { deletedAt: new Date() } });
 
-      await comUsuario(app, usuario).get(`${AUTH}/me`).expect(401);
-      await comUsuario(app, excluido).get(`${AUTH}/me`).expect(401);
+      const inativo = await comUsuario(app, usuario).get(`${AUTH}/me`).expect(401);
+      const removido = await comUsuario(app, excluido).get(`${AUTH}/me`).expect(401);
+
+      expect([inativo.body.code, removido.body.code]).toEqual([
+        'SESSAO_INVALIDA',
+        'SESSAO_INVALIDA',
+      ]);
     });
   });
 
@@ -333,16 +356,24 @@ describe('Autenticação (e2e)', () => {
       await esqueci(usuario.email).expect(202);
       await esqueci(usuario.email).expect(202);
 
-      await redefinir(pedidos[0]?.token ?? '').expect(400);
+      const antigo = await redefinir(pedidos[0]?.token ?? '').expect(400);
       await redefinir(pedidos[1]?.token ?? '').expect(204);
+
+      expect(antigo.body).toMatchObject({ code: 'LINK_REDEFINICAO_INVALIDO' });
+      expect(pedidos).toHaveLength(2);
     });
 
     it('link expirado ou inexistente: 400', async () => {
       await esqueci(usuario.email).expect(202);
       await prisma.redefinicaoSenha.updateMany({ data: { expiraEm: new Date(Date.now() - 1) } });
 
-      await redefinir(pedidos[0]?.token ?? '').expect(400);
-      await redefinir('token-que-nao-existe').expect(400);
+      const expirado = await redefinir(pedidos[0]?.token ?? '').expect(400);
+      const inexistente = await redefinir('token-que-nao-existe').expect(400);
+
+      expect([expirado.body.code, inexistente.body.code]).toEqual([
+        'LINK_REDEFINICAO_INVALIDO',
+        'LINK_REDEFINICAO_INVALIDO',
+      ]);
     });
 
     it('400 para senha fraca, com a mensagem do campo', async () => {
