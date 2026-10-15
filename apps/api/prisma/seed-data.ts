@@ -2,6 +2,7 @@ import { fakerPT_BR as faker } from '@faker-js/faker';
 import { PERMISSOES } from '@torres/shared';
 import { hashSenha } from '../src/common/auth/senhas';
 import type { PrismaClient } from '../src/generated/prisma/client';
+import { applySeedEntidades, buildSeedEntidades, type SeedEntidades } from './seed-entidades';
 
 /**
  * Dados de desenvolvimento 100% fictícios (CLAUDE.md, seção 6).
@@ -27,6 +28,8 @@ export interface SeedData {
     email: string;
     telefone: string;
   };
+  /** Entidades compartilhadas (pacientes, profissionais, produtos…). */
+  entidades: SeedEntidades;
 }
 
 /** Gera um CNPJ fictício com dígitos verificadores válidos (somente dígitos). */
@@ -102,7 +105,10 @@ export function buildSeedData(): SeedData {
     telefone: gerarCelular(),
   };
 
-  return { empresa, unidades, usuarios, perfilAdmin, admin };
+  // Também depois dos demais, pelo mesmo motivo.
+  const entidades = buildSeedEntidades(SEED_EMAIL_DOMAIN);
+
+  return { empresa, unidades, usuarios, perfilAdmin, admin, entidades };
 }
 
 /**
@@ -111,33 +117,37 @@ export function buildSeedData(): SeedData {
  */
 export async function applySeed(prisma: PrismaClient, senhaAdmin: string): Promise<SeedData> {
   const data = buildSeedData();
-  const { empresa, unidades, usuarios, perfilAdmin, admin } = data;
+  const { empresa, unidades, usuarios, perfilAdmin, admin, entidades } = data;
   const senhaHash = await hashSenha(senhaAdmin);
 
-  await prisma.$transaction(async (tx) => {
-    await tx.empresa.upsert({ where: { id: empresa.id }, create: empresa, update: empresa });
-    for (const unidade of unidades) {
-      await tx.unidade.upsert({ where: { id: unidade.id }, create: unidade, update: unidade });
-    }
-    for (const usuario of usuarios) {
-      await tx.usuario.upsert({ where: { id: usuario.id }, create: usuario, update: usuario });
-    }
-    await tx.perfil.upsert({
-      where: { id: perfilAdmin.id },
-      create: perfilAdmin,
-      update: perfilAdmin,
-    });
-    await tx.perfilPermissao.deleteMany({ where: { perfilId: perfilAdmin.id } });
-    await tx.perfilPermissao.createMany({
-      data: PERMISSOES.map((permissao) => ({ perfilId: perfilAdmin.id, permissao })),
-    });
-    const usuarioAdmin = { ...admin, senhaHash, ativo: true };
-    await tx.usuario.upsert({
-      where: { id: admin.id },
-      create: usuarioAdmin,
-      update: usuarioAdmin,
-    });
-  });
+  await prisma.$transaction(
+    async (tx) => {
+      await tx.empresa.upsert({ where: { id: empresa.id }, create: empresa, update: empresa });
+      for (const unidade of unidades) {
+        await tx.unidade.upsert({ where: { id: unidade.id }, create: unidade, update: unidade });
+      }
+      for (const usuario of usuarios) {
+        await tx.usuario.upsert({ where: { id: usuario.id }, create: usuario, update: usuario });
+      }
+      await tx.perfil.upsert({
+        where: { id: perfilAdmin.id },
+        create: perfilAdmin,
+        update: perfilAdmin,
+      });
+      await tx.perfilPermissao.deleteMany({ where: { perfilId: perfilAdmin.id } });
+      await tx.perfilPermissao.createMany({
+        data: PERMISSOES.map((permissao) => ({ perfilId: perfilAdmin.id, permissao })),
+      });
+      const usuarioAdmin = { ...admin, senhaHash, ativo: true };
+      await tx.usuario.upsert({
+        where: { id: admin.id },
+        create: usuarioAdmin,
+        update: usuarioAdmin,
+      });
+      await applySeedEntidades(tx, entidades);
+    },
+    { timeout: 60_000 },
+  );
 
   return data;
 }
