@@ -16,6 +16,25 @@ export interface ApiFetchOptions<T> {
   /** Schema da resposta de sucesso. Sem schema, o corpo volta sem validação. */
   schema?: ValidadorResposta<T>;
   signal?: AbortSignal;
+  /**
+   * Padrão `true`: envia o access token e, no 401, renova a sessão uma vez e repete.
+   * `false` nas rotas da própria autenticação (login, refresh), para não entrar em laço.
+   */
+  autenticar?: boolean;
+}
+
+/** Ponte com a sessão (`lib/auth/sessao`), registrada por ela para evitar import circular. */
+export interface AutenticacaoApi {
+  /** Access token atual, só em memória. */
+  token(): string | null;
+  /** Renova a sessão pelo cookie. `true` se conseguiu um token novo. */
+  renovar(): Promise<boolean>;
+}
+
+let autenticacao: AutenticacaoApi | null = null;
+
+export function configurarAutenticacao(ponte: AutenticacaoApi | null): void {
+  autenticacao = ponte;
 }
 
 /**
@@ -25,31 +44,52 @@ export interface ApiFetchOptions<T> {
  */
 export async function apiFetch<T = unknown>(
   path: string,
-  { method = 'GET', query, body, schema, signal }: ApiFetchOptions<T> = {},
+  options: ApiFetchOptions<T> = {},
 ): Promise<T> {
+  const autenticar = options.autenticar !== false && autenticacao !== null;
+  let resposta = await enviar(path, options, autenticar);
+  // Access token vencido: renova a sessão uma vez e repete a chamada.
+  if (resposta.status === 401 && autenticar && (await autenticacao?.renovar())) {
+    resposta = await enviar(path, options, true);
+  }
+
+  const corpo = await lerCorpo(resposta);
+  if (!resposta.ok) throw erroDaResposta(resposta.status, corpo);
+  if (!options.schema) return corpo as T;
+
+  const dados = options.schema.safeParse(corpo);
+  if (!dados.success) throw new ApiRequestError(resposta.status, null);
+  return dados.data;
+}
+
+async function enviar<T>(
+  path: string,
+  { method = 'GET', query, body, signal }: ApiFetchOptions<T>,
+  autenticar: boolean,
+): Promise<Response> {
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
+  const token = autenticar ? autenticacao?.token() : null;
+  if (token) headers.Authorization = `Bearer ${token}`;
 
-  let resposta: Response;
   try {
-    resposta = await fetch(montarUrl(path, query), {
+    return await fetch(montarUrl(path, query), {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
       signal,
+      credentials: 'same-origin',
     });
   } catch (error) {
     if (signal?.aborted) throw error;
     throw new ApiRequestError(0, null, ERRO_CONEXAO);
   }
+}
 
-  const corpo = await lerCorpo(resposta);
-  if (!resposta.ok) throw erroDaResposta(resposta.status, corpo);
-  if (!schema) return corpo as T;
-
-  const dados = schema.safeParse(corpo);
-  if (!dados.success) throw new ApiRequestError(resposta.status, null);
-  return dados.data;
+/** Header `Authorization` para chamadas fora do `apiFetch` (ex.: upload por XHR). */
+export function authorizationHeader(): string | null {
+  const token = autenticacao?.token();
+  return token ? `Bearer ${token}` : null;
 }
 
 function montarUrl(path: string, query?: Query): string {

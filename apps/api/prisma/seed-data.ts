@@ -1,4 +1,6 @@
 import { fakerPT_BR as faker } from '@faker-js/faker';
+import { PERMISSOES } from '@torres/shared';
+import { hashSenha } from '../src/common/auth/senhas';
 import type { PrismaClient } from '../src/generated/prisma/client';
 
 /**
@@ -8,11 +10,23 @@ import type { PrismaClient } from '../src/generated/prisma/client';
 
 export const SEED = 73;
 export const SEED_EMAIL_DOMAIN = 'example.com';
+export const SEED_ADMIN_EMAIL = `admin@${SEED_EMAIL_DOMAIN}`;
 
 export interface SeedData {
   empresa: { id: string; nome: string; documento: string; email: string; telefone: string };
   unidades: { id: string; empresaId: string; nome: string }[];
   usuarios: { id: string; empresaId: string; nome: string; email: string; telefone: string }[];
+  /** Perfil com todas as permissões do catálogo. */
+  perfilAdmin: { id: string; nome: string; descricao: string };
+  /** Usuário que entra no sistema: `admin@example.com`, senha de `SEED_ADMIN_PASSWORD`. */
+  admin: {
+    id: string;
+    empresaId: string;
+    perfilId: string;
+    nome: string;
+    email: string;
+    telefone: string;
+  };
 }
 
 /** Gera um CNPJ fictício com dígitos verificadores válidos (somente dígitos). */
@@ -73,13 +87,32 @@ export function buildSeedData(): SeedData {
     };
   });
 
-  return { empresa, unidades, usuarios };
+  // Depois dos demais, para não mudar os ids já gerados pela semente.
+  const perfilAdmin = {
+    id: faker.string.uuid(),
+    nome: 'Administrador',
+    descricao: 'Acesso total ao sistema',
+  };
+  const admin = {
+    id: faker.string.uuid(),
+    empresaId: empresa.id,
+    perfilId: perfilAdmin.id,
+    nome: faker.person.fullName(),
+    email: SEED_ADMIN_EMAIL,
+    telefone: gerarCelular(),
+  };
+
+  return { empresa, unidades, usuarios, perfilAdmin, admin };
 }
 
-/** Idempotente: pode rodar várias vezes (upsert pelos ids determinísticos). */
-export async function applySeed(prisma: PrismaClient): Promise<SeedData> {
+/**
+ * Idempotente: pode rodar várias vezes (upsert pelos ids determinísticos). O perfil
+ * Administrador recebe de novo todo o catálogo de permissões, inclusive as novas.
+ */
+export async function applySeed(prisma: PrismaClient, senhaAdmin: string): Promise<SeedData> {
   const data = buildSeedData();
-  const { empresa, unidades, usuarios } = data;
+  const { empresa, unidades, usuarios, perfilAdmin, admin } = data;
+  const senhaHash = await hashSenha(senhaAdmin);
 
   await prisma.$transaction(async (tx) => {
     await tx.empresa.upsert({ where: { id: empresa.id }, create: empresa, update: empresa });
@@ -89,6 +122,21 @@ export async function applySeed(prisma: PrismaClient): Promise<SeedData> {
     for (const usuario of usuarios) {
       await tx.usuario.upsert({ where: { id: usuario.id }, create: usuario, update: usuario });
     }
+    await tx.perfil.upsert({
+      where: { id: perfilAdmin.id },
+      create: perfilAdmin,
+      update: perfilAdmin,
+    });
+    await tx.perfilPermissao.deleteMany({ where: { perfilId: perfilAdmin.id } });
+    await tx.perfilPermissao.createMany({
+      data: PERMISSOES.map((permissao) => ({ perfilId: perfilAdmin.id, permissao })),
+    });
+    const usuarioAdmin = { ...admin, senhaHash, ativo: true };
+    await tx.usuario.upsert({
+      where: { id: admin.id },
+      create: usuarioAdmin,
+      update: usuarioAdmin,
+    });
   });
 
   return data;

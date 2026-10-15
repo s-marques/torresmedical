@@ -32,9 +32,13 @@ export const SENSITIVE_KEYS = [
   'password',
   'passwordHash',
   'senha',
+  'senhaHash',
+  'senhaAtual',
+  'confirmacao',
   'token',
   'accessToken',
   'refreshToken',
+  'tokenHash',
   'secret',
 ] as const;
 

@@ -1,5 +1,6 @@
 import { ARQUIVO_CAMPO, arquivoSchema, type Arquivo, type ArquivoUso } from '@torres/shared';
 import { ApiRequestError, ERRO_CONEXAO, erroDaResposta } from './api-error';
+import { authorizationHeader } from './client';
 
 export const ERRO_INESPERADO = 'Não foi possível enviar o arquivo. Tente novamente';
 
@@ -29,6 +30,8 @@ export function uploadArquivo({
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `/api/arquivos?${new URLSearchParams({ uso }).toString()}`);
     xhr.responseType = 'json';
+    const authorization = authorizationHeader();
+    if (authorization) xhr.setRequestHeader('Authorization', authorization);
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) onProgress?.(Math.round((event.loaded / event.total) * 100));

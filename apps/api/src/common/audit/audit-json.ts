@@ -2,10 +2,10 @@ import type { Prisma } from '../../generated/prisma/client';
 
 /**
  * Chaves de credencial que nunca vão para o audit_log (CLAUDE.md, seção 4):
- * password*, senha*, *token, *secret e *secretKey, sem diferenciar maiúsculas.
+ * password*, senha*, *token, *tokenHash, *secret e *secretKey, sem diferenciar maiúsculas.
  * "secret" só no fim para não pegar campos de domínio como `secretariaId`.
  */
-const CREDENTIAL_KEY = /^(password|senha)|(token|secret|secretkey)$/i;
+const CREDENTIAL_KEY = /^(password|senha)|(token|tokenhash|secret|secretkey)$/i;
 
 export function isCredentialKey(key: string): boolean {
   return CREDENTIAL_KEY.test(key);

@@ -43,23 +43,90 @@ model Unidade {
   @@map("unidades")
 }
 
-/// Sem credenciais nem perfil: ficam para a issue de Autenticação.
+/// Usuário do sistema. Sem `senhaHash` não há login (até definir a senha pela redefinição).
 model Usuario {
   id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   empresaId     String    @map("empresa_id") @db.Uuid
+  perfilId      String?   @map("perfil_id") @db.Uuid
   nome          String
   email         String    @unique
   telefone      String?
+  /// Hash argon2id. Nunca sai em resposta, log ou audit_log.
+  senhaHash     String?   @map("senha_hash")
   ativo         Boolean   @default(true)
   ultimoLoginEm DateTime? @map("ultimo_login_em") @db.Timestamptz(3)
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(3)
 
-  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  empresa      Empresa            @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  perfil       Perfil?            @relation(fields: [perfilId], references: [id], onDelete: Restrict)
+  sessoes      Sessao[]
+  redefinicoes RedefinicaoSenha[]
 
   @@index([empresaId])
+  @@index([perfilId])
   @@map("usuarios")
+}
+
+/// Perfil de acesso: o conjunto de permissões (`<modulo>.<recurso>.<acao>`) dos seus usuários.
+model Perfil {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String    @unique
+  descricao String?
+  ativo     Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  permissoes PerfilPermissao[]
+  usuarios   Usuario[]
+
+  @@map("perfis")
+}
+
+/// Permissão concedida a um perfil. O texto é validado pelo catálogo de `packages/shared`.
+model PerfilPermissao {
+  perfilId  String @map("perfil_id") @db.Uuid
+  permissao String
+
+  perfil Perfil @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+
+  @@id([perfilId, permissao])
+  @@map("perfis_permissoes")
+}
+
+/// Sessão de login. Guarda só o hash do refresh token atual (rotacionado a cada uso).
+model Sessao {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  usuarioId   String    @map("usuario_id") @db.Uuid
+  tokenHash   String    @map("token_hash")
+  expiraEm    DateTime  @map("expira_em") @db.Timestamptz(3)
+  revogadaEm  DateTime? @map("revogada_em") @db.Timestamptz(3)
+  ultimoUsoEm DateTime? @map("ultimo_uso_em") @db.Timestamptz(3)
+  ip          String?
+  userAgent   String?   @map("user_agent")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@map("sessoes")
+}
+
+/// Pedido de redefinição de senha: token de uso único, guardado só como hash.
+model RedefinicaoSenha {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  usuarioId String    @map("usuario_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiraEm  DateTime  @map("expira_em") @db.Timestamptz(3)
+  usadaEm   DateTime? @map("usada_em") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@map("redefinicoes_senha")
 }
 
 enum AuditAction {

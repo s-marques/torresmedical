@@ -13,6 +13,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { Audit } from '../../src/common/audit/audit.decorator';
+import { Public, SomenteAutenticado } from '../../src/common/auth/auth.decorators';
 import type { PrismaAdapter } from '../../src/common/prisma/prisma-transaction';
 
 interface EmpresaInput {
@@ -25,6 +26,7 @@ interface EmpresaInput {
  * acesso ao banco por `txHost.tx` e retorno da entidade resultante.
  */
 @Controller('test-fixtures/empresas')
+@SomenteAutenticado()
 class AuditFixtureController {
   constructor(private readonly txHost: TransactionHost<PrismaAdapter>) {}
 
@@ -46,6 +48,14 @@ class AuditFixtureController {
   async excluir(@Param('id', ParseUUIDPipe) id: string) {
     await this.buscar(id);
     return this.txHost.tx.empresa.update({ where: { id }, data: { deletedAt: new Date() } });
+  }
+
+  /** Rota pública: a auditoria grava "anonymous" quando não há usuário. */
+  @Post('publico')
+  @Public()
+  @Audit({ entity: 'Empresa' })
+  criarPublico(@Body() body: EmpresaInput) {
+    return this.txHost.tx.empresa.create({ data: body });
   }
 
   /** Grava e depois falha: a transação deve desfazer a escrita e não auditar. */

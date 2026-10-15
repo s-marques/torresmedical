@@ -10,3 +10,6 @@ Object.assign(process.env, resolveTestStorageEnv(process.env));
 
 // Logs HTTP só atrapalham a saída dos testes. Para depurar, defina TEST_LOG_LEVEL.
 process.env.LOG_LEVEL = process.env.TEST_LOG_LEVEL ?? 'silent';
+
+// Segredo fixo dos tokens nos testes (o .env local e o CI não precisam defini-lo).
+process.env.AUTH_JWT_SECRET ??= 'segredo-dos-testes-com-pelo-menos-32-caracteres';

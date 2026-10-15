@@ -9,10 +9,9 @@ import {
 import { createE2eApp } from '../utils/create-e2e-app';
 import { truncateAll } from '../utils/database';
 import { expectAudit, expectNoAudit } from '../utils/expect-audit';
-import { TEST_USER_HEADER } from '../utils/test-user.guard';
+import { comUsuario, criarUsuarioTeste, type UsuarioTeste } from '../utils/auth';
 
 const BASE = '/api/arquivos';
-const USER_ID = 'u-arquivos';
 const INEXISTENTE = '00000000-0000-4000-8000-000000000000';
 const MB = 1024 * 1024;
 const PNG = Buffer.concat([
@@ -25,6 +24,7 @@ describe('Arquivos: upload e download (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let storage: StorageDriver;
+  let usuario: UsuarioTeste;
 
   beforeAll(async () => {
     app = await createE2eApp();
@@ -34,6 +34,8 @@ describe('Arquivos: upload e download (e2e)', () => {
 
   beforeEach(async () => {
     await truncateAll(prisma);
+    // Arquivos exigem só o login, sem permissão específica.
+    usuario = await criarUsuarioTeste(app);
   });
 
   afterAll(async () => {
@@ -41,14 +43,14 @@ describe('Arquivos: upload e download (e2e)', () => {
   });
 
   function http() {
-    return request(app.getHttpServer());
+    return comUsuario(app, usuario);
   }
 
   function enviar(uso: string, conteudo: Buffer, filename: string, contentType?: string) {
     return http()
       .post(BASE)
       .query({ uso })
-      .set(TEST_USER_HEADER, USER_ID)
+
       .attach('arquivo', conteudo, { filename, contentType });
   }
 
@@ -73,7 +75,7 @@ describe('Arquivos: upload e download (e2e)', () => {
         nomeOriginal: 'Nota fiscal de compra.XML',
         contentType: 'application/xml',
         tamanho: XML.length,
-        criadoPor: USER_ID,
+        criadoPor: usuario.id,
       });
       expect(res.body).not.toHaveProperty('chave');
 
@@ -88,7 +90,7 @@ describe('Arquivos: upload e download (e2e)', () => {
         entityId: arquivo.id,
         before: null,
         after: { id: arquivo.id, uso: 'nfe-xml', tamanho: XML.length },
-        userId: USER_ID,
+        userId: usuario.id,
       });
     });
 
@@ -257,7 +259,7 @@ describe('Arquivos: upload e download (e2e)', () => {
       const id = await enviarPng();
       const { url } = (await http().get(`${BASE}/${id}/link`).expect(200)).body as { url: string };
 
-      const res = await http().delete(`${BASE}/${id}`).set(TEST_USER_HEADER, USER_ID).expect(200);
+      const res = await http().delete(`${BASE}/${id}`).expect(200);
 
       expect(res.body).toMatchObject({ id });
       const registro = await prisma.arquivo.findUniqueOrThrow({ where: { id } });
@@ -268,7 +270,7 @@ describe('Arquivos: upload e download (e2e)', () => {
         entityId: id,
         before: { id, uso: 'avatar', deletedAt: null },
         after: null,
-        userId: USER_ID,
+        userId: usuario.id,
       });
       await http().get(`${BASE}/${id}`).expect(404);
       const download = await http().get(url).expect(404);
@@ -280,6 +282,28 @@ describe('Arquivos: upload e download (e2e)', () => {
 
       expect(res.body.code).toBe('NOT_FOUND');
       await expectNoAudit(prisma, { entity: 'Arquivo', action: 'DELETE' });
+    });
+  });
+
+  describe('acesso', () => {
+    it('upload, metadados, link e exclusão exigem login (401 sem token)', async () => {
+      const anonimo = () => request(app.getHttpServer());
+
+      await anonimo().post(BASE).query({ uso: 'avatar' }).expect(401);
+      await anonimo().get(`${BASE}/${INEXISTENTE}`).expect(401);
+      await anonimo().get(`${BASE}/${INEXISTENTE}/link`).expect(401);
+      const res = await anonimo().delete(`${BASE}/${INEXISTENTE}`).expect(401);
+
+      expect(res.body).toMatchObject({ code: 'UNAUTHORIZED' });
+    });
+
+    it('o download pelo link assinado não exige login', async () => {
+      const id = await enviarPng();
+      const { url } = (await http().get(`${BASE}/${id}/link`).expect(200)).body as { url: string };
+
+      const res = await request(app.getHttpServer()).get(url).expect(200);
+
+      expect(res.headers['content-type']).toMatch(/^image\/png/);
     });
   });
 });

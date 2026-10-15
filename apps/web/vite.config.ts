@@ -17,7 +17,8 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     proxy: {
-      '/api': { target: apiProxyTarget, changeOrigin: true },
+      // xfwd: repassa o IP do navegador (X-Forwarded-For) para o rate limit e a auditoria.
+      '/api': { target: apiProxyTarget, changeOrigin: true, xfwd: true },
     },
   },
   test: {

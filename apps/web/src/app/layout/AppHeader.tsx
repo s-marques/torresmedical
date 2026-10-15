@@ -1,5 +1,4 @@
 import { Bell, LogOut, Monitor, Moon, Search, Sun } from 'lucide-react';
-import { Link } from 'react-router';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +15,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { useTheme, type Theme } from '@/lib/theme';
 import { useApiHealth, type ApiHealthStatus } from '../use-api-health';
-import { USUARIO_PROVISORIO } from './usuario-provisorio';
+import { useSair, useUsuarioExibido } from './use-usuario-logado';
 
 export interface AppHeaderProps {
   onOpenSearch: () => void;
@@ -121,30 +120,28 @@ function NotificationsMenu() {
 }
 
 function UserMenu() {
+  const usuario = useUsuarioExibido();
+  const sair = useSair();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="rounded-full" aria-label="Menu do usuário">
           <Avatar className="size-8">
             <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-              {USUARIO_PROVISORIO.iniciais}
+              {usuario.iniciais}
             </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="grid">
-          <span>{USUARIO_PROVISORIO.nome}</span>
-          <span className="text-xs font-normal text-muted-foreground">
-            {USUARIO_PROVISORIO.perfil}
-          </span>
+          <span>{usuario.nome}</span>
+          <span className="text-xs font-normal text-muted-foreground">{usuario.perfil}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link to="/login">
-            <LogOut aria-hidden />
-            Sair
-          </Link>
+        <DropdownMenuItem onSelect={sair}>
+          <LogOut aria-hidden />
+          Sair
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

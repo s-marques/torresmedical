@@ -18,7 +18,7 @@ function cnpjValido(cnpj: string): boolean {
 
 describe('buildSeedData', () => {
   const data = buildSeedData();
-  const pessoas = [data.empresa, ...data.usuarios];
+  const pessoas = [data.empresa, ...data.usuarios, data.admin];
 
   it('é determinístico (mesma semente, mesmos dados e ids)', () => {
     expect(buildSeedData()).toEqual(data);
@@ -31,8 +31,14 @@ describe('buildSeedData', () => {
   });
 
   it('gera e-mails e ids únicos', () => {
-    const emails = data.usuarios.map((u) => u.email);
-    const ids = [data.empresa, ...data.unidades, ...data.usuarios].map((r) => r.id);
+    const emails = [...data.usuarios, data.admin].map((u) => u.email);
+    const ids = [
+      data.empresa,
+      ...data.unidades,
+      ...data.usuarios,
+      data.perfilAdmin,
+      data.admin,
+    ].map((r) => r.id);
     expect(new Set(emails).size).toBe(emails.length);
     expect(new Set(ids).size).toBe(ids.length);
   });
@@ -54,5 +60,14 @@ describe('buildSeedData', () => {
     for (const r of [...data.unidades, ...data.usuarios]) {
       expect(r.empresaId).toBe(data.empresa.id);
     }
+  });
+
+  it('cria o admin admin@example.com com o perfil Administrador', () => {
+    expect(data.admin).toMatchObject({
+      email: 'admin@example.com',
+      perfilId: data.perfilAdmin.id,
+      empresaId: data.empresa.id,
+    });
+    expect(data.perfilAdmin.nome).toBe('Administrador');
   });
 });

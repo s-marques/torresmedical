@@ -1,8 +1,10 @@
 import './zod-pt-br';
 
+export * from './auth/permissoes';
 export * from './menu/menu';
 export * from './schemas/arquivos/arquivo';
 export * from './schemas/auditoria/audit-log';
+export * from './schemas/auth/auth';
 export * from './schemas/common/api-error';
 export * from './schemas/common/list-query';
 export * from './schemas/common/pagination';
