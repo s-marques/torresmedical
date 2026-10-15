@@ -1,7 +1,7 @@
 import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiRequestError } from './api-error';
-import { createQueryClient, deveRepetir } from './query-client';
+import { META_FORMULARIO, createQueryClient, deveRepetir } from './query-client';
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }));
 
@@ -70,6 +70,18 @@ describe('createQueryClient', () => {
     const mutation = client.getMutationCache().build(client, {
       mutationFn: () => Promise.reject(erro(500)),
       meta: { tratarErro: false },
+    });
+
+    await mutation.execute(undefined).catch(() => {});
+
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('mutation de formulário não mostra toast para os erros que o formulário exibe', async () => {
+    const client = createQueryClient({ onUnauthorized });
+    const mutation = client.getMutationCache().build(client, {
+      mutationFn: () => Promise.reject(erro(409)),
+      meta: META_FORMULARIO,
     });
 
     await mutation.execute(undefined).catch(() => {});

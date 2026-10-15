@@ -72,6 +72,19 @@ describe('tratarErroApi', () => {
     expect(toast.error).toHaveBeenCalledWith(ERRO_INESPERADO_API);
   });
 
+  it('erro do formulário: só 401 e 403 são tratados aqui', () => {
+    const contexto = { erroNoFormulario: true };
+    for (const erro of [erroApi(409), erroApi(500), new Error('x')]) {
+      tratarErroApi(erro, { onUnauthorized }, contexto);
+    }
+    expect(toast.error).not.toHaveBeenCalled();
+
+    tratarErroApi(erroApi(403), { onUnauthorized }, contexto);
+    tratarErroApi(erroApi(401), { onUnauthorized }, contexto);
+    expect(toast.error).toHaveBeenCalledWith(MENSAGEM_SEM_PERMISSAO);
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
+
   it('ignora cancelamentos', () => {
     tratarErroApi(new DOMException('cancelado', 'AbortError'), { onUnauthorized });
 

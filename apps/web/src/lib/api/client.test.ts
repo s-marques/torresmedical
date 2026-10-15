@@ -1,7 +1,7 @@
 import { healthResponseSchema } from '@torres/shared';
 import { describe, expect, it, vi } from 'vitest';
 import { ApiRequestError, ERRO_CONEXAO, ERRO_INESPERADO_API, erroDaResposta } from './api-error';
-import { apiFetch } from './client';
+import { apiFetch, apiFetchArquivo, nomeDoArquivo } from './client';
 
 function json(corpo: unknown, status = 200): Response {
   return new Response(JSON.stringify(corpo), {
@@ -125,5 +125,44 @@ describe('erroDaResposta', () => {
     const erro = erroDaResposta(500, { qualquer: 1 }, 'Falhou');
 
     expect(erro).toMatchObject({ status: 500, body: null, message: 'Falhou' });
+  });
+});
+
+describe('apiFetchArquivo', () => {
+  it('baixa o arquivo com o nome do Content-Disposition', async () => {
+    const fetchMock = mockFetch(
+      new Response('conteudo', {
+        headers: {
+          'Content-Disposition': `attachment; filename="unidades.xlsx"; filename*=UTF-8''unidades%20%C3%BAteis.xlsx`,
+        },
+      }),
+    );
+
+    const arquivo = await apiFetchArquivo('/api/x/export', { query: { format: 'xlsx' } });
+
+    expect(arquivo.nome).toBe('unidades úteis.xlsx');
+    expect(await arquivo.blob.text()).toBe('conteudo');
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/x/export?format=xlsx',
+      expect.objectContaining({ headers: { Accept: '*/*' } }),
+    );
+  });
+
+  it('usa o nome padrão sem Content-Disposition e rejeita com o erro da API', async () => {
+    mockFetch(new Response('x'), json(ERRO_400, 400));
+
+    expect((await apiFetchArquivo('/api/x', { nomePadrao: 'padrao.pdf' })).nome).toBe('padrao.pdf');
+    await expect(apiFetchArquivo('/api/x')).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe('nomeDoArquivo', () => {
+  it.each([
+    [null, null],
+    ['attachment; filename="a.pdf"', 'a.pdf'],
+    [`attachment; filename=b.pdf; filename*=UTF-8''%E0%A4%A`, 'b.pdf'],
+    ['attachment', null],
+  ])('%s → %s', (disposition, nome) => {
+    expect(nomeDoArquivo(disposition)).toBe(nome);
   });
 });

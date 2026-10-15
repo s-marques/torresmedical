@@ -12,7 +12,12 @@ declare module '@tanstack/react-query' {
 interface QueryMeta extends Record<string, unknown> {
   /** `false` desliga o tratamento global (toast/redirecionamento) para esta query ou mutation. */
   tratarErro?: boolean;
+  /** A mutation alimenta um `FormLayout`: o erro aparece no formulário, sem toast (só 401/403 globais). */
+  erroNoFormulario?: boolean;
 }
+
+/** `meta` das mutations que enviam um `FormLayout`: `useMutation({ mutationFn, meta: META_FORMULARIO })`. */
+export const META_FORMULARIO = { erroNoFormulario: true } as const satisfies QueryMeta;
 
 const MAX_TENTATIVAS = 2;
 
@@ -32,7 +37,8 @@ export function createQueryClient(options: TratarErroOptions): QueryClient {
     }),
     mutationCache: new MutationCache({
       onError: (error, _variables, _context, mutation) => {
-        if (mutation.meta?.tratarErro !== false) tratarErroApi(error, options);
+        if (mutation.meta?.tratarErro === false) return;
+        tratarErroApi(error, options, { erroNoFormulario: mutation.meta?.erroNoFormulario });
       },
     }),
     defaultOptions: {

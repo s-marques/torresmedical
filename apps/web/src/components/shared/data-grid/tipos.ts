@@ -1,0 +1,102 @@
+import type { PaginationMeta, Permissao } from '@torres/shared';
+import type { LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
+import type { ValidadorResposta } from '@/lib/api/client';
+
+/** Coluna do `DataGrid`. Defina o array fora do componente (ou com `useMemo`). */
+export interface ColunaGrid<T> {
+  /** Identificador da coluna; por padrão também é o campo lido da linha. */
+  id: string;
+  /** Texto do cabeçalho e do menu "Colunas". */
+  titulo: string;
+  /** Conteúdo da célula. Padrão: `linha[id]`, com "-" quando vazio. */
+  celula?: (linha: T) => ReactNode;
+  /** Campo do `sort=campo:asc` (whitelist do schema da listagem). `true` usa o `id`. */
+  ordenavel?: boolean | string;
+  /** Chave da coluna no `columns=` da exportação. `true` usa o `id`. Padrão: não exporta. */
+  exportavel?: boolean | string;
+  /** Pode ser ocultada no menu "Colunas". Padrão: `true`. */
+  ocultavel?: boolean;
+  /** Começa oculta. */
+  oculta?: boolean;
+  className?: string;
+}
+
+export interface OpcaoFiltro {
+  valor: string;
+  rotulo: string;
+}
+
+/** Chips de status (Todos/Ativo/Inativo…). "Todos" é sempre o primeiro e omite o parâmetro. */
+export interface FiltroStatus {
+  /** Parâmetro da query string. Padrão: `status`. */
+  parametro?: string;
+  opcoes: readonly OpcaoFiltro[];
+}
+
+/** Filtros extras: select (com "Todos") e período De/Até (date inputs). */
+export type FiltroGrid =
+  | { tipo: 'select'; parametro: string; rotulo: string; opcoes: readonly OpcaoFiltro[] }
+  | { tipo: 'periodo'; rotulo: string; parametroDe: string; parametroAte: string };
+
+/** Ação do menu "⋯" de cada linha. Ações destrutivas devem abrir um `ConfirmDialog`. */
+export interface AcaoLinha {
+  rotulo: string;
+  onSelect: () => void;
+  icone?: LucideIcon;
+  /** Aparece em vermelho. */
+  destrutiva?: boolean;
+  /** Só aparece com a permissão. */
+  permissao?: Permissao;
+}
+
+export interface ExportacaoGrid {
+  /** Ex.: `configuracoes-gestao.minha-empresa.exportar`. Sem ela, o botão não aparece. */
+  permissao: Permissao;
+  /** Padrão: `<url da listagem>/export`. */
+  url?: string;
+  /** Nome usado se a API não mandar `Content-Disposition`. Padrão: `exportacao`. */
+  nomeArquivo?: string;
+  /** Valida a query antes de enviar, ex.: `exportUnidadesQuerySchema` (`exportQuerySchema`). */
+  schema?: ValidadorConsulta;
+}
+
+/** O que o grid usa de um schema Zod de query (`listQuerySchema`/`exportQuerySchema`). */
+export interface ValidadorConsulta {
+  safeParse(
+    dados: unknown,
+  ): { success: true } | { success: false; error: { issues: readonly IssueConsulta[] } };
+}
+
+interface IssueConsulta {
+  path: readonly PropertyKey[];
+  message: string;
+}
+
+export type RespostaPaginada<T> = { data: T[]; meta: PaginationMeta };
+
+export interface DataGridProps<T> {
+  /** Listagem no contrato padrão, ex.: `/api/configuracoes-gestao/unidades`. */
+  url: string;
+  /** Schema da resposta, ex.: `unidadePageSchema` (`paginatedResponseSchema(item)`). */
+  schema: ValidadorResposta<RespostaPaginada<T>>;
+  /**
+   * Schema da query da listagem (`listQuerySchema`), ex.: `listUnidadesQuerySchema`. Parâmetros
+   * inválidos na URL (ordenação ou filtro fora da whitelist) são descartados antes da chamada.
+   */
+  querySchema?: ValidadorConsulta;
+  colunas: readonly ColunaGrid<T>[];
+  /** Id da linha. Padrão: `linha.id`. */
+  idLinha?: (linha: T) => string;
+  /** Placeholder da busca textual, ex.: "Buscar usuarios...". `false` esconde a busca. */
+  busca?: string | false;
+  status?: FiltroStatus;
+  filtros?: readonly FiltroGrid[];
+  exportacao?: ExportacaoGrid;
+  /** Ações do menu "⋯" de cada linha. */
+  acoes?: (linha: T) => AcaoLinha[];
+  /** Estado vazio, ex.: "Nenhum veiculo encontrado.". Padrão: "Nenhum resultado.". */
+  mensagemVazio?: string;
+  /** Opções de "Linhas por página". A primeira é o padrão. */
+  tamanhosPagina?: readonly number[];
+}
