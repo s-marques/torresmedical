@@ -13,6 +13,41 @@ pedido de uma issue, pare e pergunte ao dev.
 
 ---
 
+## Dúvidas e validação com o dev (vale para todas as seções)
+
+Se houver dúvida, ambiguidade, informação insuficiente ou mais de um jeito de implementar,
+**consulte o dev antes de tomar uma decisão que impacte o sistema.**
+
+**Antes de perguntar,** analise o que já existe: o inventário da tela
+(`docs/inventario/telas/`), os prints (`docs/inventario/img/`), a issue e os comentários do card,
+a documentação e o código existente.
+
+**Como perguntar:**
+- Seja específico. Diga em que tela ou parte está a dúvida, o que foi encontrado e o que falta.
+  Nada de perguntas genéricas.
+- Separe com clareza:
+  - **Identificado nas fontes:** o que está no inventário, no print, no comentário ou no código.
+    Cite a fonte.
+  - **Inferência da IA:** o que parece provável, mas não está documentado.
+  - **Precisa de confirmação:** a pergunta em si.
+- Sempre que possível, traga as **principais alternativas**, cada uma com uma explicação curta.
+  Indique qual recomenda e por quê, com base nas evidências.
+
+**Regras:**
+- **Não invente** requisitos, regras de negócio ou comportamentos que não estejam documentados
+  ou confirmados.
+- Não assuma que uma implementação está certa só porque parece a mais provável.
+- Fundamente as sugestões no inventário, nos prints, na documentação e no código.
+- **Espere a confirmação do dev** quando a dúvida afetar arquitetura, regra de negócio,
+  experiência do usuário ou comportamento funcional. As outras partes da tarefa podem seguir
+  enquanto isso.
+- **Siga sem perguntar** em decisões técnicas simples, reversíveis e de baixo impacto (nomes
+  internos, organização de arquivos, detalhes de implementação que não mudam o comportamento).
+  Use as boas práticas e os padrões deste arquivo.
+- Registre na descrição do PR as decisões tomadas e quem confirmou cada uma.
+
+---
+
 ## 1. Stack
 
 | Camada | Tecnologia |
@@ -299,9 +334,10 @@ Antes de mover o card para **"Em revisão"**:
    paginação) e abas descritos.
    - O inventário foi gerado automaticamente e só em modo leitura. Modais e formulários de
      "Novo…/Editar" não foram abertos.
-   - Quando faltar um detalhe, por exemplo os campos de um formulário de criação, deduza pela
-     coluna do grid e pela tela de detalhe. **Pergunte ao dev em caso de dúvida.**
-   - Registre na descrição do PR o que foi deduzido.
+   - Quando faltar um detalhe, por exemplo os campos de um formulário de criação, levante o que
+     as colunas do grid e a tela de detalhe indicam e **leve isso ao dev como sugestão**, seguindo
+     a seção "Dúvidas e validação com o dev". Não implemente o que foi deduzido sem confirmação.
+   - Registre na descrição do PR o que foi confirmado e por quem.
 5. Siga a ordem:
    1. Schema Zod em `packages/shared`
    2. Model e migration Prisma
