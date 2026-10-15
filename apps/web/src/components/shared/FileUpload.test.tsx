@@ -2,11 +2,8 @@ import type { Arquivo } from '@torres/shared';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  ApiRequestError,
-  uploadArquivo,
-  type UploadArquivoOptions,
-} from '../../lib/api/upload-arquivo';
+import { ApiRequestError } from '../../lib/api/api-error';
+import { uploadArquivo, type UploadArquivoOptions } from '../../lib/api/upload-arquivo';
 import { FileUpload } from './FileUpload';
 
 vi.mock('../../lib/api/upload-arquivo', async (importOriginal) => ({
@@ -98,15 +95,15 @@ describe('FileUpload', () => {
     const zona = screen.getByTestId('file-upload-zona');
 
     fireEvent.dragOver(zona);
-    expect(zona.parentElement).toHaveClass('file-upload--arrastando');
+    expect(zona.parentElement).toHaveAttribute('data-arrastando', 'true');
     fireEvent.dragLeave(zona);
-    expect(zona.parentElement).not.toHaveClass('file-upload--arrastando');
+    expect(zona.parentElement).not.toHaveAttribute('data-arrastando', 'true');
     fireEvent.dragOver(zona);
     await act(async () => {
       fireEvent.drop(zona, { dataTransfer: { files: [png()] } });
     });
 
-    expect(zona.parentElement).not.toHaveClass('file-upload--arrastando');
+    expect(zona.parentElement).not.toHaveAttribute('data-arrastando', 'true');
     expect(onUploaded).toHaveBeenCalledWith(ARQUIVO);
   });
 

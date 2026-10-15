@@ -1,0 +1,149 @@
+import { encontrarTelaPorRota, filtrarMenu, MENU, type ModuloId } from '@torres/shared';
+import { ChevronRight, LogOut } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Link, useLocation } from 'react-router';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+  useSidebar,
+} from '@/components/ui/sidebar';
+import { ICONES_TELA } from './menu-icones';
+import { USUARIO_PROVISORIO } from './usuario-provisorio';
+
+export interface AppSidebarProps {
+  /**
+   * Permissões do usuário. Sem lista, o menu mostra todas as telas: a filtragem real por
+   * perfil entra com a autenticação (#79).
+   */
+  permissoes?: readonly string[];
+}
+
+/**
+ * Menu lateral na ordem do inventário. Acordeão: um módulo aberto por vez, que acompanha a
+ * rota atual. Recolhível no desktop e em drawer no mobile.
+ */
+export function AppSidebar({ permissoes }: Readonly<AppSidebarProps>) {
+  const { pathname } = useLocation();
+  const { isMobile, setOpenMobile } = useSidebar();
+  const menu = useMemo(() => filtrarMenu(MENU, permissoes), [permissoes]);
+
+  const moduloDaRota = encontrarTelaPorRota(pathname)?.modulo ?? null;
+  const [aberto, setAberto] = useState<ModuloId | null>(moduloDaRota);
+  const [moduloAnterior, setModuloAnterior] = useState(moduloDaRota);
+  // Ao navegar para outro módulo, ele abre e os demais fecham.
+  if (moduloDaRota !== moduloAnterior) {
+    setModuloAnterior(moduloDaRota);
+    if (moduloDaRota) setAberto(moduloDaRota);
+  }
+
+  const nomeDoModuloAtual = MENU.find((modulo) => modulo.id === moduloDaRota)?.nome;
+
+  return (
+    <Sidebar aria-label="Menu principal">
+      <SidebarHeader className="border-b border-sidebar-border">
+        <Link to="/" className="flex items-center gap-2 rounded-md p-2">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">
+            TM
+          </span>
+          <span className="grid leading-tight">
+            <span className="text-sm font-semibold uppercase">Torres Medical</span>
+            <span className="text-xs text-sidebar-foreground/60 uppercase">
+              {nomeDoModuloAtual ?? 'Gestão'}
+            </span>
+          </span>
+        </Link>
+      </SidebarHeader>
+
+      <SidebarContent className="gap-0 py-2">
+        {menu.map((modulo) => (
+          <Collapsible
+            key={modulo.id}
+            open={aberto === modulo.id}
+            onOpenChange={(abrir) => setAberto(abrir ? modulo.id : null)}
+            className="group/modulo"
+          >
+            <SidebarGroup className="py-0">
+              <SidebarGroupLabel
+                asChild
+                className="h-9 text-[0.7rem] font-bold tracking-wider text-sidebar-foreground uppercase hover:bg-sidebar-accent"
+              >
+                <CollapsibleTrigger>
+                  {modulo.nome}
+                  <ChevronRight
+                    aria-hidden
+                    className="ml-auto transition-transform group-data-[state=open]/modulo:rotate-90"
+                  />
+                </CollapsibleTrigger>
+              </SidebarGroupLabel>
+              <CollapsibleContent>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {modulo.telas.map((tela) => {
+                      const Icone = ICONES_TELA[tela.id];
+                      const ativa = pathname === tela.rota;
+                      return (
+                        <SidebarMenuItem key={tela.id}>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={ativa}
+                            className="data-[active=true]:text-sidebar-primary"
+                          >
+                            <Link
+                              to={tela.rota}
+                              aria-current={ativa ? 'page' : undefined}
+                              onClick={() => {
+                                if (isMobile) setOpenMobile(false);
+                              }}
+                            >
+                              <Icone aria-hidden />
+                              <span>{tela.nome}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </CollapsibleContent>
+            </SidebarGroup>
+          </Collapsible>
+        ))}
+      </SidebarContent>
+
+      <SidebarFooter className="border-t border-sidebar-border">
+        <div className="flex items-center gap-2 p-1">
+          <Avatar className="size-8">
+            <AvatarFallback className="bg-sidebar-primary text-xs text-sidebar-primary-foreground">
+              {USUARIO_PROVISORIO.iniciais}
+            </AvatarFallback>
+          </Avatar>
+          <span className="grid min-w-0 flex-1 leading-tight">
+            <span className="truncate text-sm font-medium">{USUARIO_PROVISORIO.nome}</span>
+            <span className="truncate text-xs text-sidebar-foreground/60">
+              {USUARIO_PROVISORIO.perfil}
+            </span>
+          </span>
+          <Link
+            to="/login"
+            aria-label="Sair"
+            className="rounded-md p-2 text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          >
+            <LogOut className="size-4" aria-hidden />
+          </Link>
+        </div>
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
+  );
+}

@@ -1,11 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  ApiRequestError,
-  ERRO_CONEXAO,
-  ERRO_INESPERADO,
-  mensagemDoErroDeUpload,
-  uploadArquivo,
-} from './upload-arquivo';
+import { ApiRequestError, ERRO_CONEXAO } from './api-error';
+import { ERRO_INESPERADO, mensagemDoErroDeUpload, uploadArquivo } from './upload-arquivo';
 
 const ARQUIVO = {
   id: '0b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f',

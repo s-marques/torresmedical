@@ -104,6 +104,24 @@ docker compose exec api sh -c 'DATABASE_URL=$DATABASE_URL_TEST pnpm --filter @to
 docker compose exec api pnpm test
 ```
 
+## Front-end (`apps/web`)
+
+- **Menu e rotas:** definidos em `packages/shared/src/menu/menu.ts` (ordem e nomes de
+  `docs/inventario/README.md`). Cada URL abre o placeholder "Em construção" até a tela ser
+  registrada em `apps/web/src/app/paginas.ts`.
+- **Cliente HTTP:** `apiFetch` (`src/lib/api/client.ts`), com o tratamento de erros
+  centralizado no QueryClient (`src/lib/api/query-client.ts`).
+- **Primitivos shadcn/ui:** em `src/components/ui`, gerados pelo CLI e fora da análise do Sonar.
+  Para adicionar um primitivo:
+
+  ```bash
+  cd apps/web && npx shadcn@4.21.0 add <componente>
+  ```
+
+  Depois, confira o `package.json`. O CLI pode adicionar dependências sem versão exata ou
+  pacotes indevidos, como `cn` e `next-themes` (o tema vem de `@/lib/theme`). Também pode
+  gerar `import { cn } from "cn"`, que deve ser trocado por `@/lib/utils`.
+
 ## Scripts (na raiz)
 
 ```bash
