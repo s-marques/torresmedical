@@ -9,10 +9,9 @@ import { AuditFixtureModule } from './fixtures/audit-fixture.module';
 import { createE2eApp } from './utils/create-e2e-app';
 import { truncateAll } from './utils/database';
 import { expectAudit, expectNoAudit } from './utils/expect-audit';
-import { TEST_USER_HEADER } from './utils/test-user.guard';
+import { comUsuario, criarUsuarioTeste, type UsuarioTeste } from './utils/auth';
 
 const BASE = '/api/test-fixtures/empresas';
-const USER_ID = 'b1f0c1d2-0000-4000-8000-000000000001';
 
 function novaEmpresa() {
   return { nome: faker.company.name(), documento: faker.string.numeric(14) };
@@ -21,6 +20,7 @@ function novaEmpresa() {
 describe('Auditoria (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let usuario: UsuarioTeste;
 
   beforeAll(async () => {
     app = await createE2eApp({ imports: [AuditFixtureModule] });
@@ -29,18 +29,22 @@ describe('Auditoria (e2e)', () => {
 
   beforeEach(async () => {
     await truncateAll(prisma);
+    usuario = await criarUsuarioTeste(app, { permissoes: ['configuracoes-gestao.auditoria.ver'] });
+    // Os registros acima não são auditados, mas a limpeza deixa o audit_log vazio.
+    await truncateAuditOnly();
   });
 
   afterAll(async () => {
     await app.close();
   });
 
+  /** Cliente com o token do usuário de teste. */
   function http() {
-    return request(app.getHttpServer());
+    return comUsuario(app, usuario);
   }
 
   async function criar(body = novaEmpresa()) {
-    const res = await http().post(BASE).set(TEST_USER_HEADER, USER_ID).send(body).expect(201);
+    const res = await http().post(BASE).send(body).expect(201);
     return res.body as { id: string; nome: string; documento: string };
   }
 
@@ -49,7 +53,7 @@ describe('Auditoria (e2e)', () => {
       const body = novaEmpresa();
       const res = await http()
         .post(BASE)
-        .set(TEST_USER_HEADER, USER_ID)
+
         .set(REQUEST_ID_HEADER, 'req-create')
         .send(body)
         .expect(201);
@@ -60,7 +64,7 @@ describe('Auditoria (e2e)', () => {
         entityId: res.body.id,
         before: null,
         after: { id: res.body.id, ...body, deletedAt: null },
-        userId: USER_ID,
+        userId: usuario.id,
         requestId: 'req-create',
       });
       expect(registro.ip).toEqual(expect.any(String));
@@ -72,7 +76,7 @@ describe('Auditoria (e2e)', () => {
 
       await http()
         .patch(`${BASE}/${empresa.id}`)
-        .set(TEST_USER_HEADER, USER_ID)
+
         .send({ nome: 'Nome Alterado' })
         .expect(200);
 
@@ -82,14 +86,14 @@ describe('Auditoria (e2e)', () => {
         entityId: empresa.id,
         before: { id: empresa.id, nome: empresa.nome },
         after: { id: empresa.id, nome: 'Nome Alterado' },
-        userId: USER_ID,
+        userId: usuario.id,
       });
     });
 
     it('DELETE grava before e after nulo', async () => {
       const empresa = await criar();
 
-      await http().delete(`${BASE}/${empresa.id}`).set(TEST_USER_HEADER, USER_ID).expect(200);
+      await http().delete(`${BASE}/${empresa.id}`).expect(200);
 
       await expectAudit(prisma, {
         action: 'DELETE',
@@ -100,8 +104,11 @@ describe('Auditoria (e2e)', () => {
       });
     });
 
-    it('grava "anonymous" quando a requisição não tem usuário', async () => {
-      const res = await http().post(BASE).send(novaEmpresa()).expect(201);
+    it('grava "anonymous" na rota pública, sem usuário', async () => {
+      const res = await request(app.getHttpServer())
+        .post(`${BASE}/publico`)
+        .send(novaEmpresa())
+        .expect(201);
 
       await expectAudit(prisma, {
         action: 'CREATE',
@@ -230,7 +237,7 @@ describe('Auditoria (e2e)', () => {
 
       const porAcao = await http()
         .get('/api/auditoria')
-        .query({ action: 'UPDATE', userId: 'anonymous' })
+        .query({ action: 'UPDATE', userId: usuario.id })
         .expect(200);
       expect(porAcao.body.data).toHaveLength(1);
       expect(porAcao.body.data[0].entityId).toBe(empresa.id);
@@ -238,6 +245,19 @@ describe('Auditoria (e2e)', () => {
       const futuro = new Date(Date.now() + 60_000).toISOString();
       const porPeriodo = await http().get('/api/auditoria').query({ de: futuro }).expect(200);
       expect(porPeriodo.body.meta.total).toBe(0);
+    });
+
+    it('sem token responde 401 e sem a permissão responde 403', async () => {
+      await request(app.getHttpServer()).get('/api/auditoria').expect(401);
+      const semPermissao = await criarUsuarioTeste(app, { permissoes: ['financeiro.caixas.ver'] });
+
+      const res = await comUsuario(app, semPermissao).get('/api/auditoria').expect(403);
+
+      expect(res.body).toMatchObject({
+        statusCode: 403,
+        code: 'FORBIDDEN',
+        message: 'Sem permissão',
+      });
     });
 
     it('filtro inválido retorna 400 com details por campo', async () => {

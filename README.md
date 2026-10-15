@@ -122,6 +122,26 @@ docker compose exec api pnpm test
   pacotes indevidos, como `cn` e `next-themes` (o tema vem de `@/lib/theme`). Também pode
   gerar `import { cn } from "cn"`, que deve ser trocado por `@/lib/utils`.
 
+## Autenticação e permissões
+
+- **Entrar no ambiente local:** `docker compose exec api pnpm --filter @torres/api db:seed` cria o
+  perfil **Administrador** (todo o catálogo de permissões) e o usuário `admin@example.com`, com a
+  senha de `SEED_ADMIN_PASSWORD` no `.env`. Rode o seed de novo depois de adicionar telas ou ações
+  ao catálogo.
+- **API:** todo endpoint é protegido pelo guard global e precisa declarar o acesso, ou o guard
+  responde 403 (o teste `test/auth/acesso-rotas.e2e-spec.ts` aponta qual esqueceu):
+  - `@RequirePermission('<modulo>.<recurso>.<acao>')`, o padrão das telas;
+  - `@SomenteAutenticado()`, para infraestrutura usada por várias telas (ex.: arquivos);
+  - `@Public()`, para rotas sem login (health, login).
+- **Catálogo:** `packages/shared/src/auth/permissoes.ts` (cada tela × `ver`, `criar`, `editar`,
+  `excluir`, `exportar`).
+- **e2e:** `criarUsuarioTeste(app, { permissoes })` e `comUsuario(app, usuario)`
+  (`apps/api/test/utils/auth.ts`) criam um usuário com token real.
+- **Front:** o menu e o ⌘K mostram só as telas com `<tela>.ver`. Para esconder botões, use
+  `usePermissao('...')` ou `<SePermitido permissao="...">`.
+- **Sessão:** o access token (15 min) fica só em memória. O refresh token vai em cookie
+  httpOnly e muda a cada uso. Em HTTP sem TLS, use `AUTH_COOKIE_SECURE=false`.
+
 ## Scripts (na raiz)
 
 ```bash

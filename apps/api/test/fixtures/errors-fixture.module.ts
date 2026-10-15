@@ -1,7 +1,9 @@
 import { Controller, Get, Module } from '@nestjs/common';
+import { Public } from '../../src/common/auth/auth.decorators';
 import { PrismaService } from '../../src/common/prisma/prisma.service';
 
 /** Rotas que falham de propósito, para testar o filtro global de exceções. */
+@Public()
 @Controller('test-fixtures/erros')
 class ErrorsFixtureController {
   constructor(private readonly prisma: PrismaService) {}

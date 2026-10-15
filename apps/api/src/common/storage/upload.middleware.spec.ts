@@ -31,11 +31,23 @@ describe('toUploadError', () => {
 });
 
 describe('UploadMiddleware', () => {
-  function run(req: Partial<Request>): unknown {
+  function run(req: Partial<Request>, authorization: string | null = 'Bearer token'): unknown {
     const next = jest.fn() as jest.MockedFunction<NextFunction>;
-    new UploadMiddleware().use(req as Request, {} as Response, next);
+    new UploadMiddleware().use(
+      { headers: { authorization: authorization ?? undefined }, ...req } as Request,
+      {} as Response,
+      next,
+    );
+    expect(next).toHaveBeenCalledTimes(1);
     return next.mock.calls[0]?.[0];
   }
+
+  it('sem Bearer não lê o corpo: o guard responde 401', () => {
+    const is = jest.fn();
+
+    expect(run({ query: { uso: 'x' }, is }, null)).toBeUndefined();
+    expect(is).not.toHaveBeenCalled();
+  });
 
   it('400 para uso ausente ou inválido, antes de ler o corpo', () => {
     const error = run({ query: { uso: 'x' }, is: jest.fn() });

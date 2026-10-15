@@ -24,6 +24,7 @@ import {
 } from '@torres/shared';
 import type { Unidade } from '../../../generated/prisma/client';
 import { Audit } from '../../../common/audit/audit.decorator';
+import { RequirePermission } from '../../../common/auth/auth.decorators';
 import { toStreamableFile } from '../../../common/export/export-response';
 import type { Page } from '../../../common/pagination/paginate';
 import {
@@ -38,17 +39,21 @@ import { UnidadesService } from './unidades.service';
 
 const ENTITY = 'Unidade';
 
-/** Recurso de referência do padrão de API. A permissão por ação entra com a Autenticação. */
+/**
+ * Recurso de referência do padrão de API. As unidades fazem parte da tela Minha Empresa,
+ * por isso usam as permissões `configuracoes-gestao.minha-empresa.<acao>`.
+ */
 @ApiTags('Configurações / Gestão: Unidades')
 @Controller('configuracoes-gestao/unidades')
 export class UnidadesController {
   constructor(private readonly unidades: UnidadesService) {}
 
   @Get()
+  @RequirePermission('configuracoes-gestao.minha-empresa.ver')
   @ApiOperation({ summary: 'Lista paginada, com busca, filtros e ordenação' })
   @ApiZodQuery(listUnidadesQuerySchema)
   @ApiZodResponse(200, unidadePageSchema)
-  @ApiErrorResponses(400)
+  @ApiErrorResponses(400, 401, 403)
   list(
     @Query(new ZodValidationPipe(listUnidadesQuerySchema)) query: ListUnidadesQuery,
   ): Promise<Page<Unidade>> {
@@ -57,6 +62,7 @@ export class UnidadesController {
 
   // Antes de ":id" para "export" não ser tratado como id.
   @Get('export')
+  @RequirePermission('configuracoes-gestao.minha-empresa.exportar')
   @Audit({ entity: ENTITY, action: 'EXPORT' })
   @ApiOperation({
     summary: 'Exporta em Excel ou PDF com os mesmos filtros e ordenação da listagem',
@@ -66,7 +72,7 @@ export class UnidadesController {
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'application/pdf',
   )
-  @ApiErrorResponses(400, 422)
+  @ApiErrorResponses(400, 401, 403, 422)
   async export(
     @Query(new ZodValidationPipe(exportUnidadesQuerySchema)) query: ExportUnidadesQuery,
   ): Promise<StreamableFile> {
@@ -74,19 +80,21 @@ export class UnidadesController {
   }
 
   @Get(':id')
+  @RequirePermission('configuracoes-gestao.minha-empresa.ver')
   @ApiOperation({ summary: 'Detalhe' })
   @ApiZodResponse(200, unidadeSchema)
-  @ApiErrorResponses(400, 404)
+  @ApiErrorResponses(400, 401, 403, 404)
   findById(@IdParam() id: string): Promise<Unidade> {
     return this.unidades.findById(id);
   }
 
   @Post()
+  @RequirePermission('configuracoes-gestao.minha-empresa.criar')
   @Audit({ entity: ENTITY })
   @ApiOperation({ summary: 'Cria' })
   @ApiZodBody(createUnidadeSchema)
   @ApiZodResponse(201, unidadeSchema)
-  @ApiErrorResponses(400, 409, 422)
+  @ApiErrorResponses(400, 401, 403, 409, 422)
   create(
     @Body(new ZodValidationPipe(createUnidadeSchema)) body: CreateUnidadeInput,
   ): Promise<Unidade> {
@@ -94,11 +102,12 @@ export class UnidadesController {
   }
 
   @Patch(':id')
+  @RequirePermission('configuracoes-gestao.minha-empresa.editar')
   @Audit({ entity: ENTITY })
   @ApiOperation({ summary: 'Altera' })
   @ApiZodBody(updateUnidadeSchema)
   @ApiZodResponse(200, unidadeSchema)
-  @ApiErrorResponses(400, 404, 409)
+  @ApiErrorResponses(400, 401, 403, 404, 409)
   update(
     @IdParam() id: string,
     @Body(new ZodValidationPipe(updateUnidadeSchema)) body: UpdateUnidadeInput,
@@ -107,11 +116,12 @@ export class UnidadesController {
   }
 
   @Delete(':id')
+  @RequirePermission('configuracoes-gestao.minha-empresa.excluir')
   @HttpCode(200)
   @Audit({ entity: ENTITY })
   @ApiOperation({ summary: 'Exclui (exclusão lógica)' })
   @ApiZodResponse(200, unidadeSchema)
-  @ApiErrorResponses(400, 404)
+  @ApiErrorResponses(400, 401, 403, 404)
   remove(@IdParam() id: string): Promise<Unidade> {
     return this.unidades.remove(id);
   }

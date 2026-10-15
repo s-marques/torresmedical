@@ -8,16 +8,23 @@ import { PrismaService } from '../../src/common/prisma/prisma.service';
 import { createE2eApp } from '../utils/create-e2e-app';
 import { truncateAll } from '../utils/database';
 import { expectAudit, expectNoAudit } from '../utils/expect-audit';
-import { TEST_USER_HEADER } from '../utils/test-user.guard';
+import { comUsuario, criarUsuarioTeste, type UsuarioTeste } from '../utils/auth';
 
 const BASE = '/api/configuracoes-gestao/unidades';
-const USER_ID = 'u-unidades';
+const PERMISSOES = [
+  'configuracoes-gestao.minha-empresa.ver',
+  'configuracoes-gestao.minha-empresa.criar',
+  'configuracoes-gestao.minha-empresa.editar',
+  'configuracoes-gestao.minha-empresa.excluir',
+  'configuracoes-gestao.minha-empresa.exportar',
+] as const;
 const INEXISTENTE = '00000000-0000-4000-8000-000000000000';
 
 describe('Unidades: padrão de API (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let empresaId: string;
+  let usuario: UsuarioTeste;
 
   beforeAll(async () => {
     app = await createE2eApp();
@@ -30,14 +37,16 @@ describe('Unidades: padrão de API (e2e)', () => {
       data: { nome: faker.company.name(), documento: faker.string.numeric(14) },
     });
     empresaId = empresa.id;
+    usuario = await criarUsuarioTeste(app, { permissoes: PERMISSOES, empresaId });
   });
 
   afterAll(async () => {
     await app.close();
   });
 
+  /** Cliente com o token do usuário de teste (todas as permissões de Minha Empresa). */
   function http() {
-    return request(app.getHttpServer());
+    return comUsuario(app, usuario);
   }
 
   function criarNoBanco(
@@ -146,7 +155,7 @@ describe('Unidades: padrão de API (e2e)', () => {
     it('201 e audita CREATE com o usuário', async () => {
       const res = await http()
         .post(BASE)
-        .set(TEST_USER_HEADER, USER_ID)
+
         .send({ empresaId, nome: '  Matriz  ' })
         .expect(201);
 
@@ -161,7 +170,7 @@ describe('Unidades: padrão de API (e2e)', () => {
         entityId: res.body.id,
         before: null,
         after: { id: res.body.id, nome: 'Matriz', ativo: true, empresaId },
-        userId: USER_ID,
+        userId: usuario.id,
       });
     });
 
@@ -230,7 +239,7 @@ describe('Unidades: padrão de API (e2e)', () => {
 
       const res = await http()
         .patch(`${BASE}/${unidade.id}`)
-        .set(TEST_USER_HEADER, USER_ID)
+
         .send({ nome: 'Centro Novo', ativo: false })
         .expect(200);
 
@@ -241,7 +250,7 @@ describe('Unidades: padrão de API (e2e)', () => {
         entityId: unidade.id,
         before: { nome: 'Centro', ativo: true },
         after: { nome: 'Centro Novo', ativo: false },
-        userId: USER_ID,
+        userId: usuario.id,
       });
     });
 
@@ -283,7 +292,7 @@ describe('Unidades: padrão de API (e2e)', () => {
     it('exclusão lógica: 200, audita DELETE e some da listagem', async () => {
       const unidade = await criarNoBanco('Centro');
 
-      await http().delete(`${BASE}/${unidade.id}`).set(TEST_USER_HEADER, USER_ID).expect(200);
+      await http().delete(`${BASE}/${unidade.id}`).expect(200);
 
       await expectAudit(prisma, {
         action: 'DELETE',
@@ -291,7 +300,7 @@ describe('Unidades: padrão de API (e2e)', () => {
         entityId: unidade.id,
         before: { nome: 'Centro', deletedAt: null },
         after: null,
-        userId: USER_ID,
+        userId: usuario.id,
       });
       expect(
         (await prisma.unidade.findUniqueOrThrow({ where: { id: unidade.id } })).deletedAt,
@@ -337,7 +346,7 @@ describe('Unidades: padrão de API (e2e)', () => {
       const res = await binary(
         http()
           .get(`${BASE}/export`)
-          .set(TEST_USER_HEADER, USER_ID)
+
           .query({ format: 'xlsx', status: 'ativo', sort: 'nome:desc', columns: 'nome,status' }),
       ).expect(200);
 
@@ -359,7 +368,7 @@ describe('Unidades: padrão de API (e2e)', () => {
         after: {
           filtros: { format: 'xlsx', status: 'ativo', sort: 'nome:desc', columns: 'nome,status' },
         },
-        userId: USER_ID,
+        userId: usuario.id,
       });
     });
 
@@ -386,5 +395,35 @@ describe('Unidades: padrão de API (e2e)', () => {
       ]);
       await expectNoAudit(prisma, { entity: 'Unidade', action: 'EXPORT' });
     });
+  });
+
+  describe('acesso', () => {
+    const ROTAS = [
+      { metodo: 'get', caminho: BASE, permissao: 'ver' },
+      { metodo: 'get', caminho: `${BASE}/export?formato=xlsx`, permissao: 'exportar' },
+      { metodo: 'get', caminho: `${BASE}/${INEXISTENTE}`, permissao: 'ver' },
+      { metodo: 'post', caminho: BASE, permissao: 'criar' },
+      { metodo: 'patch', caminho: `${BASE}/${INEXISTENTE}`, permissao: 'editar' },
+      { metodo: 'delete', caminho: `${BASE}/${INEXISTENTE}`, permissao: 'excluir' },
+    ] as const;
+
+    it.each(ROTAS)('$metodo $caminho sem token responde 401', async ({ metodo, caminho }) => {
+      const res = await request(app.getHttpServer())[metodo](caminho).send({}).expect(401);
+
+      expect(res.body).toMatchObject({ statusCode: 401, code: 'UNAUTHORIZED' });
+    });
+
+    it.each(ROTAS)(
+      '$metodo $caminho sem a permissão $permissao responde 403, sem auditar',
+      async ({ metodo, caminho, permissao }) => {
+        const outras = PERMISSOES.filter((p) => !p.endsWith(`.${permissao}`));
+        const semPermissao = await criarUsuarioTeste(app, { permissoes: outras, empresaId });
+
+        const res = await comUsuario(app, semPermissao)[metodo](caminho).send({}).expect(403);
+
+        expect(res.body).toMatchObject({ code: 'FORBIDDEN', message: 'Sem permissão' });
+        await expectNoAudit(prisma, { entity: 'Unidade' });
+      },
+    );
   });
 });

@@ -16,10 +16,16 @@ import { zodIssuesToDetails } from '../validation/zod-issues';
  * Lê o multipart de `POST /api/arquivos` com o limite de tamanho do uso (`?uso=`): um arquivo
  * acima do limite é recusado durante o envio, sem ficar inteiro na memória.
  * É middleware (e não interceptor) para o corpo ser lido antes de a auditoria abrir a transação.
+ * Middleware roda antes do guard: sem `Authorization: Bearer`, o corpo não é lido e o guard
+ * responde 401, sem gastar leitura de upload com quem não está logado.
  */
 @Injectable()
 export class UploadMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction): void {
+    if (!/^bearer\s/i.test(req.headers.authorization ?? '')) {
+      next();
+      return;
+    }
     const query = uploadArquivoQuerySchema.safeParse(req.query);
     if (!query.success) {
       next(new ValidationException(zodIssuesToDetails(query.error.issues)));

@@ -22,6 +22,7 @@ import {
   type UploadArquivoQuery,
 } from '@torres/shared';
 import { Audit } from '../audit/audit.decorator';
+import { Public, SomenteAutenticado } from '../auth/auth.decorators';
 import { ApiErrorResponses, ApiZodQuery, ApiZodResponse } from '../swagger/zod-openapi';
 import { IdParam } from '../validation/id-param.decorator';
 import { ZodValidationPipe } from '../validation/zod-validation.pipe';
@@ -30,10 +31,12 @@ import { ArquivosService, type ArquivoDto, type ArquivoRecebido } from './arquiv
 const ENTITY = 'Arquivo';
 
 /**
- * Serviço comum de arquivos. A permissão por uso entra com a Autenticação (#79);
- * `GET /:id/conteudo` será `@Public()`, porque é autorizado pela assinatura da URL.
+ * Serviço comum de arquivos, usado pelos formulários de várias telas: exige só o login.
+ * A autorização de cada tela vale quando ela grava o id do arquivo no próprio endpoint.
+ * `GET /:id/conteudo` é público: quem autoriza é a assinatura da URL temporária.
  */
 @ApiTags('Arquivos')
+@SomenteAutenticado()
 @Controller('arquivos')
 export class ArquivosController {
   constructor(private readonly arquivos: ArquivosService) {}
@@ -54,7 +57,7 @@ export class ArquivosController {
     },
   })
   @ApiZodResponse(201, arquivoSchema)
-  @ApiErrorResponses(400)
+  @ApiErrorResponses(400, 401)
   upload(
     @Query(new ZodValidationPipe(uploadArquivoQuerySchema)) query: UploadArquivoQuery,
     @UploadedFile() arquivo: ArquivoRecebido | undefined,
@@ -65,7 +68,7 @@ export class ArquivosController {
   @Get(':id')
   @ApiOperation({ summary: 'Metadados do arquivo' })
   @ApiZodResponse(200, arquivoSchema)
-  @ApiErrorResponses(400, 404)
+  @ApiErrorResponses(400, 401, 404)
   findById(@IdParam() id: string): Promise<ArquivoDto> {
     return this.arquivos.findById(id);
   }
@@ -73,12 +76,13 @@ export class ArquivosController {
   @Get(':id/link')
   @ApiOperation({ summary: 'URL temporária de download (para <img src> e <a href>)' })
   @ApiZodResponse(200, arquivoLinkSchema)
-  @ApiErrorResponses(400, 404)
+  @ApiErrorResponses(400, 401, 404)
   link(@IdParam() id: string): Promise<ArquivoLink> {
     return this.arquivos.link(id);
   }
 
   @Get(':id/conteudo')
+  @Public()
   @Header('X-Content-Type-Options', 'nosniff')
   @Header('Cache-Control', 'private, no-store')
   @ApiOperation({ summary: 'Download pelo link temporário (assinatura e validade na query)' })
@@ -102,7 +106,7 @@ export class ArquivosController {
   @Audit({ entity: ENTITY })
   @ApiOperation({ summary: 'Exclui (exclusão lógica)' })
   @ApiZodResponse(200, arquivoSchema)
-  @ApiErrorResponses(400, 404)
+  @ApiErrorResponses(400, 401, 404)
   remove(@IdParam() id: string): Promise<ArquivoDto> {
     return this.arquivos.remove(id);
   }

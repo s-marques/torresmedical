@@ -19,13 +19,10 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { ICONES_TELA } from './menu-icones';
-import { USUARIO_PROVISORIO } from './usuario-provisorio';
+import { useSair, useUsuarioExibido } from './use-usuario-logado';
 
 export interface AppSidebarProps {
-  /**
-   * Permissões do usuário. Sem lista, o menu mostra todas as telas: a filtragem real por
-   * perfil entra com a autenticação (#79).
-   */
+  /** Permissões do usuário: o menu mostra só as telas com `<tela>.ver`. Sem lista, mostra todas. */
   permissoes?: readonly string[];
 }
 
@@ -36,6 +33,8 @@ export interface AppSidebarProps {
 export function AppSidebar({ permissoes }: Readonly<AppSidebarProps>) {
   const { pathname } = useLocation();
   const { isMobile, setOpenMobile } = useSidebar();
+  const usuario = useUsuarioExibido();
+  const sair = useSair();
   const menu = useMemo(() => filtrarMenu(MENU, permissoes), [permissoes]);
 
   const moduloDaRota = encontrarTelaPorRota(pathname)?.modulo ?? null;
@@ -125,22 +124,21 @@ export function AppSidebar({ permissoes }: Readonly<AppSidebarProps>) {
         <div className="flex items-center gap-2 p-1">
           <Avatar className="size-8">
             <AvatarFallback className="bg-sidebar-primary text-xs text-sidebar-primary-foreground">
-              {USUARIO_PROVISORIO.iniciais}
+              {usuario.iniciais}
             </AvatarFallback>
           </Avatar>
           <span className="grid min-w-0 flex-1 leading-tight">
-            <span className="truncate text-sm font-medium">{USUARIO_PROVISORIO.nome}</span>
-            <span className="truncate text-xs text-sidebar-foreground/60">
-              {USUARIO_PROVISORIO.perfil}
-            </span>
+            <span className="truncate text-sm font-medium">{usuario.nome}</span>
+            <span className="truncate text-xs text-sidebar-foreground/60">{usuario.perfil}</span>
           </span>
-          <Link
-            to="/login"
+          <button
+            type="button"
             aria-label="Sair"
+            onClick={sair}
             className="rounded-md p-2 text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           >
             <LogOut className="size-4" aria-hidden />
-          </Link>
+          </button>
         </div>
       </SidebarFooter>
       <SidebarRail />

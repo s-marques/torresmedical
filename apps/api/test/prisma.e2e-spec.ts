@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { PERMISSOES } from '@torres/shared';
 import { applySeed, buildSeedData } from '../prisma/seed-data';
 import { PrismaModule } from '../src/common/prisma/prisma.module';
 import { PrismaService } from '../src/common/prisma/prisma.service';
@@ -43,6 +44,10 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'arquivos',
       'audit_log',
       'empresas',
+      'perfis',
+      'perfis_permissoes',
+      'redefinicoes_senha',
+      'sessoes',
       'unidades',
       'usuarios',
     ]);
@@ -124,13 +129,21 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
   it('seed grava os dados fictícios e é idempotente', async () => {
     const esperado = buildSeedData();
 
-    await applySeed(prisma);
-    await applySeed(prisma);
+    await applySeed(prisma, 'senha-do-seed-1');
+    await applySeed(prisma, 'senha-do-seed-1');
 
     expect(await prisma.empresa.count()).toBe(1);
     expect(await prisma.unidade.count()).toBe(esperado.unidades.length);
     const usuarios = await prisma.usuario.findMany({ select: { email: true } });
-    expect(usuarios).toHaveLength(esperado.usuarios.length);
+    expect(usuarios).toHaveLength(esperado.usuarios.length + 1);
     expect(usuarios.every((u) => u.email.endsWith('@example.com'))).toBe(true);
+
+    const admin = await prisma.usuario.findUniqueOrThrow({
+      where: { email: 'admin@example.com' },
+      include: { perfil: { include: { permissoes: true } } },
+    });
+    expect(admin.senhaHash).toMatch(/^\$argon2id\$/);
+    expect(admin.perfil?.nome).toBe('Administrador');
+    expect(admin.perfil?.permissoes).toHaveLength(PERMISSOES.length);
   });
 });

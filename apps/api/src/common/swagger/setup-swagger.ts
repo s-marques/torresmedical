@@ -16,6 +16,8 @@ export function setupSwagger(app: INestApplication, env: NodeJS.ProcessEnv = pro
     .setTitle('Torres Medical API')
     .setDescription('API do sistema de gestão da clínica Torres Medical.')
     .setVersion('1.0')
+    .addBearerAuth()
+    .addSecurityRequirements('bearer')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup(SWAGGER_PATH, app, document, { jsonDocumentUrl: `${SWAGGER_PATH}/json` });

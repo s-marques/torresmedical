@@ -51,6 +51,7 @@ const ERROR_DESCRIPTIONS: Readonly<Record<number, string>> = {
   404: 'Não encontrado',
   409: 'Conflito (ex.: registro duplicado)',
   422: 'Regra de negócio',
+  429: 'Muitas tentativas. Tente novamente em instantes',
 };
 
 /** Respostas de erro no formato padrão (`apiErrorSchema`). */

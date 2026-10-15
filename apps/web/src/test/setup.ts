@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup, configure } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
+import { reiniciarSessaoParaTestes } from '../lib/auth/sessao';
 import { matchMediaStub } from './match-media';
 
 // O `pnpm -r test` roda API e web em paralelo: sob carga, 1 s (padrão) não basta para o findBy*.
@@ -23,6 +24,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  reiniciarSessaoParaTestes();
   vi.unstubAllGlobals();
   localStorage.clear();
   document.documentElement.className = '';

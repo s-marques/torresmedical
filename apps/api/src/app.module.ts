@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
 import { AuditModule } from './common/audit/audit.module';
+import { AuthModule } from './common/auth/auth.module';
 import { RequestContextModule } from './common/context/request-context.module';
 import { AllExceptionsFilter } from './common/errors/all-exceptions.filter';
 import { ExportModule } from './common/export/export.module';
@@ -16,6 +17,7 @@ import { ConfiguracoesGestaoModule } from './modules/configuracoes-gestao/config
     LoggerModule,
     PrismaModule,
     AuditModule,
+    AuthModule,
     ExportModule,
     StorageModule,
     HealthModule,

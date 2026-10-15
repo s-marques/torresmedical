@@ -150,7 +150,7 @@ export interface TelaMenu {
   /** URL do sistema atual. */
   rota: string;
   /** Permissão para ver a tela: `<modulo>.<recurso>.ver`. */
-  permissao: string;
+  permissao: `${TelaId}.ver`;
 }
 
 export interface ModuloMenu {
