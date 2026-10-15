@@ -22,7 +22,7 @@ export const SEM_PERMISSAO = 'Sem permissão';
 /**
  * Guard global (CLAUDE.md, seção 6): toda rota exige login, exceto as `@Public()`.
  * Depois do login, a rota precisa declarar o acesso: `@RequirePermission(...)` confere a
- * permissão no perfil (403 sem ela) e `@SomenteAutenticado()` libera qualquer usuário logado.
+ * permissão no perfil (403 sem nenhuma das declaradas) e `@SomenteAutenticado()` libera qualquer usuário logado.
  * Rota sem declaração é negada (403): o padrão é fechado.
  */
 @Injectable()
@@ -44,11 +44,11 @@ export class AuthGuard implements CanActivate {
     request.usuario = usuario;
     this.context.setUserId(usuario.id);
 
-    const permissao = this.reflector.getAllAndOverride<Permissao | undefined>(
+    const permissoes = this.reflector.getAllAndOverride<readonly Permissao[] | undefined>(
       PERMISSION_METADATA,
       alvos,
     );
-    if (permissao) return this.exigir(usuario, permissao);
+    if (permissoes) return this.exigir(usuario, permissoes);
     if (this.reflector.getAllAndOverride<boolean>(AUTHENTICATED_METADATA, alvos)) return true;
     throw new ApiException(403, ErrorCode.FORBIDDEN, SEM_PERMISSAO);
   }
@@ -71,8 +71,9 @@ export class AuthGuard implements CanActivate {
     return usuario;
   }
 
-  private exigir(usuario: UsuarioAutenticado, permissao: Permissao): boolean {
-    if (!usuario.permissoes.has(permissao)) {
+  /** Basta uma das permissões declaradas. */
+  private exigir(usuario: UsuarioAutenticado, permissoes: readonly Permissao[]): boolean {
+    if (!permissoes.some((permissao) => usuario.permissoes.has(permissao))) {
       throw new ApiException(403, ErrorCode.FORBIDDEN, SEM_PERMISSAO);
     }
     return true;

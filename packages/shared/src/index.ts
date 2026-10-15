@@ -9,5 +9,6 @@ export * from './schemas/common/api-error';
 export * from './schemas/common/list-query';
 export * from './schemas/common/pagination';
 export * from './schemas/configuracoes-gestao/unidade';
+export * from './schemas/lookups/lookup';
 export * from './schemas/health';
 export { zodErrorPtBr } from './zod-pt-br';

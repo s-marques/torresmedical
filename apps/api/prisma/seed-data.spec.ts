@@ -1,4 +1,16 @@
 import { buildSeedData, gerarCnpj, SEED_EMAIL_DOMAIN } from './seed-data';
+import { gerarCpf } from './seed-entidades';
+
+function cpfValido(cpf: string): boolean {
+  if (!/^\d{11}$/.test(cpf)) return false;
+  const calc = (base: string): number => {
+    const soma = [...base].reduce((acc, n, i) => acc + Number(n) * (base.length + 1 - i), 0);
+    const resto = 11 - (soma % 11);
+    return resto >= 10 ? 0 : resto;
+  };
+  const d1 = calc(cpf.slice(0, 9));
+  return cpf.endsWith(`${d1}${calc(cpf.slice(0, 9) + d1)}`);
+}
 
 function cnpjValido(cnpj: string): boolean {
   if (!/^\d{14}$/.test(cnpj)) return false;
@@ -69,5 +81,50 @@ describe('buildSeedData', () => {
       empresaId: data.empresa.id,
     });
     expect(data.perfilAdmin.nome).toBe('Administrador');
+  });
+
+  describe('entidades compartilhadas', () => {
+    const { entidades } = data;
+    const todas = Object.values(entidades).flat();
+
+    it('gera ids únicos, sem repetir os dos demais dados', () => {
+      const ids = [data.empresa.id, data.admin.id, ...todas.map((r) => r.id)];
+      expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    it('gera CPF fictício válido para os pacientes', () => {
+      expect(entidades.pacientes.length).toBeGreaterThanOrEqual(20);
+      for (const { documento } of entidades.pacientes)
+        expect(cpfValido(String(documento))).toBe(true);
+      for (let i = 0; i < 20; i++) expect(cpfValido(gerarCpf())).toBe(true);
+    });
+
+    it('usa e-mails do domínio de exemplos e telefones fictícios', () => {
+      const pessoas = [
+        ...entidades.pacientes,
+        ...entidades.profissionais,
+        ...entidades.funcionarios,
+      ];
+      for (const { email, telefone } of pessoas) {
+        expect(email?.endsWith(`@${SEED_EMAIL_DOMAIN}`)).toBe(true);
+        expect(telefone).toMatch(/^[1-9]{2}9\d{8}$/);
+      }
+    });
+
+    it('liga as FKs a registros do próprio seed e tem ativos e inativos', () => {
+      const ids = (lista: { id: string }[]) => new Set(lista.map((r) => r.id));
+      const especialidades = ids(entidades.especialidades);
+      const cargos = ids(entidades.cargos);
+      const categorias = ids(entidades.categorias);
+      expect(
+        entidades.profissionais.every((p) => especialidades.has(String(p.especialidadeId))),
+      ).toBe(true);
+      expect(entidades.funcionarios.every((f) => cargos.has(String(f.cargoId)))).toBe(true);
+      expect(entidades.produtos.every((p) => categorias.has(String(p.categoriaId)))).toBe(true);
+      expect(entidades.pacientes.some((p) => p.ativo === false)).toBe(true);
+      expect(entidades.produtos.map((p) => p.tipo)).toEqual(
+        expect.arrayContaining(['PRODUTO', 'SERVICO']),
+      );
+    });
   });
 });

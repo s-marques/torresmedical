@@ -9,7 +9,12 @@ import { LoggerModule } from './common/logger/logger.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { StorageModule } from './common/storage/storage.module';
 import { HealthModule } from './health/health.module';
+import { ComercialAtendimentoModule } from './modules/comercial-atendimento/comercial-atendimento.module';
+import { ComprasEstoqueModule } from './modules/compras-estoque/compras-estoque.module';
 import { ConfiguracoesGestaoModule } from './modules/configuracoes-gestao/configuracoes-gestao.module';
+import { FinanceiroModule } from './modules/financeiro/financeiro.module';
+import { GestaoProfissionaisModule } from './modules/gestao-profissionais/gestao-profissionais.module';
+import { RegulatorioQualidadeModule } from './modules/regulatorio-qualidade/regulatorio-qualidade.module';
 
 @Module({
   imports: [
@@ -21,6 +26,11 @@ import { ConfiguracoesGestaoModule } from './modules/configuracoes-gestao/config
     ExportModule,
     StorageModule,
     HealthModule,
+    ComercialAtendimentoModule,
+    GestaoProfissionaisModule,
+    FinanceiroModule,
+    ComprasEstoqueModule,
+    RegulatorioQualidadeModule,
     ConfiguracoesGestaoModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],

@@ -16,6 +16,9 @@ class Rotas {
   @RequirePermission('financeiro.caixas.ver')
   comPermissao(): void {}
 
+  @RequirePermission('financeiro.contas-pagar.ver', 'financeiro.caixas.ver')
+  qualquerPermissao(): void {}
+
   @SomenteAutenticado()
   logado(): void {}
 
@@ -105,6 +108,19 @@ describe('AuthGuard', () => {
         criarGuard(semPermissao).guard.canActivate(
           contexto('comPermissao', 'Bearer valido').context,
         ),
+      ),
+    ).toBe(403);
+  });
+
+  it('com várias permissões, basta uma delas', async () => {
+    const outra = { ...USUARIO, permissoes: new Set(['financeiro.contas-receber.ver'] as const) };
+
+    expect(
+      await criarGuard().guard.canActivate(contexto('qualquerPermissao', 'Bearer valido').context),
+    ).toBe(true);
+    expect(
+      await status(
+        criarGuard(outra).guard.canActivate(contexto('qualquerPermissao', 'Bearer valido').context),
       ),
     ).toBe(403);
   });

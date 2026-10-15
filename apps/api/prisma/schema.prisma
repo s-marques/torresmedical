@@ -129,6 +129,227 @@ model RedefinicaoSenha {
   @@map("redefinicoes_senha")
 }
 
+// ---------------------------------------------------------------------------------------------
+// Entidades compartilhadas (issue #81). Campos mínimos: identificação, status, vínculos e o que
+// outras telas consomem. A tela de cada entidade completa os campos dela em migration própria.
+// Cada uma pertence ao módulo dono (comentário do model) e é exposta pelo service dele.
+// ---------------------------------------------------------------------------------------------
+
+/// Dono: comercial-atendimento.
+model Paciente {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String
+  /// CPF, somente dígitos.
+  documento String?
+  telefone  String?
+  email     String?
+  ativo     Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([documento])
+  @@map("pacientes")
+}
+
+/// Dono: gestao-profissionais.
+model Especialidade {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String
+  ativo     Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  profissionais Profissional[]
+
+  @@map("especialidades")
+}
+
+/// Dono: gestao-profissionais.
+model Profissional {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome            String
+  /// Registro no conselho (CRM, CRN, CRBM…), texto livre.
+  registro        String?
+  especialidadeId String?   @map("especialidade_id") @db.Uuid
+  telefone        String?
+  email           String?
+  ativo           Boolean   @default(true)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  especialidade Especialidade? @relation(fields: [especialidadeId], references: [id], onDelete: Restrict)
+
+  @@index([especialidadeId])
+  @@map("profissionais")
+}
+
+/// Dono: compras-estoque.
+model Fornecedor {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String
+  /// CNPJ ou CPF, somente dígitos.
+  documento String?
+  email     String?
+  telefone  String?
+  cidade    String?
+  /// Sigla do estado.
+  uf        String?   @db.Char(2)
+  ativo     Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([documento])
+  @@map("fornecedores")
+}
+
+enum TipoItem {
+  PRODUTO
+  SERVICO
+
+  @@map("tipo_item")
+}
+
+/// Dono: compras-estoque. Categoria de produtos ou de serviços.
+model Categoria {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String
+  tipo      TipoItem
+  /// Cor de exibição, ex.: `#22c55e`.
+  cor       String?
+  descricao String?
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  produtos Produto[]
+
+  @@map("categorias")
+}
+
+/// Dono: compras-estoque. Ex.: UN (Unidade), CX (Caixa).
+model UnidadeMedida {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sigla     String
+  nome      String
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  produtos Produto[]
+
+  @@map("unidades_medida")
+}
+
+/// Dono: compras-estoque. Produto ou serviço do catálogo da clínica.
+model Produto {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome            String
+  tipo            TipoItem
+  /// SKU ou código de barras.
+  codigo          String?
+  categoriaId     String?   @map("categoria_id") @db.Uuid
+  unidadeMedidaId String?   @map("unidade_medida_id") @db.Uuid
+  precoVenda      Decimal   @default(0) @map("preco_venda") @db.Decimal(12, 2)
+  ativo           Boolean   @default(true)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  categoria     Categoria?     @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
+  unidadeMedida UnidadeMedida? @relation(fields: [unidadeMedidaId], references: [id], onDelete: Restrict)
+
+  @@index([categoriaId])
+  @@index([unidadeMedidaId])
+  @@index([codigo])
+  @@map("produtos")
+}
+
+/// Dono: regulatorio-qualidade.
+model Cargo {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String
+  ativo     Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  funcionarios Funcionario[]
+
+  @@map("cargos")
+}
+
+/// Dono: regulatorio-qualidade.
+model Funcionario {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String
+  email     String?
+  telefone  String?
+  cargoId   String?   @map("cargo_id") @db.Uuid
+  ativo     Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  cargo Cargo? @relation(fields: [cargoId], references: [id], onDelete: Restrict)
+
+  @@index([cargoId])
+  @@map("funcionarios")
+}
+
+enum FinalidadePagamento {
+  RECEBER
+  PAGAR
+
+  @@map("finalidade_pagamento")
+}
+
+/// Tipos vistos no inventário (Formas de Pagamento).
+enum TipoFormaPagamento {
+  DINHEIRO
+  PIX
+  BOLETO
+  CARTAO_CREDITO
+  CARTAO_DEBITO
+  CONVENIO
+  CORTESIA
+  PERMUTA
+  PAGAMENTO
+
+  @@map("tipo_forma_pagamento")
+}
+
+/// Dono: financeiro.
+model FormaPagamento {
+  id         String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome       String
+  finalidade FinalidadePagamento
+  tipo       TipoFormaPagamento
+  ativo      Boolean             @default(true)
+  createdAt  DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt  DateTime?           @map("deleted_at") @db.Timestamptz(3)
+
+  @@map("formas_pagamento")
+}
+
+/// Dono: configuracoes-gestao. Tipo de consulta/procedimento da agenda.
+model TipoAgendamento {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome           String
+  cor            String?
+  duracaoMinutos Int       @map("duracao_minutos")
+  ativo          Boolean   @default(true)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@map("tipos_agendamento")
+}
+
 enum AuditAction {
   CREATE
   UPDATE

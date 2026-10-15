@@ -12,9 +12,11 @@ export const Public = (): MethodDecorator & ClassDecorator => SetMetadata(PUBLIC
 /**
  * Exige a permissão (`<modulo>.<recurso>.<acao>`) no perfil do usuário: sem login → 401,
  * sem a permissão → 403. Ex.: `@RequirePermission('financeiro.contas-receber.criar')`.
+ * Com várias, basta uma delas (ex.: lookups usados por telas de módulos diferentes).
  */
-export const RequirePermission = (permissao: Permissao): MethodDecorator & ClassDecorator =>
-  SetMetadata(PERMISSION_METADATA, permissao);
+export const RequirePermission = (
+  ...permissoes: readonly [Permissao, ...Permissao[]]
+): MethodDecorator & ClassDecorator => SetMetadata(PERMISSION_METADATA, permissoes);
 
 /**
  * Exige só o login, sem permissão específica. Para recursos de infraestrutura usados por várias

@@ -43,12 +43,23 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
     expect(tabelas.map((t) => t.table_name)).toEqual([
       'arquivos',
       'audit_log',
+      'cargos',
+      'categorias',
       'empresas',
+      'especialidades',
+      'formas_pagamento',
+      'fornecedores',
+      'funcionarios',
+      'pacientes',
       'perfis',
       'perfis_permissoes',
+      'produtos',
+      'profissionais',
       'redefinicoes_senha',
       'sessoes',
+      'tipos_agendamento',
       'unidades',
+      'unidades_medida',
       'usuarios',
     ]);
   });
@@ -98,6 +109,31 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
     await expect(prisma.empresa.delete({ where: { id: empresa.id } })).rejects.toThrow();
   });
 
+  it('entidades compartilhadas: FKs válidas e sem apagar quem tem vínculo (RESTRICT)', async () => {
+    const inexistente = '00000000-0000-4000-8000-000000000000';
+    await expect(
+      prisma.profissional.create({
+        data: { nome: 'Sem especialidade', especialidadeId: inexistente },
+      }),
+    ).rejects.toMatchObject({ code: 'P2003' });
+    await expect(
+      prisma.produto.create({
+        data: { nome: 'Sem categoria', tipo: 'PRODUTO', categoriaId: inexistente },
+      }),
+    ).rejects.toMatchObject({ code: 'P2003' });
+
+    const cargo = await prisma.cargo.create({ data: { nome: 'Recepção' } });
+    await prisma.funcionario.create({ data: { nome: 'Funcionário', cargoId: cargo.id } });
+    await expect(prisma.cargo.delete({ where: { id: cargo.id } })).rejects.toThrow();
+
+    const unidade = await prisma.unidadeMedida.create({ data: { sigla: 'UN', nome: 'Unidade' } });
+    const produto = await prisma.produto.create({
+      data: { nome: 'Soro', tipo: 'PRODUTO', unidadeMedidaId: unidade.id, precoVenda: '10.25' },
+    });
+    expect(produto.precoVenda.toString()).toBe('10.25');
+    await expect(prisma.unidadeMedida.delete({ where: { id: unidade.id } })).rejects.toThrow();
+  });
+
   it('grava audit_log com before/after em jsonb e ação do enum', async () => {
     const registro = await prisma.auditLog.create({
       data: {
@@ -145,5 +181,10 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
     expect(admin.senhaHash).toMatch(/^\$argon2id\$/);
     expect(admin.perfil?.nome).toBe('Administrador');
     expect(admin.perfil?.permissoes).toHaveLength(PERMISSOES.length);
+
+    expect(await prisma.paciente.count()).toBe(esperado.entidades.pacientes.length);
+    expect(await prisma.produto.count()).toBe(esperado.entidades.produtos.length);
+    expect(await prisma.formaPagamento.count()).toBe(esperado.entidades.formasPagamento.length);
+    expect(await prisma.tipoAgendamento.count()).toBe(esperado.entidades.tiposAgendamento.length);
   });
 });

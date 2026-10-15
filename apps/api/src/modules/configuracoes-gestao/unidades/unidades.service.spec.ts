@@ -210,3 +210,37 @@ describe('UnidadesService', () => {
     expect(status?.value({ ...UNIDADE, ativo: false })).toBe('Inativo');
   });
 });
+
+describe('UnidadesService (lookup)', () => {
+  it('só ativas e não excluídas, com filtro por empresa e busca', async () => {
+    const { service, unidade } = setup();
+
+    const page = await service.lookup({
+      page: 1,
+      pageSize: 10,
+      sort: { field: 'nome', direction: 'asc' },
+      search: 'mat',
+      empresaId: EMPRESA_ID,
+    });
+
+    expect(unidade.count).toHaveBeenCalledWith({
+      where: {
+        deletedAt: null,
+        ativo: true,
+        empresaId: EMPRESA_ID,
+        OR: [{ nome: { contains: 'mat', mode: 'insensitive' } }],
+      },
+    });
+    expect(page.data).toEqual([{ id: ID, label: 'Matriz', descricao: null }]);
+  });
+
+  it('findLookupById devolve o item', async () => {
+    const { service } = setup();
+
+    await expect(service.findLookupById(ID)).resolves.toEqual({
+      id: ID,
+      label: 'Matriz',
+      descricao: null,
+    });
+  });
+});
