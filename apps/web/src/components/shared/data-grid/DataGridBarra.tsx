@@ -6,8 +6,6 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -63,7 +61,7 @@ export function ChipsStatus({
   );
 }
 
-/** Filtros extras: selects e períodos De/Até. */
+/** Filtros extras: selects ("Todos" + opções) e períodos "<rótulo> de: … até: … Limpar". */
 export function FiltrosExtras({
   filtros,
   valores,
@@ -108,7 +106,10 @@ function FiltroSelect({
   const id = useId();
   return (
     <div className="flex items-center gap-2">
-      <Label htmlFor={id}>{filtro.rotulo}:</Label>
+      {/* Como nos prints, o select mostra só o valor ("Todos"); o rótulo fica para leitores de tela. */}
+      <Label htmlFor={id} className="sr-only">
+        {filtro.rotulo}
+      </Label>
       <Select
         value={valor ?? TODOS}
         onValueChange={(novo) =>
@@ -231,8 +232,6 @@ export function MenuColunas({ colunas }: Readonly<{ colunas: readonly ColunaOcul
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuLabel>Colunas visíveis</DropdownMenuLabel>
-        <DropdownMenuSeparator />
         {colunas.map((coluna) => (
           <DropdownMenuCheckboxItem
             key={coluna.id}

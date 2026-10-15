@@ -5,22 +5,37 @@ interface EventoDeFoco {
 }
 
 /**
+ * Elemento que deve receber o foco de volta. Um item de menu (ex.: "Excluir" no "⋯" da linha)
+ * some quando o menu fecha: nesse caso, volta para o botão que abriu o menu.
+ */
+function origemDoFoco(): HTMLElement | null {
+  const ativo = document.activeElement;
+  if (!(ativo instanceof HTMLElement) || ativo === document.body) return null;
+  const menu = ativo.closest<HTMLElement>('[role="menu"]');
+  // Os ids do React (`«r1»`) não servem direto em seletor CSS: compara o atributo.
+  const gatilho = menu?.id
+    ? Array.from(document.querySelectorAll<HTMLElement>('[aria-controls]')).find(
+        (el) => el.getAttribute('aria-controls') === menu.id,
+      )
+    : undefined;
+  return gatilho ?? ativo;
+}
+
+/**
  * Devolve o foco a quem abriu o diálogo ao fechar. O Radix só devolve ao `<DialogTrigger>`;
  * os diálogos controlados (`aberto`/`onAbertoChange`) não têm trigger e o foco iria para o
- * `<body>`, o que atrapalha quem usa o teclado. Se o elemento sumiu (ex.: item de um menu),
- * o Radix segue o comportamento padrão.
+ * `<body>`, o que atrapalha quem usa o teclado. Se o elemento sumiu, o Radix segue o padrão.
  */
 export function useFocoDeRetorno() {
   const origem = useRef<HTMLElement | null>(null);
   return {
     onOpenAutoFocus: () => {
-      origem.current =
-        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      origem.current = origemDoFoco();
     },
     onCloseAutoFocus: (evento: EventoDeFoco) => {
       const elemento = origem.current;
       origem.current = null;
-      if (!elemento?.isConnected || elemento === document.body) return;
+      if (!elemento?.isConnected) return;
       evento.preventDefault();
       elemento.focus();
     },

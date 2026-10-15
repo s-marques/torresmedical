@@ -69,6 +69,8 @@ describe('página de exemplos dos componentes', { timeout: 20_000 }, () => {
     const confirmacao = await screen.findByRole('alertdialog', { name: 'Excluir unidade?' });
     await user.click(within(confirmacao).getByRole('button', { name: 'Excluir' }));
     expect(await screen.findByText('Exemplo: nenhuma unidade foi excluída.')).toBeInTheDocument();
+    // O item do menu sumiu: o foco volta ao botão "Ações" da linha.
+    await waitFor(() => expect(within(linha).getByRole('button', { name: 'Ações' })).toHaveFocus());
   });
 
   it('abre o modal de nova unidade e cancela', async () => {

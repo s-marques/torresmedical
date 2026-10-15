@@ -219,7 +219,7 @@ describe('DataGrid', () => {
       'true',
     );
 
-    await user.click(screen.getByRole('combobox', { name: 'Empresa:' }));
+    await user.click(screen.getByRole('combobox', { name: 'Empresa' }));
     await user.click(await screen.findByRole('option', { name: 'Matriz' }));
     await waitFor(() => expect(ultimo().empresaId).toBe(EMPRESA));
 
@@ -237,7 +237,7 @@ describe('DataGrid', () => {
 
     await user.click(within(periodo).getByRole('button', { name: 'Limpar Criação' }));
     await user.click(within(chips).getByRole('button', { name: 'Todos' }));
-    await user.click(screen.getByRole('combobox', { name: 'Empresa:' }));
+    await user.click(screen.getByRole('combobox', { name: 'Empresa' }));
     await user.click(await screen.findByRole('option', { name: 'Todos' }));
     await waitFor(() => expect(ultimo()).toEqual({ page: '1', pageSize: '10' }));
   });
