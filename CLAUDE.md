@@ -321,6 +321,11 @@ Antes de mover o card para **"Em revisão"**:
 1. Leia a issue e os **critérios de aceite**.
 2. Leia `docs/inventario/telas/<arquivo>.md` (o link está na issue) e veja o screenshot em
    `docs/inventario/img/<arquivo>.png`.
+   - A seção **"Estados capturados"** do `.md` traz o que abre ao clicar em cada item de
+     visualização (abas, "Novo…", "Editar", detalhes, menus, filtros), com os campos de cada modal
+     (rótulo, tipo, obrigatório), os botões e as opções. Os prints estão em
+     `docs/inventario/img/estados/<arquivo>--<item>.jpg`. Abra as imagens dos itens que for implementar.
+   - Os mesmos prints aparecem na issue, na seção recolhida "Prints dos estados 🤖".
 3. Confira a seção **"Checklist de prints"** da issue e os comentários do card
    (`gh issue view <n> --comments`).
    - Itens 🤖 são capturados pelo robô e entram no inventário.
