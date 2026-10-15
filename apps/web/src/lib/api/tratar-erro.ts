@@ -8,26 +8,40 @@ export interface TratarErroOptions {
   onUnauthorized: () => void;
 }
 
+export interface TratarErroContexto {
+  /**
+   * O erro aparece no formulário (`FormLayout`): trata só 401 e 403; os demais (400, 409,
+   * 422, 500…) ficam para o formulário mostrar nos campos ou no alerta, sem toast.
+   */
+  erroNoFormulario?: boolean;
+}
+
 /**
  * Tratamento centralizado dos erros da API (CLAUDE.md, seção 3, "Tratamento de erros"):
  * - 401 redireciona para o login;
  * - 403 mostra "Sem permissão";
  * - 400 com `details` fica para o formulário mapear nos campos (`errosPorCampo`), sem toast;
  * - os demais erros aparecem em toast.
- * Cancelamentos (`AbortError`) são ignorados.
+ * Cancelamentos (`AbortError`) são ignorados. Com `erroNoFormulario`, só 401 e 403 são tratados aqui.
  */
-export function tratarErroApi(error: unknown, { onUnauthorized }: TratarErroOptions): void {
+export function tratarErroApi(
+  error: unknown,
+  { onUnauthorized }: TratarErroOptions,
+  { erroNoFormulario = false }: TratarErroContexto = {},
+): void {
   if (error instanceof DOMException && error.name === 'AbortError') return;
-  if (!(error instanceof ApiRequestError)) {
-    toast.error(ERRO_INESPERADO_API);
-    return;
-  }
-  if (error.status === 401) {
+  const status = error instanceof ApiRequestError ? error.status : null;
+  if (status === 401) {
     onUnauthorized();
     return;
   }
-  if (error.status === 403) {
+  if (status === 403) {
     toast.error(MENSAGEM_SEM_PERMISSAO);
+    return;
+  }
+  if (erroNoFormulario) return;
+  if (!(error instanceof ApiRequestError)) {
+    toast.error(ERRO_INESPERADO_API);
     return;
   }
   if (error.status === 400 && error.body?.details?.length) return;

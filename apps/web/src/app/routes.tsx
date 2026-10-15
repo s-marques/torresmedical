@@ -9,6 +9,20 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { PageErrorPage } from './pages/PageErrorPage';
 import { PaginaDaTela } from './pages/PaginaDaTela';
 
+/** Página de exemplos dos componentes compartilhados: só em desenvolvimento, fora do menu. */
+export const ROTA_EXEMPLOS = '/dev/componentes';
+
+const ROTAS_DE_DESENVOLVIMENTO: RouteObject[] = import.meta.env.DEV
+  ? [
+      {
+        path: ROTA_EXEMPLOS,
+        lazy: async () => ({
+          Component: (await import('./pages/exemplos/ComponentesPage')).ComponentesPage,
+        }),
+      },
+    ]
+  : [];
+
 /**
  * Rotas da aplicação: login e senha fora do layout; as 70 telas do inventário (mesmas URLs do
  * sistema atual) dentro dele, só com sessão (`RotaProtegida`). O `errorElement` da rota sem
@@ -29,6 +43,7 @@ export const ROTAS: RouteObject[] = [
             errorElement: <PageErrorPage />,
             children: [
               ...TELAS.map((tela) => ({ path: tela.rota, element: <PaginaDaTela tela={tela} /> })),
+              ...ROTAS_DE_DESENVOLVIMENTO,
               { path: '*', element: <NotFoundPage /> },
             ],
           },

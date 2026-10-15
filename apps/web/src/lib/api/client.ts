@@ -46,13 +46,7 @@ export async function apiFetch<T = unknown>(
   path: string,
   options: ApiFetchOptions<T> = {},
 ): Promise<T> {
-  const autenticar = options.autenticar !== false && autenticacao !== null;
-  let resposta = await enviar(path, options, autenticar);
-  // Access token vencido: renova a sessão uma vez e repete a chamada.
-  if (resposta.status === 401 && autenticar && (await autenticacao?.renovar())) {
-    resposta = await enviar(path, options, true);
-  }
-
+  const resposta = await enviarAutenticado(path, options);
   const corpo = await lerCorpo(resposta);
   if (!resposta.ok) throw erroDaResposta(resposta.status, corpo);
   if (!options.schema) return corpo as T;
@@ -62,12 +56,65 @@ export async function apiFetch<T = unknown>(
   return dados.data;
 }
 
+/** Arquivo baixado da API (ex.: exportação Excel/PDF). */
+export interface ArquivoApi {
+  blob: Blob;
+  /** Nome do `Content-Disposition`, ou `nomePadrao`. */
+  nome: string;
+}
+
+/**
+ * Download autenticado (mesma renovação de sessão do `apiFetch`). Rejeita com
+ * `ApiRequestError` quando a API responde erro.
+ */
+export async function apiFetchArquivo(
+  path: string,
+  options: Omit<ApiFetchOptions<never>, 'schema' | 'body'> & { nomePadrao?: string } = {},
+): Promise<ArquivoApi> {
+  const resposta = await enviarAutenticado(path, options, '*/*');
+  if (!resposta.ok) throw erroDaResposta(resposta.status, await lerCorpo(resposta));
+  return {
+    blob: await resposta.blob(),
+    nome:
+      nomeDoArquivo(resposta.headers.get('Content-Disposition')) ?? options.nomePadrao ?? 'arquivo',
+  };
+}
+
+/** Nome do arquivo de um `Content-Disposition`, preferindo o `filename*` (UTF-8). */
+export function nomeDoArquivo(disposition: string | null): string | null {
+  if (!disposition) return null;
+  const utf8 = /filename\*=UTF-8''([^;]+)/i.exec(disposition)?.[1];
+  if (utf8) {
+    try {
+      return decodeURIComponent(utf8.trim());
+    } catch {
+      // Codificação inválida: tenta o `filename` simples.
+    }
+  }
+  return /filename="?([^";]+)"?/i.exec(disposition)?.[1]?.trim() || null;
+}
+
+async function enviarAutenticado<T>(
+  path: string,
+  options: ApiFetchOptions<T>,
+  accept = 'application/json',
+): Promise<Response> {
+  const autenticar = options.autenticar !== false && autenticacao !== null;
+  const resposta = await enviar(path, options, autenticar, accept);
+  // Access token vencido: renova a sessão uma vez e repete a chamada.
+  if (resposta.status === 401 && autenticar && (await autenticacao?.renovar())) {
+    return enviar(path, options, true, accept);
+  }
+  return resposta;
+}
+
 async function enviar<T>(
   path: string,
   { method = 'GET', query, body, signal }: ApiFetchOptions<T>,
   autenticar: boolean,
+  accept: string,
 ): Promise<Response> {
-  const headers: Record<string, string> = { Accept: 'application/json' };
+  const headers: Record<string, string> = { Accept: accept };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   const token = autenticar ? autenticacao?.token() : null;
   if (token) headers.Authorization = `Bearer ${token}`;

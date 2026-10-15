@@ -122,6 +122,98 @@ docker compose exec api pnpm test
   pacotes indevidos, como `cn` e `next-themes` (o tema vem de `@/lib/theme`). Também pode
   gerar `import { cn } from "cn"`, que deve ser trocado por `@/lib/utils`.
 
+## Componentes compartilhados (`apps/web/src/components/shared`)
+
+As telas usam estes componentes em vez de criar grid, formulário ou modal do zero (CLAUDE.md,
+seção 3). Exemplos funcionando em **`/dev/componentes`**: a página existe só em desenvolvimento
+(`import.meta.env.DEV`) e não aparece no menu. O código dela fica em `src/app/pages/exemplos/`.
+
+- **`PageHeader`:** breadcrumb "Painel > Tela", título, descrição e ações (`acoes`).
+- **`DataGrid`** (`data-grid/DataGrid`): consome o contrato de listagem `{ data, meta }`.
+  ```tsx
+  const COLUNAS: ColunaGrid<Unidade>[] = [
+    { id: 'nome', titulo: 'Nome', ordenavel: true, exportavel: true },
+    {
+      id: 'status',
+      titulo: 'Status',
+      ordenavel: 'ativo',
+      exportavel: true,
+      celula: (u) => <StatusAtivo ativo={u.ativo} />,
+    },
+  ];
+  <DataGrid
+    url="/api/configuracoes-gestao/unidades"
+    schema={unidadePageSchema} // paginatedResponseSchema(item)
+    querySchema={listUnidadesQuerySchema} // listQuerySchema: descarta parâmetros inválidos da URL
+    colunas={COLUNAS}
+    busca="Buscar unidades..."
+    status={{
+      opcoes: [
+        { valor: 'ativo', rotulo: 'Ativo' },
+        { valor: 'inativo', rotulo: 'Inativo' },
+      ],
+    }}
+    filtros={[
+      {
+        tipo: 'periodo',
+        rotulo: 'Vencimento',
+        parametroDe: 'vencimentoDe',
+        parametroAte: 'vencimentoAte',
+      },
+    ]}
+    exportacao={{
+      permissao: 'configuracoes-gestao.minha-empresa.exportar',
+      schema: exportUnidadesQuerySchema,
+    }}
+    acoes={(u) => [
+      {
+        rotulo: 'Excluir',
+        destrutiva: true,
+        permissao: '…excluir',
+        onSelect: () => setExcluindo(u),
+      },
+    ]}
+    mensagemVazio="Nenhuma unidade encontrada."
+  />;
+  ```
+  - O estado (página, tamanho, `sort=campo:asc`, `search`, chips e filtros) fica na query string.
+    Busca e filtros voltam para a página 1. Os valores padrão não aparecem na URL.
+  - Defina `colunas` fora do componente (ou com `useMemo`). `ordenavel` e `exportavel` aceitam o
+    nome do campo da API, quando ele for diferente do `id` da coluna (ex.: `status` → `ativo`).
+  - **Exportar** (Excel/PDF) envia os filtros, a ordenação e as colunas visíveis exportáveis
+    (`columns=`) para `<url>/export`, e só aparece com a permissão. Para botões "Excel"/"PDF" no
+    `PageHeader`, use `useExportacao`.
+  - Opções de "Linhas por página": 10, 20, 30, 40 e 50 (`tamanhosPagina` muda por tela).
+- **`FormLayout` + `FormField`** (`form/`): React Hook Form com `zodResolver` e o schema de
+  `@torres/shared`.
+  ```tsx
+  const form = useFormulario(createUnidadeSchema, { defaultValues: { nome: '', ativo: true } });
+  const salvar = useMutation({ mutationFn: criarUnidade, meta: META_FORMULARIO });
+  <FormLayout form={form} onSubmit={salvar.mutateAsync} onCancelar={fechar} colunas={2}>
+    <FormField name="nome" label="Nome" obrigatorio />
+    <FormField name="cpf" label="CPF" tipo="cpf" />
+    <FormField name="pacienteId" label="Paciente" tipo="entidade" entidade="pacientes" />
+  </FormLayout>;
+  ```
+  - Tipos: `texto`, `email`, `senha`, `numero`, `moeda`, `data`, `periodo` (`name` + `nameAte`),
+    `select` (`opcoes`), `entidade` (o `EntitySelect`), `checkbox`, `switch`, `textarea` e as
+    máscaras `cpf`, `cnpj`, `cpf-cnpj`, `telefone` e `cep`.
+  - **Valores:** as máscaras guardam só os dígitos, `moeda` e `numero` guardam `number` (`null`
+    vazio), `data` guarda `AAAA-MM-DD`, `entidade` guarda o id (`null` vazio).
+  - **Erros do servidor:** o 400 com `details` vai para os campos. Os demais (409, 422, 500…)
+    aparecem no topo do formulário. Com `meta: META_FORMULARIO` na mutation, o tratamento global só
+    cuida de 401 (login) e 403 ("Sem permissão"), sem repetir o erro em toast.
+  - No `Modal`, passe `acoes={null}` e `id` ao `FormLayout` e use
+    `<FormAcoes form={form} formId={id} />` no `rodape`.
+- **`Modal`** e **`ConfirmDialog`:** controlados por `aberto`/`onAbertoChange`. Devolvem o foco a
+  quem abriu. Toda ação destrutiva passa pelo `ConfirmDialog`: se `onConfirmar` devolver uma
+  Promise, o diálogo mostra carregamento e só fecha quando ela termina.
+- **`StatusBadge`** (tons `sucesso`, `perigo`, `alerta`, `info`, `destaque`, `neutro`),
+  **`StatusAtivo`** e **`EmptyState`**.
+- **Toasts:** `toast.success(...)`/`toast.error(...)` do `sonner` (o `<Toaster>` já está montado).
+- **Testes de grid** usam MSW: `usarMsw()` e `servidorMsw.use(http.get('/api/...', …))`
+  (`src/test/msw.ts`). Não misture com `apiFalsa`/`renderApp` no mesmo arquivo.
+
 ## Autenticação e permissões
 
 - **Entrar no ambiente local:** `docker compose exec api pnpm --filter @torres/api db:seed` cria o

@@ -1,0 +1,418 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  exportUnidadesQuerySchema,
+  listUnidadesQuerySchema,
+  PERMISSOES,
+  unidadePageSchema,
+  type Permissao,
+  type Unidade,
+} from '@torres/shared';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
+import { createMemoryRouter, RouterProvider } from 'react-router';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { servidorMsw, usarMsw } from '../../../test/msw';
+import { StatusAtivo } from '../StatusBadge';
+import { DataGrid } from './DataGrid';
+import type { ColunaGrid, DataGridProps } from './tipos';
+
+const sessao = vi.hoisted(() => ({ permissoes: [] as readonly string[] }));
+vi.mock('@/lib/auth/use-sessao', () => ({ usePermissoes: () => sessao.permissoes }));
+
+usarMsw();
+
+const URL_LISTA = '/api/configuracoes-gestao/unidades';
+const TOTAL = 25;
+const EMPRESA = '7a1d3c52-8d0f-4b8e-9f4c-2b2f3c4d5e6f';
+
+function unidade(i: number): Unidade {
+  return {
+    id: `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+    empresaId: EMPRESA,
+    nome: `Unidade ${i}`,
+    ativo: i % 2 === 1,
+    createdAt: '2026-10-01T12:00:00.000Z',
+    updatedAt: '2026-10-01T12:00:00.000Z',
+  };
+}
+
+/** Query strings recebidas pela API falsa, por caminho. */
+let pedidos: Record<string, URLSearchParams[]>;
+
+function ultimo(caminho = URL_LISTA): Record<string, string> {
+  return Object.fromEntries(pedidos[caminho]?.at(-1) ?? []);
+}
+
+function responderLista(total = TOTAL) {
+  servidorMsw.use(
+    http.get(URL_LISTA, ({ request }) => {
+      const params = new URL(request.url).searchParams;
+      (pedidos[URL_LISTA] ??= []).push(params);
+      const page = Number(params.get('page'));
+      const pageSize = Number(params.get('pageSize'));
+      const inicio = (page - 1) * pageSize;
+      const data = Array.from({ length: Math.max(0, Math.min(pageSize, total - inicio)) }, (_, i) =>
+        unidade(inicio + i + 1),
+      );
+      return HttpResponse.json({
+        data,
+        meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
+      });
+    }),
+  );
+}
+
+const COLUNAS: ColunaGrid<Unidade>[] = [
+  { id: 'nome', titulo: 'Nome', ordenavel: true, exportavel: true },
+  {
+    id: 'status',
+    titulo: 'Status',
+    ordenavel: 'ativo',
+    exportavel: true,
+    celula: (u) => <StatusAtivo ativo={u.ativo} />,
+  },
+  { id: 'createdAt', titulo: 'Criado em', ordenavel: true, exportavel: true, oculta: true },
+  { id: 'empresaId', titulo: 'Empresa', ocultavel: false },
+];
+
+const PROPS: DataGridProps<Unidade> = {
+  url: URL_LISTA,
+  schema: unidadePageSchema,
+  querySchema: listUnidadesQuerySchema,
+  colunas: COLUNAS,
+  busca: 'Buscar unidades...',
+  status: {
+    opcoes: [
+      { valor: 'ativo', rotulo: 'Ativo' },
+      { valor: 'inativo', rotulo: 'Inativo' },
+    ],
+  },
+  exportacao: {
+    permissao: 'configuracoes-gestao.minha-empresa.exportar',
+    schema: exportUnidadesQuerySchema,
+  },
+  mensagemVazio: 'Nenhuma unidade encontrada.',
+};
+
+function renderizar(props: Partial<DataGridProps<Unidade>> = {}, inicial = '/lista') {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const router = createMemoryRouter(
+    [{ path: '/lista', element: <DataGrid {...PROPS} {...props} /> }],
+    { initialEntries: [inicial] },
+  );
+  render(
+    <QueryClientProvider client={client}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
+  return { user: userEvent.setup(), router };
+}
+
+const botao = (nome: string) => screen.getByRole('button', { name: nome });
+
+beforeEach(() => {
+  pedidos = {};
+  sessao.permissoes = PERMISSOES;
+  responderLista();
+});
+
+describe('DataGrid', () => {
+  it('lista as colunas e as linhas da primeira página com o rodapé', async () => {
+    renderizar();
+
+    expect(await screen.findByText('Unidade 1')).toBeInTheDocument();
+    const cabecalhos = screen.getAllByRole('columnheader').map((th) => th.textContent);
+    expect(cabecalhos).toEqual(['Nome', 'Status', 'Empresa']);
+    expect(screen.getAllByRole('row')).toHaveLength(11);
+    expect(screen.getAllByText('Ativo').length).toBeGreaterThan(0);
+    expect(screen.getByText('25 linha(s) no total.')).toBeInTheDocument();
+    expect(screen.getByText('Página 1 de 3')).toBeInTheDocument();
+    expect(ultimo()).toEqual({ page: '1', pageSize: '10' });
+  });
+
+  it('ordena pelo cabeçalho: asc, desc e volta ao padrão', async () => {
+    const { user, router } = renderizar();
+    await screen.findByText('Unidade 1');
+    const nome = () => screen.getByRole('columnheader', { name: /Nome/ });
+    expect(
+      within(screen.getByRole('columnheader', { name: 'Empresa' })).queryByRole('button'),
+    ).toBeNull();
+
+    await user.click(within(nome()).getByRole('button'));
+    await waitFor(() => expect(ultimo().sort).toBe('nome:asc'));
+    expect(nome()).toHaveAttribute('aria-sort', 'ascending');
+
+    await user.click(within(nome()).getByRole('button'));
+    await waitFor(() => expect(ultimo().sort).toBe('nome:desc'));
+    expect(nome()).toHaveAttribute('aria-sort', 'descending');
+    expect(router.state.location.search).toBe('?sort=nome%3Adesc');
+
+    await user.click(within(nome()).getByRole('button'));
+    await waitFor(() => expect(router.state.location.search).toBe(''));
+    expect(nome()).toHaveAttribute('aria-sort', 'none');
+  });
+
+  it('pagina no servidor e troca o tamanho da página', async () => {
+    const { user } = renderizar();
+    await screen.findByText('Unidade 1');
+    expect(botao('Ir para primeira página')).toHaveAttribute('aria-disabled', 'true');
+    expect(botao('Ir para página anterior')).toHaveAttribute('aria-disabled', 'true');
+
+    await user.click(botao('Ir para próxima página'));
+    expect(await screen.findByText('Unidade 11')).toBeInTheDocument();
+    expect(ultimo().page).toBe('2');
+
+    await user.click(botao('Ir para última página'));
+    expect(await screen.findByText('Unidade 21')).toBeInTheDocument();
+    expect(screen.getByText('Página 3 de 3')).toBeInTheDocument();
+    const proxima = botao('Ir para próxima página');
+    expect(proxima).toHaveAttribute('aria-disabled', 'true');
+    // Desabilitado sem perder o foco: o clique não muda de página.
+    await user.click(proxima);
+    expect(proxima).toHaveFocus();
+    expect(ultimo().page).toBe('3');
+
+    await user.click(botao('Ir para página anterior'));
+    await waitFor(() => expect(ultimo().page).toBe('2'));
+    await user.click(botao('Ir para primeira página'));
+    await waitFor(() => expect(ultimo().page).toBe('1'));
+
+    await user.click(screen.getByRole('combobox', { name: 'Linhas por página' }));
+    await user.click(await screen.findByRole('option', { name: '20' }));
+    await waitFor(() => expect(ultimo()).toEqual({ page: '1', pageSize: '20' }));
+    expect(await screen.findByText('Página 1 de 2')).toBeInTheDocument();
+  });
+
+  it('busca com atraso, voltando para a página 1', async () => {
+    const { user, router } = renderizar({}, '/lista?page=2');
+    await screen.findByText('Unidade 11');
+
+    await user.type(screen.getByRole('searchbox', { name: 'Buscar' }), 'centro');
+
+    await waitFor(() => expect(ultimo()).toEqual({ page: '1', pageSize: '10', search: 'centro' }));
+    // Uma consulta só para o texto todo, não uma por tecla.
+    expect(pedidos[URL_LISTA]?.filter((p) => p.has('search'))).toHaveLength(1);
+    expect(router.state.location.search).toBe('?search=centro');
+  });
+
+  it('filtra pelos chips de status, selects e período', async () => {
+    const { user } = renderizar({
+      filtros: [
+        {
+          tipo: 'select',
+          parametro: 'empresaId',
+          rotulo: 'Empresa',
+          opcoes: [{ valor: EMPRESA, rotulo: 'Matriz' }],
+        },
+        { tipo: 'periodo', rotulo: 'Criação', parametroDe: 'de', parametroAte: 'ate' },
+      ],
+      querySchema: undefined,
+    });
+    await screen.findByText('Unidade 1');
+    const chips = screen.getByRole('group', { name: 'Filtrar por status' });
+
+    await user.click(within(chips).getByRole('button', { name: 'Inativo' }));
+    await waitFor(() => expect(ultimo().status).toBe('inativo'));
+    expect(within(chips).getByRole('button', { name: 'Inativo' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+
+    await user.click(screen.getByRole('combobox', { name: 'Empresa' }));
+    await user.click(await screen.findByRole('option', { name: 'Matriz' }));
+    await waitFor(() => expect(ultimo().empresaId).toBe(EMPRESA));
+
+    const periodo = screen.getByRole('group', { name: 'Criação' });
+    await user.type(within(periodo).getByLabelText('Criação de:'), '2026-10-01');
+    await user.type(within(periodo).getByLabelText('até:'), '2026-10-31');
+    await waitFor(() =>
+      expect(ultimo()).toMatchObject({
+        status: 'inativo',
+        empresaId: EMPRESA,
+        de: '2026-10-01',
+        ate: '2026-10-31',
+      }),
+    );
+
+    await user.click(within(periodo).getByRole('button', { name: 'Limpar Criação' }));
+    await user.click(within(chips).getByRole('button', { name: 'Todos' }));
+    await user.click(screen.getByRole('combobox', { name: 'Empresa' }));
+    await user.click(await screen.findByRole('option', { name: 'Todos' }));
+    await waitFor(() => expect(ultimo()).toEqual({ page: '1', pageSize: '10' }));
+  });
+
+  it('restaura o estado da URL e descarta parâmetros fora do schema', async () => {
+    renderizar({}, '/lista?page=2&pageSize=20&sort=ativo:desc&status=ativo&search=x&pageSize=abc');
+    await screen.findByText('Unidade 21');
+    expect(ultimo()).toEqual({
+      page: '2',
+      pageSize: '20',
+      sort: 'ativo:desc',
+      status: 'ativo',
+      search: 'x',
+    });
+    expect(screen.getByRole('searchbox')).toHaveValue('x');
+    expect(screen.getByRole('button', { name: 'Ativo' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('ignora ordenação fora da whitelist e tamanho de página inválido', async () => {
+    renderizar({}, '/lista?sort=empresaId:asc&pageSize=7&page=0');
+    await screen.findByText('Unidade 1');
+    expect(ultimo()).toEqual({ page: '1', pageSize: '10' });
+  });
+
+  it('mostra e oculta colunas pelo botão "Colunas"', async () => {
+    const { user } = renderizar({ acoes: () => [] });
+    await screen.findByText('Unidade 1');
+
+    await user.click(botao('Colunas'));
+    const menu = await screen.findByRole('menu');
+    expect(
+      within(menu)
+        .getAllByRole('menuitemcheckbox')
+        .map((item) => item.textContent),
+    ).toEqual(['Nome', 'Status', 'Criado em']);
+    await user.click(within(menu).getByRole('menuitemcheckbox', { name: 'Criado em' }));
+    await user.click(within(menu).getByRole('menuitemcheckbox', { name: 'Status' }));
+    await user.keyboard('{Escape}');
+
+    const cabecalhos = screen.getAllByRole('columnheader').map((th) => th.textContent);
+    expect(cabecalhos).toEqual(['Nome', 'Criado em', 'Empresa', 'Ações']);
+    expect(screen.getAllByText('2026-10-01T12:00:00.000Z').length).toBe(10);
+  });
+
+  describe('exportação', () => {
+    const urlOriginal = { create: URL.createObjectURL, revoke: URL.revokeObjectURL };
+
+    afterEach(() => {
+      URL.createObjectURL = urlOriginal.create;
+      URL.revokeObjectURL = urlOriginal.revoke;
+    });
+
+    it('exporta com os filtros, a ordenação e as colunas visíveis', async () => {
+      URL.createObjectURL = vi.fn(() => 'blob:1');
+      URL.revokeObjectURL = vi.fn();
+      const clique = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+      servidorMsw.use(
+        http.get(`${URL_LISTA}/export`, ({ request }) => {
+          (pedidos.export ??= []).push(new URL(request.url).searchParams);
+          return new HttpResponse('xlsx', {
+            headers: { 'Content-Disposition': 'attachment; filename="unidades.xlsx"' },
+          });
+        }),
+      );
+      const { user } = renderizar({}, '/lista?page=2&sort=nome:asc&status=ativo&search=centro');
+      await screen.findByText('Unidade 11');
+
+      await user.click(botao('Exportar'));
+      await user.click(await screen.findByRole('menuitem', { name: 'Excel' }));
+
+      await waitFor(() => expect(clique).toHaveBeenCalledOnce());
+      expect(ultimo('export')).toEqual({
+        sort: 'nome:asc',
+        status: 'ativo',
+        search: 'centro',
+        format: 'xlsx',
+        columns: 'nome,status',
+      });
+      expect((clique.mock.contexts[0] as HTMLAnchorElement).download).toBe('unidades.xlsx');
+    });
+
+    it('não envia exportação inválida para o schema', async () => {
+      const { user } = renderizar({
+        colunas: [{ id: 'empresaId', titulo: 'Empresa', exportavel: true }],
+      });
+      await screen.findAllByText(EMPRESA);
+
+      await user.click(botao('Exportar'));
+      await user.click(await screen.findByRole('menuitem', { name: 'PDF' }));
+
+      // Sem handler de exportação: com `onUnhandledRequest: 'error'`, uma chamada falharia o teste.
+      await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
+      expect(pedidos.export).toBeUndefined();
+    });
+
+    it('esconde o "Exportar" sem a permissão', async () => {
+      sessao.permissoes = [];
+      renderizar();
+      await screen.findByText('Unidade 1');
+      expect(screen.queryByRole('button', { name: 'Exportar' })).not.toBeInTheDocument();
+      expect(botao('Colunas')).toBeInTheDocument();
+    });
+  });
+
+  it('ações por linha respeitam a permissão', async () => {
+    sessao.permissoes = ['configuracoes-gestao.minha-empresa.editar'] satisfies Permissao[];
+    const editar = vi.fn();
+    const { user } = renderizar({
+      acoes: (u) => [
+        {
+          rotulo: 'Editar',
+          onSelect: () => editar(u.nome),
+          permissao: 'configuracoes-gestao.minha-empresa.editar',
+        },
+        {
+          rotulo: 'Excluir',
+          onSelect: vi.fn(),
+          destrutiva: true,
+          permissao: 'configuracoes-gestao.minha-empresa.excluir',
+        },
+      ],
+    });
+    await screen.findByText('Unidade 1');
+
+    const linha = screen.getByRole('row', { name: /Unidade 2 / });
+    await user.click(within(linha).getByRole('button', { name: 'Ações' }));
+    const menu = await screen.findByRole('menu');
+    expect(
+      within(menu)
+        .getAllByRole('menuitem')
+        .map((item) => item.textContent),
+    ).toEqual(['Editar']);
+    await user.keyboard('{ArrowDown}{Enter}');
+    expect(editar).toHaveBeenCalledWith('Unidade 2');
+  });
+
+  it('esconde o menu de ações quando nenhuma é permitida', async () => {
+    sessao.permissoes = [];
+    renderizar({
+      acoes: () => [
+        {
+          rotulo: 'Excluir',
+          onSelect: vi.fn(),
+          permissao: 'configuracoes-gestao.minha-empresa.excluir',
+        },
+      ],
+    });
+    await screen.findByText('Unidade 1');
+    expect(screen.queryByRole('button', { name: 'Ações' })).not.toBeInTheDocument();
+  });
+
+  it('mostra o estado vazio com a mensagem da tela', async () => {
+    responderLista(0);
+    renderizar({ busca: false, status: undefined });
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Nenhuma unidade encontrada.');
+    expect(screen.getByText('Página 1 de 0')).toBeInTheDocument();
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
+  });
+
+  it('mostra o erro e tenta de novo', async () => {
+    let falhar = true;
+    servidorMsw.use(
+      http.get(URL_LISTA, () =>
+        falhar
+          ? HttpResponse.json({ statusCode: 500, code: 'X', message: 'Erro' }, { status: 500 })
+          : undefined,
+      ),
+    );
+    const { user } = renderizar();
+
+    const alerta = await screen.findByRole('alert');
+    expect(alerta).toHaveTextContent('Não foi possível carregar os dados.');
+    falhar = false;
+    await user.click(within(alerta).getByRole('button', { name: 'Tentar novamente' }));
+    expect(await screen.findByText('Unidade 1')).toBeInTheDocument();
+  });
+});
