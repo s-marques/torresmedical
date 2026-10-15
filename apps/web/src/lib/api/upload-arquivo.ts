@@ -1,26 +1,7 @@
-import {
-  apiErrorSchema,
-  ARQUIVO_CAMPO,
-  arquivoSchema,
-  type ApiError,
-  type Arquivo,
-  type ArquivoUso,
-} from '@torres/shared';
+import { ARQUIVO_CAMPO, arquivoSchema, type Arquivo, type ArquivoUso } from '@torres/shared';
+import { ApiRequestError, ERRO_CONEXAO, erroDaResposta } from './api-error';
 
-export const ERRO_CONEXAO = 'Falha de conexão. Tente novamente';
 export const ERRO_INESPERADO = 'Não foi possível enviar o arquivo. Tente novamente';
-
-/** Erro de uma chamada à API, com o corpo padrão de erro quando houver. */
-export class ApiRequestError extends Error {
-  constructor(
-    readonly status: number,
-    readonly body: ApiError | null,
-    message = body?.message ?? ERRO_INESPERADO,
-  ) {
-    super(message);
-    this.name = 'ApiRequestError';
-  }
-}
 
 export interface UploadArquivoOptions {
   uso: ArquivoUso;
@@ -57,11 +38,10 @@ export function uploadArquivo({
       if (xhr.status >= 200 && xhr.status < 300) {
         const arquivo = arquivoSchema.safeParse(corpo);
         if (arquivo.success) resolve(arquivo.data);
-        else reject(new ApiRequestError(xhr.status, null));
+        else reject(new ApiRequestError(xhr.status, null, ERRO_INESPERADO));
         return;
       }
-      const erro = apiErrorSchema.safeParse(corpo);
-      reject(new ApiRequestError(xhr.status, erro.success ? erro.data : null));
+      reject(erroDaResposta(xhr.status, corpo, ERRO_INESPERADO));
     };
     xhr.onerror = () => reject(new ApiRequestError(0, null, ERRO_CONEXAO));
     xhr.onabort = () => reject(abortError());

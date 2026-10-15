@@ -8,8 +8,9 @@ import {
   type ArquivoUso,
 } from '@torres/shared';
 import { useEffect, useId, useRef, useState, type DragEvent } from 'react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { mensagemDoErroDeUpload, uploadArquivo } from '../../lib/api/upload-arquivo';
-import './file-upload.css';
 
 export interface FileUploadProps {
   /** Uso do arquivo: define formatos aceitos e tamanho máximo (catálogo de `packages/shared`). */
@@ -96,29 +97,28 @@ export function FileUpload({
     if (!bloqueado) selecionar(event.dataTransfer.files);
   }
 
-  const classes = [
-    'file-upload',
-    arrastando && 'file-upload--arrastando',
-    bloqueado && 'file-upload--bloqueado',
-  ]
-    .filter(Boolean)
-    .join(' ');
-
   return (
-    <div className={classes}>
+    <div
+      className="group/upload grid gap-2"
+      data-arrastando={arrastando || undefined}
+      data-bloqueado={bloqueado || undefined}
+    >
       <label
         htmlFor={id}
-        className="file-upload__zona"
+        className={cn(
+          'grid cursor-pointer gap-1 rounded-lg border-2 border-dashed border-input p-5 text-center transition-colors',
+          'group-focus-within/upload:border-primary group-focus-within/upload:bg-primary/5',
+          'group-data-arrastando/upload:border-primary group-data-arrastando/upload:bg-primary/5',
+          'group-data-bloqueado/upload:cursor-not-allowed group-data-bloqueado/upload:opacity-60',
+        )}
         data-testid="file-upload-zona"
         onDragOver={onDragOver}
         onDragLeave={() => setArrastando(false)}
         onDrop={onDrop}
       >
-        <span className="file-upload__rotulo">{label}</span>
-        <span className="file-upload__instrucao">
-          Arraste o arquivo aqui ou clique para escolher
-        </span>
-        <span className="file-upload__dica" id={`${id}-dica`}>
+        <span className="font-semibold">{label}</span>
+        <span>Arraste o arquivo aqui ou clique para escolher</span>
+        <span className="text-sm text-muted-foreground" id={`${id}-dica`}>
           {dica}
         </span>
       </label>
@@ -126,7 +126,7 @@ export function FileUpload({
         ref={inputRef}
         id={id}
         type="file"
-        className="file-upload__input"
+        className="sr-only"
         accept={acceptDoUso(uso)}
         disabled={bloqueado}
         aria-describedby={`${id}-dica`}
@@ -135,21 +135,26 @@ export function FileUpload({
       />
 
       {estado.tipo === 'enviando' && (
-        <div className="file-upload__status">
+        <div className="flex items-center gap-2">
           <span>Enviando {estado.nome}…</span>
           <progress max={100} value={estado.progresso} aria-label={`Enviando ${estado.nome}`} />
-          <button type="button" onClick={() => envioRef.current?.abort()}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => envioRef.current?.abort()}
+          >
             Cancelar
-          </button>
+          </Button>
         </div>
       )}
       {estado.tipo === 'enviado' && (
-        <p className="file-upload__status" role="status">
+        <p className="m-0 flex items-center gap-2" role="status">
           Arquivo enviado: {estado.nome}
         </p>
       )}
       {estado.tipo === 'erro' && (
-        <p className="file-upload__erro" role="alert">
+        <p className="m-0 text-destructive" role="alert">
           {estado.mensagem}
         </p>
       )}

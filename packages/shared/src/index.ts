@@ -1,5 +1,6 @@
 import './zod-pt-br';
 
+export * from './menu/menu';
 export * from './schemas/arquivos/arquivo';
 export * from './schemas/auditoria/audit-log';
 export * from './schemas/common/api-error';
