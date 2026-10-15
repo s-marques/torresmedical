@@ -61,3 +61,64 @@ _Nenhuma mensagem visível._
 ## Seções (cabeçalhos)
 
 - Thais - Atendimento Torres Medical
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Aba: Instruções
+
+![Aba: Instruções](../img/estados/configuracoes-gestao-instrucoes-agente--aba-instrucoes.jpg)
+
+
+### Aba: Instruções Extras
+
+![Aba: Instruções Extras](../img/estados/configuracoes-gestao-instrucoes-agente--aba-instrucoes-extras.jpg)
+
+
+### Aba: Alertas do Agente
+
+![Aba: Alertas do Agente](../img/estados/configuracoes-gestao-instrucoes-agente--aba-alertas-do-agente.jpg)
+
+
+### Aba: Regras
+
+![Aba: Regras](../img/estados/configuracoes-gestao-instrucoes-agente--aba-regras.jpg)
+
+
+### Nova Instrução
+
+![Nova Instrução](../img/estados/configuracoes-gestao-instrucoes-agente--nova-instrucao.jpg)
+
+- Abre modal **Nova Instrução**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Nome * | text | sim | — |
+| Modelo | combobox | não indicado | — |
+| Temperatura | number | não indicado | — |
+| Max Tokens | number | não indicado | — |
+| Ativo | switch | não indicado | — |
+| System Prompt / Instrução * | textarea | sim | — |
+
+- Botões do modal: GPT-4.1 Mini (Recomendado) · Usar template · Cancelar · Criar · Close
+
+### Editar (ícone lápis)
+
+![Editar (ícone lápis)](../img/estados/configuracoes-gestao-instrucoes-agente--editar-icone-lapis.jpg)
+
+- Abre modal **Editar Instrução**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Nome * | text | sim | — |
+| Modelo | combobox | não indicado | — |
+| Temperatura | number | não indicado | — |
+| Max Tokens | number | não indicado | — |
+| Ativo | switch | não indicado | — |
+| System Prompt / Instrução * | textarea | sim | — |
+
+- Botões do modal: GPT-4.1 Mini (Recomendado) · Usar template · Cancelar · Salvar · Close
+
+<!-- /estados -->

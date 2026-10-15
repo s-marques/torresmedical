@@ -83,3 +83,68 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Bancaria
+
+![Bancaria](../img/estados/financeiro-conciliacao--bancaria.jpg)
+
+
+### Cartao
+
+![Cartao](../img/estados/financeiro-conciliacao--cartao.jpg)
+
+
+### Contas Bancárias
+
+![Contas Bancárias](../img/estados/financeiro-conciliacao--contas-bancarias.jpg)
+
+
+### Todos
+
+![Todos](../img/estados/financeiro-conciliacao--todos.jpg)
+
+
+### Conciliado
+
+![Conciliado](../img/estados/financeiro-conciliacao--conciliado.jpg)
+
+
+### Nao Conciliado
+
+![Nao Conciliado](../img/estados/financeiro-conciliacao--nao-conciliado.jpg)
+
+
+### Novo Lançamento
+
+![Novo Lançamento](../img/estados/financeiro-conciliacao--novo-lancamento.jpg)
+
+- Itens do menu/lista: Lançamento Manual · Transferência entre Contas
+
+### Dropdown aberto: Todas as contas
+
+![Dropdown aberto: Todas as contas](../img/estados/financeiro-conciliacao--dropdown-aberto-todas-as-contas.jpg)
+
+- Itens do menu/lista: Todas as contas · LUCAS FERNANDES ZANCHETT - PESSOAL · LUCAS ZANCHET FERNANDES LTDA · RECEBIMENTO DE PERMUTAS · TOP4 PARTICIPACOES · TORRES MEDICAL CENTER
+
+### A Pagar
+
+![A Pagar](../img/estados/financeiro-conciliacao--a-pagar.jpg)
+
+
+### A Receber
+
+![A Receber](../img/estados/financeiro-conciliacao--a-receber.jpg)
+
+
+### Menu de ações (⋯)
+
+![Menu de ações (⋯)](../img/estados/financeiro-conciliacao--menu-de-acoes.jpg)
+
+- Itens do menu/lista: Detalhar · Editar · Excluir
+
+<!-- /estados -->

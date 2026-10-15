@@ -65,3 +65,53 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Novo Perfil
+
+![Novo Perfil](../img/estados/configuracoes-gestao-perfis-de-acesso--novo-perfil.jpg)
+
+- Abre modal **Novo Perfil**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Nome * | text | sim | — |
+| Descrição | text | não indicado | — |
+| — | checkbox | não indicado | — |
+| — | checkbox | não indicado | — |
+| — | checkbox | não indicado | — |
+| — | checkbox | não indicado | — |
+| — | checkbox | não indicado | — |
+| — | checkbox | não indicado | — |
+| — | checkbox | não indicado | — |
+| — | checkbox | não indicado | — |
+| — | checkbox | não indicado | — |
+
+- Botões do modal: Selecionar Todas · Limpar · Cancelar · Cadastrar · Close
+
+### Colunas
+
+![Colunas](../img/estados/configuracoes-gestao-perfis-de-acesso--colunas.jpg)
+
+- Itens do menu/lista: Nome · Paginas_permitidas · Ativo
+
+### Ordenação por coluna — 1 print de exemplo (colunas: Nome, Páginas, Status)
+
+![Ordenação por coluna — 1 print de exemplo (colunas: Nome, Páginas, Status)](../img/estados/configuracoes-gestao-perfis-de-acesso--ordenacao-por-coluna-1-print-de-exemplo-colunas-no.jpg)
+
+
+### Menu de ações (⋯) (na linha da tabela)
+
+![Menu de ações (⋯) (na linha da tabela)](../img/estados/configuracoes-gestao-perfis-de-acesso--menu-de-acoes-na-linha-da-tabela.jpg)
+
+- Itens do menu/lista: Editar · Excluir
+
+### Paginação — 1 print da página 2
+
+- lista com uma página só (botão de próxima página desabilitado), sem print
+
+<!-- /estados -->

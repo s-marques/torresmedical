@@ -78,3 +78,94 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Novo Negocio
+
+![Novo Negocio](../img/estados/comercial-atendimento-negocios--novo-negocio.jpg)
+
+- Abre modal **Novo Negocio**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Titulo * | text | sim | — |
+| Valor (R$) | number | não indicado | — |
+| Cliente | text | não indicado | — |
+| Pipeline | combobox | não indicado | — |
+| Estagio | combobox | não indicado | — |
+| Responsavel | combobox | não indicado | — |
+| Previsao de Fechamento | date | não indicado | — |
+| Status | combobox | não indicado | — |
+| Origem | combobox | não indicado | — |
+| Observacoes | textarea | não indicado | — |
+
+- Botões do modal: Selecione o pipeline · Selecione o estagio · Nenhum · Aberto · Não informado · Cancelar · Criar Negocio · Close
+
+### Dropdown aberto: Todos os Pipelines
+
+![Dropdown aberto: Todos os Pipelines](../img/estados/comercial-atendimento-negocios--dropdown-aberto-todos-os-pipelines.jpg)
+
+- Itens do menu/lista: Todos os Pipelines · VENDAS DE LOCAÇÕES
+
+### Todos
+
+![Todos](../img/estados/comercial-atendimento-negocios--todos.jpg)
+
+
+### Aberto
+
+![Aberto](../img/estados/comercial-atendimento-negocios--aberto.jpg)
+
+
+### Ganho
+
+![Ganho](../img/estados/comercial-atendimento-negocios--ganho.jpg)
+
+
+### Perdido
+
+![Perdido](../img/estados/comercial-atendimento-negocios--perdido.jpg)
+
+
+### Colunas
+
+![Colunas](../img/estados/comercial-atendimento-negocios--colunas.jpg)
+
+- Itens do menu/lista: Titulo · Cliente_nome · Estagio_nome · Valor · Data_previsao_fechamento · Status · Origem · Motivo_perda · Responsavel_nome
+
+### Ordenação por coluna — 1 print de exemplo (colunas: Titulo, Cliente, Estagio, Valor (R$), Previsao Fechamento, Status, Origem, Motivo Perda, Responsavel)
+
+![Ordenação por coluna — 1 print de exemplo (colunas: Titulo, Cliente, Estagio, Valor (R$), Previsao Fechamento, Status, Origem, Motivo Perda, Responsavel)](../img/estados/comercial-atendimento-negocios--ordenacao-por-coluna-1-print-de-exemplo-colunas-ti.jpg)
+
+
+### Editar (na linha da tabela)
+
+![Editar (na linha da tabela)](../img/estados/comercial-atendimento-negocios--editar-na-linha-da-tabela.jpg)
+
+- Abre modal **Editar Negocio**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Titulo * | text | sim | — |
+| Valor (R$) | number | não indicado | — |
+| Cliente | text | não indicado | — |
+| Pipeline | combobox | não indicado | — |
+| Estagio | combobox | não indicado | — |
+| Responsavel | combobox | não indicado | — |
+| Previsao de Fechamento | date | não indicado | — |
+| Status | combobox | não indicado | — |
+| Origem | combobox | não indicado | — |
+| Observacoes | textarea | não indicado | — |
+
+- Botões do modal: VENDAS DE LOCAÇÕES · EM DECISÃO / NEGOCIAÇÃO · Gleisiellé Carvalhö · Aberto · WhatsApp · Cancelar · Salvar · Close
+
+### Paginação — 1 print da página 2
+
+![Paginação — 1 print da página 2](../img/estados/comercial-atendimento-negocios--paginacao-1-print-da-pagina-2.jpg)
+
+
+<!-- /estados -->

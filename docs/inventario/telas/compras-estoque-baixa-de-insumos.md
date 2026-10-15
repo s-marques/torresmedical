@@ -53,3 +53,38 @@ _Nenhum link na área principal._
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Nova Baixa
+
+![Nova Baixa](../img/estados/compras-estoque-baixa-de-insumos--nova-baixa.jpg)
+
+- Abre modal **Nova Baixa de Insumos**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Digite o nome do paciente... | text | não indicado | — |
+| Profissional | combobox | não indicado | — |
+| Unidade | combobox | não indicado | — |
+| Pressão Arterial | text | não indicado | — |
+| Dextro (Glicemia) | text | não indicado | — |
+| Buscar insumo... | text | não indicado | — |
+| Observação | textarea | não indicado | — |
+
+- Botões do modal: Selecione... · Cancelar · Registrar Baixa · Close
+
+### Filtrar
+
+![Filtrar](../img/estados/compras-estoque-baixa-de-insumos--filtrar.jpg)
+
+
+### Limpar
+
+![Limpar](../img/estados/compras-estoque-baixa-de-insumos--limpar.jpg)
+
+
+<!-- /estados -->

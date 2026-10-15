@@ -51,3 +51,40 @@ _Nenhum link na área principal._
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Nova Resposta
+
+![Nova Resposta](../img/estados/configuracoes-gestao-respostas-rapidas--nova-resposta.jpg)
+
+- Abre modal **Nova Resposta Rapida**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Titulo * | text | sim | — |
+| Mensagem * | textarea | sim | — |
+| Categoria | text | não indicado | — |
+| Atalho | text | não indicado | — |
+
+- Botões do modal: Cancelar · Criar · Close
+
+### Criar primeira resposta
+
+![Criar primeira resposta](../img/estados/configuracoes-gestao-respostas-rapidas--criar-primeira-resposta.jpg)
+
+- Abre modal **Nova Resposta Rapida**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Titulo * | text | sim | — |
+| Mensagem * | textarea | sim | — |
+| Categoria | text | não indicado | — |
+| Atalho | text | não indicado | — |
+
+- Botões do modal: Cancelar · Criar · Close
+
+<!-- /estados -->

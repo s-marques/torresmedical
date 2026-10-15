@@ -77,3 +77,40 @@ _Nenhuma mensagem visível._
 ## Seções (cabeçalhos)
 
 - Aguardando pagamento
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Todos
+
+![Todos](../img/estados/financeiro-caixas--todos.jpg)
+
+
+### Aberto
+
+![Aberto](../img/estados/financeiro-caixas--aberto.jpg)
+
+
+### Fechado
+
+![Fechado](../img/estados/financeiro-caixas--fechado.jpg)
+
+
+### Colunas
+
+![Colunas](../img/estados/financeiro-caixas--colunas.jpg)
+
+- Itens do menu/lista: Id · Operador · Data_abertura · Data_fechamento · Valor_abertura · Valor_fechamento · Quebra · Status
+
+### Ordenação por coluna — 1 print de exemplo (colunas: #, Operador, Abertura, Fechamento, Vl. Abertura, Vl. Fechamento, Quebra, Status)
+
+![Ordenação por coluna — 1 print de exemplo (colunas: #, Operador, Abertura, Fechamento, Vl. Abertura, Vl. Fechamento, Quebra, Status)](../img/estados/financeiro-caixas--ordenacao-por-coluna-1-print-de-exemplo-colunas-op.jpg)
+
+
+### Paginação — 1 print da página 2
+
+- lista com uma página só (botão de próxima página desabilitado), sem print
+
+<!-- /estados -->

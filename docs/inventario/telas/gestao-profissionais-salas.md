@@ -57,3 +57,77 @@ _Nenhum link na área principal._
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Aba: Salas
+
+![Aba: Salas](../img/estados/gestao-profissionais-salas--aba-salas.jpg)
+
+
+### Aba: Contratos
+
+![Aba: Contratos](../img/estados/gestao-profissionais-salas--aba-contratos.jpg)
+
+
+### Aba: Mapa Ocupação
+
+![Aba: Mapa Ocupação](../img/estados/gestao-profissionais-salas--aba-mapa-ocupacao.jpg)
+
+
+### Aba: Dashboard
+
+![Aba: Dashboard](../img/estados/gestao-profissionais-salas--aba-dashboard.jpg)
+
+
+### Nova Sala
+
+![Nova Sala](../img/estados/gestao-profissionais-salas--nova-sala.jpg)
+
+- Abre modal **Nova Sala**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Nome * | text | sim | — |
+| Número | text | não indicado | — |
+| Andar | text | não indicado | — |
+| Tipo | combobox | não indicado | — |
+| m² | number | não indicado | — |
+| R$/Hora | number | não indicado | — |
+| R$/Turno | number | não indicado | — |
+| R$/Mês | number | não indicado | — |
+| Equipamentos | textarea | não indicado | — |
+
+- Botões do modal: Consultório · Cancelar · Salvar · Close
+
+### Detalhar
+
+![Detalhar](../img/estados/gestao-profissionais-salas--detalhar.jpg)
+
+- Abre modal **Detalhes da Sala**
+- Botões do modal: Fechar · Editar · Close
+
+### Editar (ícone lápis)
+
+![Editar (ícone lápis)](../img/estados/gestao-profissionais-salas--editar-icone-lapis.jpg)
+
+- Abre modal **Editar Sala**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Nome * | text | sim | — |
+| Número | text | não indicado | — |
+| Andar | text | não indicado | — |
+| Tipo | combobox | não indicado | — |
+| m² | number | não indicado | — |
+| R$/Hora | number | não indicado | — |
+| R$/Turno | number | não indicado | — |
+| R$/Mês | number | não indicado | — |
+| Equipamentos | textarea | não indicado | — |
+
+- Botões do modal: Consultório · Cancelar · Salvar · Close
+
+<!-- /estados -->

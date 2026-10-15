@@ -59,3 +59,25 @@ _Nenhum link na área principal._
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Aba: Perfil
+
+![Aba: Perfil](../img/estados/configuracoes-gestao-configuracoes--aba-perfil.jpg)
+
+
+### Aba: Preferências
+
+![Aba: Preferências](../img/estados/configuracoes-gestao-configuracoes--aba-preferencias.jpg)
+
+
+### Aba: Aparência
+
+![Aba: Aparência](../img/estados/configuracoes-gestao-configuracoes--aba-aparencia.jpg)
+
+
+<!-- /estados -->

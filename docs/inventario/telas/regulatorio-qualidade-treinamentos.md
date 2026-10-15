@@ -72,3 +72,59 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Novo Treinamento
+
+![Novo Treinamento](../img/estados/regulatorio-qualidade-treinamentos--novo-treinamento.jpg)
+
+- Abre modal **Novo Treinamento**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Funcionario * | text | sim | — |
+| Tipo * | combobox | sim | — |
+| Descricao | textarea | não indicado | — |
+| Data Realizacao | date | não indicado | — |
+| Data Vencimento | date | não indicado | — |
+| Carga Horaria (h) | number | não indicado | — |
+| Instituicao | text | não indicado | — |
+| Observacoes | textarea | não indicado | — |
+
+- Botões do modal: Selecione... · Cancelar · Cadastrar · Close
+
+### Aba: Todos
+
+![Aba: Todos](../img/estados/regulatorio-qualidade-treinamentos--aba-todos.jpg)
+
+
+### Aba: Valido
+
+![Aba: Valido](../img/estados/regulatorio-qualidade-treinamentos--aba-valido.jpg)
+
+
+### Aba: Vencido
+
+![Aba: Vencido](../img/estados/regulatorio-qualidade-treinamentos--aba-vencido.jpg)
+
+
+### Colunas
+
+![Colunas](../img/estados/regulatorio-qualidade-treinamentos--colunas.jpg)
+
+- Itens do menu/lista: Funcionario_nome · Tipo · Data_realizacao · Data_vencimento · Instituicao · Status
+
+### Ordenação por coluna — 1 print de exemplo (colunas: Funcionario, Tipo, Realizacao, Vencimento, Instituicao, Status)
+
+![Ordenação por coluna — 1 print de exemplo (colunas: Funcionario, Tipo, Realizacao, Vencimento, Instituicao, Status)](../img/estados/regulatorio-qualidade-treinamentos--ordenacao-por-coluna-1-print-de-exemplo-colunas-fu.jpg)
+
+
+### Paginação — 1 print da página 2
+
+- lista com uma página só (botão de próxima página desabilitado), sem print
+
+<!-- /estados -->

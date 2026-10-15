@@ -52,3 +52,34 @@ _Nenhum link na área principal._
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Nova Origem
+
+![Nova Origem](../img/estados/comercial-atendimento-origens-de-cliente--nova-origem.jpg)
+
+- Abre modal **Nova Origem**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Nome * | text | sim | — |
+
+- Botões do modal: Cancelar · Salvar · Close
+
+### Editar (ícone lápis) (na linha da tabela)
+
+![Editar (ícone lápis) (na linha da tabela)](../img/estados/comercial-atendimento-origens-de-cliente--editar-icone-lapis-na-linha-da-tabela.jpg)
+
+- Abre modal **Renomear Origem**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Nome * | text | sim | — |
+
+- Botões do modal: Cancelar · Salvar · Close
+
+<!-- /estados -->

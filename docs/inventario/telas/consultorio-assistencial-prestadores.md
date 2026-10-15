@@ -74,3 +74,71 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Novo Prestador
+
+![Novo Prestador](../img/estados/consultorio-assistencial-prestadores--novo-prestador.jpg)
+
+- Abre modal **Novo Prestador**
+- Abas do modal: Dados · Servico · Comercial · Avaliacao
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Nome * | text | sim | — |
+| Nome Fantasia | text | não indicado | — |
+| Tipo Pessoa | combobox | não indicado | — |
+| CPF/CNPJ | text | não indicado | — |
+| Telefone | text | não indicado | — |
+| Email | email | não indicado | — |
+| Status | combobox | não indicado | — |
+| Endereco | text | não indicado | — |
+
+- Botões do modal: Dados · Servico · Comercial · Avaliacao · Pessoa Fisica · Ativo · Cancelar · Cadastrar · Close
+
+### Dropdown aberto: Todas categorias
+
+![Dropdown aberto: Todas categorias](../img/estados/consultorio-assistencial-prestadores--dropdown-aberto-todas-categorias.jpg)
+
+- Itens do menu/lista: Todas categorias · Eletrica · Hidraulica · Pintura · Ar Condicionado · Jardinagem · Serralheria · Marcenaria · Gesso · Dedetizacao · Limpeza Caixa · TI · Refrigeracao · Outros
+
+### Todos
+
+![Todos](../img/estados/consultorio-assistencial-prestadores--todos.jpg)
+
+
+### Ativo
+
+![Ativo](../img/estados/consultorio-assistencial-prestadores--ativo.jpg)
+
+
+### Inativo
+
+![Inativo](../img/estados/consultorio-assistencial-prestadores--inativo.jpg)
+
+
+### Bloqueado
+
+![Bloqueado](../img/estados/consultorio-assistencial-prestadores--bloqueado.jpg)
+
+
+### Colunas
+
+![Colunas](../img/estados/consultorio-assistencial-prestadores--colunas.jpg)
+
+- Itens do menu/lista: Nome · Categoria · Telefone · Atende_urgencia · Nota_qualidade · Status
+
+### Ordenação por coluna — 1 print de exemplo (colunas: Nome, Categoria, Telefone, Urgencia, Avaliacao, Status)
+
+![Ordenação por coluna — 1 print de exemplo (colunas: Nome, Categoria, Telefone, Urgencia, Avaliacao, Status)](../img/estados/consultorio-assistencial-prestadores--ordenacao-por-coluna-1-print-de-exemplo-colunas-no.jpg)
+
+
+### Paginação — 1 print da página 2
+
+- lista com uma página só (botão de próxima página desabilitado), sem print
+
+<!-- /estados -->

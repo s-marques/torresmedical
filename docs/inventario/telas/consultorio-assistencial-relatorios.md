@@ -51,3 +51,15 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Dropdown aberto: Selecione um relatório... ASS-01 — Saldo de Pacotes ASS-02 — Aplicacoes por Prot
+
+- select nativo: opções listadas, sem print
+- Opções: Selecione um relatório..., ASS-01 — Saldo de Pacotes, ASS-02 — Aplicacoes por Protocolo, ASS-03 — Intercorrencias, ASS-04 — Tempo Medio de Consulta
+
+<!-- /estados -->

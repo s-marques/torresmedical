@@ -59,3 +59,61 @@ _Nenhum link na área principal._
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Nova Conta
+
+![Nova Conta](../img/estados/financeiro-plano-de-contas--nova-conta.jpg)
+
+- Abre modal **Nova Conta**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Código * | text | sim | — |
+| Tipo * | combobox | sim | — |
+| Nome * | text | sim | — |
+| Conta Pai | combobox | não indicado | — |
+
+- Botões do modal: Despesa · Nenhuma (raiz) · Cancelar · Salvar · Close
+
+### Dropdown aberto: Todos
+
+![Dropdown aberto: Todos](../img/estados/financeiro-plano-de-contas--dropdown-aberto-todos.jpg)
+
+- Itens do menu/lista: Todos · Receita · Despesa · Ativo · Passivo
+
+### Expandir Tudo
+
+![Expandir Tudo](../img/estados/financeiro-plano-de-contas--expandir-tudo.jpg)
+
+
+### Recolher
+
+![Recolher](../img/estados/financeiro-plano-de-contas--recolher.jpg)
+
+
+### Expandir (ícone ▾) (na linha da tabela)
+
+![Expandir (ícone ▾) (na linha da tabela)](../img/estados/financeiro-plano-de-contas--expandir-icone-na-linha-da-tabela.jpg)
+
+
+### Editar (ícone lápis) (na linha da tabela)
+
+![Editar (ícone lápis) (na linha da tabela)](../img/estados/financeiro-plano-de-contas--editar-icone-lapis-na-linha-da-tabela.jpg)
+
+- Abre modal **Editar Conta**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Código * | text | sim | — |
+| Tipo * | combobox | sim | — |
+| Nome * | text | sim | — |
+| Conta Pai | combobox | não indicado | — |
+
+- Botões do modal: Ativo · Nenhuma (raiz) · Cancelar · Salvar · Close
+
+<!-- /estados -->

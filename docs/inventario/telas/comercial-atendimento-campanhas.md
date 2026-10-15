@@ -55,3 +55,45 @@ _Nenhuma mensagem visível._
 ## Seções (cabeçalhos)
 
 - Nenhuma campanha
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Envios Agendados
+
+![Envios Agendados](../img/estados/comercial-atendimento-campanhas--envios-agendados.jpg)
+
+
+### Mensagens Automáticas
+
+![Mensagens Automáticas](../img/estados/comercial-atendimento-campanhas--mensagens-automaticas.jpg)
+
+
+### Relatórios
+
+![Relatórios](../img/estados/comercial-atendimento-campanhas--relatorios.jpg)
+
+
+### Nova Campanha
+
+![Nova Campanha](../img/estados/comercial-atendimento-campanhas--nova-campanha.jpg)
+
+- Abre modal **Nova Campanha**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Nome da Campanha * | text | sim | — |
+| Tipo de Envio | combobox | não indicado | — |
+| Canal WhatsApp | combobox | não indicado | — |
+| Filtro de Clientes | combobox | não indicado | — |
+| Quantidade de Envios | number | não indicado | — |
+| Intervalo entre envios (seg) | number | não indicado | — |
+| Data do Envio | date | não indicado | — |
+| Hora do Envio | time | não indicado | — |
+| Mensagem * | textarea | sim | — |
+
+- Botões do modal: Texto · Selecione · Todos os clientes · Visualizar Clientes · Cancelar · Criar Campanha · Close
+
+<!-- /estados -->

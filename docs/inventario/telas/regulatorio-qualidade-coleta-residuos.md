@@ -68,3 +68,44 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Nova Coleta
+
+![Nova Coleta](../img/estados/regulatorio-qualidade-coleta-residuos--nova-coleta.jpg)
+
+- Abre modal **Nova Coleta de Residuo**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Data Coleta * | date | sim | — |
+| Proxima Coleta | date | não indicado | — |
+| Empresa Coletora | text | não indicado | — |
+| Manifesto MTR | text | não indicado | — |
+| Peso (kg) | number | não indicado | — |
+| Tipo Residuo * | combobox | sim | — |
+| Responsavel | text | não indicado | — |
+| Observacoes | textarea | não indicado | — |
+
+- Botões do modal: Selecione... · Cancelar · Registrar · Close
+
+### Colunas
+
+![Colunas](../img/estados/regulatorio-qualidade-coleta-residuos--colunas.jpg)
+
+- Itens do menu/lista: Data_coleta · Proxima_coleta · Empresa_coletora · Manifesto_mtr · Peso_kg · Tipo_residuo · Responsavel
+
+### Ordenação por coluna — 1 print de exemplo (colunas: Data Coleta, Proxima Coleta, Empresa Coletora, MTR, Peso (kg), Tipo Residuo, Responsavel)
+
+![Ordenação por coluna — 1 print de exemplo (colunas: Data Coleta, Proxima Coleta, Empresa Coletora, MTR, Peso (kg), Tipo Residuo, Responsavel)](../img/estados/regulatorio-qualidade-coleta-residuos--ordenacao-por-coluna-1-print-de-exemplo-colunas-da.jpg)
+
+
+### Paginação — 1 print da página 2
+
+- lista com uma página só (botão de próxima página desabilitado), sem print
+
+<!-- /estados -->

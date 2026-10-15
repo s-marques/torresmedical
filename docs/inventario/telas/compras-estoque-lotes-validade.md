@@ -70,3 +70,46 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Novo Lote
+
+![Novo Lote](../img/estados/compras-estoque-lotes-validade--novo-lote.jpg)
+
+- Abre modal **Novo Lote**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Produto * | combobox | sim | — |
+| Numero do Lote * | text | sim | — |
+| Data de Vencimento * | date | sim | — |
+| Quantidade * | number | sim | — |
+
+- Botões do modal: Selecione o produto · Cancelar · Cadastrar · Close
+
+### Dropdown aberto: Todos os produtos
+
+![Dropdown aberto: Todos os produtos](../img/estados/compras-estoque-lotes-validade--dropdown-aberto-todos-os-produtos.jpg)
+
+- Itens do menu/lista: Todos os produtos
+
+### Colunas
+
+![Colunas](../img/estados/compras-estoque-lotes-validade--colunas.jpg)
+
+- Itens do menu/lista: Produto_nome · Numero_lote · Quantidade · Data_vencimento · Status
+
+### Ordenação por coluna — 1 print de exemplo (colunas: Produto, Lote, Quantidade, Vencimento, Status)
+
+![Ordenação por coluna — 1 print de exemplo (colunas: Produto, Lote, Quantidade, Vencimento, Status)](../img/estados/compras-estoque-lotes-validade--ordenacao-por-coluna-1-print-de-exemplo-colunas-pr.jpg)
+
+
+### Paginação — 1 print da página 2
+
+- lista com uma página só (botão de próxima página desabilitado), sem print
+
+<!-- /estados -->

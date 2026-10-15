@@ -76,3 +76,64 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Nova Mensalidade
+
+![Nova Mensalidade](../img/estados/comercial-atendimento-mensalidades--nova-mensalidade.jpg)
+
+- Abre modal **Nova Mensalidade**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Buscar paciente por nome... | text | não indicado | — |
+| Descricao * | text | sim | — |
+| Valor (R$) * | number | sim | — |
+| Dia Vencimento * | number | sim | — |
+| Forma Pagamento | combobox | não indicado | — |
+| Data Inicio * | date | sim | — |
+| Data Fim | date | não indicado | — |
+| Observacoes | textarea | não indicado | — |
+
+- Botões do modal: Selecione... · Cancelar · Cadastrar · Close
+
+### Aba: Todos
+
+![Aba: Todos](../img/estados/comercial-atendimento-mensalidades--aba-todos.jpg)
+
+
+### Aba: Ativo
+
+![Aba: Ativo](../img/estados/comercial-atendimento-mensalidades--aba-ativo.jpg)
+
+
+### Aba: Pausado
+
+![Aba: Pausado](../img/estados/comercial-atendimento-mensalidades--aba-pausado.jpg)
+
+
+### Aba: Cancelado
+
+![Aba: Cancelado](../img/estados/comercial-atendimento-mensalidades--aba-cancelado.jpg)
+
+
+### Colunas
+
+![Colunas](../img/estados/comercial-atendimento-mensalidades--colunas.jpg)
+
+- Itens do menu/lista: Cliente_nome · Descricao · Valor · Dia_vencimento · Data_inicio · Data_fim · Status
+
+### Ordenação por coluna — 1 print de exemplo (colunas: Cliente, Descricao, Valor, Dia Venc., Inicio, Fim, Status)
+
+![Ordenação por coluna — 1 print de exemplo (colunas: Cliente, Descricao, Valor, Dia Venc., Inicio, Fim, Status)](../img/estados/comercial-atendimento-mensalidades--ordenacao-por-coluna-1-print-de-exemplo-colunas-cl.jpg)
+
+
+### Paginação — 1 print da página 2
+
+- lista com uma página só (botão de próxima página desabilitado), sem print
+
+<!-- /estados -->

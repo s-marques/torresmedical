@@ -59,3 +59,20 @@ _Nenhuma mensagem visível._
 ## Seções (cabeçalhos)
 
 - Como posso ajudar?
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Nova conversa
+
+![Nova conversa](../img/estados/painel-busca-inteligente--nova-conversa.jpg)
+
+
+### Recolher painel lateral
+
+![Recolher painel lateral](../img/estados/painel-busca-inteligente--recolher-painel-lateral.jpg)
+
+
+<!-- /estados -->

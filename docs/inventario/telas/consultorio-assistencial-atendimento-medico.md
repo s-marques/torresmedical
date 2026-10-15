@@ -59,3 +59,42 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Anterior (ícone ‹)
+
+![Anterior (ícone ‹)](../img/estados/consultorio-assistencial-atendimento-medico--anterior-icone.jpg)
+
+
+### Próximo (ícone ›)
+
+![Próximo (ícone ›)](../img/estados/consultorio-assistencial-atendimento-medico--proximo-icone.jpg)
+
+
+### Hoje
+
+![Hoje](../img/estados/consultorio-assistencial-atendimento-medico--hoje.jpg)
+
+
+### Dropdown aberto: Todos os profissionais
+
+![Dropdown aberto: Todos os profissionais](../img/estados/consultorio-assistencial-atendimento-medico--dropdown-aberto-todos-os-profissionais.jpg)
+
+- Itens do menu/lista: Todos os profissionais · ANA LUIZA CARDOSO SILVA · CARLOS RODOLFO SCHLISCHKA · CRISTIANE CHARMO DIAS AMORIM · DAYANA BORGES VARANDA · FLAVIA CONCEIÇÃO SCOLAR · GIOVANNA CARVALHO FERNANDES FIGUEIREDO · GLEISIELLE CARVALHO DOS SANTOS · HOZANA CARLOS ALENCAR · ISIS HELENA FIGUEIREDO FORTES · KARYNE ARRUDA BURLI · LUMA REGINA DA COSTA FONTES · MARCOS VINICIUS VILELA MANCILHA · MARIO RONEY DE JESUS SOUSA · NATHALLY CANDIDO · PABLO GONÇALVES DA SILVA · ROSANA RIBEIRO DA SILVA · SARA RESCHETTI MARCON · SILVIA CRISTINA DE ALMEIDA · TUANNE LETICIA BAZZI CARDOSO · VITA GESTÃO DE SERVIÇOS DE SAÚDE LTDA
+
+### Dropdown aberto: Todos os status
+
+![Dropdown aberto: Todos os status](../img/estados/consultorio-assistencial-atendimento-medico--dropdown-aberto-todos-os-status.jpg)
+
+- Itens do menu/lista: Todos os status · Confirmados · Aguardando · Em Atendimento · Realizados
+
+### Clicar na linha da tabela (abre detalhe)
+
+![Clicar na linha da tabela (abre detalhe)](../img/estados/consultorio-assistencial-atendimento-medico--clicar-na-linha-da-tabela-abre-detalhe.jpg)
+
+
+<!-- /estados -->

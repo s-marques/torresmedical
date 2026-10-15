@@ -75,3 +75,49 @@ _Nenhum link na área principal._
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Dropdown aberto: Todos
+
+![Dropdown aberto: Todos](../img/estados/gestao-profissionais-receita-profissionais--dropdown-aberto-todos.jpg)
+
+- Itens do menu/lista: Todos · ANA LUIZA CARDOSO SILVA · CARLOS RODOLFO SCHLISCHKA · FLAVIA CONCEIÇÃO SCOLAR · GIOVANNA CARVALHO FERNANDES FIGUEIREDO · GLEISIELLE CARVALHO DOS SANTOS · ISIS HELENA FIGUEIREDO FORTES · KARYNE ARRUDA BURLI · LUMA REGINA DA COSTA FONTES · MARIO RONEY DE JESUS SOUSA · NATHALLY CANDIDO · PABLO GONÇALVES DA SILVA · ROSANA RIBEIRO DA SILVA · SARA RESCHETTI MARCON · TUANNE LETICIA BAZZI CARDOSO
+
+### Dropdown aberto: Todas
+
+![Dropdown aberto: Todas](../img/estados/gestao-profissionais-receita-profissionais--dropdown-aberto-todas.jpg)
+
+- Itens do menu/lista: Todas · Cartão de Crédito · Cartão de Débito · Convênio · Dinheiro · PIX · Permuta · Voucher
+
+### Limpar
+
+![Limpar](../img/estados/gestao-profissionais-receita-profissionais--limpar.jpg)
+
+
+### Colunas
+
+![Colunas](../img/estados/gestao-profissionais-receita-profissionais--colunas.jpg)
+
+- Itens do menu/lista: Data_vencimento · Profissional_nome · Cliente_nome · Descricao · Forma_pagamento · Valor · Status
+
+### Ordenação por coluna — 1 print de exemplo (colunas: Data, Profissional, Paciente, Valor)
+
+![Ordenação por coluna — 1 print de exemplo (colunas: Data, Profissional, Paciente, Valor)](../img/estados/gestao-profissionais-receita-profissionais--ordenacao-por-coluna-1-print-de-exemplo-colunas-da.jpg)
+
+
+### Ações (na linha da tabela)
+
+![Ações (na linha da tabela)](../img/estados/gestao-profissionais-receita-profissionais--acoes-na-linha-da-tabela.jpg)
+
+- Itens do menu/lista: Detalhar · Estornar Baixa · Editar · Excluir
+
+### Paginação — 1 print da página 2
+
+![Paginação — 1 print da página 2](../img/estados/gestao-profissionais-receita-profissionais--paginacao-1-print-da-pagina-2.jpg)
+
+
+<!-- /estados -->

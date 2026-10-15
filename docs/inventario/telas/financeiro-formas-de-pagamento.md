@@ -75,3 +75,75 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Aba: Formas de Pagamento
+
+![Aba: Formas de Pagamento](../img/estados/financeiro-formas-de-pagamento--aba-formas-de-pagamento.jpg)
+
+
+### Aba: Bandeiras
+
+![Aba: Bandeiras](../img/estados/financeiro-formas-de-pagamento--aba-bandeiras.jpg)
+
+
+### Aba: Taxas por Bandeira
+
+![Aba: Taxas por Bandeira](../img/estados/financeiro-formas-de-pagamento--aba-taxas-por-bandeira.jpg)
+
+
+### Nova Forma de Pagamento
+
+![Nova Forma de Pagamento](../img/estados/financeiro-formas-de-pagamento--nova-forma-de-pagamento.jpg)
+
+- Abre modal **Nova Forma de Pagamento**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Nome * | text | sim | — |
+| Finalidade | combobox | não indicado | — |
+| Tipo | combobox | não indicado | — |
+| Prazo Recebimento (dias) | number | não indicado | — |
+| Max. Parcelas | number | não indicado | — |
+| Movimenta conta bancária | checkbox | não indicado | — |
+
+- Botões do modal: Vendas / Recebimento · Dinheiro · Cancelar · Criar · Close
+
+### Colunas
+
+![Colunas](../img/estados/financeiro-formas-de-pagamento--colunas.jpg)
+
+- Itens do menu/lista: Nome · Tipo · Prazo_recebimento · Max_parcelas · Ativo
+
+### Ordenação por coluna — 1 print de exemplo (colunas: Nome, Tipo, Prazo, Max. Parcelas, Status)
+
+![Ordenação por coluna — 1 print de exemplo (colunas: Nome, Tipo, Prazo, Max. Parcelas, Status)](../img/estados/financeiro-formas-de-pagamento--ordenacao-por-coluna-1-print-de-exemplo-colunas-no.jpg)
+
+
+### Editar (na linha da tabela)
+
+![Editar (na linha da tabela)](../img/estados/financeiro-formas-de-pagamento--editar-na-linha-da-tabela.jpg)
+
+- Abre modal **Editar Forma de Pagamento**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Nome * | text | sim | — |
+| Finalidade | combobox | não indicado | — |
+| Tipo | combobox | não indicado | — |
+| Prazo Recebimento (dias) | number | não indicado | — |
+| Max. Parcelas | number | não indicado | — |
+| Movimenta conta bancária | checkbox | não indicado | — |
+
+- Botões do modal: Vendas / Recebimento · Boleto · Cancelar · Salvar · Close
+
+### Paginação — 1 print da página 2
+
+![Paginação — 1 print da página 2](../img/estados/financeiro-formas-de-pagamento--paginacao-1-print-da-pagina-2.jpg)
+
+
+<!-- /estados -->

@@ -51,3 +51,15 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Dropdown aberto: Selecione um relatório... REG-01 — Documentos a Vencer REG-02 — Treinamentos Pen
+
+- select nativo: opções listadas, sem print
+- Opções: Selecione um relatório..., REG-01 — Documentos a Vencer, REG-02 — Treinamentos Pendentes, REG-03 — Rastreabilidade de Lote, REG-04 — Coletas de Residuo
+
+<!-- /estados -->

@@ -52,3 +52,15 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Dropdown aberto: Selecione um relatório... RP-01 — Receita por Profissional RP-02 — Detalhado (Re
+
+- select nativo: opções listadas, sem print
+- Opções: Selecione um relatório..., RP-01 — Receita por Profissional, RP-02 — Detalhado (Recebidos + Pendentes), RP-03 — Por Forma de Pagamento, RP-04 — Pendentes (Parcelas + Sem Registro), RP-05 — Atendimentos por Profissional, RP-06 — Faturamento por Período, RP-07 — Receita por Paciente, RP-08 — Inadimplência, RP-09 — Contas por Faixa de Vencimento, RP-10 — Pagamentos em Andamento, RP-11 — Agendamentos sem Recebimento, RP-12 — Resumo Pendentes por Profissional, RP-13 — Consultas por Profissional e Forma de Pagamento
+
+<!-- /estados -->

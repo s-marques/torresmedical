@@ -49,3 +49,17 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Ver detalhes
+
+![Ver detalhes](../img/estados/configuracoes-gestao-ai-growth--ver-detalhes.jpg)
+
+- Abre modal **Nenhum paciente inativo há +60 dias**
+- Botões do modal: Close
+
+<!-- /estados -->

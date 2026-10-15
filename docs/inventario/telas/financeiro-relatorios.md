@@ -51,3 +51,15 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Dropdown aberto: Selecione um relatório... FIN-01 — Inadimplencia FIN-02 — Pagamentos em Andament
+
+- select nativo: opções listadas, sem print
+- Opções: Selecione um relatório..., FIN-01 — Inadimplencia, FIN-02 — Pagamentos em Andamento, FIN-03 — Pagamentos Nao Realizados, FIN-04 — Pro Bono / Permuta, FIN-05 — DRE por Unidade, FIN-06 — Faturamento por Período, FIN-07 — Faturamento por Tipo de Pagamento, FIN-08 — Faturamento por Profissional, FIN-09 — Faturamento por Procedimento, FIN-10 — Faturamento por Paciente, FIN-11 — Contas a Receber e Pagar por Vencimento, FIN-12 — Despesa por Centro de Custo, FIN-13 — Extrato por Plano de Contas (Despesas), FIN-14 — Extrato por Plano de Contas (Receitas), FIN-15 — Conciliação Bancária, FIN-16 — Conciliação de Cartão, FIN-17 — Extrato por Fornecedor / Contrato, FIN-18 — Extrato de Créditos do Paciente, FIN-19 — Contas a Pagar (Detalhado), FIN-20 — Contas a Receber (Detalhado), FIN-21 — Mix de Produtos Coworking
+
+<!-- /estados -->

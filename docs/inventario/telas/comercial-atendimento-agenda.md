@@ -59,3 +59,62 @@ _Nenhuma mensagem visível._
 ## Seções (cabeçalhos)
 
 - 12 de out. — 18 de out. de 2026
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Novo Agendamento
+
+![Novo Agendamento](../img/estados/comercial-atendimento-agenda--novo-agendamento.jpg)
+
+- Abre modal **Novo Agendamento**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Buscar paciente por nome... | text | não indicado | — |
+| Profissional * | combobox | sim | — |
+| Data | date | não indicado | — |
+| Hora | time | não indicado | — |
+| Agendamento recorrente | checkbox | não indicado | — |
+| Duração (min) | number | não indicado | — |
+| Tipo | combobox | não indicado | — |
+| Valor (R$) | number | não indicado | — |
+| Convênio | checkbox | não indicado | — |
+| Observações | textarea | não indicado | — |
+
+- Botões do modal: Novo · Selecione · Fechar · Agendar · Close
+
+### Anterior (ícone ‹)
+
+![Anterior (ícone ‹)](../img/estados/comercial-atendimento-agenda--anterior-icone.jpg)
+
+
+### Hoje
+
+![Hoje](../img/estados/comercial-atendimento-agenda--hoje.jpg)
+
+
+### Próximo (ícone ›)
+
+![Próximo (ícone ›)](../img/estados/comercial-atendimento-agenda--proximo-icone.jpg)
+
+
+### Semana
+
+![Semana](../img/estados/comercial-atendimento-agenda--semana.jpg)
+
+
+### Dia
+
+![Dia](../img/estados/comercial-atendimento-agenda--dia.jpg)
+
+
+### Dropdown aberto: Todos profissionais
+
+![Dropdown aberto: Todos profissionais](../img/estados/comercial-atendimento-agenda--dropdown-aberto-todos-profissionais.jpg)
+
+- Itens do menu/lista: Todos profissionais · ANA LUIZA CARDOSO SILVA · CARLOS RODOLFO SCHLISCHKA · FLAVIA CONCEIÇÃO SCOLAR · GIOVANNA CARVALHO FERNANDES FIGUEIREDO · GLEISIELLE CARVALHO DOS SANTOS · ISIS HELENA FIGUEIREDO FORTES · KARYNE ARRUDA BURLI · LUMA REGINA DA COSTA FONTES · MARIO RONEY DE JESUS SOUSA · NATHALLY CANDIDO · PABLO GONÇALVES DA SILVA · ROSANA RIBEIRO DA SILVA · SARA RESCHETTI MARCON · TUANNE LETICIA BAZZI CARDOSO
+
+<!-- /estados -->

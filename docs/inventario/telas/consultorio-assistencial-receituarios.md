@@ -71,3 +71,64 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Novo Bloco
+
+![Novo Bloco](../img/estados/consultorio-assistencial-receituarios--novo-bloco.jpg)
+
+- Abre modal **Novo Bloco de Receituario**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Tipo * | combobox | sim | — |
+| Numero Inicio * | number | sim | — |
+| Numero Fim * | number | sim | — |
+| Localizacao | text | não indicado | — |
+| ID do Medico | number | não indicado | — |
+| Data Recebimento | date | não indicado | — |
+
+- Botões do modal: Branca (C) · Cancelar · Cadastrar · Close
+
+### Blocos
+
+![Blocos](../img/estados/consultorio-assistencial-receituarios--blocos.jpg)
+
+
+### Prescricoes
+
+![Prescricoes](../img/estados/consultorio-assistencial-receituarios--prescricoes.jpg)
+
+
+### Dropdown aberto: Todos os tipos
+
+![Dropdown aberto: Todos os tipos](../img/estados/consultorio-assistencial-receituarios--dropdown-aberto-todos-os-tipos.jpg)
+
+- Itens do menu/lista: Todos os tipos · Amarela · Azul · Branca
+
+### Dropdown aberto: Todos
+
+![Dropdown aberto: Todos](../img/estados/consultorio-assistencial-receituarios--dropdown-aberto-todos.jpg)
+
+- Itens do menu/lista: Todos · Ativo · Finalizado · Cancelado
+
+### Colunas
+
+![Colunas](../img/estados/consultorio-assistencial-receituarios--colunas.jpg)
+
+- Itens do menu/lista: Tipo · Localizacao · Medico_nome · Status
+
+### Ordenação por coluna — 1 print de exemplo (colunas: Tipo, Localizacao, Medico, Status)
+
+![Ordenação por coluna — 1 print de exemplo (colunas: Tipo, Localizacao, Medico, Status)](../img/estados/consultorio-assistencial-receituarios--ordenacao-por-coluna-1-print-de-exemplo-colunas-ti.jpg)
+
+
+### Paginação — 1 print da página 2
+
+- lista com uma página só (botão de próxima página desabilitado), sem print
+
+<!-- /estados -->

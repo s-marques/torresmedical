@@ -73,3 +73,50 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Atualizar
+
+![Atualizar](../img/estados/comercial-atendimento-confirmacoes--atualizar.jpg)
+
+
+### Hoje
+
+![Hoje](../img/estados/comercial-atendimento-confirmacoes--hoje.jpg)
+
+
+### Pendentes
+
+![Pendentes](../img/estados/comercial-atendimento-confirmacoes--pendentes.jpg)
+
+
+### Historico
+
+![Historico](../img/estados/comercial-atendimento-confirmacoes--historico.jpg)
+
+
+### Modelos e Config
+
+![Modelos e Config](../img/estados/comercial-atendimento-confirmacoes--modelos-e-config.jpg)
+
+
+### Colunas
+
+![Colunas](../img/estados/comercial-atendimento-confirmacoes--colunas.jpg)
+
+- Itens do menu/lista: Data_hora · Cliente_nome · Profissional_nome · Confirmado
+
+### Ordenação por coluna — 1 print de exemplo (colunas: Agendamento, Paciente, Profissional, Status)
+
+![Ordenação por coluna — 1 print de exemplo (colunas: Agendamento, Paciente, Profissional, Status)](../img/estados/comercial-atendimento-confirmacoes--ordenacao-por-coluna-1-print-de-exemplo-colunas-ag.jpg)
+
+
+### Paginação — 1 print da página 2
+
+- lista com uma página só (botão de próxima página desabilitado), sem print
+
+<!-- /estados -->

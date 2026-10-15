@@ -65,3 +65,40 @@ _Nenhum link na área principal._
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Aba: Dados
+
+![Aba: Dados](../img/estados/configuracoes-gestao-minha-empresa--aba-dados.jpg)
+
+
+### Aba: Plano e Faturas
+
+![Aba: Plano e Faturas](../img/estados/configuracoes-gestao-minha-empresa--aba-plano-e-faturas.jpg)
+
+
+### Aba: Integrações
+
+![Aba: Integrações](../img/estados/configuracoes-gestao-minha-empresa--aba-integracoes.jpg)
+
+
+### Aba: Usuários
+
+![Aba: Usuários](../img/estados/configuracoes-gestao-minha-empresa--aba-usuarios.jpg)
+
+
+### Aba: Unidades
+
+![Aba: Unidades](../img/estados/configuracoes-gestao-minha-empresa--aba-unidades.jpg)
+
+
+### Aba: Horários
+
+![Aba: Horários](../img/estados/configuracoes-gestao-minha-empresa--aba-horarios.jpg)
+
+
+<!-- /estados -->

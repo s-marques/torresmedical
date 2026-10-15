@@ -68,3 +68,60 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Nova Categoria
+
+![Nova Categoria](../img/estados/compras-estoque-categorias--nova-categoria.jpg)
+
+- Abre modal **Nova Categoria**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Nome * | text | sim | — |
+| Tipo | combobox | não indicado | — |
+| Descricao | text | não indicado | — |
+
+- Botões do modal: Servico · Cancelar · Cadastrar · Close
+
+### Todas
+
+![Todas](../img/estados/compras-estoque-categorias--todas.jpg)
+
+
+### Produtos
+
+![Produtos](../img/estados/compras-estoque-categorias--produtos.jpg)
+
+
+### Servicos
+
+![Servicos](../img/estados/compras-estoque-categorias--servicos.jpg)
+
+
+### Colunas
+
+![Colunas](../img/estados/compras-estoque-categorias--colunas.jpg)
+
+- Itens do menu/lista: Nome · Tipo · Cor · Descricao
+
+### Ordenação por coluna — 1 print de exemplo (colunas: Nome, Tipo, Descricao)
+
+![Ordenação por coluna — 1 print de exemplo (colunas: Nome, Tipo, Descricao)](../img/estados/compras-estoque-categorias--ordenacao-por-coluna-1-print-de-exemplo-colunas-no.jpg)
+
+
+### Menu de ações (⋯) (na linha da tabela)
+
+![Menu de ações (⋯) (na linha da tabela)](../img/estados/compras-estoque-categorias--menu-de-acoes-na-linha-da-tabela.jpg)
+
+- Itens do menu/lista: Editar · Excluir
+
+### Paginação — 1 print da página 2
+
+- lista com uma página só (botão de próxima página desabilitado), sem print
+
+<!-- /estados -->

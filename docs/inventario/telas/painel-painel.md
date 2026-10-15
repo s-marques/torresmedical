@@ -91,3 +91,83 @@ _Nenhum link na área principal._
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Dropdown aberto: Por mês
+
+![Dropdown aberto: Por mês](../img/estados/painel-painel--dropdown-aberto-por-mes.jpg)
+
+- Itens do menu/lista: Por mês · Por período
+
+### Dropdown aberto: Outubro de 
+
+![Dropdown aberto: Outubro de ](../img/estados/painel-painel--dropdown-aberto-outubro-de.jpg)
+
+- Itens do menu/lista: Outubro de 2026 · Setembro de 2026 · Agosto de 2026 · Julho de 2026 · Junho de 2026 · Maio de 2026 · Abril de 2026 · Março de 2026 · Fevereiro de 2026 · Janeiro de 2026 · Dezembro de 2025 · Novembro de 2025 · Outubro de 2025 · Setembro de 2025 · Agosto de 2025 · Julho de 2025 · Junho de 2025 · Maio de 2025 · Abril de 2025 · Março de 2025 · Fevereiro de 2025 · Janeiro de 2025 · Dezembro de 2024 · Novembro de 2024
+
+### Dropdown aberto: Recebimento
+
+![Dropdown aberto: Recebimento](../img/estados/painel-painel--dropdown-aberto-recebimento.jpg)
+
+- Itens do menu/lista: Recebimento · Competência
+
+### Buscar
+
+![Buscar](../img/estados/painel-painel--buscar.jpg)
+
+
+### Executivo
+
+![Executivo](../img/estados/painel-painel--executivo.jpg)
+
+
+### Comercial
+
+![Comercial](../img/estados/painel-painel--comercial.jpg)
+
+
+### Ocupação
+
+![Ocupação](../img/estados/painel-painel--ocupacao.jpg)
+
+
+### Financeiro
+
+![Financeiro](../img/estados/painel-painel--financeiro.jpg)
+
+
+### Pacientes
+
+![Pacientes](../img/estados/painel-painel--pacientes.jpg)
+
+
+### Dropdown aberto: Contratados Livres Ocupação %
+
+- select nativo: opções listadas, sem print
+- Opções: Contratados, Livres, Ocupação %
+
+### Tabela
+
+![Tabela](../img/estados/painel-painel--tabela.jpg)
+
+
+### Barras
+
+![Barras](../img/estados/painel-painel--barras.jpg)
+
+
+### Pizza
+
+![Pizza](../img/estados/painel-painel--pizza.jpg)
+
+
+### Linha
+
+![Linha](../img/estados/painel-painel--linha.jpg)
+
+
+<!-- /estados -->

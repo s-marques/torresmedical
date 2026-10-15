@@ -76,3 +76,70 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Nova NC
+
+![Nova NC](../img/estados/regulatorio-qualidade-nao-conformidades--nova-nc.jpg)
+
+- Abre modal **Nova Nao-Conformidade**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Titulo * | text | sim | — |
+| Descricao | textarea | não indicado | — |
+| Setor | text | não indicado | — |
+| Tipo * | combobox | sim | — |
+| Data Ocorrencia | date | não indicado | — |
+| Data Limite Correcao | date | não indicado | — |
+| Responsavel | text | não indicado | — |
+| Acao Corretiva | textarea | não indicado | — |
+| Observacoes | textarea | não indicado | — |
+
+- Botões do modal: Selecione... · Cancelar · Registrar · Close
+
+### Aba: Todas
+
+![Aba: Todas](../img/estados/regulatorio-qualidade-nao-conformidades--aba-todas.jpg)
+
+
+### Aba: Aberta
+
+![Aba: Aberta](../img/estados/regulatorio-qualidade-nao-conformidades--aba-aberta.jpg)
+
+
+### Aba: Em Tratamento
+
+![Aba: Em Tratamento](../img/estados/regulatorio-qualidade-nao-conformidades--aba-em-tratamento.jpg)
+
+
+### Aba: Corrigida
+
+![Aba: Corrigida](../img/estados/regulatorio-qualidade-nao-conformidades--aba-corrigida.jpg)
+
+
+### Aba: Fechada
+
+![Aba: Fechada](../img/estados/regulatorio-qualidade-nao-conformidades--aba-fechada.jpg)
+
+
+### Colunas
+
+![Colunas](../img/estados/regulatorio-qualidade-nao-conformidades--colunas.jpg)
+
+- Itens do menu/lista: Titulo · Setor · Tipo · Data_ocorrencia · Responsavel · Status
+
+### Ordenação por coluna — 1 print de exemplo (colunas: Titulo, Setor, Tipo, Data Ocorrencia, Responsavel, Status)
+
+![Ordenação por coluna — 1 print de exemplo (colunas: Titulo, Setor, Tipo, Data Ocorrencia, Responsavel, Status)](../img/estados/regulatorio-qualidade-nao-conformidades--ordenacao-por-coluna-1-print-de-exemplo-colunas-ti.jpg)
+
+
+### Paginação — 1 print da página 2
+
+- lista com uma página só (botão de próxima página desabilitado), sem print
+
+<!-- /estados -->

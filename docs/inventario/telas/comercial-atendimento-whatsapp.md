@@ -159,3 +159,78 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Anúncios
+
+![Anúncios](../img/estados/comercial-atendimento-whatsapp--anuncios.jpg)
+
+- Abre modal **Contatos vindos de anúncio**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| De | date | não indicado | — |
+| Até | date | não indicado | — |
+
+- Botões do modal: Close
+
+### Gerenciar Tags
+
+![Gerenciar Tags](../img/estados/comercial-atendimento-whatsapp--gerenciar-tags.jpg)
+
+- Abre modal **Gerenciar Tags**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Nome da tag | text | não indicado | — |
+| — | color | não indicado | — |
+
+- Botões do modal: Close
+
+### Buscar conversas...
+
+![Buscar conversas...](../img/estados/comercial-atendimento-whatsapp--buscar-conversas.jpg)
+
+- Abre modal **Buscar Conversas**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Buscar por nome, telefone, tag ou palavra nas mensagens... | text | não indicado | — |
+
+- Botões do modal: Close
+
+### Nova
+
+![Nova](../img/estados/comercial-atendimento-whatsapp--nova.jpg)
+
+
+### Bot
+
+![Bot](../img/estados/comercial-atendimento-whatsapp--bot.jpg)
+
+
+### Aguardando
+
+![Aguardando](../img/estados/comercial-atendimento-whatsapp--aguardando.jpg)
+
+
+### Em Atendimento
+
+![Em Atendimento](../img/estados/comercial-atendimento-whatsapp--em-atendimento.jpg)
+
+
+### Alertas
+
+![Alertas](../img/estados/comercial-atendimento-whatsapp--alertas.jpg)
+
+
+### Finalizada
+
+![Finalizada](../img/estados/comercial-atendimento-whatsapp--finalizada.jpg)
+
+
+<!-- /estados -->

@@ -50,3 +50,16 @@ _Nenhum link na área principal._
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Dropdown aberto: Selecione o canal
+
+![Dropdown aberto: Selecione o canal](../img/estados/comercial-atendimento-grupos-whatsapp--dropdown-aberto-selecione-o-canal.jpg)
+
+- Itens do menu/lista: Recepção · Gerência Geral · Dr Carlos Schlischka · Dr Carlos Schlischka - II
+
+<!-- /estados -->

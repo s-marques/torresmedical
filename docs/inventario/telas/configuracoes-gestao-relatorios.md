@@ -51,3 +51,15 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Dropdown aberto: Selecione um relatório... GES-01 — Log de Acesso GES-02 — Ticket Medio por Canal
+
+- select nativo: opções listadas, sem print
+- Opções: Selecione um relatório..., GES-01 — Log de Acesso, GES-02 — Ticket Medio por Canal, GES-03 — Ocupacao por Sala, GES-04 — LTV Paciente
+
+<!-- /estados -->

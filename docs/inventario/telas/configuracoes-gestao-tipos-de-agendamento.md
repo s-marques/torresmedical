@@ -49,3 +49,46 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Novo Tipo
+
+![Novo Tipo](../img/estados/configuracoes-gestao-tipos-de-agendamento--novo-tipo.jpg)
+
+- Abre modal **Novo Tipo de Agendamento**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Nome * | text | sim | — |
+| Duração padrão (min) | number | não indicado | — |
+| — | color | não indicado | — |
+| — | text | não indicado | — |
+| Permite vincular procedimento/produto | checkbox | não indicado | — |
+| Permite vincular pacote de sessões | checkbox | não indicado | — |
+| É soroterapia (agenda separada) | checkbox | não indicado | — |
+
+- Botões do modal: Cancelar · Criar · Close
+
+### Editar (ícone lápis)
+
+![Editar (ícone lápis)](../img/estados/configuracoes-gestao-tipos-de-agendamento--editar-icone-lapis.jpg)
+
+- Abre modal **Editar Tipo**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Nome * | text | sim | — |
+| Duração padrão (min) | number | não indicado | — |
+| — | color | não indicado | — |
+| — | text | não indicado | — |
+| Permite vincular procedimento/produto | checkbox | não indicado | — |
+| Permite vincular pacote de sessões | checkbox | não indicado | — |
+| É soroterapia (agenda separada) | checkbox | não indicado | — |
+
+- Botões do modal: Cancelar · Salvar · Close
+
+<!-- /estados -->

@@ -69,3 +69,51 @@ _Nenhum modal aberto na carga da tela. Modais disparados por botões não foram 
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Novo Usuario
+
+![Novo Usuario](../img/estados/configuracoes-gestao-usuarios--novo-usuario.jpg)
+
+- Abre modal **Novo Usuario**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Nome * | text | sim | — |
+| Email * | email | sim | — |
+| Senha * | password | sim | — |
+| Telefone | text | não indicado | — |
+| Cargo | text | não indicado | — |
+| Perfil de Acesso | combobox | não indicado | — |
+| Perfil de Acesso (Páginas) | combobox | não indicado | — |
+| Ver dados sensíveis (LGPD) — CPF, RG, endereço, e-mail dos pacientes | checkbox | não indicado | — |
+
+- Botões do modal: Usuário Básico · Sem perfil (usa padrão da role) · Cancelar · Cadastrar · Close
+
+### Colunas
+
+![Colunas](../img/estados/configuracoes-gestao-usuarios--colunas.jpg)
+
+- Itens do menu/lista: Nome · Email · Telefone · Role · Perfil_nome · Ativo · Ultimo_login
+
+### Ordenação por coluna — 1 print de exemplo (colunas: Nome, Email, Telefone, Role, Perfil, Status, Ultimo Login)
+
+![Ordenação por coluna — 1 print de exemplo (colunas: Nome, Email, Telefone, Role, Perfil, Status, Ultimo Login)](../img/estados/configuracoes-gestao-usuarios--ordenacao-por-coluna-1-print-de-exemplo-colunas-no.jpg)
+
+
+### Menu de ações (⋯) (na linha da tabela)
+
+![Menu de ações (⋯) (na linha da tabela)](../img/estados/configuracoes-gestao-usuarios--menu-de-acoes-na-linha-da-tabela.jpg)
+
+- Itens do menu/lista: Visualizar · Editar · Resetar Senha · Desativar
+
+### Paginação — 1 print da página 2
+
+![Paginação — 1 print da página 2](../img/estados/configuracoes-gestao-usuarios--paginacao-1-print-da-pagina-2.jpg)
+
+
+<!-- /estados -->

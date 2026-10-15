@@ -66,3 +66,39 @@ _Nenhum link na área principal._
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Adicionar
+
+![Adicionar](../img/estados/configuracoes-gestao-bypass-agente--adicionar.jpg)
+
+- Abre modal **Adicionar Telefone ao Bypass**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Telefone * | text | sim | — |
+| Nome | text | não indicado | — |
+| Cargo | text | não indicado | — |
+
+- Botões do modal: Cancelar · Adicionar · Close
+
+### Colunas
+
+![Colunas](../img/estados/configuracoes-gestao-bypass-agente--colunas.jpg)
+
+- Itens do menu/lista: Telefone · Nome · Cargo · Ativo
+
+### Ordenação por coluna — 1 print de exemplo (colunas: Telefone, Nome, Cargo)
+
+![Ordenação por coluna — 1 print de exemplo (colunas: Telefone, Nome, Cargo)](../img/estados/configuracoes-gestao-bypass-agente--ordenacao-por-coluna-1-print-de-exemplo-colunas-te.jpg)
+
+
+### Paginação — 1 print da página 2
+
+- lista com uma página só (botão de próxima página desabilitado), sem print
+
+<!-- /estados -->

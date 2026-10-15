@@ -56,3 +56,52 @@ _Nenhum link na área principal._
 ## Mensagens e validações visíveis
 
 _Nenhuma mensagem visível._
+
+<!-- estados -->
+## Estados capturados (interações de visualização)
+
+_Capturados em 15/10/2026 clicando só em itens de visualização do checklist da issue. Nenhum formulário foi preenchido e toda gravação foi bloqueada._
+
+### Novo Documento
+
+![Novo Documento](../img/estados/configuracoes-gestao-base-de-conhecimento--novo-documento.jpg)
+
+- Abre modal **Novo Documento**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Título * | text | sim | — |
+| Profissional | combobox | não indicado | — |
+| Categoria | combobox | não indicado | — |
+| Conteúdo * | textarea | sim | — |
+
+- Botões do modal: Geral (todos) · Geral · Cancelar · Salvar e Indexar · Close
+
+### Dropdown aberto: Todos
+
+![Dropdown aberto: Todos](../img/estados/configuracoes-gestao-base-de-conhecimento--dropdown-aberto-todos.jpg)
+
+- Itens do menu/lista: Todos · ANA LUIZA CARDOSO SILVA · CARLOS RODOLFO SCHLISCHKA · CRISTIANE CHARMO DIAS AMORIM · DAYANA BORGES VARANDA · FLAVIA CONCEIÇÃO SCOLAR · GIOVANNA CARVALHO FERNANDES FIGUEIREDO · GLEISIELLE CARVALHO DOS SANTOS · HOZANA CARLOS ALENCAR · ISIS HELENA FIGUEIREDO FORTES · KARYNE ARRUDA BURLI · LUMA REGINA DA COSTA FONTES · MARCOS VINICIUS VILELA MANCILHA · MARIO RONEY DE JESUS SOUSA · NATHALLY CANDIDO · PABLO GONÇALVES DA SILVA · ROSANA RIBEIRO DA SILVA · SARA RESCHETTI MARCON · SILVIA CRISTINA DE ALMEIDA · TUANNE LETICIA BAZZI CARDOSO · VITA GESTÃO DE SERVIÇOS DE SAÚDE LTDA
+
+### Dropdown aberto: Todas
+
+![Dropdown aberto: Todas](../img/estados/configuracoes-gestao-base-de-conhecimento--dropdown-aberto-todas.jpg)
+
+- Itens do menu/lista: Todas · Geral · Procedimento · Preparo de Exame · Pós-procedimento · Pergunta Frequente · Convênio · Protocolo · Orientação
+
+### Editar (ícone lápis)
+
+![Editar (ícone lápis)](../img/estados/configuracoes-gestao-base-de-conhecimento--editar-icone-lapis.jpg)
+
+- Abre modal **Editar Documento**
+
+| Campo | Tipo | Obrigatório | Opções |
+|---|---|---|---|
+| Título * | text | sim | — |
+| Profissional | combobox | não indicado | — |
+| Categoria | combobox | não indicado | — |
+| Conteúdo * | textarea | sim | — |
+
+- Botões do modal: Geral (todos) · Geral · Cancelar · Salvar e Indexar · Close
+
+<!-- /estados -->
