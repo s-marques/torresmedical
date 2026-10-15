@@ -286,14 +286,23 @@ Antes de mover o card para **"Em revisão"**:
 1. Leia a issue e os **critérios de aceite**.
 2. Leia `docs/inventario/telas/<arquivo>.md` (o link está na issue) e veja o screenshot em
    `docs/inventario/img/<arquivo>.png`.
-3. Implemente todos os **campos, ações, validações, grids** (colunas, filtros, ordenação e
+3. Confira a seção **"Checklist de prints"** da issue e os comentários do card
+   (`gh issue view <n> --comments`).
+   - Itens 🤖 são capturados pelo robô e entram no inventário.
+   - Itens **👤 Manual** dependem do dev. Para cada item 👤 desmarcado e sem um comentário
+     `Print: <item>` no card, **pare antes de implementar aquela parte e peça ao dev** o print ou
+     a descrição da ação: o que abre, quais campos e quais mensagens aparecem. **Não deduza esse
+     comportamento.** As outras partes da tela podem seguir enquanto isso.
+   - Prints e comentários do dev são a fonte para essas ações. Use o texto escrito junto do
+     print (mensagens, regras) e cite o comentário na descrição do PR.
+4. Implemente todos os **campos, ações, validações, grids** (colunas, filtros, ordenação e
    paginação) e abas descritos.
    - O inventário foi gerado automaticamente e só em modo leitura. Modais e formulários de
      "Novo…/Editar" não foram abertos.
    - Quando faltar um detalhe, por exemplo os campos de um formulário de criação, deduza pela
      coluna do grid e pela tela de detalhe. **Pergunte ao dev em caso de dúvida.**
    - Registre na descrição do PR o que foi deduzido.
-4. Siga a ordem:
+5. Siga a ordem:
    1. Schema Zod em `packages/shared`
    2. Model e migration Prisma
    3. Service e controller com `@Audit` e `@RequirePermission`
@@ -301,7 +310,7 @@ Antes de mover o card para **"Em revisão"**:
    5. Página em `features/<modulo>/<tela>` usando `DataGrid`, `Form` e `Modal`
    6. Rota e item de menu com permissão
    7. Testes do front
-5. Marque no PR cada critério de aceite atendido.
+6. Marque no PR cada critério de aceite atendido.
 
 ## 10. Migrations (Prisma)
 
