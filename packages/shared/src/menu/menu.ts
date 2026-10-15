@@ -5,159 +5,143 @@
  * O id do módulo é o do módulo Nest (`apps/api/src/modules/<modulo>`). O recurso é o nome da
  * tela em kebab-case, sem acento e sem conectivos (`Contas a Receber` → `contas-receber`).
  * A permissão para ver a tela no menu é `<modulo>.<recurso>.ver`.
+ *
+ * Aqui módulos e recursos são chaves em camelCase (`contasReceber`), convertidas para
+ * kebab-case (`contas-receber`) nos ids. A definição é um objeto com tuplas `[nome, rota]`.
  */
-const DEFINICAO = [
-  {
-    id: 'painel',
+const DEFINICAO = {
+  painel: {
     nome: 'PAINEL',
-    telas: [
-      { recurso: 'painel', nome: 'Painel', rota: '/' },
-      { recurso: 'busca-inteligente', nome: 'Busca Inteligente', rota: '/busca' },
-    ],
+    telas: {
+      painel: ['Painel', '/'],
+      buscaInteligente: ['Busca Inteligente', '/busca'],
+    },
   },
-  {
-    id: 'comercial-atendimento',
+  comercialAtendimento: {
     nome: 'COMERCIAL / ATENDIMENTO',
-    telas: [
-      { recurso: 'pipeline', nome: 'Pipeline', rota: '/crm' },
-      { recurso: 'negocios', nome: 'Negócios', rota: '/negocios' },
-      { recurso: 'atividades', nome: 'Atividades', rota: '/atividades' },
-      { recurso: 'pacientes', nome: 'Pacientes', rota: '/clientes' },
-      { recurso: 'origens-cliente', nome: 'Origens de Cliente', rota: '/origens-cliente' },
-      { recurso: 'agenda', nome: 'Agenda', rota: '/agenda' },
-      { recurso: 'confirmacoes', nome: 'Confirmações', rota: '/confirmacoes' },
-      { recurso: 'orcamentos', nome: 'Orçamentos', rota: '/orcamentos' },
-      { recurso: 'vendas-pdv', nome: 'Vendas/PDV', rota: '/vendas' },
-      { recurso: 'pacotes', nome: 'Pacotes', rota: '/pacotes' },
-      { recurso: 'mensalidades', nome: 'Mensalidades', rota: '/mensalidades' },
-      { recurso: 'whatsapp', nome: 'WhatsApp', rota: '/atendimento' },
-      { recurso: 'campanhas', nome: 'Campanhas', rota: '/campanhas' },
-      { recurso: 'grupos-whatsapp', nome: 'Grupos WhatsApp', rota: '/grupos-whatsapp' },
-      { recurso: 'pesquisa-nps', nome: 'Pesquisa NPS', rota: '/pesquisa-satisfacao' },
-      { recurso: 'relatorios', nome: 'Relatórios', rota: '/crm/relatorios' },
-    ],
+    telas: {
+      pipeline: ['Pipeline', '/crm'],
+      negocios: ['Negócios', '/negocios'],
+      atividades: ['Atividades', '/atividades'],
+      pacientes: ['Pacientes', '/clientes'],
+      origensCliente: ['Origens de Cliente', '/origens-cliente'],
+      agenda: ['Agenda', '/agenda'],
+      confirmacoes: ['Confirmações', '/confirmacoes'],
+      orcamentos: ['Orçamentos', '/orcamentos'],
+      vendasPdv: ['Vendas/PDV', '/vendas'],
+      pacotes: ['Pacotes', '/pacotes'],
+      mensalidades: ['Mensalidades', '/mensalidades'],
+      whatsapp: ['WhatsApp', '/atendimento'],
+      campanhas: ['Campanhas', '/campanhas'],
+      gruposWhatsapp: ['Grupos WhatsApp', '/grupos-whatsapp'],
+      pesquisaNps: ['Pesquisa NPS', '/pesquisa-satisfacao'],
+      relatorios: ['Relatórios', '/crm/relatorios'],
+    },
   },
-  {
-    id: 'consultorio-assistencial',
+  consultorioAssistencial: {
     nome: 'CONSULTÓRIO / ASSISTENCIAL',
-    telas: [
-      { recurso: 'atendimento-medico', nome: 'Atendimento Médico', rota: '/atendimento-medico' },
-      { recurso: 'receituarios', nome: 'Receituários', rota: '/receituarios' },
-      { recurso: 'prontuarios', nome: 'Prontuários', rota: '/prontuarios' },
-      { recurso: 'evolucao-voz', nome: 'Evolução por Voz', rota: '/evolucoes' },
-      { recurso: 'soroterapia', nome: 'Soroterapia', rota: '/soroterapia' },
-      { recurso: 'prestadores', nome: 'Prestadores', rota: '/prestadores' },
-      { recurso: 'relatorios', nome: 'Relatórios', rota: '/assistencial/relatorios' },
-    ],
+    telas: {
+      atendimentoMedico: ['Atendimento Médico', '/atendimento-medico'],
+      receituarios: ['Receituários', '/receituarios'],
+      prontuarios: ['Prontuários', '/prontuarios'],
+      evolucaoVoz: ['Evolução por Voz', '/evolucoes'],
+      soroterapia: ['Soroterapia', '/soroterapia'],
+      prestadores: ['Prestadores', '/prestadores'],
+      relatorios: ['Relatórios', '/assistencial/relatorios'],
+    },
   },
-  {
-    id: 'gestao-profissionais',
+  gestaoProfissionais: {
     nome: 'GESTÃO PROFISSIONAIS',
-    telas: [
-      { recurso: 'salas', nome: 'Salas', rota: '/salas' },
-      { recurso: 'profissionais', nome: 'Profissionais', rota: '/profissionais' },
-      {
-        recurso: 'servicos-profissionais',
-        nome: 'Serviços Profissionais',
-        rota: '/servicos-profissionais',
-      },
-      { recurso: 'protocolos', nome: 'Protocolos', rota: '/protocolos' },
-      {
-        recurso: 'receita-profissionais',
-        nome: 'Receita Profissionais',
-        rota: '/receita-profissionais',
-      },
-      { recurso: 'relatorios', nome: 'Relatórios', rota: '/receita-profissionais/relatorios' },
-    ],
+    telas: {
+      salas: ['Salas', '/salas'],
+      profissionais: ['Profissionais', '/profissionais'],
+      servicosProfissionais: ['Serviços Profissionais', '/servicos-profissionais'],
+      protocolos: ['Protocolos', '/protocolos'],
+      receitaProfissionais: ['Receita Profissionais', '/receita-profissionais'],
+      relatorios: ['Relatórios', '/receita-profissionais/relatorios'],
+    },
   },
-  {
-    id: 'financeiro',
+  financeiro: {
     nome: 'FINANCEIRO',
-    telas: [
-      { recurso: 'caixas', nome: 'Caixas', rota: '/caixas' },
-      { recurso: 'contas-receber', nome: 'Contas a Receber', rota: '/receber' },
-      { recurso: 'contas-pagar', nome: 'Contas a Pagar', rota: '/pagar' },
-      { recurso: 'conciliacao', nome: 'Conciliação', rota: '/conciliacao' },
-      { recurso: 'formas-pagamento', nome: 'Formas de Pagamento', rota: '/formas-pgto' },
-      { recurso: 'plano-contas', nome: 'Plano de Contas', rota: '/plano-contas' },
-      { recurso: 'relatorios', nome: 'Relatórios', rota: '/financeiro/relatorios' },
-      { recurso: 'indicadores', nome: 'Indicadores', rota: '/financeiro/indicadores' },
-    ],
+    telas: {
+      caixas: ['Caixas', '/caixas'],
+      contasReceber: ['Contas a Receber', '/receber'],
+      contasPagar: ['Contas a Pagar', '/pagar'],
+      conciliacao: ['Conciliação', '/conciliacao'],
+      formasPagamento: ['Formas de Pagamento', '/formas-pgto'],
+      planoContas: ['Plano de Contas', '/plano-contas'],
+      relatorios: ['Relatórios', '/financeiro/relatorios'],
+      indicadores: ['Indicadores', '/financeiro/indicadores'],
+    },
   },
-  {
-    id: 'patrimonio-pessoal',
+  patrimonioPessoal: {
     nome: 'PATRIMÔNIO & PESSOAL',
-    telas: [
-      { recurso: 'patrimonio', nome: 'Patrimônio', rota: '/patrimonio' },
-      { recurso: 'imoveis', nome: 'Imóveis', rota: '/imoveis' },
-      { recurso: 'veiculos', nome: 'Veículos', rota: '/veiculos' },
-    ],
+    telas: {
+      patrimonio: ['Patrimônio', '/patrimonio'],
+      imoveis: ['Imóveis', '/imoveis'],
+      veiculos: ['Veículos', '/veiculos'],
+    },
   },
-  {
-    id: 'compras-estoque',
+  comprasEstoque: {
     nome: 'COMPRAS / ESTOQUE',
-    telas: [
-      { recurso: 'estoque', nome: 'Estoque', rota: '/estoque' },
-      { recurso: 'entrada-compras', nome: 'Entrada de Compras', rota: '/compras' },
-      { recurso: 'fornecedores', nome: 'Fornecedores', rota: '/fornecedores' },
-      { recurso: 'produtos-servicos', nome: 'Produtos/Serviços', rota: '/produtos' },
-      { recurso: 'categorias', nome: 'Categorias', rota: '/categorias' },
-      { recurso: 'baixa-insumos', nome: 'Baixa de Insumos', rota: '/baixa-insumos' },
-      { recurso: 'lotes-validade', nome: 'Lotes / Validade', rota: '/lotes' },
-      { recurso: 'pedidos-transito', nome: 'Pedidos em Trânsito', rota: '/pedidos-compra' },
-      { recurso: 'relatorios', nome: 'Relatórios', rota: '/estoque/relatorios' },
-    ],
+    telas: {
+      estoque: ['Estoque', '/estoque'],
+      entradaCompras: ['Entrada de Compras', '/compras'],
+      fornecedores: ['Fornecedores', '/fornecedores'],
+      produtosServicos: ['Produtos/Serviços', '/produtos'],
+      categorias: ['Categorias', '/categorias'],
+      baixaInsumos: ['Baixa de Insumos', '/baixa-insumos'],
+      lotesValidade: ['Lotes / Validade', '/lotes'],
+      pedidosTransito: ['Pedidos em Trânsito', '/pedidos-compra'],
+      relatorios: ['Relatórios', '/estoque/relatorios'],
+    },
   },
-  {
-    id: 'regulatorio-qualidade',
+  regulatorioQualidade: {
     nome: 'REGULATÓRIO / QUALIDADE',
-    telas: [
-      { recurso: 'alvaras-licencas', nome: 'Alvarás e Licenças', rota: '/alvaras' },
-      { recurso: 'funcionarios', nome: 'Funcionários', rota: '/funcionarios' },
-      { recurso: 'treinamentos', nome: 'Treinamentos', rota: '/treinamentos' },
-      { recurso: 'nao-conformidades', nome: 'Não Conformidades', rota: '/nao-conformidades' },
-      { recurso: 'coleta-residuos', nome: 'Coleta Resíduos', rota: '/coletas-residuo' },
-      { recurso: 'fiscal', nome: 'Fiscal', rota: '/fiscal' },
-      { recurso: 'relatorios', nome: 'Relatórios', rota: '/regulatorio/relatorios' },
-    ],
+    telas: {
+      alvarasLicencas: ['Alvarás e Licenças', '/alvaras'],
+      funcionarios: ['Funcionários', '/funcionarios'],
+      treinamentos: ['Treinamentos', '/treinamentos'],
+      naoConformidades: ['Não Conformidades', '/nao-conformidades'],
+      coletaResiduos: ['Coleta Resíduos', '/coletas-residuo'],
+      fiscal: ['Fiscal', '/fiscal'],
+      relatorios: ['Relatórios', '/regulatorio/relatorios'],
+    },
   },
-  {
-    id: 'configuracoes-gestao',
+  configuracoesGestao: {
     nome: 'CONFIGURAÇÕES / GESTÃO',
-    telas: [
-      { recurso: 'relatorios', nome: 'Relatórios', rota: '/gestao/relatorios' },
-      { recurso: 'usuarios', nome: 'Usuários', rota: '/usuarios' },
-      { recurso: 'perfis-acesso', nome: 'Perfis de Acesso', rota: '/perfis' },
-      { recurso: 'ai-growth', nome: 'AI Growth', rota: '/ai-growth' },
-      { recurso: 'agentes-ia', nome: 'Agentes IA', rota: '/agentes-ia' },
-      { recurso: 'instrucoes-agente', nome: 'Instruções Agente', rota: '/agentes-ia/instrucoes' },
-      { recurso: 'base-conhecimento', nome: 'Base de Conhecimento', rota: '/base-conhecimento' },
-      { recurso: 'bypass-agente', nome: 'Bypass Agente', rota: '/bypass-agente' },
-      {
-        recurso: 'tipos-agendamento',
-        nome: 'Tipos de Agendamento',
-        rota: '/config/tipos-agendamento',
-      },
-      { recurso: 'respostas-rapidas', nome: 'Respostas Rápidas', rota: '/respostas-rapidas' },
-      { recurso: 'configuracoes', nome: 'Configurações', rota: '/settings' },
-      { recurso: 'minha-empresa', nome: 'Minha Empresa', rota: '/settings/empresa' },
-    ],
+    telas: {
+      relatorios: ['Relatórios', '/gestao/relatorios'],
+      usuarios: ['Usuários', '/usuarios'],
+      perfisAcesso: ['Perfis de Acesso', '/perfis'],
+      aiGrowth: ['AI Growth', '/ai-growth'],
+      agentesIa: ['Agentes IA', '/agentes-ia'],
+      instrucoesAgente: ['Instruções Agente', '/agentes-ia/instrucoes'],
+      baseConhecimento: ['Base de Conhecimento', '/base-conhecimento'],
+      bypassAgente: ['Bypass Agente', '/bypass-agente'],
+      tiposAgendamento: ['Tipos de Agendamento', '/config/tipos-agendamento'],
+      respostasRapidas: ['Respostas Rápidas', '/respostas-rapidas'],
+      configuracoes: ['Configurações', '/settings'],
+      minhaEmpresa: ['Minha Empresa', '/settings/empresa'],
+    },
   },
-] as const;
+} as const;
 
-type Definicao = (typeof DEFINICAO)[number];
+type Definicao = typeof DEFINICAO;
+type ChaveModulo = keyof Definicao;
+
+/** `contasReceber` → `contas-receber`, no tipo. */
+type Kebab<S extends string> = S extends `${infer C}${infer R}`
+  ? `${C extends Lowercase<C> ? C : `-${Lowercase<C>}`}${Kebab<R>}`
+  : '';
 
 /** Id de um módulo do inventário (igual ao módulo Nest). */
-export type ModuloId = Definicao['id'];
-
-type IdsDasTelas<M> = M extends { id: infer I extends string; telas: readonly (infer T)[] }
-  ? T extends { recurso: infer R extends string }
-    ? `${I}.${R}`
-    : never
-  : never;
+export type ModuloId = Kebab<ChaveModulo>;
 
 /** Id de uma tela: `<modulo>.<recurso>`, por exemplo `financeiro.contas-receber`. */
-export type TelaId = IdsDasTelas<Definicao>;
+export type TelaId = {
+  [M in ChaveModulo]: `${Kebab<M>}.${Kebab<keyof Definicao[M]['telas'] & string>}`;
+}[ChaveModulo];
 
 export interface TelaMenu {
   id: TelaId;
@@ -178,20 +162,23 @@ export interface ModuloMenu {
 /** Ação de permissão que libera a tela no menu. */
 export const ACAO_VER = 'ver';
 
-export const MENU: readonly ModuloMenu[] = DEFINICAO.map((modulo) => ({
-  id: modulo.id,
-  nome: modulo.nome,
-  telas: modulo.telas.map((tela) => {
-    const id = `${modulo.id}.${tela.recurso}` as TelaId;
+function kebab(chave: string): string {
+  return chave.replaceAll(/[A-Z]/g, (letra) => `-${letra.toLowerCase()}`);
+}
+
+export const MENU: readonly ModuloMenu[] = Object.entries(DEFINICAO).map(
+  ([chaveModulo, { nome, telas }]) => {
+    const modulo = kebab(chaveModulo) as ModuloId;
     return {
-      id,
-      modulo: modulo.id,
-      nome: tela.nome,
-      rota: tela.rota,
-      permissao: `${id}.${ACAO_VER}`,
+      id: modulo,
+      nome,
+      telas: Object.entries(telas).map(([chaveTela, [nomeTela, rota]]) => {
+        const id = `${modulo}.${kebab(chaveTela)}` as TelaId;
+        return { id, modulo, nome: nomeTela, rota, permissao: `${id}.${ACAO_VER}` };
+      }),
     };
-  }),
-}));
+  },
+);
 
 /** Todas as telas do menu, na ordem do inventário. */
 export const TELAS: readonly TelaMenu[] = MENU.flatMap((modulo) => modulo.telas);
