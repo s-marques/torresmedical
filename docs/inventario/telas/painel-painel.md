@@ -52,7 +52,33 @@ _Nenhuma tabela encontrada._
 
 ## Abas
 
-_Nenhuma aba._
+A tela tem 5 abas (botões no topo do dashboard). Prints capturados em 15/10/2026:
+
+- Executivo
+- Comercial
+- Ocupação
+- Financeiro
+- Pacientes
+
+### Executivo
+
+![Painel – Executivo](../img/painel-painel-executivo.png)
+
+### Comercial
+
+![Painel – Comercial](../img/painel-painel-comercial.png)
+
+### Ocupação
+
+![Painel – Ocupação](../img/painel-painel-ocupacao.png)
+
+### Financeiro
+
+![Painel – Financeiro](../img/painel-painel-financeiro.png)
+
+### Pacientes
+
+![Painel – Pacientes](../img/painel-painel-pacientes.png)
 
 ## Modais
 
