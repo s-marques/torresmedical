@@ -7,6 +7,7 @@ import { AllExceptionsFilter } from './common/errors/all-exceptions.filter';
 import { ExportModule } from './common/export/export.module';
 import { LoggerModule } from './common/logger/logger.module';
 import { PrismaModule } from './common/prisma/prisma.module';
+import { RelatoriosModule } from './common/relatorios/relatorios.module';
 import { StorageModule } from './common/storage/storage.module';
 import { HealthModule } from './health/health.module';
 import { ComercialAtendimentoModule } from './modules/comercial-atendimento/comercial-atendimento.module';
@@ -24,6 +25,7 @@ import { RegulatorioQualidadeModule } from './modules/regulatorio-qualidade/regu
     AuditModule,
     AuthModule,
     ExportModule,
+    RelatoriosModule,
     StorageModule,
     HealthModule,
     ComercialAtendimentoModule,

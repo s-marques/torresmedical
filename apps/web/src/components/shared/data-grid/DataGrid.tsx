@@ -76,6 +76,7 @@ export function DataGrid<T extends RowData>({
   querySchema,
   colunas,
   idLinha = idPadrao,
+  consultaFixa,
   busca = 'Buscar...',
   status,
   filtros,
@@ -89,7 +90,7 @@ export function DataGrid<T extends RowData>({
     tamanhos: tamanhosPagina,
     querySchema,
   });
-  const query = consultaDaListagem(estado);
+  const query = { ...consultaDaListagem(estado), ...consultaFixa };
   const consulta = useQuery({
     queryKey: ['data-grid', url, query],
     queryFn: ({ signal }) => apiFetch(url, { query, schema, signal }),
@@ -101,6 +102,7 @@ export function DataGrid<T extends RowData>({
     permissao: exportacao?.permissao,
     nomeArquivo: exportacao?.nomeArquivo,
     schema: exportacao?.schema,
+    consultaFixa,
   });
 
   const [visibilidade, setVisibilidade] = useState<ColumnVisibilityState>(() =>
@@ -112,7 +114,7 @@ export function DataGrid<T extends RowData>({
     features: FEATURES,
     columns: definicoes,
     data: consulta.data?.data ?? SEM_LINHAS,
-    getRowId: (linha) => idLinha(linha),
+    getRowId: (linha, indice) => idLinha(linha, indice),
     state: { columnVisibility: visibilidade },
     onColumnVisibilityChange: setVisibilidade,
   });
