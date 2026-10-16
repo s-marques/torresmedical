@@ -33,9 +33,24 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      # RabbitMQ dos e2e da mensageria.
+      rabbitmq:
+        image: rabbitmq:4-management-alpine
+        env:
+          RABBITMQ_DEFAULT_USER: torres
+          RABBITMQ_DEFAULT_PASS: torres
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 10s
+          --health-timeout 10s
+          --health-retries 10
+          --health-start-period 30s
 
     env:
       DATABASE_URL: postgresql://torres:torres@localhost:5432/torres_test
+      RABBITMQ_URL: amqp://torres:torres@localhost:5672
       # Storage dos e2e: MinIO (S3), iniciado no passo abaixo.
       STORAGE_DRIVER: s3
       STORAGE_S3_ENDPOINT: http://localhost:9000

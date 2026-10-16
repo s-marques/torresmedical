@@ -8,6 +8,9 @@ if (url) process.env.DATABASE_URL = url;
 // E o bucket (ou a pasta) de teste do storage.
 Object.assign(process.env, resolveTestStorageEnv(process.env));
 
+// RabbitMQ dos testes: RABBITMQ_URL_TEST (opcional, ex.: outro vhost) ou RABBITMQ_URL.
+if (process.env.RABBITMQ_URL_TEST) process.env.RABBITMQ_URL = process.env.RABBITMQ_URL_TEST;
+
 // Logs HTTP só atrapalham a saída dos testes. Para depurar, defina TEST_LOG_LEVEL.
 process.env.LOG_LEVEL = process.env.TEST_LOG_LEVEL ?? 'silent';
 

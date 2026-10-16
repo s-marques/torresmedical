@@ -2,9 +2,9 @@ import type { ExportFormat } from '@torres/shared';
 
 /**
  * Ponto de extensão para relatórios pesados (CLAUDE.md, seção 5: "relatórios grandes" vão para
- * fila). Só a interface: ainda não há implementação nem provider registrado. Quando o
- * `MessagingModule` existir, ele fornece `FILA_RELATORIOS`, e o `RelatoriosService` passa a
- * enfileirar os relatórios com `execucao: 'fila'` em vez de gerar o arquivo na requisição.
+ * fila). Só a interface: ainda não há implementação nem provider registrado. A implementação
+ * publica o pedido com o `EventPublisher` (`common/messaging`) e um consumidor gera o arquivo;
+ * aí o `RelatoriosService` passa a enfileirar os relatórios com `execucao: 'fila'`.
  */
 export const FILA_RELATORIOS = Symbol('FILA_RELATORIOS');
 
