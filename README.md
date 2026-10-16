@@ -214,6 +214,58 @@ seção 3). Exemplos funcionando em **`/dev/componentes`**: a página existe só
 - **Testes de grid** usam MSW: `usarMsw()` e `servidorMsw.use(http.get('/api/...', …))`
   (`src/test/msw.ts`). Não misture com `apiFalsa`/`renderApp` no mesmo arquivo.
 
+## Relatórios (`ReportPage` + `common/relatorios`)
+
+As 7 telas de Relatórios usam a mesma estrutura: seletor de relatório, período De/Até e o
+resultado no `DataGrid`, com exportação Excel/PDF. Cada módulo só declara os relatórios dele na API.
+O exemplo é o `EX-01` em `/gestao/relatorios` (`modules/configuracoes-gestao/relatorios`).
+
+- **API:** um provider do módulo implementa `ProvedorRelatorios` com uma lista de `definirRelatorio({...})`.
+  O módulo registra `criarRelatoriosController('<modulo>.relatorios', Provider)`, que cria:
+  - `GET /api/<modulo>/relatorios`: catálogo com colunas e filtros, só com os relatórios permitidos;
+  - `GET /api/<modulo>/relatorios/:id?de=&ate=&page=&pageSize=&sort=&<filtros>`: `{ data, meta }`;
+  - `GET /api/<modulo>/relatorios/:id/export?format=xlsx|pdf&columns=`: auditado como `EXPORT`
+    (entidade `Relatorio`, `entityId` = id do relatório).
+  ```ts
+  definirRelatorio<ContaReceber>({
+    id: 'FIN-01',
+    nome: 'Inadimplencia',
+    permissao: 'financeiro.contas-receber.ver', // opcional, além de financeiro.relatorios.ver
+    colunas: [{ key: 'vencimento', header: 'Vencimento', type: 'date', ordenavel: true, value: (c) => c.vencimento }],
+    ordenacaoPadrao: 'vencimento:asc',
+    filtros: [{ tipo: 'select', parametro: 'situacao', rotulo: 'Situação', opcoes: [...] }],
+    buscar: (consulta, pagina) => service.inadimplencia(consulta.intervalo, consulta.sort, pagina),
+    contar: (consulta) => service.contarInadimplencia(consulta.intervalo),
+  });
+  ```
+  - **Permissões:** a tela exige `<modulo>.relatorios.ver` (`exportar` para exportar). O campo
+    `permissao` (opcional) usa uma permissão que já existe no catálogo. Sem ela, o relatório não
+    aparece no catálogo e responde 403.
+  - **Período:** `de`/`ate` (`AAAA-MM-DD`) são obrigatórios. O schema compartilhado
+    (`periodoRelatorioSchema`) valida De ≤ Até. `consulta.intervalo` traz `[gte, lt)` em dias
+    inteiros no fuso da clínica, e `consulta.periodo` traz as datas como vieram.
+  - **Erros:** id desconhecido → 404 `RELATORIO_NAO_ENCONTRADO`; query inválida → 400; exportação
+    acima de 10.000 linhas → 422.
+  - **Fila:** `common/relatorios/relatorio-fila.ts` define só a interface (`FILA_RELATORIOS`), para
+    os relatórios pesados quando a mensageria existir. Hoje tudo é síncrono.
+- **Front:** a página da tela usa a `ReportPage`, e as colunas e os filtros vêm da API.
+  ```tsx
+  <ReportPage
+    tela="financeiro.relatorios"
+    titulo="Relatórios Financeiros"
+    descricao="Faturamento, inadimplência, contas a pagar/receber, DRE e mais."
+    breadcrumb={[
+      { rotulo: 'Painel', para: '/' },
+      { rotulo: 'Financeiro' },
+      { rotulo: 'Relatórios' },
+    ]}
+  />
+  ```
+  - O resultado carrega ao escolher o relatório ou mudar o período, sem botão. O período padrão é
+    o dos últimos 30 dias até hoje. Relatório e período ficam na URL (`?relatorio=&de=&ate=`).
+  - As células são formatadas pelo `tipo` da coluna (`text`, `number`, `currency`, `date`,
+    `datetime`, `boolean`), como na exportação.
+
 ## Autenticação e permissões
 
 - **Entrar no ambiente local:** `docker compose exec api pnpm --filter @torres/api db:seed` cria o

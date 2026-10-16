@@ -86,8 +86,13 @@ export interface DataGridProps<T> {
    */
   querySchema?: ValidadorConsulta;
   colunas: readonly ColunaGrid<T>[];
-  /** Id da linha. Padrão: `linha.id`. */
-  idLinha?: (linha: T) => string;
+  /** Id da linha. Padrão: `linha.id`. Sem id próprio (ex.: relatórios), use o `indice` na página. */
+  idLinha?: (linha: T, indice: number) => string;
+  /**
+   * Parâmetros enviados em toda consulta e exportação, sem controle no grid (ex.: o período
+   * De/Até da `ReportPage`). Mudar o valor refaz a consulta.
+   */
+  consultaFixa?: Readonly<Record<string, string>>;
   /** Placeholder da busca textual, ex.: "Buscar usuarios...". `false` esconde a busca. */
   busca?: string | false;
   status?: FiltroStatus;

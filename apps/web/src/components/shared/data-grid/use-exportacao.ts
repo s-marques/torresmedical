@@ -14,6 +14,8 @@ export interface OpcoesExportacao {
   nomeArquivo?: string;
   /** Ex.: `exportUnidadesQuerySchema`. */
   schema?: ValidadorConsulta;
+  /** Parâmetros fixos, além dos da URL (ex.: período da `ReportPage`). */
+  consultaFixa?: Readonly<Record<string, string>>;
 }
 
 /** Parâmetros da URL que são da paginação, não da exportação. */
@@ -29,6 +31,7 @@ export function useExportacao({
   permissao,
   nomeArquivo = 'exportacao',
   schema,
+  consultaFixa,
 }: OpcoesExportacao) {
   const permissoes = usePermissoes();
   const permitido = permissao !== undefined && permissoes.includes(permissao);
@@ -45,6 +48,7 @@ export function useExportacao({
       params.forEach((valor, chave) => {
         if (!SO_DA_LISTAGEM.has(chave)) query[chave] = valor;
       });
+      Object.assign(query, consultaFixa);
       query.format = format;
       if (colunas?.length) query.columns = colunas.join(',');
 

@@ -1,11 +1,13 @@
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { Injectable } from '@nestjs/common';
 import type {
+  AtivoStatus,
   CreateUnidadeInput,
   ExportUnidadesQuery,
   ListUnidadesQuery,
   LookupItem,
   LookupQuery,
+  Sort,
   UnidadeExportColumn,
   UpdateUnidadeInput,
 } from '@torres/shared';
@@ -27,6 +29,11 @@ export const UNIDADE_EXPORT_DEFINITIONS: readonly ExportColumn<Unidade, UnidadeE
   { key: 'status', header: 'Status', value: (u) => (u.ativo ? 'Ativo' : 'Inativo') },
   { key: 'createdAt', header: 'Criado em', type: 'datetime', value: (u) => u.createdAt },
 ];
+
+export interface FiltroCadastradas {
+  intervalo: { gte: Date; lt: Date };
+  status?: AtivoStatus;
+}
 
 /**
  * Recurso de referência do padrão de API (CLAUDE.md, seção 3): listagem paginada,
@@ -103,6 +110,27 @@ export class UnidadesService extends EntidadeLookupService<
       columns: selectColumns(UNIDADE_EXPORT_DEFINITIONS, query.columns),
       rows,
     });
+  }
+
+  /** Relatório de exemplo (EX-01): unidades cadastradas no intervalo, sem as excluídas. */
+  cadastradasNoPeriodo(
+    filtro: FiltroCadastradas,
+    sort: Sort<UnidadeExportColumn>,
+    pagina?: { skip: number; take: number },
+  ): Promise<Unidade[]> {
+    return this.txHost.tx.unidade.findMany({
+      where: this.whereCadastradas(filtro),
+      orderBy: toOrderBy(sort, { status: 'ativo' }),
+      ...pagina,
+    });
+  }
+
+  contarCadastradasNoPeriodo(filtro: FiltroCadastradas): Promise<number> {
+    return this.txHost.tx.unidade.count({ where: this.whereCadastradas(filtro) });
+  }
+
+  private whereCadastradas({ intervalo, status }: FiltroCadastradas): Prisma.UnidadeWhereInput {
+    return { ...this.where({ status, search: undefined }), createdAt: intervalo };
   }
 
   private where(

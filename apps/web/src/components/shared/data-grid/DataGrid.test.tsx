@@ -131,6 +131,15 @@ describe('DataGrid', () => {
     expect(ultimo()).toEqual({ page: '1', pageSize: '10' });
   });
 
+  it('envia a `consultaFixa` em toda consulta e aceita id pelo índice da linha', async () => {
+    const idLinha = vi.fn((_linha: Unidade, indice: number) => `linha-${indice}`);
+    renderizar({ consultaFixa: { de: '2026-10-01', ate: '2026-10-31' }, idLinha });
+
+    expect(await screen.findByText('Unidade 1')).toBeInTheDocument();
+    expect(ultimo()).toEqual({ page: '1', pageSize: '10', de: '2026-10-01', ate: '2026-10-31' });
+    expect(idLinha).toHaveBeenCalledWith(expect.objectContaining({ nome: 'Unidade 2' }), 1);
+  });
+
   it('ordena pelo cabeçalho: asc, desc e volta ao padrão', async () => {
     const { user, router } = renderizar();
     await screen.findByText('Unidade 1');
