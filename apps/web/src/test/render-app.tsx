@@ -26,7 +26,12 @@ export function json(corpo: unknown, status = 200): Response {
 
 /** Resposta de `/api/health` com a API no ar. */
 export function healthOk(): Response {
-  return json({ status: 'ok', uptime: 1, timestamp: new Date().toISOString() });
+  return json({
+    status: 'ok',
+    uptime: 1,
+    timestamp: new Date().toISOString(),
+    checks: { mensageria: 'up' },
+  });
 }
 
 export function sessaoJson(usuario: UsuarioSessao = USUARIO_TESTE, accessToken = 'token-1') {

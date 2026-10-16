@@ -395,3 +395,36 @@ model Arquivo {
   @@index([uso])
   @@map("arquivos")
 }
+
+// Mensageria (CLAUDE.md, seção 5). Tabelas técnicas, fora dos módulos do inventário.
+
+/// Outbox: eventos gravados na mesma transação da escrita que os gerou. O relay publica no
+/// RabbitMQ só o que foi commitado e apaga a linha depois da confirmação do broker.
+model OutboxEvent {
+  /// É o `eventId` do envelope.
+  id        String   @id @db.Uuid
+  /// Routing key (`<modulo>.<entidade>.<acao>`). O exchange é `torres.<modulo>`.
+  type      String
+  /// Envelope completo `{ eventId, type, occurredAt, userId, payload, version }`.
+  envelope  Json
+  /// Tentativas de publicação que falharam.
+  attempts  Int      @default(0)
+  /// Tipo do último erro de publicação (sem mensagem: pode conter dados).
+  lastError String?  @map("last_error")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([createdAt])
+  @@map("outbox_events")
+}
+
+/// Eventos já processados por consumidor (fila). Garante a idempotência por `eventId`.
+model ProcessedEvent {
+  eventId     String   @map("event_id") @db.Uuid
+  /// Nome da fila consumidora: um mesmo evento é processado uma vez por fila.
+  consumer    String
+  processedAt DateTime @default(now()) @map("processed_at") @db.Timestamptz(3)
+
+  @@id([eventId, consumer])
+  @@index([processedAt])
+  @@map("processed_events")
+}

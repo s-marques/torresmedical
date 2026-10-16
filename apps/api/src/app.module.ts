@@ -6,6 +6,7 @@ import { RequestContextModule } from './common/context/request-context.module';
 import { AllExceptionsFilter } from './common/errors/all-exceptions.filter';
 import { ExportModule } from './common/export/export.module';
 import { LoggerModule } from './common/logger/logger.module';
+import { MessagingModule } from './common/messaging/messaging.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RelatoriosModule } from './common/relatorios/relatorios.module';
 import { StorageModule } from './common/storage/storage.module';
@@ -24,6 +25,7 @@ import { RegulatorioQualidadeModule } from './modules/regulatorio-qualidade/regu
     PrismaModule,
     AuditModule,
     AuthModule,
+    MessagingModule,
     ExportModule,
     RelatoriosModule,
     StorageModule,

@@ -53,6 +53,8 @@ O `.env` nunca é commitado. O [`.env.example`](.env.example) lista as variávei
 | `DATABASE_URL_TEST`                                 | Banco dos testes (nome termina com `_test`)       |
 | `RABBITMQ_DEFAULT_USER`, `RABBITMQ_DEFAULT_PASS`    | Credenciais do RabbitMQ                           |
 | `RABBITMQ_URL`                                      | Conexão da API com o RabbitMQ (host `rabbitmq`)   |
+| `RABBITMQ_URL_TEST`                                 | RabbitMQ dos testes (opcional)                    |
+| `MESSAGING_*`                                       | Retry, prefetch e outbox (ver `.env.example`)     |
 | `API_PORT`                                          | Porta interna da API (padrão 3000)                |
 | `LOG_LEVEL`                                         | Nível do log da API (`info`, `debug`…)            |
 | `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`            | Credenciais do MinIO                              |
@@ -247,7 +249,8 @@ O exemplo é o `EX-01` em `/gestao/relatorios` (`modules/configuracoes-gestao/re
   - **Erros:** id desconhecido → 404 `RELATORIO_NAO_ENCONTRADO`; query inválida → 400; exportação
     acima de 10.000 linhas → 422.
   - **Fila:** `common/relatorios/relatorio-fila.ts` define só a interface (`FILA_RELATORIOS`), para
-    os relatórios pesados quando a mensageria existir. Hoje tudo é síncrono.
+    os relatórios pesados. A mensageria já existe, mas o consumidor de relatórios ainda não:
+    hoje tudo é síncrono.
 - **Front:** a página da tela usa a `ReportPage`, e as colunas e os filtros vêm da API.
   ```tsx
   <ReportPage
@@ -265,6 +268,58 @@ O exemplo é o `EX-01` em `/gestao/relatorios` (`modules/configuracoes-gestao/re
     o dos últimos 30 dias até hoje. Relatório e período ficam na URL (`?relatorio=&de=&ate=`).
   - As células são formatadas pelo `tipo` da coluna (`text`, `number`, `currency`, `date`,
     `datetime`, `boolean`), como na exportação.
+
+## Mensageria (RabbitMQ, `common/messaging`)
+
+Regras e nomes na seção 5 do [`CLAUDE.md`](CLAUDE.md). O `MessagingModule` é global.
+
+- **Publicar** (evento ou comando): injete o `EventPublisher`. Ele grava na tabela
+  `outbox_events` pela transação atual (`txHost.tx`). O `OutboxRelay` publica no RabbitMQ só o que
+  foi commitado: se a transação for desfeita, o evento some junto. Com o broker fora, os eventos
+  esperam na outbox.
+  ```ts
+  await this.events.publish('comercial.venda.paga', { vendaId: venda.id });
+  ```
+  - O exchange (`topic`, durável) é `torres.<primeiro segmento>` e é declarado no primeiro uso.
+  - O envelope é `{ eventId, type, occurredAt, userId, payload, version }`. O `userId` vem do
+    contexto (`system` fora de HTTP). Payload com campo de dado pessoal (`cpf`, `nome`, `telefone`…,
+    a mesma lista da redaction do log) é recusado: envie só ids.
+- **Consumir:** crie um provider no módulo consumidor.
+  ```ts
+  @Injectable()
+  @MessageConsumer({
+    queue: 'financeiro.gerar-titulo-venda',
+    events: ['comercial.venda.paga'],
+    payloadSchema: z.object({ vendaId: z.uuid() }), // opcional
+  })
+  export class GerarTituloVendaConsumer extends BaseConsumer<{ vendaId: string }> {
+    constructor(private readonly txHost: TransactionHost<PrismaAdapter>) {
+      super();
+    }
+    async handle({ payload }: MessageEnvelope<{ vendaId: string }>) {
+      // busca o que precisar pelo id; use this.txHost.tx e AuditService.record
+    }
+  }
+  ```
+  - Na inicialização são declaradas a fila, a `<fila>.retry` e a `<fila>.dlq` (duráveis), e a
+    fila é ligada aos eventos.
+  - **Idempotência:** `handle` roda numa transação junto com o registro em `processed_events`
+    (`eventId` + fila). Mensagem repetida é confirmada sem chamar `handle`. Se `handle` falhar, o
+    registro é desfeito. Chamada a sistema externo não volta atrás com a transação: o handler deve
+    tolerar repetição.
+  - **Retry:** cada falha manda a mensagem para a `<fila>.retry` com espera exponencial
+    (`MESSAGING_RETRY_BASE_MS`, dobrando até `MESSAGING_RETRY_MAX_MS`). Na tentativa
+    `MESSAGING_MAX_ATTEMPTS`, ela vai para a `<fila>.dlq` com os headers `x-attempts` e `x-error`
+    (tipo do erro). Envelope ou payload inválido vai direto para a DLQ.
+  - **Auditoria:** o contexto do consumidor tem o `userId` do envelope. `AuditService.record`
+    grava com esse usuário.
+  - **Logs:** só fila, `eventId`, tipo, tentativa e tipo do erro. Nunca o payload nem a mensagem
+    do erro.
+- **Health:** `GET /api/health` traz `checks.mensageria` (`up`/`down`) e continua 200 com o
+  RabbitMQ fora.
+- **Testes:** os e2e (`test/messaging`) usam o RabbitMQ do Compose (ou `RABBITMQ_URL_TEST`) e
+  `test/utils/rabbitmq.ts` para preparar filas e inspecionar a DLQ. No CI, o RabbitMQ roda como
+  service do job.
 
 ## Autenticação e permissões
 

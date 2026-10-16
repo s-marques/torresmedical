@@ -20,7 +20,12 @@ function mockFetch(...respostas: (Response | Error)[]) {
   return fn;
 }
 
-const HEALTH = { status: 'ok', uptime: 1, timestamp: '2026-10-15T12:00:00.000Z' };
+const HEALTH = {
+  status: 'ok',
+  uptime: 1,
+  timestamp: '2026-10-15T12:00:00.000Z',
+  checks: { mensageria: 'up' },
+};
 const ERRO_400 = {
   statusCode: 400,
   code: 'VALIDATION_ERROR',
