@@ -46,6 +46,14 @@ describe('PacientesService', () => {
     expect(delegate.count.mock.calls[1][0].where).toEqual({ deletedAt: null, ativo: true });
   });
 
+  it('contar: total de pacientes não excluídos, ativos ou não', async () => {
+    const { service, delegate } = setup();
+
+    await service.contar();
+
+    expect(delegate.count).toHaveBeenCalledWith({ where: { deletedAt: null } });
+  });
+
   it('findLookupById e 404', async () => {
     await expect(setup().service.findLookupById(PACIENTE.id)).resolves.toMatchObject({
       label: 'Maria Teste',

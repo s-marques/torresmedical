@@ -49,6 +49,11 @@ export class ProfissionaisService extends EntidadeLookupService<
     };
   }
 
+  /** Total de profissionais ativos (alimenta o painel). */
+  contarAtivos(): Promise<number> {
+    return this.fonte.count({ where: SELECIONAVEIS });
+  }
+
   protected toItem(profissional: ProfissionalComEspecialidade): LookupItem {
     return {
       id: profissional.id,
