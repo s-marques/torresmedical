@@ -26,6 +26,7 @@ export interface SeedEntidades {
   funcionarios: ComId<Prisma.FuncionarioUncheckedCreateInput>[];
   formasPagamento: ComId<Prisma.FormaPagamentoUncheckedCreateInput>[];
   tiposAgendamento: ComId<Prisma.TipoAgendamentoUncheckedCreateInput>[];
+  origensCliente: ComId<Prisma.OrigemClienteUncheckedCreateInput>[];
 }
 
 const ESPECIALIDADES = ['Clínica Geral', 'Pediatria', 'Nutrição', 'Dermatologia', 'Cardiologia'];
@@ -59,6 +60,14 @@ const TIPOS_AGENDAMENTO: [string, number][] = [
   ['Avaliação', 30],
   ['Procedimento', 60],
   ['Soroterapia', 60],
+];
+// Catálogo de captação: termos genéricos, sem dados pessoais.
+const ORIGENS_CLIENTE: [string, string][] = [
+  ['Indicação', 'indicacao'],
+  ['Google', 'google'],
+  ['Instagram', 'instagram'],
+  ['Facebook', 'facebook'],
+  ['Site', 'site'],
 ];
 
 /** Gera um CPF fictício com dígitos verificadores válidos (somente dígitos). */
@@ -156,6 +165,13 @@ export function buildSeedEntidades(dominioEmail: string): SeedEntidades {
     duracaoMinutos,
     cor: faker.color.rgb(),
   }));
+  // Por último, para não mudar os ids gerados antes.
+  const origensCliente = ORIGENS_CLIENTE.map(([nome, codigo], i) => ({
+    id: faker.string.uuid(),
+    nome,
+    codigo,
+    ordem: i + 1,
+  }));
 
   return {
     especialidades,
@@ -169,6 +185,7 @@ export function buildSeedEntidades(dominioEmail: string): SeedEntidades {
     funcionarios,
     formasPagamento,
     tiposAgendamento,
+    origensCliente,
   };
 }
 
@@ -196,4 +213,5 @@ export async function applySeedEntidades(
   await upsertPorId(dados.funcionarios, (a) => tx.funcionario.upsert(a));
   await upsertPorId(dados.formasPagamento, (a) => tx.formaPagamento.upsert(a));
   await upsertPorId(dados.tiposAgendamento, (a) => tx.tipoAgendamento.upsert(a));
+  await upsertPorId(dados.origensCliente, (a) => tx.origemCliente.upsert(a));
 }

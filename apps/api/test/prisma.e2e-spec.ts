@@ -50,6 +50,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'formas_pagamento',
       'fornecedores',
       'funcionarios',
+      'origens_cliente',
       'outbox_events',
       'pacientes',
       'perfis',
