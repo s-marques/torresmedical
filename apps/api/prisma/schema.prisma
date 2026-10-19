@@ -137,19 +137,42 @@ model RedefinicaoSenha {
 
 /// Dono: comercial-atendimento.
 model Paciente {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome            String
+  /// CPF, somente dígitos.
+  documento       String?
+  telefone        String?
+  email           String?
+  ativo           Boolean   @default(true)
+  /// De onde o paciente chegou (tela Origens de Cliente).
+  origemClienteId String?   @map("origem_cliente_id") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  origemCliente OrigemCliente? @relation(fields: [origemClienteId], references: [id], onDelete: Restrict)
+
+  @@index([documento])
+  @@index([origemClienteId])
+  @@map("pacientes")
+}
+
+/// Dono: comercial-atendimento. De onde os pacientes chegam (cadastro de clientes e relatórios de captação).
+model OrigemCliente {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   nome      String
-  /// CPF, somente dígitos.
-  documento String?
-  telefone  String?
-  email     String?
-  ativo     Boolean   @default(true)
+  /// Gerado a partir do nome (`gerarCodigoOrigemCliente`).
+  codigo    String
+  ordem     Int
+  ativa     Boolean   @default(true)
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
 
-  @@index([documento])
-  @@map("pacientes")
+  pacientes Paciente[]
+
+  @@index([ordem])
+  @@map("origens_cliente")
 }
 
 /// Dono: gestao-profissionais.

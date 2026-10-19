@@ -8,6 +8,7 @@ export * from './schemas/auth/auth';
 export * from './schemas/common/api-error';
 export * from './schemas/common/list-query';
 export * from './schemas/common/pagination';
+export * from './schemas/comercial-atendimento/origem-cliente';
 export * from './schemas/configuracoes-gestao/unidade';
 export * from './schemas/lookups/lookup';
 export * from './schemas/painel/dashboard';
