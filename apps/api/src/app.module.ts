@@ -16,6 +16,7 @@ import { ComprasEstoqueModule } from './modules/compras-estoque/compras-estoque.
 import { ConfiguracoesGestaoModule } from './modules/configuracoes-gestao/configuracoes-gestao.module';
 import { FinanceiroModule } from './modules/financeiro/financeiro.module';
 import { GestaoProfissionaisModule } from './modules/gestao-profissionais/gestao-profissionais.module';
+import { PainelModule } from './modules/painel/painel.module';
 import { RegulatorioQualidadeModule } from './modules/regulatorio-qualidade/regulatorio-qualidade.module';
 
 @Module({
@@ -30,6 +31,7 @@ import { RegulatorioQualidadeModule } from './modules/regulatorio-qualidade/regu
     RelatoriosModule,
     StorageModule,
     HealthModule,
+    PainelModule,
     ComercialAtendimentoModule,
     GestaoProfissionaisModule,
     FinanceiroModule,

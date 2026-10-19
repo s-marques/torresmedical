@@ -74,7 +74,7 @@ describe('AppLayout: busca de telas (⌘K)', () => {
     const { router } = renderApp('/');
     await layoutPronto();
 
-    await userEvent.click(screen.getByRole('button', { name: /Buscar/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Buscar telas' }));
     const dialogo = await screen.findByRole('dialog', { name: 'Buscar tela' });
     await userEvent.type(within(dialogo).getByRole('combobox'), 'contas a pagar');
     await userEvent.click(within(dialogo).getByRole('option', { name: 'Contas a Pagar' }));

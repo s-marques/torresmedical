@@ -47,6 +47,11 @@ export class PacientesService extends EntidadeLookupService<
     return { ...SELECIONAVEIS, ...buscaPaciente(query.search) };
   }
 
+  /** Total de pacientes não excluídos (alimenta o painel). */
+  contar(): Promise<number> {
+    return this.fonte.count({ where: { deletedAt: null } });
+  }
+
   protected toItem(paciente: Paciente): LookupItem {
     return { id: paciente.id, label: paciente.nome, descricao: mascararCpf(paciente.documento) };
   }

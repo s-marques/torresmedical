@@ -60,4 +60,12 @@ describe('ProfissionaisService', () => {
       message: 'Profissional não encontrado',
     });
   });
+
+  it('contarAtivos: só profissionais ativos e não excluídos', async () => {
+    const { service, delegate } = setup();
+
+    await expect(service.contarAtivos()).resolves.toBe(1);
+
+    expect(delegate.count).toHaveBeenCalledWith({ where: { deletedAt: null, ativo: true } });
+  });
 });

@@ -10,6 +10,7 @@ export * from './schemas/common/list-query';
 export * from './schemas/common/pagination';
 export * from './schemas/configuracoes-gestao/unidade';
 export * from './schemas/lookups/lookup';
+export * from './schemas/painel/dashboard';
 export * from './schemas/relatorios/relatorio';
 export * from './schemas/health';
 export { zodErrorPtBr } from './zod-pt-br';
