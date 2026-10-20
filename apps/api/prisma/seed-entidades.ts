@@ -108,7 +108,7 @@ export function buildSeedEntidades(dominioEmail: string): SeedEntidades {
     documento: gerarCpf(),
     telefone: celular(),
     email: email('paciente', i),
-    ativo: inativoACada(10)(i),
+    status: inativoACada(10)(i) ? ('ATIVO' as const) : ('INATIVO' as const),
   }));
   const fornecedores = Array.from({ length: 10 }, (_, i) => ({
     id: faker.string.uuid(),

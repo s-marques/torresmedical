@@ -100,6 +100,11 @@ export interface DataGridProps<T> {
   exportacao?: ExportacaoGrid;
   /** Ações do menu "⋯" de cada linha. */
   acoes?: (linha: T) => AcaoLinha[];
+  /**
+   * Clique (ou Enter) na linha, ex.: abrir o detalhe. Cliques em botões, links e menus dentro da
+   * linha não disparam.
+   */
+  aoClicarLinha?: (linha: T) => void;
   /** Estado vazio, ex.: "Nenhum veiculo encontrado.". Padrão: "Nenhum resultado.". */
   mensagemVazio?: string;
   /** Opções de "Linhas por página". A primeira é o padrão. */

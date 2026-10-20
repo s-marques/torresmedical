@@ -135,25 +135,75 @@ model RedefinicaoSenha {
 // Cada uma pertence ao módulo dono (comentário do model) e é exposta pelo service dele.
 // ---------------------------------------------------------------------------------------------
 
-/// Dono: comercial-atendimento.
+enum PacienteTipo {
+  PF
+  PJ
+
+  @@map("paciente_tipo")
+}
+
+enum PacienteStatus {
+  NOVO
+  ATIVO
+  INATIVO
+
+  @@map("paciente_status")
+}
+
+enum PacienteSexo {
+  FEMININO
+  MASCULINO
+  OUTRO
+
+  @@map("paciente_sexo")
+}
+
+/// Dono: comercial-atendimento. Paciente/cliente, pessoa física ou jurídica (tela Pacientes, `/clientes`).
 model Paciente {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  nome            String
-  /// CPF, somente dígitos.
-  documento       String?
-  telefone        String?
-  email           String?
-  ativo           Boolean   @default(true)
+  id                      String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipo                    PacienteTipo   @default(PF)
+  nome                    String
+  nomeSocial              String?        @map("nome_social")
+  /// CPF (PF) ou CNPJ (PJ), somente dígitos.
+  documento               String?
+  rg                      String?
+  menorIdade              Boolean        @default(false) @map("menor_idade")
+  telefone                String?
+  celular                 String?
+  email                   String?
+  /// Data de nascimento (PF) ou de fundação (PJ).
+  dataNascimento          DateTime?      @map("data_nascimento") @db.Date
+  sexo                    PacienteSexo?
+  profissao               String?
   /// De onde o paciente chegou (tela Origens de Cliente).
-  origemClienteId String?   @map("origem_cliente_id") @db.Uuid
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(3)
+  origemClienteId         String?        @map("origem_cliente_id") @db.Uuid
+  /// Inativo some dos comboboxes (lookups), mas o cadastro continua consultável.
+  status                  PacienteStatus @default(ATIVO)
+  observacoes             String?
+  /// LGPD: desmarcado quando o paciente pede para não receber campanhas. Confirmações continuam.
+  aceitaCampanhasWhatsapp Boolean        @default(true) @map("aceita_campanhas_whatsapp")
+  razaoSocial             String?        @map("razao_social")
+  nomeFantasia            String?        @map("nome_fantasia")
+  inscricaoEstadual       String?        @map("inscricao_estadual")
+  representanteNome       String?        @map("representante_nome")
+  representanteCelular    String?        @map("representante_celular")
+  cep                     String?
+  logradouro              String?
+  numero                  String?
+  complemento             String?
+  bairro                  String?
+  cidade                  String?
+  uf                      String?
+  codigoIbge              String?        @map("codigo_ibge")
+  createdAt               DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt               DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt               DateTime?      @map("deleted_at") @db.Timestamptz(3)
 
   origemCliente OrigemCliente? @relation(fields: [origemClienteId], references: [id], onDelete: Restrict)
 
   @@index([documento])
   @@index([origemClienteId])
+  @@index([status])
   @@map("pacientes")
 }
 

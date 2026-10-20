@@ -33,7 +33,12 @@ const sigla = (nome: string) => nome.slice(0, 2).toUpperCase();
 /** Como criar um registro de cada entidade com só o necessário. */
 function configs(prisma: PrismaService, empresaId: string): Record<LookupEntidade, Config> {
   return {
-    pacientes: { criar: (data) => prisma.paciente.create({ data }) },
+    pacientes: {
+      criar: ({ ativo, ...data }) =>
+        prisma.paciente.create({
+          data: { ...data, ...(ativo === false && { status: 'INATIVO' }) },
+        }),
+    },
     profissionais: { criar: (data) => prisma.profissional.create({ data }) },
     especialidades: { criar: (data) => prisma.especialidade.create({ data }) },
     empresas: {
@@ -63,6 +68,17 @@ function configs(prisma: PrismaService, empresaId: string): Record<LookupEntidad
     },
     'tipos-agendamento': {
       criar: (data) => prisma.tipoAgendamento.create({ data: { ...data, duracaoMinutos: 30 } }),
+    },
+    'origens-cliente': {
+      criar: ({ ativo, ...data }) =>
+        prisma.origemCliente.create({
+          data: {
+            ...data,
+            ativa: ativo,
+            codigo: data.nome.toLowerCase().replaceAll(' ', '_'),
+            ordem: 1,
+          },
+        }),
     },
   };
 }

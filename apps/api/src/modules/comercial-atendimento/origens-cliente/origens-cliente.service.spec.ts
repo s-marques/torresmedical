@@ -49,6 +49,28 @@ function setup() {
 const SORT = { field: 'ordem', direction: 'asc' } as const;
 
 describe('OrigensClienteService', () => {
+  describe('lookup (combobox de origem)', () => {
+    it('só origens ativas e não excluídas, com busca por nome', async () => {
+      const { service, origemCliente } = setup();
+
+      const page = await service.lookup({
+        page: 1,
+        pageSize: 10,
+        sort: { field: 'nome', direction: 'asc' },
+        search: 'indic',
+      });
+
+      expect(origemCliente.count).toHaveBeenCalledWith({
+        where: {
+          deletedAt: null,
+          ativa: true,
+          OR: [{ nome: { contains: 'indic', mode: 'insensitive' } }],
+        },
+      });
+      expect(page.data).toEqual([{ id: ID, label: 'Indicação', descricao: null }]);
+    });
+  });
+
   describe('list', () => {
     it('filtra excluídas, status e busca (nome e código); ordena e pagina', async () => {
       const { service, origemCliente } = setup();
