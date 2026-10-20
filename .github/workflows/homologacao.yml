@@ -1,0 +1,37 @@
+# Atualiza a homologação do servidor (http://<servidor>:5173) a cada push na main, ou seja,
+# a cada merge de PR. A chave SSH só consegue executar o script de atualização no servidor
+# (comando forçado no authorized_keys); o script e o compose da homologação ficam fora do repositório.
+name: Homologação
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Um merge logo depois do outro: as atualizações rodam em fila, sem cancelar a anterior.
+concurrency:
+  group: homologacao
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  atualizar:
+    name: Atualizar homologação
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Atualizar o servidor (pull da main, rebuild e restart)
+        env:
+          SSH_KEY: ${{ secrets.HOMOLOGACAO_SSH_KEY }}
+          SSH_HOST: ${{ secrets.HOMOLOGACAO_SSH_HOST }}
+          SSH_USER: ${{ secrets.HOMOLOGACAO_SSH_USER }}
+          SSH_KNOWN_HOSTS: ${{ secrets.HOMOLOGACAO_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/homologacao
+          chmod 600 ~/.ssh/homologacao
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/homologacao -o IdentitiesOnly=yes -o BatchMode=yes \
+            -o ServerAliveInterval=30 "$SSH_USER@$SSH_HOST" atualizar
