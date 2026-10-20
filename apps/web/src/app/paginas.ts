@@ -10,6 +10,9 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   'comercial-atendimento.origens-cliente': lazy(
     () => import('@/features/comercial-atendimento/origens-cliente/OrigensClientePage'),
   ),
+  'compras-estoque.categorias': lazy(
+    () => import('@/features/compras-estoque/categorias/CategoriasPage'),
+  ),
   'painel.painel': lazy(() => import('@/features/painel/painel/PainelPage')),
   'configuracoes-gestao.relatorios': lazy(
     () => import('@/features/configuracoes-gestao/relatorios/RelatoriosGestaoPage'),
