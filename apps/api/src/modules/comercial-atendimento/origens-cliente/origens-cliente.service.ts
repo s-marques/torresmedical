@@ -2,6 +2,8 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { Injectable } from '@nestjs/common';
 import {
   gerarCodigoOrigemCliente,
+  type LookupItem,
+  type LookupQuery,
   type CreateOrigemClienteInput,
   type ExportOrigensClienteQuery,
   type ListOrigensClienteQuery,
@@ -14,7 +16,7 @@ import { AuditService } from '../../../common/audit/audit.service';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ExportService, selectColumns } from '../../../common/export/export.service';
 import type { ExportColumn, ExportFile } from '../../../common/export/export.types';
-import { buscarPorId, type FonteLookup } from '../../../common/lookups/lookup-query';
+import { EntidadeLookupService, type FonteLookup } from '../../../common/lookups/lookup-query';
 import { paginate, searchWhere, toOrderBy, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 
@@ -38,8 +40,13 @@ export const ORIGEM_CLIENTE_EXPORT_DEFINITIONS: readonly ExportColumn<
  * usada no cadastro de clientes e nos relatórios de captação.
  */
 @Injectable()
-export class OrigensClienteService {
-  private readonly fonte: FonteLookup<Prisma.OrigemClienteWhereInput, OrigemCliente> = {
+export class OrigensClienteService extends EntidadeLookupService<
+  LookupQuery<'origens-cliente'>,
+  Prisma.OrigemClienteWhereInput,
+  OrigemCliente
+> {
+  protected readonly naoEncontrado = 'Origem de cliente não encontrada';
+  protected readonly fonte: FonteLookup<Prisma.OrigemClienteWhereInput, OrigemCliente> = {
     findMany: (args) => this.txHost.tx.origemCliente.findMany(args),
     count: (args) => this.txHost.tx.origemCliente.count(args),
     findFirst: (args) => this.txHost.tx.origemCliente.findFirst(args),
@@ -49,7 +56,18 @@ export class OrigensClienteService {
     private readonly txHost: TransactionHost<PrismaAdapter>,
     private readonly exportService: ExportService,
     private readonly audit: AuditService,
-  ) {}
+  ) {
+    super();
+  }
+
+  /** Combobox de origem (cadastro de pacientes): só as ativas, na ordem da lista. */
+  protected filtro(query: LookupQuery<'origens-cliente'>): Prisma.OrigemClienteWhereInput {
+    return { ...NAO_EXCLUIDAS, ativa: true, ...searchWhere(query.search, ['nome']) };
+  }
+
+  protected toItem(origem: OrigemCliente): LookupItem {
+    return { id: origem.id, label: origem.nome, descricao: null };
+  }
 
   list(query: ListOrigensClienteQuery): Promise<Page<OrigemCliente>> {
     const where = this.where(query);
@@ -58,11 +76,6 @@ export class OrigensClienteService {
       findMany: (page) => this.txHost.tx.origemCliente.findMany({ where, orderBy, ...page }),
       count: () => this.txHost.tx.origemCliente.count({ where }),
     });
-  }
-
-  /** Origem não excluída (ativa ou inativa); 404 se não existir. */
-  findById(id: string): Promise<OrigemCliente> {
-    return buscarPorId(this.fonte, id, 'Origem de cliente não encontrada');
   }
 
   /** Nova origem: o código vem do nome e ela entra no fim da lista. */

@@ -121,7 +121,7 @@ describe('buildSeedData', () => {
       ).toBe(true);
       expect(entidades.funcionarios.every((f) => cargos.has(String(f.cargoId)))).toBe(true);
       expect(entidades.produtos.every((p) => categorias.has(String(p.categoriaId)))).toBe(true);
-      expect(entidades.pacientes.some((p) => p.ativo === false)).toBe(true);
+      expect(entidades.pacientes.some((p) => p.status === 'INATIVO')).toBe(true);
       expect(entidades.produtos.map((p) => p.tipo)).toEqual(
         expect.arrayContaining(['PRODUTO', 'SERVICO']),
       );

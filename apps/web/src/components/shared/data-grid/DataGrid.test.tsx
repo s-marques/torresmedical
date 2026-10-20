@@ -351,6 +351,29 @@ describe('DataGrid', () => {
     });
   });
 
+  it('aoClicarLinha: clique ou Enter na linha, sem disparar pelo menu de ações', async () => {
+    const abrir = vi.fn();
+    const editar = vi.fn();
+    const { user } = renderizar({
+      aoClicarLinha: abrir,
+      acoes: () => [{ rotulo: 'Editar', onSelect: editar }],
+    });
+
+    await user.click(await screen.findByText('Unidade 1'));
+    expect(abrir).toHaveBeenCalledTimes(1);
+    expect(abrir).toHaveBeenLastCalledWith(expect.objectContaining({ nome: 'Unidade 1' }));
+
+    const linha = screen.getByText('Unidade 2').closest('tr') as HTMLElement;
+    linha.focus();
+    await user.keyboard('{Enter}');
+    expect(abrir).toHaveBeenCalledTimes(2);
+
+    await user.click(screen.getAllByRole('button', { name: /ações/i })[0] as HTMLElement);
+    await user.click(await screen.findByRole('menuitem', { name: 'Editar' }));
+    expect(editar).toHaveBeenCalledTimes(1);
+    expect(abrir).toHaveBeenCalledTimes(2);
+  });
+
   it('ações por linha respeitam a permissão', async () => {
     sessao.permissoes = ['configuracoes-gestao.minha-empresa.editar'] satisfies Permissao[];
     const editar = vi.fn();

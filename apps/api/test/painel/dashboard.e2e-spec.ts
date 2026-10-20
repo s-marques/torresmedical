@@ -92,7 +92,7 @@ describe('Painel: dashboard (e2e)', () => {
     await prisma.paciente.createMany({
       data: [
         { nome: faker.person.fullName() },
-        { nome: faker.person.fullName(), ativo: false },
+        { nome: faker.person.fullName(), status: 'INATIVO' },
         { nome: faker.person.fullName(), deletedAt: new Date() },
       ],
     });

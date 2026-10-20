@@ -8,7 +8,7 @@ import {
   type RowData,
 } from '@tanstack/react-table';
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, MoreHorizontalIcon } from 'lucide-react';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -82,6 +82,7 @@ export function DataGrid<T extends RowData>({
   filtros,
   exportacao,
   acoes,
+  aoClicarLinha,
   mensagemVazio = 'Nenhum resultado.',
   tamanhosPagina = TAMANHOS_PAGINA,
 }: Readonly<DataGridProps<T>>) {
@@ -199,7 +200,10 @@ export function DataGrid<T extends RowData>({
               onTentarDeNovo={() => void consulta.refetch()}
             />
             {linhas.map((linha) => (
-              <TableRow key={linha.id}>
+              <TableRow
+                key={linha.id}
+                {...(aoClicarLinha && propsDeLinhaClicavel(() => aoClicarLinha(linha.original)))}
+              >
                 {linha.getVisibleCells().map((celula) => (
                   <TableCell key={celula.id} className={porId.get(celula.column.id)?.className}>
                     <table.FlexRender cell={celula} />
@@ -221,6 +225,22 @@ export function DataGrid<T extends RowData>({
       />
     </section>
   );
+}
+
+const INTERATIVOS = 'button, a, input, select, textarea, [role="menu"], [role="menuitem"]';
+
+/** Linha que abre algo ao clicar ou ao teclar Enter, sem competir com os controles dentro dela. */
+function propsDeLinhaClicavel(abrir: () => void) {
+  return {
+    tabIndex: 0,
+    className: 'cursor-pointer',
+    onClick: (evento: MouseEvent<HTMLTableRowElement>) => {
+      if (!(evento.target as HTMLElement).closest(INTERATIVOS)) abrir();
+    },
+    onKeyDown: (evento: KeyboardEvent<HTMLTableRowElement>) => {
+      if (evento.key === 'Enter' && evento.target === evento.currentTarget) abrir();
+    },
+  };
 }
 
 function montarDefinicoes<T extends RowData>(
