@@ -1,6 +1,6 @@
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { Injectable } from '@nestjs/common';
-import type { LookupItem, LookupQuery } from '@torres/shared';
+import type { CreateUnidadeMedidaInput, LookupItem, LookupQuery } from '@torres/shared';
 import type { Prisma, UnidadeMedida } from '../../../generated/prisma/client';
 import { EntidadeLookupService, type FonteLookup } from '../../../common/lookups/lookup-query';
 import { searchWhere } from '../../../common/pagination/paginate';
@@ -22,6 +22,10 @@ export class UnidadesMedidaService extends EntidadeLookupService<
 
   constructor(private readonly txHost: TransactionHost<PrismaAdapter>) {
     super();
+  }
+
+  create(input: CreateUnidadeMedidaInput): Promise<UnidadeMedida> {
+    return this.txHost.tx.unidadeMedida.create({ data: input });
   }
 
   protected filtro(query: LookupQuery<'unidades-medida'>): Prisma.UnidadeMedidaWhereInput {

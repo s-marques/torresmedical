@@ -48,6 +48,8 @@ export interface AcaoLinha {
   destrutiva?: boolean;
   /** Só aparece com a permissão. */
   permissao?: Permissao;
+  /** Aparece, mas não pode ser escolhida (ex.: funcionalidade de outra tela ainda não pronta). */
+  desabilitada?: boolean;
 }
 
 export interface ExportacaoGrid {

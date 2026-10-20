@@ -229,7 +229,7 @@ describe('Lookups das entidades compartilhadas (e2e)', () => {
 
   describe('filtros e descrições', () => {
     it('produtos e categorias por tipo; formas de pagamento por finalidade', async () => {
-      await prisma.produto.create({ data: { nome: 'Soro', tipo: 'PRODUTO', codigo: '789' } });
+      await prisma.produto.create({ data: { nome: 'Soro', tipo: 'PRODUTO', sku: '789' } });
       await prisma.produto.create({ data: { nome: 'Consulta', tipo: 'SERVICO' } });
       await prisma.categoria.create({ data: { nome: 'Insumos', tipo: 'PRODUTO' } });
       await prisma.formaPagamento.create({

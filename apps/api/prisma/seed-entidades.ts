@@ -137,7 +137,7 @@ export function buildSeedEntidades(dominioEmail: string): SeedEntidades {
       id: faker.string.uuid(),
       nome: faker.commerce.productName(),
       tipo,
-      codigo: tipo === 'PRODUTO' ? faker.string.numeric(13) : null,
+      sku: tipo === 'PRODUTO' ? faker.string.numeric(13) : null,
       categoriaId: faker.helpers.arrayElement(categorias.filter((c) => c.tipo === tipo)).id,
       unidadeMedidaId: tipo === 'PRODUTO' ? faker.helpers.arrayElement(unidadesMedida).id : null,
       precoVenda: faker.commerce.price({ min: 5, max: 900 }),

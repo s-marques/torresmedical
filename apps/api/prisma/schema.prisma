@@ -317,27 +317,46 @@ model UnidadeMedida {
   @@map("unidades_medida")
 }
 
+/// Tipo do item do catálogo (campo Tipo do modal Novo Produto/Serviço). Só `SERVICO` é serviço.
+enum ProdutoTipo {
+  PRODUTO
+  REVENDA
+  USO_CONSUMO
+  SERVICO
+
+  @@map("produto_tipo")
+}
+
 /// Dono: compras-estoque. Produto ou serviço do catálogo da clínica.
 model Produto {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   nome            String
-  tipo            TipoItem
-  /// SKU ou código de barras.
-  codigo          String?
-  categoriaId     String?   @map("categoria_id") @db.Uuid
-  unidadeMedidaId String?   @map("unidade_medida_id") @db.Uuid
-  precoVenda      Decimal   @default(0) @map("preco_venda") @db.Decimal(12, 2)
-  ativo           Boolean   @default(true)
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(3)
+  tipo            ProdutoTipo
+  categoriaId     String?     @map("categoria_id") @db.Uuid
+  unidadeMedidaId String?     @map("unidade_medida_id") @db.Uuid
+  marca           String?
+  codigoBarras    String?     @map("codigo_barras")
+  sku             String?
+  precoCusto      Decimal?    @map("preco_custo") @db.Decimal(12, 2)
+  precoVenda      Decimal     @default(0) @map("preco_venda") @db.Decimal(12, 2)
+  estoqueMinimo   Decimal     @default(0) @map("estoque_minimo") @db.Decimal(12, 3)
+  controlaEstoque Boolean     @default(true) @map("controla_estoque")
+  /// Saldo atual. Só leitura em Produtos/Serviços: a tela Estoque (#20) é quem movimenta.
+  estoqueAtual    Decimal     @default(0) @map("estoque_atual") @db.Decimal(12, 3)
+  ncm             String?
+  descricao       String?
+  ativo           Boolean     @default(true)
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt       DateTime?   @map("deleted_at") @db.Timestamptz(3)
 
   categoria     Categoria?     @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
   unidadeMedida UnidadeMedida? @relation(fields: [unidadeMedidaId], references: [id], onDelete: Restrict)
 
   @@index([categoriaId])
   @@index([unidadeMedidaId])
-  @@index([codigo])
+  @@index([sku])
+  @@index([codigoBarras])
   @@map("produtos")
 }
 
