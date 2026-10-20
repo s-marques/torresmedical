@@ -41,6 +41,28 @@ O código é montado como volume: API (`nest start --watch`), web (Vite HMR) e s
 (`tsup --watch`) recarregam sozinhos. Os `node_modules` ficam em volumes do container.
 Depois de mudar dependências, rode `docker compose up -d --build -V`.
 
+### Ambientes no servidor
+
+| Ambiente            | Porta  | Código                                                   | Atualização                       |
+| ------------------- | ------ | -------------------------------------------------------- | --------------------------------- |
+| **Homologação**     | `5173` | sempre a `main` (`~/projetos/torresmedical-homologacao`) | automática a cada merge na `main` |
+| **Desenvolvimento** | `5174` | a branch aberta em `~/projetos/torresmedical-dev`        | hot reload (como acima)           |
+
+Fluxo: com o card em **Em revisão**, teste a branch no desenvolvimento (`5174`); depois do merge,
+a homologação (`5173`) se atualiza sozinha.
+
+- A homologação usa o Postgres, o RabbitMQ e o MinIO do desenvolvimento, com banco
+  `torres_homologacao`, vhost `homologacao` e bucket `torres-arquivos-homologacao` próprios.
+- O workflow [`homologacao.yml`](.github/workflows/homologacao.yml) roda a cada push na `main` e
+  executa por SSH o `atualizar.sh` do servidor: `pull` da `main`, rebuild da imagem quando as
+  dependências mudam, recriação de `api`/`web` do zero (migrations aplicadas na subida) e espera
+  pelo healthcheck. O log fica no Actions e em `torresmedical-homologacao/atualizar.log`. Para
+  rodar de novo sem merge: Actions → Homologação → _Run workflow_.
+- Secrets usados: `HOMOLOGACAO_SSH_KEY` (chave que só executa o script), `HOMOLOGACAO_SSH_HOST`,
+  `HOMOLOGACAO_SSH_USER` e `HOMOLOGACAO_SSH_KNOWN_HOSTS`.
+- O cookie de sessão vale para o host, sem distinguir porta: logado nos dois ambientes no mesmo
+  navegador, um encerra a sessão do outro ao recarregar. Use perfis ou navegadores diferentes.
+
 ### Variáveis de ambiente (`.env`)
 
 O `.env` nunca é commitado. O [`.env.example`](.env.example) lista as variáveis sem valores reais:
