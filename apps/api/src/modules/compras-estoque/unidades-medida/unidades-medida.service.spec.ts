@@ -29,4 +29,14 @@ describe('UnidadesMedidaService', () => {
       message: 'Unidade de medida não encontrada',
     });
   });
+
+  it('create grava nome e sigla', async () => {
+    const { txHost, delegate } = txHostFalso('unidadeMedida', [UNIDADE]);
+    const create = jest.fn().mockResolvedValue(UNIDADE);
+    Object.assign(delegate, { create });
+
+    await new UnidadesMedidaService(txHost).create({ nome: 'Caixa', sigla: 'CX' });
+
+    expect(create).toHaveBeenCalledWith({ data: { nome: 'Caixa', sigla: 'CX' } });
+  });
 });

@@ -355,10 +355,11 @@ function AcoesDaLinha({ acoes }: Readonly<{ acoes: AcaoLinha[] }>) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {permitidas.map(({ rotulo, onSelect, icone: Icone, destrutiva }) => (
+        {permitidas.map(({ rotulo, onSelect, icone: Icone, destrutiva, desabilitada }) => (
           <DropdownMenuItem
             key={rotulo}
             variant={destrutiva ? 'destructive' : 'default'}
+            disabled={desabilitada}
             onSelect={onSelect}
           >
             {Icone && <Icone aria-hidden />}

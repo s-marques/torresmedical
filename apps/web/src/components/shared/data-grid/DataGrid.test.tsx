@@ -351,6 +351,21 @@ describe('DataGrid', () => {
     });
   });
 
+  it('ação desabilitada aparece no menu e não dispara', async () => {
+    const movimentar = vi.fn();
+    const { user } = renderizar({
+      acoes: () => [{ rotulo: 'Movimentar', onSelect: movimentar, desabilitada: true }],
+    });
+
+    await screen.findByText('Unidade 1');
+    await user.click(screen.getAllByRole('button', { name: /ações/i })[0] as HTMLElement);
+    const item = await screen.findByRole('menuitem', { name: 'Movimentar' });
+    expect(item).toHaveAttribute('aria-disabled', 'true');
+    await user.click(item);
+
+    expect(movimentar).not.toHaveBeenCalled();
+  });
+
   it('aoClicarLinha: clique ou Enter na linha, sem disparar pelo menu de ações', async () => {
     const abrir = vi.fn();
     const editar = vi.fn();
