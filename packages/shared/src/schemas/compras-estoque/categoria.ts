@@ -32,7 +32,10 @@ const nome = z
 
 const tipo = z.enum(TIPOS_ITEM, { error: 'Tipo deve ser produto ou servico' });
 
-const cor = z.enum(CATEGORIA_CORES, { error: 'Cor inválida' });
+/** Qualquer cor `#rrggbb`: categorias antigas têm cores fora da paleta e precisam continuar editáveis. */
+const cor = z
+  .string({ error: 'Cor inválida' })
+  .regex(/^#[0-9a-fA-F]{6}$/, { error: 'Cor inválida' });
 
 /** Descrição opcional: vazio vira `null`. */
 const descricao = z

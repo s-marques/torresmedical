@@ -239,6 +239,29 @@ describe('Categorias (/categorias)', () => {
     });
   });
 
+  it('Editar categoria com cor fora da paleta mantém a cor ao salvar', async () => {
+    let corpo: Corpo = {};
+    const { user } = renderTela(
+      api({
+        rotas: {
+          [API]: () => pagina([categoria({ cor: '#cff2e8' })]),
+          [`${API}/${ID_1}`]: (init) => {
+            corpo = corpoDe(init);
+            return json(categoria({ cor: '#cff2e8' }));
+          },
+        },
+      }),
+    );
+
+    await abrirMenu(user, 'Marketing', 'Editar');
+    const modal = await screen.findByRole('dialog', { name: 'Editar Categoria' });
+    expect(within(modal).queryByRole('radio', { checked: true })).not.toBeInTheDocument();
+    await user.click(within(modal).getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(corpo).toMatchObject({ cor: '#cff2e8' });
+  });
+
   it('Excluir: confirma antes e envia DELETE; Cancelar não exclui', async () => {
     let excluidas = 0;
     const { user } = renderTela(

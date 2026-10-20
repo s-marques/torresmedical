@@ -43,18 +43,22 @@ describe('createCategoriaSchema', () => {
     ).toMatchObject({ tipo: 'produto', cor: CATEGORIA_CORES[3], descricao: null });
   });
 
-  it('rejeita tipo, cor fora da paleta, nome longo e campo extra', () => {
+  it('rejeita tipo, cor que não é hexadecimal, nome longo e campo extra', () => {
     expect(
       messages(
         createCategoriaSchema.safeParse({
           nome: 'x'.repeat(CATEGORIA_NOME_MAX + 1),
           tipo: 'outro',
-          cor: '#000000',
+          cor: 'azul',
           extra: 1,
         }),
       ),
     ).toMatchObject({ tipo: expect.any(String), cor: 'Cor inválida', nome: expect.any(String) });
   });
+});
+
+it('aceita cor hexadecimal fora da paleta (categorias antigas)', () => {
+  expect(createCategoriaSchema.parse({ nome: 'Antiga', cor: '#cff2e8' }).cor).toBe('#cff2e8');
 });
 
 describe('listCategoriasQuerySchema', () => {

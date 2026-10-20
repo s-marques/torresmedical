@@ -151,10 +151,10 @@ describe('Categorias (e2e)', () => {
       await expectNoAudit(prisma, { entity: ENTITY });
     });
 
-    it('400 para tipo, cor fora da paleta e campo não permitido', async () => {
+    it('400 para tipo, cor inválida e campo não permitido', async () => {
       const res = await http()
         .post(BASE)
-        .send({ nome: 'X', tipo: 'outro', cor: '#000000', deletedAt: null })
+        .send({ nome: 'X', tipo: 'outro', cor: 'azul', deletedAt: null })
         .expect(400);
 
       expect(res.body.details.map((d: { field: string }) => d.field).sort()).toEqual([

@@ -26,7 +26,7 @@ function valoresIniciais(categoria?: Categoria): CategoriaFormInput {
   return {
     nome: categoria?.nome ?? '',
     tipo: (categoria?.tipo.toLowerCase() as TipoItem | undefined) ?? 'servico',
-    cor: (categoria?.cor as CategoriaFormInput['cor']) ?? CATEGORIA_COR_PADRAO,
+    cor: categoria?.cor ?? CATEGORIA_COR_PADRAO,
     descricao: categoria?.descricao ?? '',
   };
 }
