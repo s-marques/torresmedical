@@ -139,7 +139,7 @@ describe('Produtos/Serviços (/produtos)', () => {
     expect(within(consulta).getByText('Inativo')).toBeVisible();
   });
 
-  it('chips, busca e ordenação chamam a API com os parâmetros', async () => {
+  it('chips Produtos e Serviços filtram por tipo na API', async () => {
     const fetchMock = api();
     const { user } = renderTela(fetchMock);
     await screen.findByText('Soro fisiológico');
@@ -148,25 +148,36 @@ describe('Produtos/Serviços (/produtos)', () => {
     await waitFor(() => expect(parametros(fetchMock)).toMatchObject({ tipo: 'produto' }));
     await user.click(screen.getByRole('button', { name: 'Serviços' }));
     await waitFor(() => expect(parametros(fetchMock)).toMatchObject({ tipo: 'servico' }));
+  });
+
+  it('busca envia o texto na API', async () => {
+    const fetchMock = api();
+    const { user } = renderTela(fetchMock);
+    await screen.findByText('Soro fisiológico');
 
     await user.type(
       screen.getByPlaceholderText('Buscar produtos por nome, SKU ou código de barras...'),
       'soro',
     );
-    await waitFor(() => expect(parametros(fetchMock)).toMatchObject({ search: 'soro' }));
 
-    const ordens: [string, string][] = [
-      ['Produto/Serviço', 'nome'],
-      ['Código', 'codigo'],
-      ['Preço Venda', 'precoVenda'],
-      ['Custo', 'precoCusto'],
-      ['Estoque', 'estoqueAtual'],
-      ['Status', 'ativo'],
-    ];
-    for (const [coluna, campo] of ordens) {
-      await user.click(screen.getByRole('button', { name: coluna }));
-      await waitFor(() => expect(parametros(fetchMock)).toMatchObject({ sort: `${campo}:asc` }));
-    }
+    await waitFor(() => expect(parametros(fetchMock)).toMatchObject({ search: 'soro' }));
+  });
+
+  it.each([
+    ['Produto/Serviço', 'nome'],
+    ['Código', 'codigo'],
+    ['Preço Venda', 'precoVenda'],
+    ['Custo', 'precoCusto'],
+    ['Estoque', 'estoqueAtual'],
+    ['Status', 'ativo'],
+  ])('ordenar por %s chama a API com sort=%s:asc', async (coluna, campo) => {
+    const fetchMock = api();
+    const { user } = renderTela(fetchMock);
+    await screen.findByText('Soro fisiológico');
+
+    await user.click(screen.getByRole('button', { name: coluna }));
+
+    await waitFor(() => expect(parametros(fetchMock)).toMatchObject({ sort: `${campo}:asc` }));
   });
 
   it('Novo Produto: mostra os campos do inventário e os botões', async () => {
