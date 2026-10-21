@@ -7,9 +7,12 @@ import {
   type HorarioAtendimento,
   type Profissional,
 } from '@torres/shared';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { apiFalsa, chamadasPara, json, renderApp, USUARIO_TESTE } from '@/test/render-app';
 import { formatarComissao, formatarValor, iniciaisDe } from './formatadores';
+
+// A tela abre vários modais e o CI roda com cobertura (mais lento): folga no tempo de cada teste.
+vi.setConfig({ testTimeout: 20_000 });
 
 const API = '/api/gestao-profissionais/profissionais';
 const API_ESPECIALIDADES = '/api/gestao-profissionais/especialidades';
@@ -681,7 +684,7 @@ describe('Profissionais (/profissionais)', () => {
           }),
         ]),
       );
-    }, 20_000);
+    });
 
     it('mostra o erro de fim antes do início e remove uma linha', async () => {
       const { user, modal } = await abrirEdicao(
