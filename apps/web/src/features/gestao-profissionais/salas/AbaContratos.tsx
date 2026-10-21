@@ -9,7 +9,7 @@ import {
   type ContratoModalidade,
   type ContratoSala,
 } from '@torres/shared';
-import { PencilIcon, SearchIcon, Trash2Icon } from 'lucide-react';
+import { PencilIcon, SearchIcon, TimerIcon, Trash2Icon } from 'lucide-react';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataGrid } from '@/components/shared/data-grid/DataGrid';
@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { formatarData } from '@/lib/formatar';
 import { ModalContrato } from './ModalContrato';
 import { ModalDetalhesContrato } from './ModalDetalhesContrato';
+import { ModalHorasContrato } from './ModalHorasContrato';
 import { PdfContrato } from './PdfContrato';
 import { StatusContrato } from './StatusContrato';
 import { URL_CONTRATOS, useExcluirContrato } from './use-contratos-sala';
@@ -61,6 +62,7 @@ export interface AbaContratosProps {
 export function AbaContratos({ criando, onFecharCriar }: Readonly<AbaContratosProps>) {
   const [detalhando, setDetalhando] = useState<ContratoSala | null>(null);
   const [editando, setEditando] = useState<ContratoSala | null>(null);
+  const [lancandoHoras, setLancandoHoras] = useState<ContratoSala | null>(null);
   const [excluindo, setExcluindo] = useState<ContratoSala | null>(null);
   const excluir = useExcluirContrato();
 
@@ -136,6 +138,19 @@ export function AbaContratos({ criando, onFecharCriar }: Readonly<AbaContratosPr
           >
             <SearchIcon aria-hidden />
           </Button>
+          {c.modalidade === 'HORA' && c.status === 'ATIVO' && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="text-blue-600 hover:text-blue-600"
+              aria-label={`Horas utilizadas de ${c.locatarioNome}`}
+              title="Horas utilizadas"
+              onClick={() => setLancandoHoras(c)}
+            >
+              <TimerIcon aria-hidden />
+            </Button>
+          )}
           <SePermitido permissao="gestao-profissionais.salas.editar">
             <Button
               type="button"
@@ -179,6 +194,9 @@ export function AbaContratos({ criando, onFecharCriar }: Readonly<AbaContratosPr
       />
       {criando && <ModalContrato onFechar={onFecharCriar} />}
       {editando && <ModalContrato contrato={editando} onFechar={() => setEditando(null)} />}
+      {lancandoHoras && (
+        <ModalHorasContrato contrato={lancandoHoras} onFechar={() => setLancandoHoras(null)} />
+      )}
       {detalhando && (
         <ModalDetalhesContrato
           contrato={detalhando}

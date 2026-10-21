@@ -2,7 +2,7 @@ import type { ContratoSala, Sala } from '@torres/shared';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { apiFalsa, chamadasPara, json, renderApp } from '@/test/render-app';
+import { apiFalsa, chamadasPara, json, renderApp, type ApiFalsaOptions } from '@/test/render-app';
 
 vi.setConfig({ testTimeout: 30_000 });
 
@@ -516,5 +516,168 @@ describe('Gestão de Salas: aba Contratos', () => {
         'noopener,noreferrer',
       ),
     );
+  });
+});
+
+describe('Gestão de Salas: Horas Utilizadas', () => {
+  const HORAS = `${API}/${ID_3}/horas`;
+  const hora = (extra: Record<string, unknown> = {}) => ({
+    id: '00000000-0000-4000-8000-0000000000d1',
+    contratoId: ID_3,
+    data: '2026-10-21',
+    entrada: '14:00',
+    saida: '15:30',
+    duracaoMinutos: 90,
+    observacao: 'Retorno',
+    createdAt: '2026-10-21T12:00:00.000Z',
+    ...extra,
+  });
+  const resposta = (horas: ReturnType<typeof hora>[] = [], minutos = 0) =>
+    json({
+      data: horas,
+      resumo: {
+        valorHora: 87.5,
+        horasContratadas: 4,
+        minutosUtilizados: minutos,
+        valorTotal: Math.round((minutos / 60) * 87.5 * 100) / 100,
+      },
+    });
+  // O contrato de Hora Avulsa precisa estar ativo para mostrar o relógio.
+  const ativo = [
+    ...CONTRATOS.slice(0, 2),
+    contrato({
+      id: ID_3,
+      modalidade: 'HORA',
+      locatarioNome: 'Carla Hora Teste',
+      valorUnitario: 87.5,
+      quantidadeMensal: 4,
+      valorTotalMensal: 350,
+    }),
+  ];
+
+  function apiHoras(rotas: NonNullable<ApiFalsaOptions['rotas']> = {}) {
+    return api({
+      rotas: {
+        [API]: () => pagina(ativo),
+        [HORAS]: () => resposta(),
+        ...rotas,
+      },
+    });
+  }
+
+  it('o relógio só aparece em contrato de Hora Avulsa ativo', async () => {
+    await renderAba(apiHoras());
+    await screen.findByText('Carla Hora Teste');
+
+    expect(
+      within(linha('Carla Hora Teste')).getByRole('button', { name: /Horas utilizadas/ }),
+    ).toBeVisible();
+    expect(
+      within(linha('Dra. Ana Teste')).queryByRole('button', { name: /Horas utilizadas/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(linha('Bruno Cliente Teste')).queryByRole('button', { name: /Horas utilizadas/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('mostra o contrato, o mês, o estado vazio e o Gerar Cobrança desabilitado', async () => {
+    const fetchMock = apiHoras();
+    const { user } = await renderAba(fetchMock);
+    await user.click(
+      await screen.findByRole('button', { name: 'Horas utilizadas de Carla Hora Teste' }),
+    );
+
+    const modal = await screen.findByRole('dialog', { name: 'Horas Utilizadas' });
+    expect(within(modal).getByText(/Sala Azul/)).toBeVisible();
+    expect(within(modal).getByText(/87,50\/h/)).toBeVisible();
+    expect(await within(modal).findByText('Nenhuma hora registrada neste mês')).toBeVisible();
+    expect(within(modal).getByText(/0h \/ 4h/)).toBeVisible();
+    expect(within(modal).getByText(/Total: 0,0h × R\$\s87,50 =/)).toBeVisible();
+    expect(within(modal).getByLabelText('Entrada')).toHaveValue('08:00');
+    expect(within(modal).getByLabelText('Saída')).toHaveValue('09:00');
+    expect(within(modal).getByRole('button', { name: 'Gerar Cobrança' })).toBeDisabled();
+    const mes = String(new Date().getMonth() + 1).padStart(2, '0');
+    const consulta = chamadasPara(fetchMock, HORAS).at(-1)?.[0] ?? '';
+    expect(new URL(consulta, 'http://x').searchParams.get('mes')).toBe(
+      `${new Date().getFullYear()}-${mes}`,
+    );
+  });
+
+  it('lista os lançamentos do mês com duração, observação e os totais', async () => {
+    const { user } = await renderAba(apiHoras({ [HORAS]: () => resposta([hora()], 90) }));
+    await user.click(
+      await screen.findByRole('button', { name: 'Horas utilizadas de Carla Hora Teste' }),
+    );
+
+    const modal = await screen.findByRole('dialog', { name: 'Horas Utilizadas' });
+    const registro = (await within(modal).findByText('21/10/2026')).closest('tr') as HTMLElement;
+    expect(within(registro).getByText('14:00')).toBeVisible();
+    expect(within(registro).getByText('15:30')).toBeVisible();
+    expect(within(registro).getByText('1h30')).toBeVisible();
+    expect(within(registro).getByText('Retorno')).toBeVisible();
+    expect(within(modal).getByText(/1,5h \/ 4h/)).toBeVisible();
+    expect(within(modal).getByText(/Total: 1,5h × R\$\s87,50 =/)).toBeVisible();
+    expect(within(modal).getAllByText(/131,25/).length).toBeGreaterThan(0);
+  });
+
+  it('Adicionar envia o lançamento e valida a saída depois da entrada', async () => {
+    let corpo: Record<string, unknown> | null = null;
+    const { user } = await renderAba(
+      apiHoras({
+        [HORAS]: (init) => {
+          if (ehLeitura(init)) return resposta();
+          corpo = corpoDe(init);
+          return json(hora(), 201);
+        },
+      }),
+    );
+    await user.click(
+      await screen.findByRole('button', { name: 'Horas utilizadas de Carla Hora Teste' }),
+    );
+    const modal = await screen.findByRole('dialog', { name: 'Horas Utilizadas' });
+    await within(modal).findByText('Nenhuma hora registrada neste mês');
+
+    await user.clear(within(modal).getByLabelText('Saída'));
+    await user.type(within(modal).getByLabelText('Saída'), '07:00');
+    await user.click(within(modal).getByRole('button', { name: 'Adicionar' }));
+    expect(await within(modal).findByText('A saída deve ser depois da entrada')).toBeVisible();
+    expect(corpo).toBeNull();
+
+    await user.clear(within(modal).getByLabelText('Saída'));
+    await user.type(within(modal).getByLabelText('Saída'), '09:30');
+    await user.type(within(modal).getByLabelText('Obs.'), 'Retorno');
+    await user.click(within(modal).getByRole('button', { name: 'Adicionar' }));
+
+    await waitFor(() => expect(corpo).not.toBeNull());
+    expect(corpo).toMatchObject({ entrada: '08:00', saida: '09:30', observacao: 'Retorno' });
+  });
+
+  it('Remover pede confirmação e só remove ao confirmar', async () => {
+    let removido = false;
+    const { user } = await renderAba(
+      apiHoras({
+        [HORAS]: () => resposta([hora()], 90),
+        [`${HORAS}/${hora().id}`]: (init) => {
+          removido = init?.method === 'DELETE';
+          return json(hora());
+        },
+      }),
+    );
+    await user.click(
+      await screen.findByRole('button', { name: 'Horas utilizadas de Carla Hora Teste' }),
+    );
+    const modal = await screen.findByRole('dialog', { name: 'Horas Utilizadas' });
+
+    await user.click(await within(modal).findByRole('button', { name: /Remover lançamento/ }));
+    const dialogo = await screen.findByRole('alertdialog', { name: 'Remover lançamento?' });
+    await user.click(within(dialogo).getByRole('button', { name: 'Cancelar' }));
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+    expect(removido).toBe(false);
+
+    await user.click(within(modal).getByRole('button', { name: /Remover lançamento/ }));
+    await user.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Remover' }),
+    );
+    await waitFor(() => expect(removido).toBe(true));
   });
 });

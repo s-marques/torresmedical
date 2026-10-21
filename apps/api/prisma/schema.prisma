@@ -715,6 +715,7 @@ model ContratoSala {
   sala         Sala              @relation(fields: [salaId], references: [id])
   profissional Profissional?     @relation(fields: [profissionalId], references: [id])
   dias         ContratoSalaDia[]
+  horas        ContratoSalaHora[]
 
   @@index([salaId])
   @@index([profissionalId])
@@ -735,6 +736,23 @@ model ContratoSalaDia {
 
   @@unique([contratoId, diaSemana])
   @@map("contratos_sala_dias")
+}
+
+/// Hora utilizada de um contrato de Hora Avulsa (modal "Horas Utilizadas"): data e horário
+/// "HH:MM" de entrada e saída. Base da cobrança do mês.
+model ContratoSalaHora {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contratoId  String       @map("contrato_id") @db.Uuid
+  data        DateTime     @db.Date
+  entrada     String
+  saida       String
+  observacao  String?
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  contrato ContratoSala @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+
+  @@index([contratoId, data])
+  @@map("contratos_sala_horas")
 }
 
 enum AuditAction {

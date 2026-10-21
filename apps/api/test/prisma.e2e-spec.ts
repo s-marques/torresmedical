@@ -49,6 +49,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'categorias',
       'contratos_sala',
       'contratos_sala_dias',
+      'contratos_sala_horas',
       'empresas',
       'especialidades',
       'formas_pagamento',
