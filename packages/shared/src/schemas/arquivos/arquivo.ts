@@ -52,6 +52,16 @@ export const ARQUIVO_USOS = {
     formatos: ['jpg', 'jpeg', 'png'],
     maxBytes: 2 * MB,
   },
+  'foto-profissional': {
+    descricao: 'Foto do profissional',
+    formatos: ['jpg', 'jpeg', 'png', 'webp'],
+    maxBytes: 2 * MB,
+  },
+  'logo-receita': {
+    descricao: 'Logo da receita do profissional',
+    formatos: ['jpg', 'jpeg', 'png'],
+    maxBytes: 2 * MB,
+  },
   'extrato-conciliacao': {
     descricao: 'Extrato bancário para conciliação',
     formatos: ['ofx', 'csv'],
