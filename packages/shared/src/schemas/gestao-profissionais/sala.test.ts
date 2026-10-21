@@ -42,7 +42,7 @@ describe('salaInputSchema', () => {
   it('rejeita tipo desconhecido, valor negativo e campo fora do formulário', () => {
     const resultado = createSalaSchema.safeParse({
       nome: 'Sala',
-      tipo: 'OUTRO',
+      tipo: 'INEXISTENTE',
       valorHora: -1,
       ativo: false,
     });

@@ -183,6 +183,16 @@ describe('Gestão de Salas (/salas)', () => {
       expect(within(modal).getByLabelText(rotulo)).toBeVisible();
     }
     expect(within(modal).getByRole('combobox', { name: 'Tipo' })).toHaveTextContent('Consultório');
+    await user.click(within(modal).getByRole('combobox', { name: 'Tipo' }));
+    const opcoes = await screen.findAllByRole('option');
+    expect(opcoes.map((opcao) => opcao.textContent)).toEqual([
+      'Consultório',
+      'Procedimento',
+      'Exame',
+      'Reunião',
+      'Outro',
+    ]);
+    await user.keyboard('{Escape}');
 
     await user.click(within(modal).getByRole('button', { name: 'Salvar' }));
 

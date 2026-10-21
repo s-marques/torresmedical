@@ -11,14 +11,17 @@ export const SALA_VALOR_MAX = 9_999_999.99;
 export const SALA_METRAGEM_MAX = 99_999.99;
 export const SALA_CAPACIDADE_PADRAO = 1;
 
-/** Opções do select "Tipo" (prints do inventário: Consultório e Reunião). */
-export const SALA_TIPOS = ['CONSULTORIO', 'REUNIAO'] as const;
+/** Opções do select "Tipo" (print do dev na #57): Consultório é o padrão. */
+export const SALA_TIPOS = ['CONSULTORIO', 'PROCEDIMENTO', 'EXAME', 'REUNIAO', 'OUTRO'] as const;
 export const salaTipoSchema = z.enum(SALA_TIPOS, { error: 'Tipo inválido' });
 export type SalaTipo = z.infer<typeof salaTipoSchema>;
 
 export const SALA_TIPO_ROTULOS: Record<SalaTipo, string> = {
   CONSULTORIO: 'Consultório',
+  PROCEDIMENTO: 'Procedimento',
+  EXAME: 'Exame',
   REUNIAO: 'Reunião',
+  OUTRO: 'Outro',
 };
 
 const textoOpcional = (max: number, rotulo: string) =>

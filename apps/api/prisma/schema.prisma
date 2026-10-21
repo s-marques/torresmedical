@@ -602,7 +602,10 @@ model ServicoProfissional {
 /// Dono: gestao-profissionais. Tipo da sala (select "Tipo" da tela Salas).
 enum SalaTipo {
   CONSULTORIO
+  PROCEDIMENTO
+  EXAME
   REUNIAO
+  OUTRO
 
   @@map("sala_tipo")
 }

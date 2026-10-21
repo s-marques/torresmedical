@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "sala_tipo" AS ENUM ('CONSULTORIO', 'REUNIAO');
+CREATE TYPE "sala_tipo" AS ENUM ('CONSULTORIO', 'PROCEDIMENTO', 'EXAME', 'REUNIAO', 'OUTRO');
 
 -- CreateTable
 CREATE TABLE "salas" (

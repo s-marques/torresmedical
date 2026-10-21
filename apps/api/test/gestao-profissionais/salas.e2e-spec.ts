@@ -120,7 +120,7 @@ describe('Salas (e2e)', () => {
     it('400 com mensagens por campo, sem auditar', async () => {
       const res = await http()
         .post(BASE)
-        .send({ nome: '', tipo: 'OUTRO', valorMensal: -1, extra: 1 })
+        .send({ nome: '', tipo: 'INEXISTENTE', valorMensal: -1, extra: 1 })
         .expect(400);
 
       expect(res.body.details).toEqual(
