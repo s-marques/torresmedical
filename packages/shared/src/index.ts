@@ -20,6 +20,7 @@ export * from './schemas/financeiro/forma-pagamento';
 export * from './schemas/gestao-profissionais/especialidade';
 export * from './schemas/gestao-profissionais/profissional';
 export * from './schemas/gestao-profissionais/profissional-agenda';
+export * from './schemas/gestao-profissionais/servico-profissional';
 export * from './schemas/lookups/lookup';
 export * from './schemas/painel/dashboard';
 export * from './schemas/relatorios/relatorio';
