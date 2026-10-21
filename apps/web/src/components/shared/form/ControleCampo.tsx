@@ -31,6 +31,9 @@ interface Contexto {
   props: PropsControle;
 }
 
+const CORHEX = /^#[0-9a-fA-F]{6}$/;
+const COR_NEUTRA = '#000000';
+
 const TIPO_INPUT = { texto: 'text', email: 'email', senha: 'password' } as const;
 
 function texto({ campo, aria, props }: Contexto, tipo: keyof typeof TIPO_INPUT) {
@@ -91,6 +94,26 @@ const RENDERIZADORES: Record<
       placeholder={props.placeholder ?? formatarMoeda(0)}
       disabled={props.disabled}
     />
+  ),
+  cor: ({ campo, aria, props }) => (
+    <div className="flex items-center gap-2">
+      <input
+        type="color"
+        aria-label={`Escolher ${props.label}`}
+        className="h-9 w-12 shrink-0 cursor-pointer rounded-md border bg-transparent p-1"
+        value={CORHEX.test(campo.value ?? '') ? campo.value : COR_NEUTRA}
+        onChange={(evento) => campo.onChange(evento.target.value)}
+        disabled={props.disabled}
+      />
+      <Input
+        {...campo}
+        {...aria}
+        value={campo.value ?? ''}
+        placeholder={props.placeholder ?? COR_NEUTRA}
+        disabled={props.disabled}
+        maxLength={7}
+      />
+    </div>
   ),
   data: ({ campo, aria, props }) => (
     <Input {...campo} {...aria} type="date" value={campo.value ?? ''} disabled={props.disabled} />

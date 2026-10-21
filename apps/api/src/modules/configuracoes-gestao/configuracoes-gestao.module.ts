@@ -3,6 +3,7 @@ import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { criarRelatoriosController } from '../../common/relatorios/relatorios.controller';
 import { EmpresasService } from './empresas/empresas.service';
 import { RelatoriosGestao } from './relatorios/relatorios-gestao';
+import { TiposAgendamentoController } from './tipos-agendamento/tipos-agendamento.controller';
 import { TiposAgendamentoService } from './tipos-agendamento/tipos-agendamento.service';
 import { UnidadesController } from './unidades/unidades.controller';
 import { UnidadesService } from './unidades/unidades.service';
@@ -16,6 +17,7 @@ const SERVICES = [UnidadesService, EmpresasService, TiposAgendamentoService];
 @Module({
   controllers: [
     UnidadesController,
+    TiposAgendamentoController,
     criarLookupController('empresas', EmpresasService),
     criarLookupController('unidades', UnidadesService),
     criarLookupController('tipos-agendamento', TiposAgendamentoService),

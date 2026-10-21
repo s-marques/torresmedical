@@ -9,12 +9,14 @@ export const CONSULTA_LOOKUP = {
   search: undefined,
 } as const;
 
-/** `txHost` falso com um delegate Prisma (`findMany`, `count`, `findFirst`) para testes unitários. */
+/** `txHost` falso com um delegate Prisma (`findMany`, `count`, `findFirst`, `create`, `update`) para testes unitários. */
 export function txHostFalso<R>(modelo: string, registros: R[]) {
   const delegate = {
     findMany: jest.fn().mockResolvedValue(registros),
     count: jest.fn().mockResolvedValue(registros.length),
     findFirst: jest.fn().mockResolvedValue(registros[0] ?? null),
+    create: jest.fn().mockResolvedValue(registros[0] ?? null),
+    update: jest.fn().mockResolvedValue(registros[0] ?? null),
   };
   const txHost = { tx: { [modelo]: delegate } } as unknown as TransactionHost<PrismaAdapter>;
   return { txHost, delegate };

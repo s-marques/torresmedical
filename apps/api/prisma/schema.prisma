@@ -430,14 +430,20 @@ model FormaPagamento {
 
 /// Dono: configuracoes-gestao. Tipo de consulta/procedimento da agenda.
 model TipoAgendamento {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  nome           String
-  cor            String?
-  duracaoMinutos Int       @map("duracao_minutos")
-  ativo          Boolean   @default(true)
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome                String
+  cor                 String?
+  duracaoMinutos      Int       @map("duracao_minutos")
+  /// Permite vincular procedimento/produto ao agendamento.
+  permiteProcedimento Boolean   @default(false) @map("permite_procedimento")
+  /// Permite vincular pacote de sessões ao agendamento.
+  permitePacote       Boolean   @default(false) @map("permite_pacote")
+  /// Soroterapia tem agenda separada.
+  soroterapia         Boolean   @default(false)
+  ativo               Boolean   @default(true)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(3)
 
   @@map("tipos_agendamento")
 }

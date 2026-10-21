@@ -13,6 +13,7 @@ export interface OpcaoCampo {
  * - texto, email, senha, textarea, data (`AAAA-MM-DD`) e select: `string` (`''` quando vazio);
  * - máscaras (cpf, cnpj, cpf-cnpj, telefone, cep): só os dígitos;
  * - numero e moeda: `number` (`null` quando vazio);
+ * - cor: `string` hexadecimal `#RRGGBB`, com seletor de cor e campo de texto;
  * - checkbox e switch: `boolean`;
  * - entidade: id (`null` quando vazio).
  */
@@ -26,6 +27,7 @@ export type TipoCampoSimples =
   | 'textarea'
   | 'checkbox'
   | 'switch'
+  | 'cor'
   | TipoMascara;
 
 interface CampoBase {
