@@ -43,6 +43,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
     expect(tabelas.map((t) => t.table_name)).toEqual([
       'arquivos',
       'audit_log',
+      'bandeiras',
       'bloqueios_agenda',
       'cargos',
       'categorias',
