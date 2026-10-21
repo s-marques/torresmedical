@@ -528,16 +528,35 @@ enum TipoFormaPagamento {
 
 /// Dono: financeiro.
 model FormaPagamento {
-  id         String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  nome       String
-  finalidade FinalidadePagamento
-  tipo       TipoFormaPagamento
-  ativo      Boolean             @default(true)
-  createdAt  DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt  DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt  DateTime?           @map("deleted_at") @db.Timestamptz(3)
+  id                     String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome                   String
+  finalidade             FinalidadePagamento
+  tipo                   TipoFormaPagamento
+  /// Dias até o dinheiro entrar (0 = à vista).
+  prazoRecebimentoDias   Int                 @default(0) @map("prazo_recebimento_dias")
+  maxParcelas            Int                 @default(1) @map("max_parcelas")
+  /// Desmarcado para Permuta, Cortesia e Convênio, que não movimentam dinheiro.
+  movimentaContaBancaria Boolean             @default(true) @map("movimenta_conta_bancaria")
+  ativo                  Boolean             @default(true)
+  createdAt              DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt              DateTime?           @map("deleted_at") @db.Timestamptz(3)
 
   @@map("formas_pagamento")
+}
+
+/// Dono: financeiro. Bandeira de cartão (Visa, Mastercard, Elo...).
+model Bandeira {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String
+  /// Classe FontAwesome do ícone, ex.: fa-cc-visa.
+  icone     String    @default("fa-credit-card")
+  ativo     Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@map("bandeiras")
 }
 
 /// Dono: configuracoes-gestao. Tipo de consulta/procedimento da agenda.
