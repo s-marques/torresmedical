@@ -72,7 +72,12 @@ describe('Formas de Pagamento (e2e)', () => {
         prazoRecebimentoDias: 30,
         maxParcelas: 12,
       });
-      await criarNoBanco('Boleto', { tipo: 'BOLETO', finalidade: 'PAGAR', ativo: false });
+      await criarNoBanco('Boleto', {
+        tipo: 'BOLETO',
+        finalidade: 'PAGAR',
+        maxParcelas: 3,
+        ativo: false,
+      });
       await criarNoBanco('Excluída', { deletedAt: new Date() });
     });
 
@@ -85,7 +90,7 @@ describe('Formas de Pagamento (e2e)', () => {
         finalidade: 'PAGAR',
         tipo: 'BOLETO',
         prazoRecebimentoDias: 0,
-        maxParcelas: 1,
+        maxParcelas: 3,
         movimentaContaBancaria: true,
         ativo: false,
       });
