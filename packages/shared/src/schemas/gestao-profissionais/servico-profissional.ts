@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ativoStatusSchema, listQuerySchema } from '../common/list-query';
+import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 
 export const SERVICO_NOME_MAX = 150;
@@ -22,12 +23,8 @@ const textoOpcional = (max: number, rotulo: string) =>
  * Serviço" e "Editar Serviço"). O `PATCH` substitui os campos do formulário.
  */
 export const servicoProfissionalInputSchema = z.strictObject({
-  profissionalId: z.uuid({ error: 'Profissional é obrigatório.' }),
-  nome: z
-    .string({ error: 'Nome do serviço é obrigatório.' })
-    .trim()
-    .min(1, { error: 'Nome do serviço é obrigatório.' })
-    .max(SERVICO_NOME_MAX, { error: `O nome deve ter no máximo ${SERVICO_NOME_MAX} caracteres` }),
+  profissionalId: z.uuid({ error: mensagemObrigatoria('Profissional') }),
+  nome: textoObrigatorio('Nome do serviço', { max: SERVICO_NOME_MAX }),
   categoria: textoOpcional(SERVICO_CATEGORIA_MAX, 'Categoria'),
   valor: z
     .number({ error: 'Valor inválido' })

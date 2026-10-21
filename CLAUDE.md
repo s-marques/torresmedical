@@ -195,6 +195,9 @@ Se faltar algo, evolua o componente compartilhado no mesmo PR, com teste.
 - **Back:** o mesmo schema via `ZodValidationPipe`. O back sempre valida, nunca confia no front.
 - **Regras que dependem do banco** (unicidade, saldo, status permitido) ficam no service e retornam `BusinessException`.
 - **Mensagens de validação** em português, iguais ou equivalentes às do inventário.
+- **Campo obrigatório vazio:** mensagem padrão "<Campo> é obrigatório." (feminino: "obrigatória."), com o
+  helper `textoObrigatorio`/`mensagemObrigatoria` de `packages/shared`. Telas já entregues adotam o
+  padrão quando forem alteradas; se o inventário trouxer outro texto, confirme com o dev.
 
 ## 4. Auditoria (obrigatória em todo módulo)
 

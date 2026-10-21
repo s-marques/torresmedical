@@ -7,6 +7,7 @@ export * from './schemas/auditoria/audit-log';
 export * from './schemas/auth/auth';
 export * from './schemas/common/api-error';
 export * from './schemas/common/list-query';
+export * from './schemas/common/obrigatorio';
 export * from './schemas/common/pagination';
 export * from './schemas/comercial-atendimento/origem-cliente';
 export * from './schemas/comercial-atendimento/paciente';
