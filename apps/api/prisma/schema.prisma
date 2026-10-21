@@ -599,6 +599,39 @@ model ServicoProfissional {
   @@map("servicos_profissionais")
 }
 
+/// Dono: gestao-profissionais. Tipo da sala (select "Tipo" da tela Salas).
+enum SalaTipo {
+  CONSULTORIO
+  PROCEDIMENTO
+  EXAME
+  REUNIAO
+  OUTRO
+
+  @@map("sala_tipo")
+}
+
+/// Dono: gestao-profissionais. Sala alugada a profissionais (tela Salas). Exclusão lógica: os
+/// contratos e cobranças futuros continuam apontando para ela.
+model Sala {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome         String
+  numero       String?
+  andar        String?
+  tipo         SalaTipo  @default(CONSULTORIO)
+  capacidade   Int       @default(1)
+  metragem     Decimal?  @db.Decimal(8, 2)
+  valorHora    Decimal?  @map("valor_hora") @db.Decimal(12, 2)
+  valorTurno   Decimal?  @map("valor_turno") @db.Decimal(12, 2)
+  valorMensal  Decimal?  @map("valor_mensal") @db.Decimal(12, 2)
+  equipamentos String?
+  ativo        Boolean   @default(true)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@map("salas")
+}
+
 enum AuditAction {
   CREATE
   UPDATE

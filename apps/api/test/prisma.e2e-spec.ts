@@ -62,6 +62,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'produtos',
       'profissionais',
       'redefinicoes_senha',
+      'salas',
       'servicos_profissionais',
       'sessoes',
       'tipos_agendamento',

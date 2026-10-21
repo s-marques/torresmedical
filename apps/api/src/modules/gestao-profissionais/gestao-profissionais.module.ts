@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { EspecialidadesController } from './especialidades/especialidades.controller';
 import { EspecialidadesService } from './especialidades/especialidades.service';
+import { SALA_EM_USO_VERIFICADORES, type SalaEmUsoVerificador } from './salas/sala-em-uso';
+import { SalasController } from './salas/salas.controller';
+import { SalasService } from './salas/salas.service';
 import {
   SERVICO_EM_USO_VERIFICADORES,
   type ServicoEmUsoVerificador,
@@ -20,15 +23,24 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ProfissionaisController,
     EspecialidadesController,
     ServicosProfissionaisController,
+    SalasController,
   ],
   providers: [
     ProfissionaisService,
     EspecialidadesService,
     ProfissionalAgendaService,
     ServicosProfissionaisService,
+    SalasService,
+    // Nenhuma sala é referenciada ainda; o módulo de Contratos acrescenta o seu verificador.
+    { provide: SALA_EM_USO_VERIFICADORES, useValue: [] as SalaEmUsoVerificador[] },
     // Nenhum cadastro referencia serviços ainda; módulos futuros acrescentam o seu verificador.
     { provide: SERVICO_EM_USO_VERIFICADORES, useValue: [] as ServicoEmUsoVerificador[] },
   ],
-  exports: [ProfissionaisService, EspecialidadesService, ServicosProfissionaisService],
+  exports: [
+    ProfissionaisService,
+    EspecialidadesService,
+    ServicosProfissionaisService,
+    SalasService,
+  ],
 })
 export class GestaoProfissionaisModule {}
