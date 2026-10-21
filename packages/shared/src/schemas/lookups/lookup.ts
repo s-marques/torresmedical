@@ -107,10 +107,12 @@ const PACIENTE = telas(
   'consultorio-assistencial.atendimento-medico',
   'financeiro.contas-receber',
   'regulatorio-qualidade.fiscal',
+  'gestao-profissionais.salas',
 );
 
 const PROFISSIONAL = telas(
   'gestao-profissionais.profissionais',
+  'gestao-profissionais.salas',
   'comercial-atendimento.agenda',
   'consultorio-assistencial.atendimento-medico',
   'consultorio-assistencial.receituarios',
@@ -171,6 +173,7 @@ export const LOOKUP_PERMISSOES: Readonly<Record<LookupEntidade, PermissoesLookup
     'financeiro.contas-pagar',
     'comercial-atendimento.vendas-pdv',
     'gestao-profissionais.receita-profissionais',
+    'gestao-profissionais.salas',
   ),
   'tipos-agendamento': telas(
     'configuracoes-gestao.tipos-agendamento',

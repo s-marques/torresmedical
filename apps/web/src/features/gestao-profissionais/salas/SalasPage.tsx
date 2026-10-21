@@ -12,6 +12,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { SePermitido } from '@/components/shared/SePermitido';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { AbaContratos } from './AbaContratos';
 import { AbaSalas } from './AbaSalas';
 
 type IdAba = 'salas' | 'contratos' | 'mapa' | 'dashboard';
@@ -31,8 +32,8 @@ const BREADCRUMB = [
 
 /**
  * Gestão de Salas (`/salas`, docs/inventario/telas/gestao-profissionais-salas.md): salas,
- * contratos, mapa de ocupação e dashboard, em quatro abas. Contratos, Mapa e Dashboard
- * dependem do cadastro de contratos e entram em PRs seguintes da #57.
+ * contratos, mapa de ocupação e dashboard, em quatro abas. Mapa e Dashboard entram em PRs
+ * seguintes da #57.
  */
 export default function SalasPage() {
   const [aba, setAba] = useState<IdAba>('salas');
@@ -45,11 +46,11 @@ export default function SalasPage() {
         descricao="Controle de aluguel de salas para profissionais"
         breadcrumb={BREADCRUMB}
         acoes={
-          aba === 'salas' && (
+          (aba === 'salas' || aba === 'contratos') && (
             <SePermitido permissao="gestao-profissionais.salas.criar">
               <Button type="button" onClick={() => setCriando(true)}>
                 <PlusIcon aria-hidden />
-                Nova Sala
+                {aba === 'salas' ? 'Nova Sala' : 'Novo Contrato'}
               </Button>
             </SePermitido>
           )
@@ -82,9 +83,11 @@ export default function SalasPage() {
         ))}
       </div>
       <div id="painel-aba" role="tabpanel" aria-labelledby={`aba-${aba}`}>
-        {aba === 'salas' ? (
-          <AbaSalas criando={criando} onFecharCriar={() => setCriando(false)} />
-        ) : (
+        {aba === 'salas' && <AbaSalas criando={criando} onFecharCriar={() => setCriando(false)} />}
+        {aba === 'contratos' && (
+          <AbaContratos criando={criando} onFecharCriar={() => setCriando(false)} />
+        )}
+        {(aba === 'mapa' || aba === 'dashboard') && (
           <EmptyState
             icone={ABAS.find((a) => a.id === aba)?.icone}
             titulo="Em construção"

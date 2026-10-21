@@ -73,6 +73,11 @@ export const ARQUIVO_USOS = {
     formatos: ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'mp3', 'ogg', 'mp4'],
     maxBytes: 16 * MB,
   },
+  'contrato-sala': {
+    descricao: 'PDF do contrato de aluguel de sala',
+    formatos: ['pdf'],
+    maxBytes: 10 * MB,
+  },
   'base-conhecimento': {
     descricao: 'Documento da Base de Conhecimento',
     formatos: ['pdf', 'txt', 'md', 'docx'],

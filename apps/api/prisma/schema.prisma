@@ -326,6 +326,7 @@ model Profissional {
   horarios      HorarioAtendimento[]
   bloqueios     BloqueioAgenda[]
   servicos      ServicoProfissional[]
+  contratosSala ContratoSala[]
 
   @@index([especialidadeId])
   @@map("profissionais")
@@ -629,7 +630,111 @@ model Sala {
   updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
 
+  contratos ContratoSala[]
+
   @@map("salas")
+}
+
+/// Dono: gestao-profissionais. Modalidade do contrato de aluguel de sala.
+enum ContratoSalaModalidade {
+  MENSAL
+  TURNO
+  HORA
+
+  @@map("contrato_sala_modalidade")
+}
+
+/// Dono: gestao-profissionais. Quem aluga a sala: um profissional ou um cliente (paciente).
+enum ContratoSalaLocatarioTipo {
+  PROFISSIONAL
+  CLIENTE
+
+  @@map("contrato_sala_locatario_tipo")
+}
+
+enum ContratoSalaTipoReceita {
+  FIXO
+  VARIAVEL
+  MISTO
+
+  @@map("contrato_sala_tipo_receita")
+}
+
+enum ContratoSalaIndiceReajuste {
+  NENHUM
+  IGPM
+  IPCA
+  INPC
+  LIVRE_NEGOCIACAO
+
+  @@map("contrato_sala_indice_reajuste")
+}
+
+/// A ordem dos valores é a da listagem (ativos primeiro).
+enum ContratoSalaStatus {
+  ATIVO
+  CANCELADO
+  ENCERRADO
+
+  @@map("contrato_sala_status")
+}
+
+/// Dono: gestao-profissionais. Contrato de aluguel de sala (aba Contratos da tela Salas).
+/// `valor_unitario` é o valor mensal, por turno ou por hora, conforme a modalidade;
+/// `quantidade_mensal` são os turnos/horas contratados por mês. O locatário é o profissional
+/// ou o paciente (módulo comercial-atendimento, sem FK: o acesso é pelo service exportado).
+/// Exclusão lógica, pois cobranças futuras apontam para o contrato.
+model ContratoSala {
+  id               String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  salaId           String                     @map("sala_id") @db.Uuid
+  modalidade       ContratoSalaModalidade
+  locatarioTipo    ContratoSalaLocatarioTipo  @map("locatario_tipo")
+  profissionalId   String?                    @map("profissional_id") @db.Uuid
+  pacienteId       String?                    @map("paciente_id") @db.Uuid
+  especialidade    String?
+  valorUnitario    Decimal                    @default(0) @map("valor_unitario") @db.Decimal(12, 2)
+  quantidadeMensal Decimal?                   @map("quantidade_mensal") @db.Decimal(8, 2)
+  permuta          Boolean                    @default(false)
+  tipoReceita      ContratoSalaTipoReceita    @default(FIXO) @map("tipo_receita")
+  diaVencimento    Int                        @default(10) @map("dia_vencimento")
+  /// Forma de pagamento (módulo financeiro, sem FK).
+  formaPagamentoId String?                    @map("forma_pagamento_id") @db.Uuid
+  indiceReajuste   ContratoSalaIndiceReajuste @default(NENHUM) @map("indice_reajuste")
+  dataInicio       DateTime                   @map("data_inicio") @db.Date
+  dataFim          DateTime?                  @map("data_fim") @db.Date
+  permiteIndicacao Boolean                    @default(true) @map("permite_indicacao")
+  participaEventos Boolean                    @default(false) @map("participa_eventos")
+  observacoes      String?
+  status           ContratoSalaStatus         @default(ATIVO)
+  /// PDF do contrato enviado em `/api/arquivos` (uso `contrato-sala`).
+  pdfArquivoId     String?                    @map("pdf_arquivo_id") @db.Uuid
+  createdAt        DateTime                   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt        DateTime?                  @map("deleted_at") @db.Timestamptz(3)
+
+  sala         Sala              @relation(fields: [salaId], references: [id])
+  profissional Profissional?     @relation(fields: [profissionalId], references: [id])
+  dias         ContratoSalaDia[]
+
+  @@index([salaId])
+  @@index([profissionalId])
+  @@index([pacienteId])
+  @@index([status])
+  @@map("contratos_sala")
+}
+
+/// Dia da semana (0 = domingo) e horário "HH:MM" em que o locatário usa a sala.
+model ContratoSalaDia {
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contratoId String @map("contrato_id") @db.Uuid
+  diaSemana  Int    @map("dia_semana")
+  inicio     String
+  fim        String
+
+  contrato ContratoSala @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+
+  @@unique([contratoId, diaSemana])
+  @@map("contratos_sala_dias")
 }
 
 enum AuditAction {

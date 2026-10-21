@@ -1,10 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import { salaPageSchema, salaSchema } from '@torres/shared';
 import { PrismaService } from '../../src/common/prisma/prisma.service';
-import {
-  SALA_EM_USO_VERIFICADORES,
-  type SalaEmUsoVerificador,
-} from '../../src/modules/gestao-profissionais/salas/sala-em-uso';
 import { comUsuario, criarUsuarioTeste, type UsuarioTeste } from '../utils/auth';
 import { createE2eApp } from '../utils/create-e2e-app';
 import { truncateAll } from '../utils/database';
@@ -203,21 +199,25 @@ describe('Salas (e2e)', () => {
       await http().delete(`${BASE}/${sala.id}`).expect(404);
     });
 
-    it('409 SALA_EM_USO quando algum cadastro referencia a sala, sem auditar', async () => {
+    it('409 SALA_EM_USO quando a sala tem contrato, sem auditar', async () => {
       const sala = await criarNoBanco('Sala 1');
-      const verificadores = app.get<SalaEmUsoVerificador[]>(SALA_EM_USO_VERIFICADORES);
-      const verificador: SalaEmUsoVerificador = {
-        emUso: (ids) => Promise.resolve(new Set(ids.filter((id) => id === sala.id))),
-      };
-      verificadores.push(verificador);
-      try {
-        const listada = await http().get(BASE).expect(200);
-        expect(listada.body.data[0].emUso).toBe(true);
-        const res = await http().delete(`${BASE}/${sala.id}`).expect(409);
-        expect(res.body.code).toBe('SALA_EM_USO');
-      } finally {
-        verificadores.splice(verificadores.indexOf(verificador), 1);
-      }
+      const profissional = await prisma.profissional.create({ data: { nome: 'Dra. Ana Teste' } });
+      await prisma.contratoSala.create({
+        data: {
+          salaId: sala.id,
+          modalidade: 'MENSAL',
+          locatarioTipo: 'PROFISSIONAL',
+          profissionalId: profissional.id,
+          valorUnitario: 1000,
+          dataInicio: new Date('2026-10-01T00:00:00Z'),
+        },
+      });
+
+      const listada = await http().get(BASE).expect(200);
+      expect(listada.body.data[0].emUso).toBe(true);
+      const res = await http().delete(`${BASE}/${sala.id}`).expect(409);
+      expect(res.body.code).toBe('SALA_EM_USO');
+
       await expectNoAudit(prisma, { entity: ENTITY, action: 'DELETE' });
       expect(
         (await prisma.sala.findUniqueOrThrow({ where: { id: sala.id } })).deletedAt,
