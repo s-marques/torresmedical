@@ -10,7 +10,7 @@ export interface OpcaoCampo {
 
 /**
  * Valor guardado no formulário por tipo:
- * - texto, email, senha, textarea, data (`AAAA-MM-DD`) e select: `string` (`''` quando vazio);
+ * - texto, email, senha, textarea, data (`AAAA-MM-DD`), hora (`HH:MM`) e select: `string` (`''` quando vazio);
  * - máscaras (cpf, cnpj, cpf-cnpj, telefone, cep): só os dígitos;
  * - numero e moeda: `number` (`null` quando vazio);
  * - cor: `string` hexadecimal `#RRGGBB`, com seletor de cor e campo de texto;
@@ -24,6 +24,7 @@ export type TipoCampoSimples =
   | 'numero'
   | 'moeda'
   | 'data'
+  | 'hora'
   | 'textarea'
   | 'checkbox'
   | 'switch'

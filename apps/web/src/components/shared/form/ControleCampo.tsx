@@ -118,6 +118,9 @@ const RENDERIZADORES: Record<
   data: ({ campo, aria, props }) => (
     <Input {...campo} {...aria} type="date" value={campo.value ?? ''} disabled={props.disabled} />
   ),
+  hora: ({ campo, aria, props }) => (
+    <Input {...campo} {...aria} type="time" value={campo.value ?? ''} disabled={props.disabled} />
+  ),
   textarea: ({ campo, aria, props }) => (
     <Textarea
       {...campo}

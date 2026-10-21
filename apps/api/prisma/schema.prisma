@@ -239,24 +239,136 @@ model Especialidade {
   @@map("especialidades")
 }
 
+enum EstadoCivil {
+  SOLTEIRO
+  CASADO
+  DIVORCIADO
+  VIUVO
+  UNIAO_ESTAVEL
+
+  @@map("estado_civil")
+}
+
+enum LayoutReceita {
+  PADRAO
+  COMPACTO
+  TIMBRADO
+  PERSONALIZADO
+
+  @@map("layout_receita")
+}
+
+enum HorarioTipo {
+  SEMANAL
+  POR_DATA
+
+  @@map("horario_tipo")
+}
+
+enum BloqueioTipo {
+  DIA_INTEIRO
+  HORARIO
+
+  @@map("bloqueio_tipo")
+}
+
+enum BloqueioMotivo {
+  FERIAS
+  FOLGA
+  CONGRESSO_CURSO
+  ATESTADO_MEDICO
+  FERIADO
+  REUNIAO
+  OUTRO
+
+  @@map("bloqueio_motivo")
+}
+
 /// Dono: gestao-profissionais.
 model Profissional {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  nome            String
+  id                   String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome                 String
   /// Registro no conselho (CRM, CRN, CRBM…), texto livre.
-  registro        String?
-  especialidadeId String?   @map("especialidade_id") @db.Uuid
-  telefone        String?
-  email           String?
-  ativo           Boolean   @default(true)
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(3)
+  registro             String?
+  especialidadeId      String?        @map("especialidade_id") @db.Uuid
+  /// Especialidades adicionais separadas por vírgula (usadas pelo agente de IA).
+  outrasEspecialidades String?        @map("outras_especialidades")
+  telefone             String?
+  email                String?
+  duracaoPadrao        Int            @default(30) @map("duracao_padrao")
+  valorConsulta        Decimal?       @map("valor_consulta") @db.Decimal(12, 2)
+  comissao             Decimal?       @db.Decimal(5, 2)
+  /// Chave da cor no calendário (catálogo em `packages/shared`).
+  corCalendario        String         @default("azul") @map("cor_calendario")
+  cpf                  String?
+  rg                   String?
+  dataNascimento       DateTime?      @map("data_nascimento") @db.Date
+  naturalidade         String?
+  estadoCivil          EstadoCivil?   @map("estado_civil")
+  endereco             String?
+  enderecoConsultorio  String?        @map("endereco_consultorio")
+  telefoneReceita      String?        @map("telefone_receita")
+  cnes                 String?
+  rodapeReceita        String?        @map("rodape_receita")
+  layoutReceita        LayoutReceita  @default(PADRAO) @map("layout_receita")
+  /// Credenciais da Memed, cifradas (AES-256-GCM) antes de gravar. A Secret Key nunca sai da API.
+  memedApiToken        String?        @map("memed_api_token")
+  memedSecretKey       String?        @map("memed_secret_key")
+  /// Arquivos enviados em `/api/arquivos` (usos `foto-profissional` e `logo-receita`).
+  fotoArquivoId        String?        @map("foto_arquivo_id") @db.Uuid
+  logoReceitaArquivoId String?        @map("logo_receita_arquivo_id") @db.Uuid
+  ativo                Boolean        @default(true)
+  createdAt            DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt            DateTime?      @map("deleted_at") @db.Timestamptz(3)
 
-  especialidade Especialidade? @relation(fields: [especialidadeId], references: [id], onDelete: Restrict)
+  especialidade Especialidade?         @relation(fields: [especialidadeId], references: [id], onDelete: Restrict)
+  horarios      HorarioAtendimento[]
+  bloqueios     BloqueioAgenda[]
 
   @@index([especialidadeId])
   @@map("profissionais")
+}
+
+/// Dono: gestao-profissionais. Horário semanal (`dia_semana`, 0 = domingo) ou de uma data.
+model HorarioAtendimento {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profissionalId String       @map("profissional_id") @db.Uuid
+  tipo           HorarioTipo
+  diaSemana      Int?         @map("dia_semana")
+  data           DateTime?    @db.Date
+  /// "HH:MM".
+  inicio         String
+  fim            String
+  almocoInicio   String?      @map("almoco_inicio")
+  almocoFim      String?      @map("almoco_fim")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
+
+  @@index([profissionalId])
+  @@map("horarios_atendimento")
+}
+
+/// Dono: gestao-profissionais. Período em que o profissional não atende (dia inteiro ou horário).
+model BloqueioAgenda {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profissionalId String         @map("profissional_id") @db.Uuid
+  dataInicio     DateTime       @map("data_inicio") @db.Date
+  dataFim        DateTime       @map("data_fim") @db.Date
+  tipo           BloqueioTipo
+  /// "HH:MM", só no bloqueio por horário.
+  horaInicio     String?        @map("hora_inicio")
+  horaFim        String?        @map("hora_fim")
+  motivo         BloqueioMotivo
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt      DateTime?      @map("deleted_at") @db.Timestamptz(3)
+
+  profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
+
+  @@index([profissionalId, dataFim])
+  @@map("bloqueios_agenda")
 }
 
 /// Dono: compras-estoque.
