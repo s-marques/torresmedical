@@ -325,6 +325,7 @@ model Profissional {
   especialidade Especialidade?         @relation(fields: [especialidadeId], references: [id], onDelete: Restrict)
   horarios      HorarioAtendimento[]
   bloqueios     BloqueioAgenda[]
+  servicos      ServicoProfissional[]
 
   @@index([especialidadeId])
   @@map("profissionais")
@@ -577,6 +578,25 @@ model TipoAgendamento {
   deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(3)
 
   @@map("tipos_agendamento")
+}
+
+/// Dono: gestao-profissionais. Serviço/procedimento que um profissional realiza (tela Serviços
+/// Profissionais). Hoje nada o referencia; ao criar um vínculo, registre um `ServicoEmUsoChecker`.
+model ServicoProfissional {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profissionalId String       @map("profissional_id") @db.Uuid
+  nome           String
+  categoria      String?
+  valor          Decimal      @default(0) @db.Decimal(12, 2)
+  duracaoMinutos Int          @default(30) @map("duracao_minutos")
+  descricao      String?
+  ativo          Boolean      @default(true)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  profissional   Profissional @relation(fields: [profissionalId], references: [id])
+
+  @@index([profissionalId])
+  @@map("servicos_profissionais")
 }
 
 enum AuditAction {
