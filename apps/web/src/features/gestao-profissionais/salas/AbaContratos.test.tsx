@@ -100,6 +100,8 @@ const SALA: Sala = {
   equipamentos: null,
   ativo: true,
   emUso: true,
+  ocupada: true,
+  locatarios: [],
   createdAt: '2026-09-01T12:00:00.000Z',
   updatedAt: '2026-09-01T12:00:00.000Z',
 };
