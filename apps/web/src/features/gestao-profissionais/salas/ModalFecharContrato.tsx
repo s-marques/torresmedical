@@ -12,19 +12,13 @@ import { FormLayout } from '@/components/shared/form/FormLayout';
 import { useFormulario } from '@/components/shared/form/use-formulario';
 import { Modal } from '@/components/shared/Modal';
 import { Button } from '@/components/ui/button';
+import { hojeISO } from '@/lib/datas';
 import { cn } from '@/lib/utils';
 import { useCancelarContrato, useEncerrarContrato } from './use-contratos-sala';
 
 const ID_FORMULARIO = 'form-fechar-contrato';
 
 const AVISO = 'Parcelas pendentes após a data de {acao} serão canceladas automaticamente.';
-
-function hojeISO(): string {
-  const agora = new Date();
-  const mes = String(agora.getMonth() + 1).padStart(2, '0');
-  const dia = String(agora.getDate()).padStart(2, '0');
-  return `${agora.getFullYear()}-${mes}-${dia}`;
-}
 
 export interface ModalFecharContratoProps {
   contrato: ContratoSala;

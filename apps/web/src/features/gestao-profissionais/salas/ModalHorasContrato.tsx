@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { hojeISO } from '@/lib/datas';
 import { formatarData } from '@/lib/formatar';
 import { formatarMoeda } from '@/lib/forms/mascaras';
 import { useHorasContrato, useLancarHora, useRemoverHora } from './use-horas-contrato';
@@ -36,13 +37,6 @@ const HORAS = new Intl.NumberFormat('pt-BR', {
 });
 const HORAS_CURTAS = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
 const horasDe = (minutos: number) => minutos / 60;
-
-function hojeISO(): string {
-  const agora = new Date();
-  const mes = String(agora.getMonth() + 1).padStart(2, '0');
-  const dia = String(agora.getDate()).padStart(2, '0');
-  return `${agora.getFullYear()}-${mes}-${dia}`;
-}
 
 function valoresIniciais(): ContratoHoraFormulario {
   return { data: hojeISO(), entrada: '08:00', saida: '09:00', observacao: '' };

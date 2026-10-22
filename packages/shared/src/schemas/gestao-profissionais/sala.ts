@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { ativoStatusSchema, listQuerySchema } from '../common/list-query';
 import { textoObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
+import { salaLocatarioSchema } from './sala-painel';
 
 export const SALA_NOME_MAX = 100;
 export const SALA_NUMERO_MAX = 20;
@@ -91,6 +92,10 @@ export const salaSchema = z.object({
   ativo: z.boolean(),
   /** Com vínculo em outro cadastro (contrato): não pode ser excluída. */
   emUso: z.boolean(),
+  /** Tem contrato ativo e vigente hoje (selo "Disponível" quando não). */
+  ocupada: z.boolean(),
+  /** Locatários de hoje: contratos ativos e vigentes. */
+  locatarios: z.array(salaLocatarioSchema),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });

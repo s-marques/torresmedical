@@ -1,5 +1,6 @@
 import type { TransactionHost } from '@nestjs-cls/transactional';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
+import type { ContratosSalaService } from './contratos-sala.service';
 import type { SalaEmUsoVerificador } from './sala-em-uso';
 import { SalasService } from './salas.service';
 
@@ -40,7 +41,14 @@ const DADOS = {
   equipamentos: null,
 } as const;
 
-function setup(opcoes: { sala?: unknown; emUso?: string[] } = {}) {
+const CONTRATO = {
+  id: '2c1d3b9a-3c4d-4e5f-8a0b-2c3d4e5f6071',
+  salaId: ID,
+  locatarioNome: 'Dra. Teste',
+  valorTotalMensal: 870,
+};
+
+function setup(opcoes: { sala?: unknown; emUso?: string[]; contratos?: unknown[] } = {}) {
   const sala = {
     findMany: jest.fn().mockResolvedValue([SALA]),
     count: jest.fn().mockResolvedValue(1),
@@ -52,10 +60,48 @@ function setup(opcoes: { sala?: unknown; emUso?: string[] } = {}) {
   const verificador: SalaEmUsoVerificador = {
     emUso: jest.fn().mockResolvedValue(new Set(opcoes.emUso ?? [])),
   };
-  return { service: new SalasService(txHost, [verificador]), sala, verificador };
+  const contratos = {
+    ativosNoPeriodo: jest.fn().mockResolvedValue(opcoes.contratos ?? []),
+  };
+  return {
+    service: new SalasService(txHost, [verificador], contratos as unknown as ContratosSalaService),
+    sala,
+    verificador,
+    contratos,
+  };
 }
 
 describe('SalasService', () => {
+  it('list: sala com contrato vigente hoje fica ocupada, com o locatário e o valor', async () => {
+    const { service, contratos } = setup({ contratos: [CONTRATO] });
+
+    const page = await service.list(QUERY);
+
+    const hoje = expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/);
+    expect(contratos.ativosNoPeriodo).toHaveBeenCalledWith(hoje, hoje, [ID]);
+    expect(page.data[0]).toMatchObject({
+      ocupada: true,
+      locatarios: [{ contratoId: CONTRATO.id, nome: 'Dra. Teste', valorTotalMensal: 870 }],
+    });
+  });
+
+  it('list: sala sem contrato fica disponível e a lista vazia não consulta contratos', async () => {
+    const { service, sala, contratos } = setup();
+    expect((await service.list(QUERY)).data[0]).toMatchObject({ ocupada: false, locatarios: [] });
+
+    sala.findMany.mockResolvedValue([]);
+    sala.count.mockResolvedValue(0);
+    contratos.ativosNoPeriodo.mockClear();
+    await service.list(QUERY);
+    expect(contratos.ativosNoPeriodo).not.toHaveBeenCalled();
+  });
+
+  it('findById e update trazem os locatários de hoje', async () => {
+    const { service } = setup({ contratos: [CONTRATO] });
+    expect(await service.findById(ID)).toMatchObject({ ocupada: true });
+    expect(await service.update(ID, DADOS)).toMatchObject({ ocupada: true });
+  });
+
   it('list: ignora excluídas, filtra, busca e converte os valores', async () => {
     const { service, sala } = setup({ emUso: [ID] });
 

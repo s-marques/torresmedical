@@ -26,6 +26,8 @@ function sala(parcial: Partial<Sala>): Sala {
     equipamentos: 'Maca e armário',
     ativo: true,
     emUso: false,
+    ocupada: false,
+    locatarios: [],
     createdAt: '2026-10-21T12:00:00.000Z',
     updatedAt: '2026-10-21T12:00:00.000Z',
     ...parcial,
@@ -108,18 +110,58 @@ describe('Gestão de Salas (/salas)', () => {
     await user.click(screen.getByRole('button', { name: 'Tentar de novo' }));
   });
 
-  it('as abas Mapa Ocupação e Dashboard abrem o aviso de etapa futura', async () => {
-    const { user } = renderTela();
-    await screen.findByText('Sala Azul');
+  it('os cards mostram os locatários com o valor mensal e só a sala livre tem o selo Disponível', async () => {
+    renderTela(
+      api({
+        rotas: {
+          [API]: () =>
+            pagina([
+              sala({
+                ocupada: true,
+                locatarios: [
+                  { contratoId: ID_1, nome: 'Dra. Ana Teste', valorTotalMensal: 870 },
+                  { contratoId: ID_2, nome: 'Bruno Cliente Teste', valorTotalMensal: 1160 },
+                ],
+              }),
+              sala({ id: ID_2, nome: 'Sala Verde' }),
+            ]),
+        },
+      }),
+    );
 
-    for (const aba of ['Mapa Ocupação', 'Dashboard']) {
-      await user.click(screen.getByRole('tab', { name: aba }));
-      expect(screen.getByRole('tab', { name: aba })).toHaveAttribute('aria-selected', 'true');
-      expect(screen.getByText('Em construção')).toBeVisible();
-      expect(screen.queryByRole('button', { name: 'Nova Sala' })).not.toBeInTheDocument();
-    }
-    await user.click(screen.getByRole('tab', { name: 'Salas' }));
-    expect(await screen.findByText('Sala Azul')).toBeVisible();
+    const azul = await screen
+      .findByRole('heading', { name: 'Sala Azul' })
+      .then(() => card('Sala Azul'));
+    expect(within(azul).getByText('Locatários:')).toBeVisible();
+    expect(within(azul).getByText('Dra. Ana Teste')).toBeVisible();
+    expect(within(azul).getByText(/870,00\/mês/)).toBeVisible();
+    expect(within(azul).getByText('Bruno Cliente Teste')).toBeVisible();
+    expect(within(azul).getByText(/1\.160,00\/mês/)).toBeVisible();
+    expect(within(azul).queryByText('Disponível')).not.toBeInTheDocument();
+    expect(within(card('Sala Verde')).getByText('Disponível')).toBeVisible();
+    expect(within(card('Sala Verde')).queryByText('Locatários:')).not.toBeInTheDocument();
+  });
+
+  it('os cards seguem a ordem numérica dos nomes', async () => {
+    renderTela(
+      api({
+        rotas: {
+          [API]: () =>
+            pagina([
+              sala({ id: ID_1, nome: 'Sala 10' }),
+              sala({ id: ID_2, nome: 'Sala 2' }),
+              sala({ id: ID_3, nome: 'Sala 1' }),
+            ]),
+        },
+      }),
+    );
+
+    await screen.findByRole('heading', { name: 'Sala 10' });
+    expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual([
+      'Sala 1',
+      'Sala 2',
+      'Sala 10',
+    ]);
   });
 
   it('lupa abre os Detalhes da Sala com todos os dados, e Fechar o dispensa', async () => {

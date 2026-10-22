@@ -1,4 +1,4 @@
-import type { Sala } from '@torres/shared';
+import { compararNomesSala, type Sala } from '@torres/shared';
 import { DoorOpenIcon } from 'lucide-react';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
@@ -48,15 +48,17 @@ export function AbaSalas({ criando, onFecharCriar }: Readonly<AbaSalasProps>) {
       )}
       {dados && dados.data.length > 0 && (
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {dados.data.map((sala) => (
-            <CardSala
-              key={sala.id}
-              sala={sala}
-              onDetalhar={() => setDetalhando(sala)}
-              onEditar={() => setEditando(sala)}
-              onExcluir={() => setExcluindo(sala)}
-            />
-          ))}
+          {[...dados.data]
+            .sort((a, b) => compararNomesSala(a.nome, b.nome))
+            .map((sala) => (
+              <CardSala
+                key={sala.id}
+                sala={sala}
+                onDetalhar={() => setDetalhando(sala)}
+                onEditar={() => setEditando(sala)}
+                onExcluir={() => setExcluindo(sala)}
+              />
+            ))}
         </ul>
       )}
       {criando && <ModalSala onFechar={onFecharCriar} />}

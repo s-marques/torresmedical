@@ -10,6 +10,8 @@ import { ContratosSalaHorasService } from './salas/contratos-sala-horas.service'
 import { ContratosSalaService } from './salas/contratos-sala.service';
 import { SALA_EM_USO_VERIFICADORES } from './salas/sala-em-uso';
 import { SalasController } from './salas/salas.controller';
+import { SalasPainelController } from './salas/salas-painel.controller';
+import { SalasPainelService } from './salas/salas-painel.service';
 import { SalasService } from './salas/salas.service';
 import {
   SERVICO_EM_USO_VERIFICADORES,
@@ -30,6 +32,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ProfissionaisController,
     EspecialidadesController,
     ServicosProfissionaisController,
+    SalasPainelController,
     SalasController,
     ContratosSalaController,
     ContratosSalaHorasController,
@@ -40,6 +43,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ProfissionalAgendaService,
     ServicosProfissionaisService,
     SalasService,
+    SalasPainelService,
     ContratosSalaService,
     ContratosSalaHorasService,
     // Sala com contrato não pode ser excluída.

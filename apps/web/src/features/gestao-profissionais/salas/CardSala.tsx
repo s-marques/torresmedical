@@ -68,11 +68,28 @@ export function CardSala({ sala, onDetalhar, onEditar, onExcluir }: Readonly<Car
         <span>Valor mensal:</span>
         <span>{formatarMoeda(sala.valorMensal) || '-'}</span>
       </p>
-      <div>
-        <StatusBadge tom={sala.ativo ? 'sucesso' : 'perigo'}>
-          {sala.ativo ? 'Disponível' : 'Inativa'}
-        </StatusBadge>
-      </div>
+      {sala.locatarios.length > 0 && (
+        <div className="grid gap-1 text-xs">
+          <p className="text-muted-foreground">Locatários:</p>
+          <ul className="grid gap-1">
+            {sala.locatarios.map((locatario) => (
+              <li key={locatario.contratoId} className="flex justify-between gap-3">
+                <span className="min-w-0 truncate">{locatario.nome}</span>
+                <span className="shrink-0 whitespace-nowrap">
+                  {formatarMoeda(locatario.valorTotalMensal)}/mês
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {!sala.ocupada && (
+        <div>
+          <StatusBadge tom={sala.ativo ? 'sucesso' : 'perigo'}>
+            {sala.ativo ? 'Disponível' : 'Inativa'}
+          </StatusBadge>
+        </div>
+      )}
     </li>
   );
 }

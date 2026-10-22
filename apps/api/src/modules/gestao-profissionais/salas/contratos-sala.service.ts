@@ -116,6 +116,31 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
     return { ...page, data: page.data.map((c) => this.toDto(c, nomes)) };
   }
 
+  /**
+   * Contratos ativos com vigência em algum dia de `[de, ate]` (`AAAA-MM-DD`), das salas não
+   * excluídas. Base do Mapa de Ocupação, do Dashboard e dos locatários dos cards.
+   */
+  async ativosNoPeriodo(
+    de: string,
+    ate: string,
+    salaIds?: readonly string[],
+  ): Promise<ContratoSalaDto[]> {
+    const contratos = await this.txHost.tx.contratoSala.findMany({
+      where: {
+        ...NAO_EXCLUIDOS,
+        status: 'ATIVO',
+        sala: { deletedAt: null },
+        salaId: salaIds ? { in: [...salaIds] } : undefined,
+        dataInicio: { lte: paraData(ate) },
+        OR: [{ dataFim: null }, { dataFim: { gte: paraData(de) } }],
+      },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      include: INCLUDE,
+    });
+    const nomes = await this.resolverNomes(contratos);
+    return contratos.map((c) => this.toDto(c, nomes));
+  }
+
   async findById(id: string): Promise<ContratoSalaDto> {
     const contrato = await this.buscar(id);
     return this.toDto(contrato, await this.resolverNomes([contrato]));
