@@ -104,6 +104,16 @@ export function ModalDetalhesContrato({
       <Secao titulo="Vigência">
         <Linha rotulo="Início">{formatarData(contrato.dataInicio)}</Linha>
         <Linha rotulo="Fim">{contrato.dataFim ? formatarData(contrato.dataFim) : SEM_VALOR}</Linha>
+        {contrato.encerradoEm && (
+          <Linha rotulo={contrato.status === 'CANCELADO' ? 'Cancelado em' : 'Encerrado em'}>
+            {formatarData(contrato.encerradoEm)}
+          </Linha>
+        )}
+        {contrato.motivoEncerramento && (
+          <Linha rotulo={contrato.status === 'CANCELADO' ? 'Motivo da rescisão' : 'Observação'}>
+            {contrato.motivoEncerramento}
+          </Linha>
+        )}
       </Secao>
       <Secao titulo="Dias e horários">
         {contrato.dias.length === 0 && <Linha rotulo="Dias">{SEM_VALOR}</Linha>}

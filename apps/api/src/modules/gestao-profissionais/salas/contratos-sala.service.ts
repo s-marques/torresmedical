@@ -7,7 +7,9 @@ import {
   valorTotalMensal,
   type ContratoExportColumn,
   type ContratoSala as ContratoSalaDto,
+  type CancelarContratoSalaInput,
   type CreateContratoSalaInput,
+  type EncerrarContratoSalaInput,
   type ExportContratosSalaQuery,
   type ListContratosSalaQuery,
   type UpdateContratoSalaInput,
@@ -20,7 +22,7 @@ import type { ExportColumn, ExportFile } from '../../../common/export/export.typ
 import { paginate, toOrderBy, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { ArquivosService } from '../../../common/storage/arquivos.service';
-import type { Prisma } from '../../../generated/prisma/client';
+import type { ContratoSalaStatus, Prisma } from '../../../generated/prisma/client';
 import { PacientesService } from '../../comercial-atendimento/pacientes/pacientes.service';
 import { FormasPagamentoService } from '../../financeiro/formas-pagamento/formas-pagamento.service';
 import { ProfissionaisService } from '../profissionais/profissionais.service';
@@ -154,6 +156,42 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
     const alterado = await this.txHost.tx.contratoSala.update({
       where: { id },
       data: { pdfArquivoId: arquivoId },
+      include: INCLUDE,
+    });
+    return this.toDto(alterado, await this.resolverNomes([alterado]));
+  }
+
+  /** Término natural: o contrato ativo passa a "encerrado" na data informada. */
+  encerrar(id: string, input: EncerrarContratoSalaInput): Promise<ContratoSalaDto> {
+    return this.fechar(id, 'ENCERRADO', input.data, input.observacao);
+  }
+
+  /** Rescisão: o contrato ativo passa a "cancelado" na data informada, com o motivo. */
+  cancelar(id: string, input: CancelarContratoSalaInput): Promise<ContratoSalaDto> {
+    return this.fechar(id, 'CANCELADO', input.data, input.motivo);
+  }
+
+  /**
+   * Só contrato ativo muda de status. As parcelas pendentes depois da data serão canceladas
+   * quando existir a tela Contas a Receber (#48), que passa a ouvir este fato.
+   */
+  private async fechar(
+    id: string,
+    status: ContratoSalaStatus,
+    data: string,
+    motivo: string | null,
+  ): Promise<ContratoSalaDto> {
+    const contrato = await this.buscar(id);
+    if (contrato.status !== 'ATIVO') {
+      throw new BusinessException(
+        'CONTRATO_NAO_ATIVO',
+        'Só é possível encerrar ou cancelar um contrato ativo.',
+        { status: 409 },
+      );
+    }
+    const alterado = await this.txHost.tx.contratoSala.update({
+      where: { id },
+      data: { status, encerradoEm: paraData(data), motivoEncerramento: motivo },
       include: INCLUDE,
     });
     return this.toDto(alterado, await this.resolverNomes([alterado]));
@@ -343,6 +381,8 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       participaEventos: contrato.participaEventos,
       observacoes: contrato.observacoes,
       status: contrato.status,
+      encerradoEm: contrato.encerradoEm ? diaISO(contrato.encerradoEm) : null,
+      motivoEncerramento: contrato.motivoEncerramento,
       pdfArquivoId: contrato.pdfArquivoId,
       pdfNome: contrato.pdfArquivoId ? (nomes.pdfs.get(contrato.pdfArquivoId) ?? null) : null,
       createdAt: contrato.createdAt.toISOString(),

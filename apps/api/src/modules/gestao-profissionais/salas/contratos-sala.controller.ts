@@ -12,16 +12,20 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
 import {
+  cancelarContratoSalaSchema,
   contratoSalaPageSchema,
   contratoSalaPdfInputSchema,
   contratoSalaSchema,
   createContratoSalaSchema,
+  encerrarContratoSalaSchema,
   exportContratosSalaQuerySchema,
   listContratosSalaQuerySchema,
   updateContratoSalaSchema,
+  type CancelarContratoSalaInput,
   type ContratoSala,
   type ContratoSalaPdfInput,
   type CreateContratoSalaInput,
+  type EncerrarContratoSalaInput,
   type ExportContratosSalaQuery,
   type ListContratosSalaQuery,
   type UpdateContratoSalaInput,
@@ -129,6 +133,36 @@ export class ContratosSalaController {
     @Body(new ZodValidationPipe(contratoSalaPdfInputSchema)) body: ContratoSalaPdfInput,
   ): Promise<ContratoSala> {
     return this.contratos.definirPdf(id, body.arquivoId);
+  }
+
+  @Post(':id/encerrar')
+  @RequirePermission('gestao-profissionais.salas.editar')
+  @HttpCode(200)
+  @Audit({ entity: ENTITY, action: 'UPDATE' })
+  @ApiOperation({ summary: 'Encerra o contrato ativo (término natural), gravando a data' })
+  @ApiZodBody(encerrarContratoSalaSchema)
+  @ApiZodResponse(200, contratoSalaSchema)
+  @ApiErrorResponses(400, 401, 403, 404, 409)
+  encerrar(
+    @IdParam() id: string,
+    @Body(new ZodValidationPipe(encerrarContratoSalaSchema)) body: EncerrarContratoSalaInput,
+  ): Promise<ContratoSala> {
+    return this.contratos.encerrar(id, body);
+  }
+
+  @Post(':id/cancelar')
+  @RequirePermission('gestao-profissionais.salas.editar')
+  @HttpCode(200)
+  @Audit({ entity: ENTITY, action: 'UPDATE' })
+  @ApiOperation({ summary: 'Cancela o contrato ativo (rescisão), gravando a data e o motivo' })
+  @ApiZodBody(cancelarContratoSalaSchema)
+  @ApiZodResponse(200, contratoSalaSchema)
+  @ApiErrorResponses(400, 401, 403, 404, 409)
+  cancelar(
+    @IdParam() id: string,
+    @Body(new ZodValidationPipe(cancelarContratoSalaSchema)) body: CancelarContratoSalaInput,
+  ): Promise<ContratoSala> {
+    return this.contratos.cancelar(id, body);
   }
 
   @Delete(':id')

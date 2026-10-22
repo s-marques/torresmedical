@@ -9,7 +9,7 @@ import {
   type ContratoModalidade,
   type ContratoSala,
 } from '@torres/shared';
-import { PencilIcon, SearchIcon, TimerIcon, Trash2Icon } from 'lucide-react';
+import { BanIcon, PencilIcon, SearchIcon, TimerIcon, Trash2Icon, XCircleIcon } from 'lucide-react';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataGrid } from '@/components/shared/data-grid/DataGrid';
@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { formatarData } from '@/lib/formatar';
 import { ModalContrato } from './ModalContrato';
 import { ModalDetalhesContrato } from './ModalDetalhesContrato';
+import { ModalFecharContrato } from './ModalFecharContrato';
 import { ModalHorasContrato } from './ModalHorasContrato';
 import { PdfContrato } from './PdfContrato';
 import { StatusContrato } from './StatusContrato';
@@ -63,6 +64,10 @@ export function AbaContratos({ criando, onFecharCriar }: Readonly<AbaContratosPr
   const [detalhando, setDetalhando] = useState<ContratoSala | null>(null);
   const [editando, setEditando] = useState<ContratoSala | null>(null);
   const [lancandoHoras, setLancandoHoras] = useState<ContratoSala | null>(null);
+  const [fechando, setFechando] = useState<{
+    contrato: ContratoSala;
+    tipo: 'encerrar' | 'cancelar';
+  } | null>(null);
   const [excluindo, setExcluindo] = useState<ContratoSala | null>(null);
   const excluir = useExcluirContrato();
 
@@ -118,7 +123,16 @@ export function AbaContratos({ criando, onFecharCriar }: Readonly<AbaContratosPr
       titulo: 'Status',
       ordenavel: true,
       exportavel: true,
-      celula: (c) => <StatusContrato status={c.status} />,
+      celula: (c) => (
+        <div className="grid justify-items-start gap-0.5">
+          <StatusContrato status={c.status} />
+          {c.encerradoEm && (
+            <span className="text-xs text-muted-foreground">
+              Enc. {formatarData(c.encerradoEm)}
+            </span>
+          )}
+        </div>
+      ),
     },
     { id: 'pdf', titulo: 'PDF', celula: (c) => <PdfContrato contrato={c} /> },
     {
@@ -150,6 +164,32 @@ export function AbaContratos({ criando, onFecharCriar }: Readonly<AbaContratosPr
             >
               <TimerIcon aria-hidden />
             </Button>
+          )}
+          {c.status === 'ATIVO' && (
+            <SePermitido permissao="gestao-profissionais.salas.editar">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="text-orange-500 hover:text-orange-500"
+                aria-label={`Encerrar contrato de ${c.locatarioNome}`}
+                title="Encerrar contrato (término natural)"
+                onClick={() => setFechando({ contrato: c, tipo: 'encerrar' })}
+              >
+                <BanIcon aria-hidden />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="text-destructive hover:text-destructive"
+                aria-label={`Cancelar contrato de ${c.locatarioNome}`}
+                title="Cancelar contrato (rescisão)"
+                onClick={() => setFechando({ contrato: c, tipo: 'cancelar' })}
+              >
+                <XCircleIcon aria-hidden />
+              </Button>
+            </SePermitido>
           )}
           <SePermitido permissao="gestao-profissionais.salas.editar">
             <Button
@@ -196,6 +236,13 @@ export function AbaContratos({ criando, onFecharCriar }: Readonly<AbaContratosPr
       {editando && <ModalContrato contrato={editando} onFechar={() => setEditando(null)} />}
       {lancandoHoras && (
         <ModalHorasContrato contrato={lancandoHoras} onFechar={() => setLancandoHoras(null)} />
+      )}
+      {fechando && (
+        <ModalFecharContrato
+          contrato={fechando.contrato}
+          tipo={fechando.tipo}
+          onFechar={() => setFechando(null)}
+        />
       )}
       {detalhando && (
         <ModalDetalhesContrato
