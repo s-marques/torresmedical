@@ -1,8 +1,10 @@
 import {
   arquivoLinkSchema,
   contratoSalaSchema,
+  type CancelarContratoSalaInput,
   type ContratoSala,
   type CreateContratoSalaInput,
+  type EncerrarContratoSalaInput,
   type UpdateContratoSalaInput,
 } from '@torres/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -67,4 +69,20 @@ export function useDefinirPdfContrato() {
 /** Link temporário para ver o PDF do contrato. */
 export function linkDoPdf(arquivoId: string) {
   return apiFetch(`/api/arquivos/${arquivoId}/link`, { schema: arquivoLinkSchema });
+}
+
+/** Encerra (término natural) o contrato ativo, gravando a data. */
+export function useEncerrarContrato(id: string) {
+  return useMutationContrato(
+    (dados: EncerrarContratoSalaInput) => chamar(`/${id}/encerrar`, 'POST', dados),
+    { formulario: true, sucesso: 'Contrato encerrado.' },
+  );
+}
+
+/** Cancela (rescisão) o contrato ativo, gravando a data e o motivo. */
+export function useCancelarContrato(id: string) {
+  return useMutationContrato(
+    (dados: CancelarContratoSalaInput) => chamar(`/${id}/cancelar`, 'POST', dados),
+    { formulario: true, sucesso: 'Contrato cancelado.' },
+  );
 }

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   abreviarDiaSemana,
+  cancelarContratoSalaSchema,
+  encerrarContratoSalaSchema,
   createContratoSalaSchema,
   descreverDiaContrato,
   descreverValorContrato,
@@ -157,5 +159,37 @@ describe('helpers de exibição', () => {
     expect(abreviarDiaSemana(0)).toBe('Dom');
     expect(abreviarDiaSemana(6)).toBe('Sáb');
     expect(abreviarDiaSemana(9)).toBe('');
+  });
+});
+
+describe('encerrarContratoSalaSchema e cancelarContratoSalaSchema', () => {
+  it('encerrar: data obrigatória e observação opcional', () => {
+    expect(encerrarContratoSalaSchema.parse({ data: '2026-10-22', observacao: ' ' })).toEqual({
+      data: '2026-10-22',
+      observacao: null,
+    });
+    const vazio = encerrarContratoSalaSchema.safeParse({ data: '' });
+    expect(vazio.error?.issues[0]?.message).toBe('Data de encerramento é obrigatória.');
+    expect(
+      encerrarContratoSalaSchema.safeParse({ data: '22/10/2026' }).error?.issues[0]?.message,
+    ).toBe('Data de encerramento inválida');
+  });
+
+  it('cancelar: data obrigatória e motivo opcional', () => {
+    expect(cancelarContratoSalaSchema.parse({ data: '2026-10-22', motivo: ' Rescisão ' })).toEqual({
+      data: '2026-10-22',
+      motivo: 'Rescisão',
+    });
+    const vazio = cancelarContratoSalaSchema.safeParse({});
+    expect(vazio.error?.issues[0]?.message).toBe('Data de cancelamento é obrigatória.');
+  });
+
+  it('limita o texto e rejeita campo fora do formulário', () => {
+    expect(
+      cancelarContratoSalaSchema.safeParse({ data: '2026-10-22', motivo: 'x'.repeat(501) }).success,
+    ).toBe(false);
+    expect(encerrarContratoSalaSchema.safeParse({ data: '2026-10-22', motivo: 'x' }).success).toBe(
+      false,
+    );
   });
 });

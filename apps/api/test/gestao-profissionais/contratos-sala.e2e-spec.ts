@@ -415,6 +415,98 @@ describe('Contratos de salas (e2e)', () => {
     });
   });
 
+  describe.each([
+    {
+      acao: 'encerrar',
+      status: 'ENCERRADO',
+      campo: 'observacao',
+      obrigatorio: 'Data de encerramento é obrigatória.',
+    },
+    {
+      acao: 'cancelar',
+      status: 'CANCELADO',
+      campo: 'motivo',
+      obrigatorio: 'Data de cancelamento é obrigatória.',
+    },
+  ])('POST /:id/$acao', ({ acao, status, campo, obrigatorio }) => {
+    it(`passa o contrato ativo para ${status}, grava a data e o texto e audita UPDATE`, async () => {
+      const contrato = await criarNoBanco();
+
+      const res = await http()
+        .post(`${BASE}/${contrato.id}/${acao}`)
+        .send({ data: '2026-10-22', [campo]: '  Fim do prazo ' })
+        .expect(200);
+
+      expect(contratoSalaSchema.parse(res.body)).toMatchObject({
+        status,
+        encerradoEm: '2026-10-22',
+        motivoEncerramento: 'Fim do prazo',
+      });
+      await expectAudit(prisma, {
+        action: 'UPDATE',
+        entity: ENTITY,
+        entityId: contrato.id,
+        before: { status: 'ATIVO', encerradoEm: null },
+        after: { status, encerradoEm: '2026-10-22' },
+        userId: usuario.id,
+      });
+      const lista = await http().get(BASE).expect(200);
+      expect(lista.body.data[0]).toMatchObject({ status, encerradoEm: '2026-10-22' });
+    });
+
+    it('o texto é opcional', async () => {
+      const contrato = await criarNoBanco();
+      const res = await http()
+        .post(`${BASE}/${contrato.id}/${acao}`)
+        .send({ data: '2026-10-22' })
+        .expect(200);
+      expect(res.body.motivoEncerramento).toBeNull();
+    });
+
+    it('400 sem data ou com campo fora do formulário, sem auditar nem mudar o status', async () => {
+      const contrato = await criarNoBanco();
+      const res = await http()
+        .post(`${BASE}/${contrato.id}/${acao}`)
+        .send({ data: '', extra: 1 })
+        .expect(400);
+      expect(res.body.details).toEqual(
+        expect.arrayContaining([
+          { field: 'data', message: obrigatorio },
+          { field: 'extra', message: 'Campo não permitido' },
+        ]),
+      );
+      await expectNoAudit(prisma, { entity: ENTITY });
+      expect(
+        (await prisma.contratoSala.findUniqueOrThrow({ where: { id: contrato.id } })).status,
+      ).toBe('ATIVO');
+    });
+
+    it('409 quando o contrato já foi encerrado ou cancelado', async () => {
+      const contrato = await criarNoBanco({ status: 'CANCELADO' });
+      const res = await http()
+        .post(`${BASE}/${contrato.id}/${acao}`)
+        .send({ data: '2026-10-22' })
+        .expect(409);
+      expect(res.body.code).toBe('CONTRATO_NAO_ATIVO');
+      await expectNoAudit(prisma, { entity: ENTITY });
+    });
+
+    it('404 para inexistente ou excluído, 400 para id inválido e 403 sem permissão de editar', async () => {
+      const excluido = await criarNoBanco({ deletedAt: new Date() });
+      await http().post(`${BASE}/${INEXISTENTE}/${acao}`).send({ data: '2026-10-22' }).expect(404);
+      await http().post(`${BASE}/${excluido.id}/${acao}`).send({ data: '2026-10-22' }).expect(404);
+      await http().post(`${BASE}/abc/${acao}`).send({ data: '2026-10-22' }).expect(400);
+      const contrato = await criarNoBanco();
+      const leitor = await criarUsuarioTeste(app, {
+        permissoes: ['gestao-profissionais.salas.ver'],
+      });
+      await comUsuario(app, leitor)
+        .post(`${BASE}/${contrato.id}/${acao}`)
+        .send({ data: '2026-10-22' })
+        .expect(403);
+    });
+  });
+
   describe('DELETE /:id', () => {
     it('exclusão lógica: 200, audita DELETE, some da listagem e libera a sala para excluir', async () => {
       const contrato = await criarNoBanco();

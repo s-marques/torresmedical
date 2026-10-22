@@ -250,6 +250,45 @@ export type UpdateContratoSalaInput = CreateContratoSalaInput;
 export const createContratoSalaSchema = contratoSalaInputSchema;
 export const updateContratoSalaSchema = contratoSalaInputSchema;
 
+export const CONTRATO_MOTIVO_MAX = 500;
+
+const motivoSchema = z
+  .string({ error: 'Texto inválido' })
+  .trim()
+  .max(CONTRATO_MOTIVO_MAX, {
+    error: `O texto deve ter no máximo ${CONTRATO_MOTIVO_MAX} caracteres`,
+  })
+  .nullish()
+  .transform((valor) => valor || null);
+
+const dataEncerramento = (rotulo: string) =>
+  z
+    .string({ error: mensagemObrigatoria(rotulo, 'f') })
+    .min(1, { error: mensagemObrigatoria(rotulo, 'f') })
+    .pipe(z.iso.date({ error: `${rotulo} inválida` }));
+
+/**
+ * Corpo de `POST /api/gestao-profissionais/contratos-sala/:id/encerrar` (modal "Encerrar
+ * Contrato", término natural): o contrato passa a "encerrado" na data informada.
+ */
+export const encerrarContratoSalaSchema = z.strictObject({
+  data: dataEncerramento('Data de encerramento'),
+  observacao: motivoSchema,
+});
+export type EncerrarContratoSalaFormulario = z.input<typeof encerrarContratoSalaSchema>;
+export type EncerrarContratoSalaInput = z.output<typeof encerrarContratoSalaSchema>;
+
+/**
+ * Corpo de `POST /api/gestao-profissionais/contratos-sala/:id/cancelar` (modal "Cancelar
+ * Contrato (Rescisão)"): o contrato passa a "cancelado" na data informada.
+ */
+export const cancelarContratoSalaSchema = z.strictObject({
+  data: dataEncerramento('Data de cancelamento'),
+  motivo: motivoSchema,
+});
+export type CancelarContratoSalaFormulario = z.input<typeof cancelarContratoSalaSchema>;
+export type CancelarContratoSalaInput = z.output<typeof cancelarContratoSalaSchema>;
+
 /** `PUT /api/gestao-profissionais/contratos-sala/:id/pdf`; `arquivoId: null` remove o PDF. */
 export const contratoSalaPdfInputSchema = z.strictObject({
   arquivoId: z.uuid({ error: 'Arquivo inválido' }).nullable(),
@@ -314,6 +353,10 @@ export const contratoSalaSchema = z.object({
   participaEventos: z.boolean(),
   observacoes: z.string().nullable(),
   status: contratoStatusSchema,
+  /** Data em que o contrato foi encerrado ou cancelado (`null` enquanto ativo). */
+  encerradoEm: z.iso.date().nullable(),
+  /** Observação do encerramento ou motivo da rescisão. */
+  motivoEncerramento: z.string().nullable(),
   pdfArquivoId: z.uuid().nullable(),
   pdfNome: z.string().nullable(),
   createdAt: z.iso.datetime(),

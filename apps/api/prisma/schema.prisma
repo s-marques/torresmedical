@@ -706,6 +706,10 @@ model ContratoSala {
   participaEventos Boolean                    @default(false) @map("participa_eventos")
   observacoes      String?
   status           ContratoSalaStatus         @default(ATIVO)
+  /// Data do encerramento (término natural) ou do cancelamento (rescisão); nula enquanto ativo.
+  encerradoEm        DateTime?                  @map("encerrado_em") @db.Date
+  /// Observação do encerramento ou motivo da rescisão.
+  motivoEncerramento String?                    @map("motivo_encerramento")
   /// PDF do contrato enviado em `/api/arquivos` (uso `contrato-sala`).
   pdfArquivoId     String?                    @map("pdf_arquivo_id") @db.Uuid
   createdAt        DateTime                   @default(now()) @map("created_at") @db.Timestamptz(3)

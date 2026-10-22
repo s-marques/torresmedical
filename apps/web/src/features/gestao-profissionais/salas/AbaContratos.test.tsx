@@ -49,6 +49,8 @@ function contrato(parcial: Partial<ContratoSala>): ContratoSala {
     participaEventos: false,
     observacoes: null,
     status: 'ATIVO',
+    encerradoEm: null,
+    motivoEncerramento: null,
     pdfArquivoId: null,
     pdfNome: null,
     createdAt: '2026-09-22T12:00:00.000Z',
@@ -679,5 +681,183 @@ describe('Gestão de Salas: Horas Utilizadas', () => {
       within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Remover' }),
     );
     await waitFor(() => expect(removido).toBe(true));
+  });
+});
+
+describe('Gestão de Salas: encerrar e cancelar contrato', () => {
+  const hoje = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const encerrado = contrato({
+    id: ID_3,
+    locatarioNome: 'Carla Encerrada Teste',
+    status: 'ENCERRADO',
+    encerradoEm: '2026-09-30',
+    motivoEncerramento: 'Fim do prazo',
+  });
+  const cancelado = contrato({
+    id: ID_2,
+    locatarioNome: 'Davi Cancelado Teste',
+    status: 'CANCELADO',
+    encerradoEm: '2026-09-30',
+    motivoEncerramento: 'Rescisão amigável',
+  });
+
+  function apiFechar(rotas: NonNullable<ApiFalsaOptions['rotas']> = {}) {
+    return api({
+      rotas: { [API]: () => pagina([contrato({}), encerrado, cancelado]), ...rotas },
+    });
+  }
+
+  it('só o contrato ativo tem os ícones Encerrar e Cancelar; os demais mostram a data', async () => {
+    await renderAba(apiFechar());
+    await screen.findByText('Dra. Ana Teste');
+
+    const ativo = linha('Dra. Ana Teste');
+    expect(within(ativo).getByRole('button', { name: /Encerrar contrato de/ })).toHaveAttribute(
+      'title',
+      'Encerrar contrato (término natural)',
+    );
+    expect(within(ativo).getByRole('button', { name: /Cancelar contrato de/ })).toHaveAttribute(
+      'title',
+      'Cancelar contrato (rescisão)',
+    );
+    for (const nome of ['Carla Encerrada Teste', 'Davi Cancelado Teste']) {
+      const fechado = linha(nome);
+      expect(
+        within(fechado).queryByRole('button', { name: /Encerrar contrato de/ }),
+      ).not.toBeInTheDocument();
+      expect(
+        within(fechado).queryByRole('button', { name: /Cancelar contrato de/ }),
+      ).not.toBeInTheDocument();
+      expect(within(fechado).getByText('Enc. 30/09/2026')).toBeVisible();
+      expect(within(fechado).getByRole('button', { name: /Editar contrato de/ })).toBeVisible();
+    }
+    expect(within(linha('Carla Encerrada Teste')).getByText('encerrado')).toBeVisible();
+    expect(within(linha('Davi Cancelado Teste')).getByText('cancelado')).toBeVisible();
+  });
+
+  it('Encerrar: abre o modal com a data de hoje, valida a data e envia o corpo', async () => {
+    let corpo: Record<string, unknown> | null = null;
+    const { user } = await renderAba(
+      apiFechar({
+        [`${API}/${ID_1}/encerrar`]: (init) => {
+          corpo = corpoDe(init);
+          return json(contrato({ status: 'ENCERRADO', encerradoEm: hoje() }));
+        },
+      }),
+    );
+    await user.click(
+      await screen.findByRole('button', { name: 'Encerrar contrato de Dra. Ana Teste' }),
+    );
+
+    const modal = await screen.findByRole('dialog', { name: 'Encerrar Contrato' });
+    expect(within(modal).getByText(/Sala Azul/)).toBeVisible();
+    expect(within(modal).getByText(/Dra. Ana Teste/)).toBeVisible();
+    expect(within(modal).getByLabelText(/Data de Encerramento/)).toHaveValue(hoje());
+    expect(within(modal).getByPlaceholderText('Motivo do encerramento...')).toBeVisible();
+    expect(
+      within(modal).getByText(
+        'Parcelas pendentes após a data de encerramento serão canceladas automaticamente.',
+      ),
+    ).toBeVisible();
+
+    await user.clear(within(modal).getByLabelText(/Data de Encerramento/));
+    await user.click(within(modal).getByRole('button', { name: 'Encerrar' }));
+    expect(await within(modal).findByText('Data de encerramento é obrigatória.')).toBeVisible();
+    expect(corpo).toBeNull();
+
+    await user.type(within(modal).getByLabelText(/Data de Encerramento/), '2026-10-30');
+    await user.type(within(modal).getByLabelText('Observação (opcional)'), 'Fim do prazo');
+    await user.click(within(modal).getByRole('button', { name: 'Encerrar' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(corpo).toEqual({ data: '2026-10-30', observacao: 'Fim do prazo' });
+  });
+
+  it('Cancelar: abre a rescisão, Voltar não envia e confirmar grava a data e o motivo', async () => {
+    let corpo: Record<string, unknown> | null = null;
+    const { user } = await renderAba(
+      apiFechar({
+        [`${API}/${ID_1}/cancelar`]: (init) => {
+          corpo = corpoDe(init);
+          return json(contrato({ status: 'CANCELADO', encerradoEm: hoje() }));
+        },
+      }),
+    );
+    await user.click(
+      await screen.findByRole('button', { name: 'Cancelar contrato de Dra. Ana Teste' }),
+    );
+
+    const modal = await screen.findByRole('dialog', { name: 'Cancelar Contrato (Rescisão)' });
+    expect(within(modal).getByLabelText(/Data de Cancelamento/)).toHaveValue(hoje());
+    expect(within(modal).getByPlaceholderText('Motivo do cancelamento/rescisão...')).toBeVisible();
+    expect(
+      within(modal).getByText(
+        'Parcelas pendentes após a data de cancelamento serão canceladas automaticamente.',
+      ),
+    ).toBeVisible();
+
+    await user.click(within(modal).getByRole('button', { name: 'Voltar' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(corpo).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Cancelar contrato de Dra. Ana Teste' }));
+    const reaberto = await screen.findByRole('dialog', { name: 'Cancelar Contrato (Rescisão)' });
+    await user.type(within(reaberto).getByLabelText('Motivo da Rescisão'), 'Rescisão amigável');
+    await user.click(within(reaberto).getByRole('button', { name: 'Cancelar Contrato' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(corpo).toEqual({ data: hoje(), motivo: 'Rescisão amigável' });
+  });
+
+  it('o erro 409 da API aparece sem fechar o modal', async () => {
+    const { user } = await renderAba(
+      apiFechar({
+        [`${API}/${ID_1}/encerrar`]: () =>
+          json(
+            {
+              statusCode: 409,
+              code: 'CONTRATO_NAO_ATIVO',
+              message: 'Só é possível encerrar ou cancelar um contrato ativo.',
+            },
+            409,
+          ),
+      }),
+    );
+    await user.click(
+      await screen.findByRole('button', { name: 'Encerrar contrato de Dra. Ana Teste' }),
+    );
+    const modal = await screen.findByRole('dialog', { name: 'Encerrar Contrato' });
+    await user.click(within(modal).getByRole('button', { name: 'Encerrar' }));
+
+    expect(
+      await screen.findByText('Só é possível encerrar ou cancelar um contrato ativo.'),
+    ).toBeVisible();
+    expect(screen.getByRole('dialog', { name: 'Encerrar Contrato' })).toBeVisible();
+  });
+
+  it('Detalhes mostra a data e o motivo do encerramento e da rescisão', async () => {
+    const { user } = await renderAba(apiFechar());
+    await screen.findByText('Dra. Ana Teste');
+
+    await user.click(
+      screen.getByRole('button', { name: 'Detalhes do contrato de Carla Encerrada Teste' }),
+    );
+    let modal = await screen.findByRole('dialog', { name: 'Detalhes do Contrato' });
+    const valorDe = (rotulo: string) =>
+      within(modal).getByText(rotulo).nextElementSibling as HTMLElement;
+    expect(valorDe('Encerrado em')).toHaveTextContent('30/09/2026');
+    expect(valorDe('Observação')).toHaveTextContent('Fim do prazo');
+    await user.click(within(modal).getAllByRole('button', { name: 'Fechar' })[0] as HTMLElement);
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+    await user.click(
+      screen.getByRole('button', { name: 'Detalhes do contrato de Davi Cancelado Teste' }),
+    );
+    modal = await screen.findByRole('dialog', { name: 'Detalhes do Contrato' });
+    expect(valorDe('Cancelado em')).toHaveTextContent('30/09/2026');
+    expect(valorDe('Motivo da rescisão')).toHaveTextContent('Rescisão amigável');
   });
 });
