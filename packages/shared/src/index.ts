@@ -21,6 +21,8 @@ export * from './schemas/financeiro/forma-pagamento';
 export * from './schemas/gestao-profissionais/especialidade';
 export * from './schemas/gestao-profissionais/profissional';
 export * from './schemas/gestao-profissionais/profissional-agenda';
+export * from './schemas/gestao-profissionais/contrato-sala';
+export * from './schemas/gestao-profissionais/contrato-sala-hora';
 export * from './schemas/gestao-profissionais/sala';
 export * from './schemas/gestao-profissionais/servico-profissional';
 export * from './schemas/lookups/lookup';

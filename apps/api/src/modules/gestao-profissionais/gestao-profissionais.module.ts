@@ -1,8 +1,14 @@
 import { Module } from '@nestjs/common';
+import { ComercialAtendimentoModule } from '../comercial-atendimento/comercial-atendimento.module';
+import { FinanceiroModule } from '../financeiro/financeiro.module';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { EspecialidadesController } from './especialidades/especialidades.controller';
 import { EspecialidadesService } from './especialidades/especialidades.service';
-import { SALA_EM_USO_VERIFICADORES, type SalaEmUsoVerificador } from './salas/sala-em-uso';
+import { ContratosSalaController } from './salas/contratos-sala.controller';
+import { ContratosSalaHorasController } from './salas/contratos-sala-horas.controller';
+import { ContratosSalaHorasService } from './salas/contratos-sala-horas.service';
+import { ContratosSalaService } from './salas/contratos-sala.service';
+import { SALA_EM_USO_VERIFICADORES } from './salas/sala-em-uso';
 import { SalasController } from './salas/salas.controller';
 import { SalasService } from './salas/salas.service';
 import {
@@ -17,6 +23,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
 
 /** Módulo GESTÃO PROFISSIONAIS do inventário. Dono das entidades Profissional e Especialidade. */
 @Module({
+  imports: [ComercialAtendimentoModule, FinanceiroModule],
   controllers: [
     criarLookupController('profissionais', ProfissionaisService),
     criarLookupController('especialidades', EspecialidadesService),
@@ -24,6 +31,8 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     EspecialidadesController,
     ServicosProfissionaisController,
     SalasController,
+    ContratosSalaController,
+    ContratosSalaHorasController,
   ],
   providers: [
     ProfissionaisService,
@@ -31,8 +40,14 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ProfissionalAgendaService,
     ServicosProfissionaisService,
     SalasService,
-    // Nenhuma sala é referenciada ainda; o módulo de Contratos acrescenta o seu verificador.
-    { provide: SALA_EM_USO_VERIFICADORES, useValue: [] as SalaEmUsoVerificador[] },
+    ContratosSalaService,
+    ContratosSalaHorasService,
+    // Sala com contrato não pode ser excluída.
+    {
+      provide: SALA_EM_USO_VERIFICADORES,
+      useFactory: (contratos: ContratosSalaService) => [contratos],
+      inject: [ContratosSalaService],
+    },
     // Nenhum cadastro referencia serviços ainda; módulos futuros acrescentam o seu verificador.
     { provide: SERVICO_EM_USO_VERIFICADORES, useValue: [] as ServicoEmUsoVerificador[] },
   ],

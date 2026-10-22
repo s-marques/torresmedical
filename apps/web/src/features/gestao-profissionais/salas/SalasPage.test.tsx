@@ -108,11 +108,11 @@ describe('Gestão de Salas (/salas)', () => {
     await user.click(screen.getByRole('button', { name: 'Tentar de novo' }));
   });
 
-  it('as abas Contratos, Mapa Ocupação e Dashboard abrem o aviso de etapa futura', async () => {
+  it('as abas Mapa Ocupação e Dashboard abrem o aviso de etapa futura', async () => {
     const { user } = renderTela();
     await screen.findByText('Sala Azul');
 
-    for (const aba of ['Contratos', 'Mapa Ocupação', 'Dashboard']) {
+    for (const aba of ['Mapa Ocupação', 'Dashboard']) {
       await user.click(screen.getByRole('tab', { name: aba }));
       expect(screen.getByRole('tab', { name: aba })).toHaveAttribute('aria-selected', 'true');
       expect(screen.getByText('Em construção')).toBeVisible();
