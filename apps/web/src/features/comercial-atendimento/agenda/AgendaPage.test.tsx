@@ -88,7 +88,7 @@ function api(rotas: Parameters<typeof apiFalsa>[0] = {}) {
 }
 
 function renderTela(fetchMock = api()) {
-  return { user: userEvent.setup(), fetchMock, ...renderApp('/agenda', fetchMock) };
+  return { user: userEvent.setup(), ...renderApp('/agenda', fetchMock) };
 }
 
 const consultas = (fetchMock: ReturnType<typeof api>) =>
