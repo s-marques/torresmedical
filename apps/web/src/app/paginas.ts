@@ -7,6 +7,9 @@ import { lazy, type ComponentType } from 'react';
  * `'financeiro.contas-receber': lazy(() => import('@/features/financeiro/contas-receber/ContasReceberPage'))`.
  */
 export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
+  'comercial-atendimento.agenda': lazy(
+    () => import('@/features/comercial-atendimento/agenda/AgendaPage'),
+  ),
   'comercial-atendimento.pacientes': lazy(
     () => import('@/features/comercial-atendimento/pacientes/PacientesPage'),
   ),

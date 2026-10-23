@@ -1,6 +1,7 @@
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { Injectable } from '@nestjs/common';
 import type {
+  AgendaProfissional,
   CreateProfissionalInput,
   ExportProfissionaisQuery,
   ListProfissionaisQuery,
@@ -249,6 +250,21 @@ export class ProfissionaisService extends EntidadeLookupService<
       columns: selectColumns(PROFISSIONAL_EXPORT_DEFINITIONS, query.columns),
       rows,
     });
+  }
+
+  /** Profissionais ativos, em ordem alfabética, com a cor do calendário (colunas e filtro da Agenda). */
+  async listarParaAgenda(): Promise<AgendaProfissional[]> {
+    const profissionais = await this.txHost.tx.profissional.findMany({
+      where: SELECIONAVEIS,
+      include: COM_ESPECIALIDADE,
+      orderBy: { nome: 'asc' },
+    });
+    return profissionais.map((p) => ({
+      id: p.id,
+      nome: p.nome,
+      especialidade: p.especialidade?.nome ?? null,
+      cor: p.corCalendario as ProfissionalCor,
+    }));
   }
 
   /** Profissional não excluído (ativo ou inativo), para as telas de agenda do cadastro. */
