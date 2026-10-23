@@ -1,0 +1,98 @@
+import { AGENDAMENTO_STATUS_ROTULOS, type Agendamento } from '@torres/shared';
+import { UserIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { Modal } from '@/components/shared/Modal';
+import { formatarData } from '@/lib/formatar';
+import { cn } from '@/lib/utils';
+import { diaLocal, horaLocal } from './agenda-datas';
+import { COR_STATUS } from './agenda-status';
+
+const MOEDA = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+export interface ModalDetalheAgendamentoProps {
+  agendamento: Agendamento;
+  onFechar: () => void;
+}
+
+function Campo({ rotulo, children }: Readonly<{ rotulo: string; children: ReactNode }>) {
+  return (
+    <div className="grid gap-1">
+      <dt className="text-muted-foreground text-sm">{rotulo}</dt>
+      <dd className="font-medium">{children}</dd>
+    </div>
+  );
+}
+
+/**
+ * Modal "Agendamento #N" aberto ao clicar num cartão da agenda (somente leitura).
+ * Confirmar, Check-in, Faltou, Cancelar, Registrar Recebimento e Editar ficam para outras issues.
+ */
+export function ModalDetalheAgendamento({
+  agendamento: a,
+  onFechar,
+}: Readonly<ModalDetalheAgendamentoProps>) {
+  const valor = a.valor ?? 0;
+  return (
+    <Modal
+      aberto
+      onAbertoChange={(aberto) => aberto || onFechar()}
+      titulo={`Agendamento #${a.numero}`}
+    >
+      <div className="grid gap-4 pb-2">
+        <div className="flex items-center gap-3">
+          <span className="bg-primary/10 text-primary flex size-12 items-center justify-center rounded-full">
+            <UserIcon aria-hidden className="size-6" />
+          </span>
+          <div>
+            <p className="text-lg font-semibold">{a.pacienteNome}</p>
+            <p className="text-muted-foreground text-sm uppercase">{a.profissionalNome}</p>
+          </div>
+        </div>
+
+        <dl className="grid grid-cols-2 gap-4 rounded-lg border p-4">
+          <Campo rotulo="Data">{formatarData(diaLocal(a.inicio))}</Campo>
+          <Campo rotulo="Horário">{horaLocal(a.inicio)}</Campo>
+          <Campo rotulo="Duração">{a.duracaoMinutos} min</Campo>
+          <Campo rotulo="Status">
+            <span
+              className={cn(
+                'inline-block rounded-full px-3 py-0.5 text-xs font-bold',
+                COR_STATUS[a.status].pilula,
+              )}
+            >
+              {AGENDAMENTO_STATUS_ROTULOS[a.status]}
+            </span>
+          </Campo>
+          {a.tipoNome && <Campo rotulo="Tipo">{a.tipoNome}</Campo>}
+          {valor > 0 && (
+            <Campo rotulo="Valor">
+              <span className="text-emerald-600">{MOEDA.format(valor)}</span>
+            </Campo>
+          )}
+          {a.convenio && <Campo rotulo="Convênio">Sim</Campo>}
+        </dl>
+
+        {a.observacoes && (
+          <div className="grid gap-1 rounded-lg border p-4">
+            <p className="text-muted-foreground text-sm">Observações</p>
+            <p className="whitespace-pre-line">{a.observacoes}</p>
+          </div>
+        )}
+
+        {valor > 0 && (
+          // Ainda não há recebimentos: tudo é "Pendente" até a tela de Registrar Recebimento existir.
+          <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
+            <div>
+              <p className="text-muted-foreground text-sm">Pagamento</p>
+              <p className="font-bold text-red-700 dark:text-red-300">Pendente</p>
+            </div>
+            <div className="text-right text-sm">
+              <p className="text-muted-foreground">R$ 0.00 / R$ {valor.toFixed(2)}</p>
+              <p className="font-bold text-orange-600">Restam R$ {valor.toFixed(2)}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}
