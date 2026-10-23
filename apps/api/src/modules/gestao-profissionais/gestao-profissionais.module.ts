@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ComercialAtendimentoModule } from '../comercial-atendimento/comercial-atendimento.module';
 import { FinanceiroModule } from '../financeiro/financeiro.module';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
@@ -25,7 +25,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
 
 /** Módulo GESTÃO PROFISSIONAIS do inventário. Dono das entidades Profissional e Especialidade. */
 @Module({
-  imports: [ComercialAtendimentoModule, FinanceiroModule],
+  imports: [forwardRef(() => ComercialAtendimentoModule), FinanceiroModule],
   controllers: [
     criarLookupController('profissionais', ProfissionaisService),
     criarLookupController('especialidades', EspecialidadesService),
