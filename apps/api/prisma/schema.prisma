@@ -200,6 +200,7 @@ model Paciente {
   deletedAt               DateTime?      @map("deleted_at") @db.Timestamptz(3)
 
   origemCliente OrigemCliente? @relation(fields: [origemClienteId], references: [id], onDelete: Restrict)
+  agendamentos  Agendamento[]
 
   @@index([documento])
   @@index([origemClienteId])
@@ -286,47 +287,48 @@ enum BloqueioMotivo {
 
 /// Dono: gestao-profissionais.
 model Profissional {
-  id                   String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                   String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   nome                 String
   /// Registro no conselho (CRM, CRN, CRBM…), texto livre.
   registro             String?
-  especialidadeId      String?        @map("especialidade_id") @db.Uuid
+  especialidadeId      String?       @map("especialidade_id") @db.Uuid
   /// Especialidades adicionais separadas por vírgula (usadas pelo agente de IA).
-  outrasEspecialidades String?        @map("outras_especialidades")
+  outrasEspecialidades String?       @map("outras_especialidades")
   telefone             String?
   email                String?
-  duracaoPadrao        Int            @default(30) @map("duracao_padrao")
-  valorConsulta        Decimal?       @map("valor_consulta") @db.Decimal(12, 2)
-  comissao             Decimal?       @db.Decimal(5, 2)
+  duracaoPadrao        Int           @default(30) @map("duracao_padrao")
+  valorConsulta        Decimal?      @map("valor_consulta") @db.Decimal(12, 2)
+  comissao             Decimal?      @db.Decimal(5, 2)
   /// Chave da cor no calendário (catálogo em `packages/shared`).
-  corCalendario        String         @default("azul") @map("cor_calendario")
+  corCalendario        String        @default("azul") @map("cor_calendario")
   cpf                  String?
   rg                   String?
-  dataNascimento       DateTime?      @map("data_nascimento") @db.Date
+  dataNascimento       DateTime?     @map("data_nascimento") @db.Date
   naturalidade         String?
-  estadoCivil          EstadoCivil?   @map("estado_civil")
+  estadoCivil          EstadoCivil?  @map("estado_civil")
   endereco             String?
-  enderecoConsultorio  String?        @map("endereco_consultorio")
-  telefoneReceita      String?        @map("telefone_receita")
+  enderecoConsultorio  String?       @map("endereco_consultorio")
+  telefoneReceita      String?       @map("telefone_receita")
   cnes                 String?
-  rodapeReceita        String?        @map("rodape_receita")
-  layoutReceita        LayoutReceita  @default(PADRAO) @map("layout_receita")
+  rodapeReceita        String?       @map("rodape_receita")
+  layoutReceita        LayoutReceita @default(PADRAO) @map("layout_receita")
   /// Credenciais da Memed, cifradas (AES-256-GCM) antes de gravar. A Secret Key nunca sai da API.
-  memedApiToken        String?        @map("memed_api_token")
-  memedSecretKey       String?        @map("memed_secret_key")
+  memedApiToken        String?       @map("memed_api_token")
+  memedSecretKey       String?       @map("memed_secret_key")
   /// Arquivos enviados em `/api/arquivos` (usos `foto-profissional` e `logo-receita`).
-  fotoArquivoId        String?        @map("foto_arquivo_id") @db.Uuid
-  logoReceitaArquivoId String?        @map("logo_receita_arquivo_id") @db.Uuid
-  ativo                Boolean        @default(true)
-  createdAt            DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt            DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt            DateTime?      @map("deleted_at") @db.Timestamptz(3)
+  fotoArquivoId        String?       @map("foto_arquivo_id") @db.Uuid
+  logoReceitaArquivoId String?       @map("logo_receita_arquivo_id") @db.Uuid
+  ativo                Boolean       @default(true)
+  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt            DateTime?     @map("deleted_at") @db.Timestamptz(3)
 
-  especialidade Especialidade?         @relation(fields: [especialidadeId], references: [id], onDelete: Restrict)
+  especialidade Especialidade?        @relation(fields: [especialidadeId], references: [id], onDelete: Restrict)
   horarios      HorarioAtendimento[]
   bloqueios     BloqueioAgenda[]
   servicos      ServicoProfissional[]
   contratosSala ContratoSala[]
+  agendamentos  Agendamento[]
 
   @@index([especialidadeId])
   @@map("profissionais")
@@ -334,18 +336,18 @@ model Profissional {
 
 /// Dono: gestao-profissionais. Horário semanal (`dia_semana`, 0 = domingo) ou de uma data.
 model HorarioAtendimento {
-  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  profissionalId String       @map("profissional_id") @db.Uuid
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profissionalId String      @map("profissional_id") @db.Uuid
   tipo           HorarioTipo
-  diaSemana      Int?         @map("dia_semana")
-  data           DateTime?    @db.Date
+  diaSemana      Int?        @map("dia_semana")
+  data           DateTime?   @db.Date
   /// "HH:MM".
   inicio         String
   fim            String
-  almocoInicio   String?      @map("almoco_inicio")
-  almocoFim      String?      @map("almoco_fim")
-  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  almocoInicio   String?     @map("almoco_inicio")
+  almocoFim      String?     @map("almoco_fim")
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
 
@@ -578,7 +580,49 @@ model TipoAgendamento {
   updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(3)
 
+  agendamentos Agendamento[]
+
   @@map("tipos_agendamento")
+}
+
+enum AgendamentoStatus {
+  AGENDADO
+  CONFIRMADO
+  CHECK_IN
+  CANCELADO
+  REAGENDAR
+  ATENDIDO
+  FALTOU
+}
+
+/// Dono: comercial-atendimento. Consulta/procedimento marcado na tela Agenda (`/agenda`).
+model Agendamento {
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Número exibido ao usuário ("Agendamento #1224").
+  numero            Int               @unique @default(autoincrement())
+  pacienteId        String            @map("paciente_id") @db.Uuid
+  profissionalId    String            @map("profissional_id") @db.Uuid
+  tipoAgendamentoId String?           @map("tipo_agendamento_id") @db.Uuid
+  /// Instante de início (UTC); o dia e a hora exibidos seguem o fuso da clínica.
+  inicio            DateTime          @db.Timestamptz(3)
+  duracaoMinutos    Int               @default(30) @map("duracao_minutos")
+  valor             Decimal?          @db.Decimal(12, 2)
+  /// Atendimento por convênio (checkbox "Convênio" do modal Novo Agendamento).
+  convenio          Boolean           @default(false)
+  observacoes       String?
+  status            AgendamentoStatus @default(AGENDADO)
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt         DateTime?         @map("deleted_at") @db.Timestamptz(3)
+
+  paciente        Paciente         @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
+  profissional    Profissional     @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+  tipoAgendamento TipoAgendamento? @relation(fields: [tipoAgendamentoId], references: [id], onDelete: Restrict)
+
+  @@index([profissionalId, inicio])
+  @@index([inicio])
+  @@index([pacienteId])
+  @@map("agendamentos")
 }
 
 /// Dono: gestao-profissionais. Serviço/procedimento que um profissional realiza (tela Serviços
@@ -685,39 +729,39 @@ enum ContratoSalaStatus {
 /// ou o paciente (módulo comercial-atendimento, sem FK: o acesso é pelo service exportado).
 /// Exclusão lógica, pois cobranças futuras apontam para o contrato.
 model ContratoSala {
-  id               String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  salaId           String                     @map("sala_id") @db.Uuid
-  modalidade       ContratoSalaModalidade
-  locatarioTipo    ContratoSalaLocatarioTipo  @map("locatario_tipo")
-  profissionalId   String?                    @map("profissional_id") @db.Uuid
-  pacienteId       String?                    @map("paciente_id") @db.Uuid
-  especialidade    String?
-  valorUnitario    Decimal                    @default(0) @map("valor_unitario") @db.Decimal(12, 2)
-  quantidadeMensal Decimal?                   @map("quantidade_mensal") @db.Decimal(8, 2)
-  permuta          Boolean                    @default(false)
-  tipoReceita      ContratoSalaTipoReceita    @default(FIXO) @map("tipo_receita")
-  diaVencimento    Int                        @default(10) @map("dia_vencimento")
+  id                 String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  salaId             String                     @map("sala_id") @db.Uuid
+  modalidade         ContratoSalaModalidade
+  locatarioTipo      ContratoSalaLocatarioTipo  @map("locatario_tipo")
+  profissionalId     String?                    @map("profissional_id") @db.Uuid
+  pacienteId         String?                    @map("paciente_id") @db.Uuid
+  especialidade      String?
+  valorUnitario      Decimal                    @default(0) @map("valor_unitario") @db.Decimal(12, 2)
+  quantidadeMensal   Decimal?                   @map("quantidade_mensal") @db.Decimal(8, 2)
+  permuta            Boolean                    @default(false)
+  tipoReceita        ContratoSalaTipoReceita    @default(FIXO) @map("tipo_receita")
+  diaVencimento      Int                        @default(10) @map("dia_vencimento")
   /// Forma de pagamento (módulo financeiro, sem FK).
-  formaPagamentoId String?                    @map("forma_pagamento_id") @db.Uuid
-  indiceReajuste   ContratoSalaIndiceReajuste @default(NENHUM) @map("indice_reajuste")
-  dataInicio       DateTime                   @map("data_inicio") @db.Date
-  dataFim          DateTime?                  @map("data_fim") @db.Date
-  permiteIndicacao Boolean                    @default(true) @map("permite_indicacao")
-  participaEventos Boolean                    @default(false) @map("participa_eventos")
-  observacoes      String?
-  status           ContratoSalaStatus         @default(ATIVO)
+  formaPagamentoId   String?                    @map("forma_pagamento_id") @db.Uuid
+  indiceReajuste     ContratoSalaIndiceReajuste @default(NENHUM) @map("indice_reajuste")
+  dataInicio         DateTime                   @map("data_inicio") @db.Date
+  dataFim            DateTime?                  @map("data_fim") @db.Date
+  permiteIndicacao   Boolean                    @default(true) @map("permite_indicacao")
+  participaEventos   Boolean                    @default(false) @map("participa_eventos")
+  observacoes        String?
+  status             ContratoSalaStatus         @default(ATIVO)
   /// Data do encerramento (término natural) ou do cancelamento (rescisão); nula enquanto ativo.
   encerradoEm        DateTime?                  @map("encerrado_em") @db.Date
   /// Observação do encerramento ou motivo da rescisão.
   motivoEncerramento String?                    @map("motivo_encerramento")
   /// PDF do contrato enviado em `/api/arquivos` (uso `contrato-sala`).
-  pdfArquivoId     String?                    @map("pdf_arquivo_id") @db.Uuid
-  createdAt        DateTime                   @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt        DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt        DateTime?                  @map("deleted_at") @db.Timestamptz(3)
+  pdfArquivoId       String?                    @map("pdf_arquivo_id") @db.Uuid
+  createdAt          DateTime                   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt          DateTime?                  @map("deleted_at") @db.Timestamptz(3)
 
-  sala         Sala              @relation(fields: [salaId], references: [id])
-  profissional Profissional?     @relation(fields: [profissionalId], references: [id])
+  sala         Sala               @relation(fields: [salaId], references: [id])
+  profissional Profissional?      @relation(fields: [profissionalId], references: [id])
   dias         ContratoSalaDia[]
   horas        ContratoSalaHora[]
 
@@ -745,13 +789,13 @@ model ContratoSalaDia {
 /// Hora utilizada de um contrato de Hora Avulsa (modal "Horas Utilizadas"): data e horário
 /// "HH:MM" de entrada e saída. Base da cobrança do mês.
 model ContratoSalaHora {
-  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contratoId  String       @map("contrato_id") @db.Uuid
-  data        DateTime     @db.Date
-  entrada     String
-  saida       String
-  observacao  String?
-  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contratoId String   @map("contrato_id") @db.Uuid
+  data       DateTime @db.Date
+  entrada    String
+  saida      String
+  observacao String?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   contrato ContratoSala @relation(fields: [contratoId], references: [id], onDelete: Cascade)
 
