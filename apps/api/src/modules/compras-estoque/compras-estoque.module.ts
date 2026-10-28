@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { CategoriasController } from './categorias/categorias.controller';
 import { CategoriasService } from './categorias/categorias.service';
+import { FornecedoresController } from './fornecedores/fornecedores.controller';
 import { FornecedoresService } from './fornecedores/fornecedores.service';
 import { ProdutosController } from './produtos/produtos.controller';
 import { ProdutosService } from './produtos/produtos.service';
@@ -17,6 +18,7 @@ const SERVICES = [FornecedoresService, ProdutosService, CategoriasService, Unida
 @Module({
   controllers: [
     criarLookupController('fornecedores', FornecedoresService),
+    FornecedoresController,
     criarLookupController('produtos', ProdutosService),
     ProdutosController,
     criarLookupController('categorias', CategoriasService),

@@ -377,19 +377,28 @@ model BloqueioAgenda {
 
 /// Dono: compras-estoque.
 model Fornecedor {
-  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  nome      String
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome         String
+  nomeFantasia String?   @map("nome_fantasia")
   /// CNPJ ou CPF, somente dígitos.
-  documento String?
-  email     String?
-  telefone  String?
-  cidade    String?
+  documento    String?
+  email        String?
+  contato      String?
+  telefone     String?
+  celular      String?
+  cep          String?
+  logradouro   String?
+  numero       String?
+  complemento  String?
+  bairro       String?
+  cidade       String?
   /// Sigla do estado.
-  uf        String?   @db.Char(2)
-  ativo     Boolean   @default(true)
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+  uf           String?   @db.Char(2)
+  ativo        Boolean   @default(true)
+  observacoes  String?
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
 
   @@index([documento])
   @@map("fornecedores")
