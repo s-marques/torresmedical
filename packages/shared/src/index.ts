@@ -13,6 +13,7 @@ export * from './schemas/comercial-atendimento/agendamento';
 export * from './schemas/comercial-atendimento/origem-cliente';
 export * from './schemas/comercial-atendimento/paciente';
 export * from './schemas/compras-estoque/categoria';
+export * from './schemas/compras-estoque/fornecedor';
 export * from './schemas/compras-estoque/produto';
 export * from './schemas/compras-estoque/unidade-medida';
 export * from './schemas/configuracoes-gestao/tipo-agendamento';
