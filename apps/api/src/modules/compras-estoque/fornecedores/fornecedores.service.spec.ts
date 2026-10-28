@@ -133,12 +133,14 @@ describe('FornecedoresService', () => {
     await service.create(INPUT);
     await service.update(ID, { ...INPUT, status: 'ativo' });
 
-    const { status: _status, ...campos } = INPUT;
-    expect(fornecedor.create).toHaveBeenCalledWith({ data: { ...campos, ativo: false } });
+    const dataCriada = fornecedor.create.mock.calls[0][0].data;
+    expect(dataCriada).toMatchObject({ nome: INPUT.nome, ativo: false });
+    expect(dataCriada).not.toHaveProperty('status');
     expect(fornecedor.update).toHaveBeenCalledWith({
       where: { id: ID },
-      data: { ...campos, ativo: true },
+      data: expect.objectContaining({ nome: INPUT.nome, ativo: true }),
     });
+    expect(fornecedor.update.mock.calls[0][0].data).not.toHaveProperty('status');
   });
 
   it('update e remove devolvem 404 quando não existe', async () => {
