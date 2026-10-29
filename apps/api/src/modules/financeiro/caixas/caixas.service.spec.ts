@@ -19,6 +19,9 @@ const CAIXA = {
   valorFechamento: null,
   quebra: null,
   status: 'ABERTO' as const,
+  createdAt: new Date('2026-10-01T12:00:00.000Z'),
+  updatedAt: new Date('2026-10-01T12:00:00.000Z'),
+  deletedAt: null,
 };
 
 function setup(userId: string | null = OPERADOR) {
@@ -94,7 +97,12 @@ describe('CaixasService', () => {
 
   it('list ordena a coluna # pelo número', async () => {
     const { service, caixa } = setup();
-    await service.list({ page: 1, pageSize: 10, sort: { field: 'id', direction: 'desc' } });
+    await service.list({
+      page: 1,
+      pageSize: 10,
+      sort: { field: 'id', direction: 'desc' },
+      search: undefined,
+    });
     expect(caixa.findMany.mock.calls[0][0].orderBy[0]).toEqual({ numero: 'desc' });
   });
 
@@ -102,14 +110,14 @@ describe('CaixasService', () => {
     const { service, exportService } = setup();
     await service.export({
       format: 'xlsx',
+      search: undefined,
       sort: { field: 'dataAbertura', direction: 'desc' },
       columns: ['nome', 'status'],
     });
     expect(exportService.ensureWithinLimit).toHaveBeenCalledWith(1);
-    expect(exportService.export.mock.calls[0][0].columns.map((c: { key: string }) => c.key)).toEqual([
-      'nome',
-      'status',
-    ]);
+    expect(
+      exportService.export.mock.calls[0][0].columns.map((c: { key: string }) => c.key),
+    ).toEqual(['nome', 'status']);
     expect(CAIXA_EXPORT_DEFINITIONS.map((c) => c.key)).toContain('quebra');
   });
 });

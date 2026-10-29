@@ -87,7 +87,10 @@ describe('Caixas (e2e)', () => {
 
   describe('POST (Abrir Caixa)', () => {
     it('201: abre para o usuário logado e audita CREATE', async () => {
-      const res = await http().post(BASE).send({ nome: ' Caixa 1 ', valorAbertura: 150.5 }).expect(201);
+      const res = await http()
+        .post(BASE)
+        .send({ nome: ' Caixa 1 ', valorAbertura: 150.5 })
+        .expect(201);
 
       expect(caixaSchema.parse(res.body)).toMatchObject({
         nome: 'Caixa 1',
@@ -147,7 +150,12 @@ describe('Caixas (e2e)', () => {
         })
         .expect(200);
       expect(res.headers['content-type']).toContain('spreadsheetml');
-      await expectAudit(prisma, { action: 'EXPORT', entity: ENTITY, entityId: '*', userId: usuario.id });
+      await expectAudit(prisma, {
+        action: 'EXPORT',
+        entity: ENTITY,
+        entityId: '*',
+        userId: usuario.id,
+      });
       await http().get(`${BASE}/export`).query({ format: 'doc' }).expect(400);
       const sem = await criarUsuarioTeste(app, {
         permissoes: ['financeiro.caixas.ver'],

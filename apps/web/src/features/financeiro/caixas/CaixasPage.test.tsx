@@ -51,7 +51,7 @@ function parametros(fetchMock: ReturnType<typeof apiFalsa>) {
 }
 
 function renderTela(fetchMock = apiFalsa({ rotas: { [API]: () => pagina(CAIXAS) } })) {
-  return { fetchMock, user: userEvent.setup(), ...renderApp('/caixas', fetchMock) };
+  return { user: userEvent.setup(), ...renderApp('/caixas', fetchMock) };
 }
 
 describe('Caixas (/caixas)', () => {

@@ -68,8 +68,7 @@ export class CaixasService {
     const where = this.where(query);
     const orderBy = this.orderBy(query.sort);
     const page = await paginate(query, {
-      findMany: (p) =>
-        this.txHost.tx.caixa.findMany({ where, orderBy, include: INCLUDE, ...p }),
+      findMany: (p) => this.txHost.tx.caixa.findMany({ where, orderBy, include: INCLUDE, ...p }),
       count: () => this.txHost.tx.caixa.count({ where }),
     });
     return { ...page, data: page.data.map(toCaixa) };
@@ -121,7 +120,8 @@ export class CaixasService {
   private where(query: Pick<ListCaixasQuery, 'search' | 'status'>): Prisma.CaixaWhereInput {
     return {
       ...NAO_EXCLUIDOS,
-      status: query.status === undefined ? undefined : query.status === 'aberto' ? 'ABERTO' : 'FECHADO',
+      status:
+        query.status === undefined ? undefined : query.status === 'aberto' ? 'ABERTO' : 'FECHADO',
       ...(query.search && {
         OR: [
           { nome: { contains: query.search, mode: 'insensitive' } },
