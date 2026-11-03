@@ -330,6 +330,7 @@ model Profissional {
   servicos      ServicoProfissional[]
   contratosSala ContratoSala[]
   agendamentos  Agendamento[]
+  protocolos    Protocolo[]
 
   @@index([especialidadeId])
   @@map("profissionais")
@@ -478,6 +479,8 @@ model Produto {
 
   categoria     Categoria?     @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
   unidadeMedida UnidadeMedida? @relation(fields: [unidadeMedidaId], references: [id], onDelete: Restrict)
+
+  protocoloItens ProtocoloItem[]
 
   @@index([categoriaId])
   @@index([unidadeMedidaId])
@@ -682,6 +685,87 @@ model ServicoProfissional {
 
   @@index([profissionalId])
   @@map("servicos_profissionais")
+}
+
+/// Dono: gestao-profissionais. Tipo do protocolo (select "Tipo" do modal Novo Protocolo).
+enum ProtocoloTipo {
+  PROCEDIMENTO
+  PRODUTO
+
+  @@map("protocolo_tipo")
+}
+
+/// Dono: gestao-profissionais. Conjunto de procedimentos/produtos aplicado no atendimento (tela
+/// Protocolos). O nome é único entre os não excluídos, sem diferenciar maiúsculas (service).
+model Protocolo {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome           String
+  tipo           ProtocoloTipo @default(PROCEDIMENTO)
+  categoria      String        @default("Geral")
+  profissionalId String?       @map("profissional_id") @db.Uuid
+  totalSemanas   Int           @default(1) @map("total_semanas")
+  valorTotal     Decimal       @default(0) @map("valor_total") @db.Decimal(12, 2)
+  observacoes    String?
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime?     @map("deleted_at") @db.Timestamptz(3)
+
+  profissional Profissional?        @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+  itens        ProtocoloItem[]
+  semanasMae   ProtocoloMaeSemana[]
+
+  @@index([profissionalId])
+  @@index([categoria])
+  @@map("protocolos")
+}
+
+/// Dono: gestao-profissionais. Item da composição de um protocolo (produto/serviço e quantidade).
+model ProtocoloItem {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  protocoloId String @map("protocolo_id") @db.Uuid
+  produtoId   String @map("produto_id") @db.Uuid
+  quantidade  Int    @default(1)
+
+  protocolo Protocolo @relation(fields: [protocoloId], references: [id], onDelete: Cascade)
+  produto   Produto   @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+
+  @@unique([protocoloId, produtoId])
+  @@index([produtoId])
+  @@map("protocolo_itens")
+}
+
+/// Dono: gestao-profissionais. Protocolo mãe: sequência de protocolos, um por semana.
+model ProtocoloMae {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome         String
+  categoria    String    @default("Geral")
+  totalSemanas Int       @default(1) @map("total_semanas")
+  valorTotal   Decimal   @default(0) @map("valor_total") @db.Decimal(12, 2)
+  descricao    String?
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  semanas ProtocoloMaeSemana[]
+
+  @@index([categoria])
+  @@map("protocolos_mae")
+}
+
+/// Dono: gestao-profissionais. Semana de um protocolo mãe (protocolo opcional e observações).
+model ProtocoloMaeSemana {
+  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  protocoloMaeId String  @map("protocolo_mae_id") @db.Uuid
+  semana         Int
+  protocoloId    String? @map("protocolo_id") @db.Uuid
+  observacoes    String?
+
+  protocoloMae ProtocoloMae @relation(fields: [protocoloMaeId], references: [id], onDelete: Cascade)
+  protocolo    Protocolo?   @relation(fields: [protocoloId], references: [id], onDelete: Restrict)
+
+  @@unique([protocoloMaeId, semana])
+  @@index([protocoloId])
+  @@map("protocolo_mae_semanas")
 }
 
 /// Dono: gestao-profissionais. Tipo da sala (select "Tipo" da tela Salas).

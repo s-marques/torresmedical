@@ -29,6 +29,8 @@ export * from './schemas/gestao-profissionais/contrato-sala-hora';
 export * from './schemas/gestao-profissionais/sala';
 export * from './schemas/gestao-profissionais/sala-painel';
 export * from './schemas/gestao-profissionais/servico-profissional';
+export * from './schemas/gestao-profissionais/protocolo';
+export * from './schemas/gestao-profissionais/protocolo-mae';
 export * from './schemas/lookups/lookup';
 export * from './schemas/painel/dashboard';
 export * from './schemas/relatorios/relatorio';
