@@ -159,6 +159,245 @@ describe('Funcionários (/funcionarios)', () => {
     expect(corpo).toMatchObject({ nome: 'Novo' });
   });
 
+  it('Editar Funcionario: abre preenchido e envia as alterações', async () => {
+    let corpo: unknown;
+    const fetchMock = apiFalsa({
+      rotas: {
+        [API_FUNCIONARIOS]: () => pagina([funcionario()]),
+        [`${API_FUNCIONARIOS}/${ID_1}`]: (init) => {
+          corpo = JSON.parse(String(init?.body));
+          return json(funcionario({ nome: 'Ana Editada' }));
+        },
+        [API_CARGOS]: () => pagina([cargo()]),
+      },
+    });
+    const { user } = renderTela(fetchMock);
+    const linha = (await screen.findByText('Ana Teste')).closest('tr') as HTMLElement;
+
+    await user.click(within(linha).getByRole('button', { name: 'Ações' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Editar' }));
+    const modal = await screen.findByRole('dialog', { name: 'Editar Funcionario' });
+    expect(within(modal).getByLabelText('Nome')).toHaveValue('Ana Teste');
+    await user.clear(within(modal).getByLabelText('Nome'));
+    await user.type(within(modal).getByLabelText('Nome'), 'Ana Editada');
+    await user.click(within(modal).getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(corpo).toMatchObject({ nome: 'Ana Editada' });
+  });
+
+  it('Excluir Funcionario: confirma e chama DELETE', async () => {
+    const fetchMock = apiFalsa({
+      rotas: {
+        [API_FUNCIONARIOS]: () => pagina([funcionario()]),
+        [`${API_FUNCIONARIOS}/${ID_1}`]: () => json(funcionario()),
+        [API_CARGOS]: () => pagina([cargo()]),
+      },
+    });
+    const { user } = renderTela(fetchMock);
+    const linha = (await screen.findByText('Ana Teste')).closest('tr') as HTMLElement;
+
+    await user.click(within(linha).getByRole('button', { name: 'Ações' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Excluir' }));
+    const dialog = await screen.findByRole('alertdialog');
+    await user.click(within(dialog).getByRole('button', { name: 'Excluir' }));
+
+    await waitFor(() =>
+      expect(
+        chamadasPara(fetchMock, `${API_FUNCIONARIOS}/${ID_1}`).filter(
+          ([, i]) => i?.method === 'DELETE',
+        ),
+      ).toHaveLength(1),
+    );
+  });
+
+  it('Desativar Funcionario: confirma e envia PATCH com status inativo', async () => {
+    let corpo: unknown;
+    const fetchMock = apiFalsa({
+      rotas: {
+        [API_FUNCIONARIOS]: () => pagina([funcionario()]),
+        [`${API_FUNCIONARIOS}/${ID_1}`]: (init) => {
+          corpo = JSON.parse(String(init?.body));
+          return json(funcionario({ ativo: false }));
+        },
+        [API_CARGOS]: () => pagina([cargo()]),
+      },
+    });
+    const { user } = renderTela(fetchMock);
+    const linha = (await screen.findByText('Ana Teste')).closest('tr') as HTMLElement;
+
+    await user.click(within(linha).getByRole('button', { name: 'Ações' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Desativar' }));
+    const dialog = await screen.findByRole('alertdialog');
+    await user.click(within(dialog).getByRole('button', { name: 'Desativar' }));
+
+    await waitFor(() => expect((corpo as { status?: string } | undefined)?.status).toBe('inativo'));
+  });
+
+  describe('aba Cargos', () => {
+    it('Novo Cargo: só o nome é obrigatório e envia os demais campos', async () => {
+      let corpo: unknown;
+      const fetchMock = apiFalsa({
+        rotas: {
+          [API_FUNCIONARIOS]: () => pagina([funcionario()]),
+          [API_CARGOS]: (init) => {
+            if (init?.method !== 'POST') return pagina([cargo()]);
+            corpo = JSON.parse(String(init.body));
+            return json(
+              cargo({ id: '00000000-0000-4000-8000-0000000000c2', nome: 'Gerente' }),
+              201,
+            );
+          },
+        },
+      });
+      const { user } = renderTela(fetchMock);
+      await screen.findByText('Ana Teste');
+      await user.click(screen.getByRole('tab', { name: 'Cargos' }));
+      await screen.findByText('Recepcionista');
+
+      await user.click(screen.getByRole('button', { name: 'Novo Cargo' }));
+      const modal = await screen.findByRole('dialog', { name: 'Novo Cargo' });
+      await user.click(within(modal).getByRole('button', { name: 'Cadastrar' }));
+      expect(await within(modal).findByText('Nome é obrigatório.')).toBeVisible();
+
+      await user.type(within(modal).getByLabelText('Nome'), 'Gerente');
+      await user.type(within(modal).getByLabelText('Departamento'), 'Diretoria');
+      await user.click(within(modal).getByRole('button', { name: 'Cadastrar' }));
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(corpo).toMatchObject({ nome: 'Gerente', departamento: 'Diretoria' });
+    });
+
+    it('Editar e Excluir Cargo', async () => {
+      let editado: unknown;
+      const fetchMock = apiFalsa({
+        rotas: {
+          [API_FUNCIONARIOS]: () => pagina([funcionario()]),
+          [API_CARGOS]: () => pagina([cargo()]),
+          [`${API_CARGOS}/${CARGO_ID}`]: (init) => {
+            if (init?.method === 'PATCH') {
+              editado = JSON.parse(String(init.body));
+              return json(cargo({ nome: 'Recepcionista Chefe' }));
+            }
+            return json(cargo());
+          },
+        },
+      });
+      const { user } = renderTela(fetchMock);
+      await screen.findByText('Ana Teste');
+      await user.click(screen.getByRole('tab', { name: 'Cargos' }));
+      const linha = (await screen.findByText('Recepcionista')).closest('tr') as HTMLElement;
+
+      await user.click(within(linha).getByRole('button', { name: 'Ações' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Editar' }));
+      const modal = await screen.findByRole('dialog', { name: 'Editar Cargo' });
+      await user.clear(within(modal).getByLabelText('Nome'));
+      await user.type(within(modal).getByLabelText('Nome'), 'Recepcionista Chefe');
+      await user.click(within(modal).getByRole('button', { name: 'Salvar' }));
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(editado).toMatchObject({ nome: 'Recepcionista Chefe' });
+
+      await user.click(within(linha).getByRole('button', { name: 'Ações' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Excluir' }));
+      const dialog = await screen.findByRole('alertdialog');
+      await user.click(within(dialog).getByRole('button', { name: 'Excluir' }));
+      await waitFor(() =>
+        expect(
+          chamadasPara(fetchMock, `${API_CARGOS}/${CARGO_ID}`).filter(
+            ([, i]) => i?.method === 'DELETE',
+          ),
+        ).toHaveLength(1),
+      );
+    });
+  });
+
+  describe('aba Comissoes', () => {
+    function urlComissoes() {
+      return `${API_FUNCIONARIOS}/${ID_1}/comissoes`;
+    }
+
+    it('ação "Comissoes" do funcionário abre a aba com a lista e permite lançar, editar e excluir', async () => {
+      const COMISSAO_ID = '00000000-0000-4000-8000-0000000000e1';
+      let ultimoCorpo: unknown;
+      let ultimoMetodo: string | undefined;
+      const fetchMock = apiFalsa({
+        rotas: {
+          [API_FUNCIONARIOS]: () => pagina([funcionario()]),
+          [API_CARGOS]: () => pagina([cargo()]),
+          [urlComissoes()]: (init) => {
+            if (init?.method === 'POST') {
+              ultimoMetodo = 'POST';
+              ultimoCorpo = JSON.parse(String(init.body));
+              return json(
+                {
+                  id: COMISSAO_ID,
+                  funcionarioId: ID_1,
+                  valor: '150.00',
+                  dataReferencia: '2026-02-01',
+                  descricao: 'Venda',
+                  status: 'pendente',
+                  createdAt: '2026-02-01T00:00:00.000Z',
+                  updatedAt: '2026-02-01T00:00:00.000Z',
+                },
+                201,
+              );
+            }
+            return pagina([
+              {
+                id: COMISSAO_ID,
+                funcionarioId: ID_1,
+                valor: '150.00',
+                dataReferencia: '2026-02-01',
+                descricao: 'Venda',
+                status: 'pendente',
+                createdAt: '2026-02-01T00:00:00.000Z',
+                updatedAt: '2026-02-01T00:00:00.000Z',
+              },
+            ]);
+          },
+          [`${urlComissoes()}/${COMISSAO_ID}`]: (init) => {
+            ultimoMetodo = init?.method;
+            if (init?.body) ultimoCorpo = JSON.parse(String(init.body));
+            return json({
+              id: COMISSAO_ID,
+              funcionarioId: ID_1,
+              valor: '150.00',
+              dataReferencia: '2026-02-01',
+              descricao: 'Venda',
+              status: 'paga',
+              createdAt: '2026-02-01T00:00:00.000Z',
+              updatedAt: '2026-02-01T00:00:00.000Z',
+            });
+          },
+        },
+      });
+      const { user } = renderTela(fetchMock);
+      const linha = (await screen.findByText('Ana Teste')).closest('tr') as HTMLElement;
+
+      await user.click(within(linha).getByRole('button', { name: 'Ações' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Comissoes' }));
+
+      expect(await screen.findByText(/Comissões de/)).toBeVisible();
+      expect(await screen.findByText('Venda')).toBeVisible();
+
+      await user.click(screen.getByRole('button', { name: 'Nova Comissão' }));
+      const modalNova = await screen.findByRole('dialog', { name: 'Nova Comissão' });
+      await user.type(within(modalNova).getByLabelText('Valor'), '15000');
+      await user.type(within(modalNova).getByLabelText('Data de Referência'), '2026-02-01');
+      await user.click(within(modalNova).getByRole('button', { name: 'Lançar' }));
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(ultimoMetodo).toBe('POST');
+      expect(ultimoCorpo).toMatchObject({ valor: 150 });
+
+      const linhaComissao = (await screen.findByText('Venda')).closest('tr') as HTMLElement;
+      await user.click(within(linhaComissao).getByRole('button', { name: 'Ações' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Excluir' }));
+      const dialog = await screen.findByRole('alertdialog');
+      await user.click(within(dialog).getByRole('button', { name: 'Excluir' }));
+      await waitFor(() => expect(ultimoMetodo).toBe('DELETE'));
+    });
+  });
+
   it('filtra pelo chip Inativo', async () => {
     const fetchMock = apiFalsa({
       rotas: {

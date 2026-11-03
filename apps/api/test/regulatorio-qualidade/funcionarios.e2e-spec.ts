@@ -1,5 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import { funcionarioPageSchema, funcionarioSchema } from '@torres/shared';
+import { Workbook } from 'exceljs';
 import request from 'supertest';
 import { PrismaService } from '../../src/common/prisma/prisma.service';
 import { comUsuario, criarUsuarioTeste, type UsuarioTeste } from '../utils/auth';
@@ -14,6 +15,7 @@ const PERMISSOES = [
   'regulatorio-qualidade.funcionarios.criar',
   'regulatorio-qualidade.funcionarios.editar',
   'regulatorio-qualidade.funcionarios.excluir',
+  'regulatorio-qualidade.funcionarios.exportar',
 ] as const;
 const INEXISTENTE = '00000000-0000-4000-8000-000000000000';
 const MSG_NOME = 'Nome é obrigatório.';
@@ -210,9 +212,62 @@ describe('Funcionários (e2e)', () => {
     });
   });
 
+  describe('GET /export', () => {
+    function binary(req: request.Test) {
+      return req.buffer(true).parse((res, callback) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk: Buffer) => chunks.push(chunk));
+        res.on('end', () => callback(null, Buffer.concat(chunks)));
+      });
+    }
+
+    it('xlsx com filtro e ordenação, com cargo e departamento do join; audita EXPORT', async () => {
+      const cargo = await criarCargoNoBanco('Gerente', 'Diretoria');
+      await criarNoBanco('Beta', { cargoId: cargo.id });
+      await criarNoBanco('Alfa');
+      await criarNoBanco('Gama', { ativo: false });
+
+      const res = await binary(
+        http().get(`${BASE}/export`).query({ format: 'xlsx', status: 'ativo', sort: 'nome:asc' }),
+      ).expect(200);
+
+      const workbook = new Workbook();
+      await workbook.xlsx.load(res.body as unknown as ArrayBuffer);
+      const rows: unknown[][] = [];
+      workbook.worksheets[0]?.eachRow((row) => rows.push((row.values as unknown[]).slice(1)));
+      expect(rows[0]).toEqual([
+        'Nome',
+        'Cargo',
+        'Departamento',
+        'Telefone',
+        'Tipo Contrato',
+        'Salário',
+        'Status',
+      ]);
+      expect(rows.slice(1).map((r) => r[0])).toEqual(['Alfa', 'Beta']);
+      expect(rows[2]).toEqual(['Beta', 'Gerente', 'Diretoria', '', '', undefined, 'Ativo']);
+      await expectAudit(prisma, {
+        action: 'EXPORT',
+        entity: ENTITY,
+        entityId: '*',
+        userId: usuario.id,
+      });
+    });
+
+    it('400 para colunas inválidas, sem auditar', async () => {
+      const res = await http()
+        .get(`${BASE}/export`)
+        .query({ format: 'xlsx', columns: 'senha' })
+        .expect(400);
+      expect(res.body.details[0].field).toBe('columns');
+      await expectNoAudit(prisma, { entity: ENTITY, action: 'EXPORT' });
+    });
+  });
+
   describe('acesso', () => {
     const ROTAS = [
       { metodo: 'get', caminho: BASE, permissao: 'ver' },
+      { metodo: 'get', caminho: `${BASE}/export?format=xlsx`, permissao: 'exportar' },
       { metodo: 'get', caminho: `${BASE}/${INEXISTENTE}`, permissao: 'ver' },
       { metodo: 'post', caminho: BASE, permissao: 'criar' },
       { metodo: 'patch', caminho: `${BASE}/${INEXISTENTE}`, permissao: 'editar' },
