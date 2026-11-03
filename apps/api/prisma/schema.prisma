@@ -625,6 +625,22 @@ model TipoAgendamento {
   @@map("tipos_agendamento")
 }
 
+/// Dono: configuracoes-gestao. Mensagem padrão para o atendimento WhatsApp (tela Respostas Rápidas).
+model RespostaRapida {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  titulo    String
+  mensagem  String
+  categoria String    @default("Geral")
+  /// Comando que insere a mensagem no chat, ex.: /boasvindas. Único (sem diferenciar maiúsculas)
+  /// entre as respostas não excluídas; a regra fica no service.
+  atalho    String?
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@map("respostas_rapidas")
+}
+
 enum AgendamentoStatus {
   AGENDADO
   CONFIRMADO
