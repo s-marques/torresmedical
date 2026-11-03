@@ -31,6 +31,8 @@ export interface OpcaoFiltro {
 export interface FiltroStatus {
   /** Parâmetro da query string. Padrão: `status`. */
   parametro?: string;
+  /** Texto do primeiro chip. Padrão: "Todos" (ex.: "Todas" em listas no feminino). */
+  rotuloTodos?: string;
   opcoes: readonly OpcaoFiltro[];
 }
 
