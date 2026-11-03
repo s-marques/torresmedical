@@ -129,7 +129,10 @@ export const VENDA_EXPORT_COLUMNS = VENDA_SORT_FIELDS;
 export type VendaExportColumn = (typeof VENDA_EXPORT_COLUMNS)[number];
 
 /** `GET /api/comercial-atendimento/vendas/export`. */
-export const exportVendasQuerySchema = exportQuerySchema(listVendasQuerySchema, VENDA_EXPORT_COLUMNS);
+export const exportVendasQuerySchema = exportQuerySchema(
+  listVendasQuerySchema,
+  VENDA_EXPORT_COLUMNS,
+);
 export type ExportVendasQuery = z.infer<typeof exportVendasQuerySchema>;
 
 /** Valores monetários chegam como texto decimal (ex.: `"150.00"`), exatos como no banco. */
