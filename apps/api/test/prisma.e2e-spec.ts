@@ -58,6 +58,8 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'fornecedores',
       'funcionarios',
       'horarios_atendimento',
+      'orcamento_itens',
+      'orcamentos',
       'origens_cliente',
       'outbox_events',
       'pacientes',
