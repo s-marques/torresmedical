@@ -10,6 +10,7 @@ export * from './schemas/common/list-query';
 export * from './schemas/common/obrigatorio';
 export * from './schemas/common/pagination';
 export * from './schemas/comercial-atendimento/agendamento';
+export * from './schemas/comercial-atendimento/orcamento';
 export * from './schemas/comercial-atendimento/origem-cliente';
 export * from './schemas/comercial-atendimento/paciente';
 export * from './schemas/compras-estoque/categoria';
