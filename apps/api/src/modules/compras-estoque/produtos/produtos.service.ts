@@ -71,6 +71,16 @@ export class ProdutosService extends EntidadeLookupService<
     });
   }
 
+  /** Nome dos produtos/serviços não excluídos entre os ids (composição de protocolos). */
+  async nomesPorIds(ids: readonly string[]): Promise<ReadonlyMap<string, string>> {
+    if (ids.length === 0) return new Map();
+    const produtos = await this.txHost.tx.produto.findMany({
+      where: { id: { in: [...ids] }, ...NAO_EXCLUIDOS },
+      select: { id: true, nome: true },
+    });
+    return new Map(produtos.map((p) => [p.id, p.nome]));
+  }
+
   async create(input: CreateProdutoInput): Promise<Produto> {
     await this.validarReferencias(input);
     return this.txHost.tx.produto.create({ data: this.dados(input) });
