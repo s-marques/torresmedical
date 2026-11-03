@@ -37,7 +37,8 @@ export class ProtocolosController {
   @Get()
   @RequirePermission('gestao-profissionais.protocolos.ver')
   @ApiOperation({
-    summary: 'Lista paginada, agrupada por categoria, com busca e filtros de categoria e profissional',
+    summary:
+      'Lista paginada, agrupada por categoria, com busca e filtros de categoria e profissional',
   })
   @ApiZodQuery(listProtocolosQuerySchema)
   @ApiZodResponse(200, protocoloPageSchema)

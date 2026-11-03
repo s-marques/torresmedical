@@ -56,7 +56,9 @@ describe('createProtocoloSchema', () => {
         { produtoId: PRODUTO, quantidade: 2 },
       ],
     });
-    expect(resultado.error?.issues[0]?.message).toBe('Há produtos/serviços repetidos na composição');
+    expect(resultado.error?.issues[0]?.message).toBe(
+      'Há produtos/serviços repetidos na composição',
+    );
     expect(
       createProtocoloSchema.safeParse({
         nome: 'X',

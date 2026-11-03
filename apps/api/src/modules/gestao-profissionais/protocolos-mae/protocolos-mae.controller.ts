@@ -58,7 +58,10 @@ export class ProtocolosMaeController {
   @Post()
   @RequirePermission('gestao-profissionais.protocolos.criar')
   @Audit({ entity: ENTITY })
-  @ApiOperation({ summary: 'Cria (Novo Protocolo Mãe). Nome e total de semanas obrigatórios; o nome não pode repetir' })
+  @ApiOperation({
+    summary:
+      'Cria (Novo Protocolo Mãe). Nome e total de semanas obrigatórios; o nome não pode repetir',
+  })
   @ApiZodBody(createProtocoloMaeSchema)
   @ApiZodResponse(201, protocoloMaeSchema)
   @ApiErrorResponses(400, 401, 403, 409)

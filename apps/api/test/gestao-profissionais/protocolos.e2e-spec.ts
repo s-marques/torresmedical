@@ -28,9 +28,8 @@ describe('Protocolos (e2e)', () => {
     await truncateAll(prisma);
     usuario = await criarUsuarioTeste(app, { permissoes: PERMISSOES });
     profissionalId = (await prisma.profissional.create({ data: { nome: 'Dra. Ana Teste' } })).id;
-    produtoId = (
-      await prisma.produto.create({ data: { nome: 'Máscara Teste', tipo: 'PRODUTO' } })
-    ).id;
+    produtoId = (await prisma.produto.create({ data: { nome: 'Máscara Teste', tipo: 'PRODUTO' } }))
+      .id;
   });
 
   afterAll(async () => {
@@ -153,7 +152,10 @@ describe('Protocolos (e2e)', () => {
     });
 
     it('400 para profissional ou produto inexistente e 403 sem permissão de criar', async () => {
-      const prof = await http().post(BASE).send({ nome: 'X', profissionalId: INEXISTENTE }).expect(400);
+      const prof = await http()
+        .post(BASE)
+        .send({ nome: 'X', profissionalId: INEXISTENTE })
+        .expect(400);
       expect(prof.body.details).toEqual([
         { field: 'profissionalId', message: 'Profissional inválido' },
       ]);
@@ -239,7 +241,9 @@ describe('Protocolos (e2e)', () => {
     it('exclui logicamente e audita DELETE', async () => {
       const protocolo = await criarNoBanco('A');
       await http().delete(`${BASE}/${protocolo.id}`).expect(200);
-      expect((await prisma.protocolo.findUnique({ where: { id: protocolo.id } }))?.deletedAt).not.toBeNull();
+      expect(
+        (await prisma.protocolo.findUnique({ where: { id: protocolo.id } }))?.deletedAt,
+      ).not.toBeNull();
       await expectAudit(prisma, {
         action: 'DELETE',
         entity: 'Protocolo',
