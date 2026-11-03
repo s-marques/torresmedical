@@ -63,6 +63,7 @@ model Usuario {
   perfil       Perfil?            @relation(fields: [perfilId], references: [id], onDelete: Restrict)
   sessoes      Sessao[]
   redefinicoes RedefinicaoSenha[]
+  caixas       Caixa[]
 
   @@index([empresaId])
   @@index([perfilId])
@@ -556,6 +557,36 @@ model FormaPagamento {
   deletedAt              DateTime?           @map("deleted_at") @db.Timestamptz(3)
 
   @@map("formas_pagamento")
+}
+
+enum CaixaStatus {
+  ABERTO
+  FECHADO
+}
+
+/// Dono: financeiro. Caixa aberto por um operador (tela Caixas, `/caixas`).
+model Caixa {
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Número exibido na coluna "#".
+  numero          Int         @unique @default(autoincrement())
+  nome            String
+  operadorId      String      @map("operador_id") @db.Uuid
+  dataAbertura    DateTime    @default(now()) @map("data_abertura") @db.Timestamptz(3)
+  dataFechamento  DateTime?   @map("data_fechamento") @db.Timestamptz(3)
+  valorAbertura   Decimal     @map("valor_abertura") @db.Decimal(12, 2)
+  valorFechamento Decimal?    @map("valor_fechamento") @db.Decimal(12, 2)
+  /// Diferença entre o valor contado e o esperado no fechamento.
+  quebra          Decimal?    @db.Decimal(12, 2)
+  status          CaixaStatus @default(ABERTO)
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt       DateTime?   @map("deleted_at") @db.Timestamptz(3)
+
+  operador Usuario @relation(fields: [operadorId], references: [id], onDelete: Restrict)
+
+  @@index([operadorId, status])
+  @@index([dataAbertura])
+  @@map("caixas")
 }
 
 /// Dono: financeiro. Bandeira de cartão (Visa, Mastercard, Elo...).
