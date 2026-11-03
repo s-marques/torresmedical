@@ -68,6 +68,8 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ProfissionaisService,
     EspecialidadesService,
     ServicosProfissionaisService,
+    ProtocolosService,
+    ProtocolosMaeService,
     SalasService,
   ],
 })
