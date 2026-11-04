@@ -71,6 +71,49 @@ export class ProdutosService extends EntidadeLookupService<
     });
   }
 
+  /**
+   * Produtos e serviços ativos para o PDV (busca por nome, SKU ou código de barras), com o preço
+   * de venda. O módulo dono expõe a consulta; Vendas/PDV não lê a tabela.
+   */
+  async vendaveis(query: {
+    page: number;
+    pageSize: number;
+    search?: string | undefined;
+  }): Promise<Page<{ id: string; nome: string; categoria: string | null; precoVenda: number }>> {
+    const where: Prisma.ProdutoWhereInput = {
+      ...NAO_EXCLUIDOS,
+      ativo: true,
+      ...searchWhere(query.search, ['nome', 'sku', 'codigoBarras']),
+    };
+    return paginate(query, {
+      findMany: async (page) =>
+        (
+          await this.txHost.tx.produto.findMany({
+            where,
+            orderBy: [{ nome: 'asc' }, { id: 'asc' }],
+            include: { categoria: { select: { nome: true } } },
+            ...page,
+          })
+        ).map((p) => ({
+          id: p.id,
+          nome: p.nome,
+          categoria: p.categoria?.nome ?? null,
+          precoVenda: p.precoVenda.toNumber(),
+        })),
+      count: () => this.txHost.tx.produto.count({ where }),
+    });
+  }
+
+  /** Nome dos produtos/serviços não excluídos entre os ids (composição de protocolos). */
+  async nomesPorIds(ids: readonly string[]): Promise<ReadonlyMap<string, string>> {
+    if (ids.length === 0) return new Map();
+    const produtos = await this.txHost.tx.produto.findMany({
+      where: { id: { in: [...ids] }, ...NAO_EXCLUIDOS },
+      select: { id: true, nome: true },
+    });
+    return new Map(produtos.map((p) => [p.id, p.nome]));
+  }
+
   async create(input: CreateProdutoInput): Promise<Produto> {
     await this.validarReferencias(input);
     return this.txHost.tx.produto.create({ data: this.dados(input) });

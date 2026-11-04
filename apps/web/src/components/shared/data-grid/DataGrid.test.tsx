@@ -265,6 +265,15 @@ describe('DataGrid', () => {
     expect(screen.getByRole('button', { name: 'Ativo' })).toHaveAttribute('aria-pressed', 'true');
   });
 
+  it('troca o texto do chip "Todos" por `rotuloTodos`', async () => {
+    renderizar({
+      status: { rotuloTodos: 'Todas', opcoes: [{ valor: 'ativo', rotulo: 'Ativo' }] },
+    });
+    await screen.findByText('Unidade 1');
+    expect(botao('Todas')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByRole('button', { name: 'Todos' })).not.toBeInTheDocument();
+  });
+
   it('ignora ordenação fora da whitelist e tamanho de página inválido', async () => {
     renderizar({}, '/lista?sort=empresaId:asc&pageSize=7&page=0');
     await screen.findByText('Unidade 1');

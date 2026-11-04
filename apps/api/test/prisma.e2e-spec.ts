@@ -49,6 +49,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'caixas',
       'cargos',
       'categorias',
+      'comissoes',
       'contratos_sala',
       'contratos_sala_dias',
       'contratos_sala_horas',
@@ -58,6 +59,8 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'fornecedores',
       'funcionarios',
       'horarios_atendimento',
+      'orcamento_itens',
+      'orcamentos',
       'origens_cliente',
       'outbox_events',
       'pacientes',
@@ -66,6 +69,10 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'processed_events',
       'produtos',
       'profissionais',
+      'protocolo_itens',
+      'protocolo_mae_semanas',
+      'protocolos',
+      'protocolos_mae',
       'redefinicoes_senha',
       'respostas_rapidas',
       'salas',
@@ -75,6 +82,8 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'unidades',
       'unidades_medida',
       'usuarios',
+      'venda_itens',
+      'vendas',
     ]);
   });
 

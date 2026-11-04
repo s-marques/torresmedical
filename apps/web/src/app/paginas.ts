@@ -13,6 +13,12 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   'comercial-atendimento.pacientes': lazy(
     () => import('@/features/comercial-atendimento/pacientes/PacientesPage'),
   ),
+  'comercial-atendimento.orcamentos': lazy(
+    () => import('@/features/comercial-atendimento/orcamentos/OrcamentosPage'),
+  ),
+  'comercial-atendimento.vendas-pdv': lazy(
+    () => import('@/features/comercial-atendimento/vendas/VendasPage'),
+  ),
   'comercial-atendimento.origens-cliente': lazy(
     () => import('@/features/comercial-atendimento/origens-cliente/OrigensClientePage'),
   ),
@@ -39,7 +45,13 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
     () =>
       import('@/features/gestao-profissionais/servicos-profissionais/ServicosProfissionaisPage'),
   ),
+  'gestao-profissionais.protocolos': lazy(
+    () => import('@/features/gestao-profissionais/protocolos/ProtocolosPage'),
+  ),
   'painel.painel': lazy(() => import('@/features/painel/painel/PainelPage')),
+  'regulatorio-qualidade.funcionarios': lazy(
+    () => import('@/features/regulatorio-qualidade/funcionarios/FuncionariosPage'),
+  ),
   'configuracoes-gestao.tipos-agendamento': lazy(
     () => import('@/features/configuracoes-gestao/tipos-agendamento/TiposAgendamentoPage'),
   ),
