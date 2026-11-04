@@ -1261,10 +1261,12 @@ model PlanoConta {
   @@map("planos_contas")
 }
 
+/// "Vencido" não é gravado: é calculado (PENDENTE com dataVencimento no passado), conforme
+/// o sistema real (print do dev, issue #48).
 enum ContaReceberStatus {
   PENDENTE
   RECEBIDO
-  VENCIDO
+  CANCELADO
 
   @@map("conta_receber_status")
 }

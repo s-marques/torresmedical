@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "conta_receber_status" AS ENUM ('PENDENTE', 'RECEBIDO', 'VENCIDO');
+CREATE TYPE "conta_receber_status" AS ENUM ('PENDENTE', 'RECEBIDO', 'CANCELADO');
 
 -- CreateTable
 CREATE TABLE "contas_receber" (

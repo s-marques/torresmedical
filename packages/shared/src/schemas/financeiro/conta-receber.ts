@@ -10,16 +10,54 @@ export const CONTA_RECEBER_OBSERVACOES_MAX = 2000;
 export const CONTA_RECEBER_VALOR_MAX = 999_999_999;
 export const CONTA_RECEBER_TOTAL_PARCELAS_MAX = 360;
 
-/** Chips do grid e combobox "Status" do modal: Todos (ausente) / Pendente / Recebido / Vencido. */
-export const CONTA_RECEBER_STATUS = ['PENDENTE', 'RECEBIDO', 'VENCIDO'] as const;
+/** Combobox "Status" do modal (print do dev, issue #48): Pendente / Recebido / Cancelado. */
+export const CONTA_RECEBER_STATUS = ['PENDENTE', 'RECEBIDO', 'CANCELADO'] as const;
 export const contaReceberStatusSchema = z.enum(CONTA_RECEBER_STATUS, { error: 'Status inválido' });
 export type ContaReceberStatus = (typeof CONTA_RECEBER_STATUS)[number];
 
 export const CONTA_RECEBER_ROTULO_STATUS: Readonly<Record<ContaReceberStatus, string>> = {
   PENDENTE: 'Pendente',
   RECEBIDO: 'Recebido',
+  CANCELADO: 'Cancelado',
+};
+
+/**
+ * Chips do grid (inventário): Todos (ausente) / Pendente / Recebido / Vencido. "Vencido" não é
+ * gravado: é calculado (PENDENTE com `dataVencimento` no passado), por isso não entra no
+ * combobox "Status" do modal nem no `ContaReceberStatus` gravado no banco.
+ */
+export const CONTA_RECEBER_FILTRO_STATUS = ['PENDENTE', 'RECEBIDO', 'VENCIDO'] as const;
+export const contaReceberFiltroStatusSchema = z.enum(CONTA_RECEBER_FILTRO_STATUS, {
+  error: 'Status inválido',
+});
+export type ContaReceberFiltroStatus = (typeof CONTA_RECEBER_FILTRO_STATUS)[number];
+
+export const CONTA_RECEBER_ROTULO_FILTRO_STATUS: Readonly<
+  Record<ContaReceberFiltroStatus, string>
+> = {
+  PENDENTE: 'Pendente',
+  RECEBIDO: 'Recebido',
   VENCIDO: 'Vencido',
 };
+
+/** Status gravado, mais "Vencido" calculado: o que a coluna "Status" do grid exibe. */
+export type ContaReceberStatusExibicao = ContaReceberStatus | 'VENCIDO';
+
+export const CONTA_RECEBER_ROTULO_STATUS_EXIBICAO: Readonly<
+  Record<ContaReceberStatusExibicao, string>
+> = {
+  ...CONTA_RECEBER_ROTULO_STATUS,
+  VENCIDO: 'Vencido',
+};
+
+/** Status exibido na linha: "Vencido" quando pendente e com vencimento no passado. */
+export function statusExibicaoContaReceber(
+  conta: Pick<ContaReceber, 'status' | 'dataVencimento'>,
+): ContaReceberStatusExibicao {
+  const hoje = new Date().toISOString().slice(0, 10);
+  if (conta.status === 'PENDENTE' && conta.dataVencimento < hoje) return 'VENCIDO';
+  return conta.status;
+}
 
 const descricao = textoObrigatorio('Descrição', { max: CONTA_RECEBER_DESCRICAO_MAX });
 
@@ -101,7 +139,7 @@ export const listContasReceberQuerySchema = listQuerySchema({
   sortFields: CONTA_RECEBER_SORT_FIELDS,
   defaultSort: 'dataVencimento:asc',
   filters: {
-    status: contaReceberStatusSchema.optional(),
+    status: contaReceberFiltroStatusSchema.optional(),
     vencimentoDe: z.iso.date({ error: 'Data inválida' }).optional(),
     vencimentoAte: z.iso.date({ error: 'Data inválida' }).optional(),
   },

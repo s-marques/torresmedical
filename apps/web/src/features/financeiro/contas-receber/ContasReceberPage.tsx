@@ -1,9 +1,12 @@
 import {
-  CONTA_RECEBER_ROTULO_STATUS,
+  CONTA_RECEBER_ROTULO_FILTRO_STATUS,
+  CONTA_RECEBER_ROTULO_STATUS_EXIBICAO,
   exportContasReceberQuerySchema,
   listContasReceberQuerySchema,
   contaReceberPageSchema,
+  statusExibicaoContaReceber,
   type ContaReceber,
+  type ContaReceberStatusExibicao,
 } from '@torres/shared';
 import { PencilIcon, PlusIcon, SearchIcon, Trash2Icon } from 'lucide-react';
 import { useState } from 'react';
@@ -27,7 +30,7 @@ import { ModalContaReceber } from './ModalContaReceber';
 import { URL_CONTAS_RECEBER, useExcluirContaReceber } from './use-contas-receber';
 
 const STATUS: FiltroStatus = {
-  opcoes: Object.entries(CONTA_RECEBER_ROTULO_STATUS).map(([valor, rotulo]) => ({
+  opcoes: Object.entries(CONTA_RECEBER_ROTULO_FILTRO_STATUS).map(([valor, rotulo]) => ({
     valor,
     rotulo,
   })),
@@ -48,9 +51,10 @@ const EXPORTACAO: ExportacaoGrid = {
   schema: exportContasReceberQuerySchema,
 };
 
-const TOM_STATUS: Record<ContaReceber['status'], 'sucesso' | 'alerta' | 'perigo'> = {
+const TOM_STATUS: Record<ContaReceberStatusExibicao, 'sucesso' | 'alerta' | 'perigo'> = {
   PENDENTE: 'alerta',
   RECEBIDO: 'sucesso',
+  CANCELADO: 'perigo',
   VENCIDO: 'perigo',
 };
 
@@ -89,9 +93,14 @@ const COLUNAS: ColunaGrid<ContaReceber>[] = [
     titulo: 'Status',
     ordenavel: true,
     exportavel: true,
-    celula: (c) => (
-      <StatusBadge tom={TOM_STATUS[c.status]}>{CONTA_RECEBER_ROTULO_STATUS[c.status]}</StatusBadge>
-    ),
+    celula: (c) => {
+      const status = statusExibicaoContaReceber(c);
+      return (
+        <StatusBadge tom={TOM_STATUS[status]}>
+          {CONTA_RECEBER_ROTULO_STATUS_EXIBICAO[status]}
+        </StatusBadge>
+      );
+    },
   },
 ];
 

@@ -1,4 +1,9 @@
-import { CONTA_RECEBER_ROTULO_STATUS, type ContaReceber } from '@torres/shared';
+import {
+  CONTA_RECEBER_ROTULO_STATUS_EXIBICAO,
+  statusExibicaoContaReceber,
+  type ContaReceber,
+  type ContaReceberStatusExibicao,
+} from '@torres/shared';
 import { PencilIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Modal } from '@/components/shared/Modal';
@@ -17,9 +22,10 @@ function Item({ rotulo, children }: Readonly<{ rotulo: string; children: ReactNo
   );
 }
 
-const TOM_STATUS: Record<ContaReceber['status'], 'sucesso' | 'alerta' | 'perigo'> = {
+const TOM_STATUS: Record<ContaReceberStatusExibicao, 'sucesso' | 'alerta' | 'perigo'> = {
   PENDENTE: 'alerta',
   RECEBIDO: 'sucesso',
+  CANCELADO: 'perigo',
   VENCIDO: 'perigo',
 };
 
@@ -35,6 +41,7 @@ export function DetalheContaReceber({
   onFechar,
   onEditar,
 }: Readonly<DetalheContaReceberProps>) {
+  const status = statusExibicaoContaReceber(c);
   return (
     <Modal
       aberto
@@ -59,8 +66,8 @@ export function DetalheContaReceber({
         <Item rotulo="Valor">{formatarMoeda(Number(c.valor))}</Item>
         <Item rotulo="Data de Vencimento">{formatarData(c.dataVencimento)}</Item>
         <Item rotulo="Status">
-          <StatusBadge tom={TOM_STATUS[c.status]}>
-            {CONTA_RECEBER_ROTULO_STATUS[c.status]}
+          <StatusBadge tom={TOM_STATUS[status]}>
+            {CONTA_RECEBER_ROTULO_STATUS_EXIBICAO[status]}
           </StatusBadge>
         </Item>
         <Item rotulo="Forma de Pagamento">{c.formaPagamentoNome}</Item>

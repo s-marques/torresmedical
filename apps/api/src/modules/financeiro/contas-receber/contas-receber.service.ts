@@ -1,7 +1,8 @@
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { Injectable } from '@nestjs/common';
 import {
-  CONTA_RECEBER_ROTULO_STATUS,
+  CONTA_RECEBER_ROTULO_STATUS_EXIBICAO,
+  statusExibicaoContaReceber,
   type ContaReceber,
   type ContaReceberExportColumn,
   type CreateContaReceberInput,
@@ -59,7 +60,11 @@ export const CONTA_RECEBER_EXPORT_DEFINITIONS: readonly ExportColumn<
   { key: 'cliente', header: 'Cliente', value: (c) => c.pacienteNome ?? '', width: 3 },
   { key: 'valor', header: 'Valor', type: 'currency', value: (c) => c.valor },
   { key: 'dataVencimento', header: 'Vencimento', type: 'date', value: (c) => c.dataVencimento },
-  { key: 'status', header: 'Status', value: (c) => CONTA_RECEBER_ROTULO_STATUS[c.status] },
+  {
+    key: 'status',
+    header: 'Status',
+    value: (c) => CONTA_RECEBER_ROTULO_STATUS_EXIBICAO[statusExibicaoContaReceber(c)],
+  },
 ];
 
 /** Contas a Receber do Financeiro (tela `/receber`). */
@@ -157,15 +162,18 @@ export class ContasReceberService {
     return [principal, { id: direction }];
   }
 
+  /** O chip "Vencido" filtra contas Pendentes com vencimento antes de hoje (não é status gravado). */
   private where(
     query: Pick<ListContasReceberQuery, 'search' | 'status' | 'vencimentoDe' | 'vencimentoAte'>,
   ): Prisma.ContaReceberWhereInput {
+    const vencidas = query.status === 'VENCIDO';
     return {
       ...NAO_EXCLUIDAS,
-      status: query.status,
+      status: vencidas ? 'PENDENTE' : query.status !== 'VENCIDO' ? query.status : undefined,
       dataVencimento: {
         gte: query.vencimentoDe ? new Date(query.vencimentoDe) : undefined,
         lte: query.vencimentoAte ? new Date(query.vencimentoAte) : undefined,
+        lt: vencidas ? new Date() : undefined,
       },
       ...(query.search && {
         OR: [

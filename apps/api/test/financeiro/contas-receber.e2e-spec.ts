@@ -47,7 +47,7 @@ describe('Contas a Receber (e2e)', () => {
     extra: Partial<{
       valor: string;
       dataVencimento: Date;
-      status: 'PENDENTE' | 'RECEBIDO' | 'VENCIDO';
+      status: 'PENDENTE' | 'RECEBIDO' | 'CANCELADO';
       pacienteId: string;
       deletedAt: Date;
     }> = {},
@@ -65,14 +65,17 @@ describe('Contas a Receber (e2e)', () => {
   describe('GET (listagem)', () => {
     it('não lista excluídas; filtra por status, período de vencimento e busca', async () => {
       await criarNoBanco('Mensalidade');
-      await criarNoBanco('Vencida', { status: 'VENCIDO', dataVencimento: new Date('2026-01-05') });
+      await criarNoBanco('Vencida', { status: 'PENDENTE', dataVencimento: new Date('2026-01-05') });
       await criarNoBanco('Excluída', { deletedAt: new Date() });
 
       const todas = await http().get(BASE).expect(200);
       expect(contaReceberPageSchema.parse(todas.body).meta.total).toBe(2);
 
+      // "Vencido" não é gravado: é calculado (Pendente com vencimento antes de hoje).
       const vencidas = await http().get(BASE).query({ status: 'VENCIDO' }).expect(200);
-      expect(vencidas.body.data).toHaveLength(1);
+      expect(vencidas.body.data.map((c: { descricao: string }) => c.descricao)).toEqual([
+        'Vencida',
+      ]);
 
       const periodo = await http()
         .get(BASE)
@@ -145,6 +148,13 @@ describe('Contas a Receber (e2e)', () => {
       await http()
         .post(BASE)
         .send({ descricao: 'X', valor: -10, dataVencimento: '2026-12-10' })
+        .expect(400);
+    });
+
+    it('400 com status VENCIDO: não é gravado, só filtro calculado do grid', async () => {
+      await http()
+        .post(BASE)
+        .send({ descricao: 'X', valor: 10, dataVencimento: '2026-12-10', status: 'VENCIDO' })
         .expect(400);
     });
   });

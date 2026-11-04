@@ -135,6 +135,20 @@ describe('ContasReceberService', () => {
     expect(page.data[0]?.numero).toBe(12);
   });
 
+  it('list com status VENCIDO filtra Pendentes com vencimento antes de hoje (não é status gravado)', async () => {
+    const { service, contaReceber } = setup();
+    await service.list({
+      page: 1,
+      pageSize: 10,
+      sort: { field: 'dataVencimento', direction: 'asc' },
+      search: undefined,
+      status: 'VENCIDO',
+    });
+    const args = contaReceber.findMany.mock.calls[0][0];
+    expect(args.where.status).toBe('PENDENTE');
+    expect(args.where.dataVencimento.lt).toBeInstanceOf(Date);
+  });
+
   it('list ordena a coluna # pelo número', async () => {
     const { service, contaReceber } = setup();
     await service.list({

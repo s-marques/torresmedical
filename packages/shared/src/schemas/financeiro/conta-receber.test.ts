@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { createContaReceberSchema, listContasReceberQuerySchema } from './conta-receber';
+import {
+  createContaReceberSchema,
+  listContasReceberQuerySchema,
+  statusExibicaoContaReceber,
+} from './conta-receber';
 
 describe('createContaReceberSchema', () => {
   const base = { descricao: 'Mensalidade', valor: 150, dataVencimento: '2026-12-10' };
@@ -53,5 +57,29 @@ describe('listContasReceberQuerySchema', () => {
     expect(q.vencimentoDe).toBe('2026-01-01');
     expect(q.vencimentoAte).toBe('2026-01-31');
     expect(listContasReceberQuerySchema.safeParse({ status: 'x' }).success).toBe(false);
+  });
+});
+
+describe('statusExibicaoContaReceber', () => {
+  const HOJE = new Date().toISOString().slice(0, 10);
+  const ONTEM = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+  const AMANHA = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+
+  it('mostra "Vencido" só quando pendente e com vencimento no passado', () => {
+    expect(statusExibicaoContaReceber({ status: 'PENDENTE', dataVencimento: ONTEM })).toBe(
+      'VENCIDO',
+    );
+    expect(statusExibicaoContaReceber({ status: 'PENDENTE', dataVencimento: HOJE })).toBe(
+      'PENDENTE',
+    );
+    expect(statusExibicaoContaReceber({ status: 'PENDENTE', dataVencimento: AMANHA })).toBe(
+      'PENDENTE',
+    );
+    expect(statusExibicaoContaReceber({ status: 'RECEBIDO', dataVencimento: ONTEM })).toBe(
+      'RECEBIDO',
+    );
+    expect(statusExibicaoContaReceber({ status: 'CANCELADO', dataVencimento: ONTEM })).toBe(
+      'CANCELADO',
+    );
   });
 });
