@@ -66,6 +66,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'pacientes',
       'perfis',
       'perfis_permissoes',
+      'planos_contas',
       'processed_events',
       'produtos',
       'profissionais',
