@@ -1229,3 +1229,31 @@ model VendaItem {
   @@index([vendaId])
   @@map("venda_itens")
 }
+
+enum PlanoContaTipo {
+  RECEITA
+  DESPESA
+  ATIVO
+  PASSIVO
+}
+
+/// Dono: financeiro. Conta contábil em árvore (tela Plano de Contas, `/plano-contas`).
+model PlanoConta {
+  id         String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  codigo     String         @unique
+  nome       String
+  tipo       PlanoContaTipo
+  /// 1 para raiz; nível do pai + 1 nas demais.
+  nivel      Int            @default(1)
+  contaPaiId String?        @map("conta_pai_id") @db.Uuid
+  ativo      Boolean        @default(true)
+  createdAt  DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt  DateTime?      @map("deleted_at") @db.Timestamptz(3)
+
+  contaPai PlanoConta?  @relation("PlanoContaHierarquia", fields: [contaPaiId], references: [id], onDelete: Restrict)
+  filhas   PlanoConta[] @relation("PlanoContaHierarquia")
+
+  @@index([contaPaiId])
+  @@map("planos_contas")
+}
