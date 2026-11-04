@@ -616,9 +616,11 @@ model FormaPagamento {
   updatedAt              DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt              DateTime?           @map("deleted_at") @db.Timestamptz(3)
 
-  orcamentos   Orcamento[]
-  agendamentos Agendamento[]
-  vendas       Venda[]
+  orcamentos        Orcamento[]
+  agendamentos      Agendamento[]
+  vendas            Venda[]
+  contasPagar       ContaPagar[]
+  baixasContaPagar  ContaPagarBaixa[]
 
   @@map("formas_pagamento")
 }
@@ -1251,9 +1253,106 @@ model PlanoConta {
   updatedAt  DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt  DateTime?      @map("deleted_at") @db.Timestamptz(3)
 
-  contaPai PlanoConta?  @relation("PlanoContaHierarquia", fields: [contaPaiId], references: [id], onDelete: Restrict)
-  filhas   PlanoConta[] @relation("PlanoContaHierarquia")
+  contaPai      PlanoConta?    @relation("PlanoContaHierarquia", fields: [contaPaiId], references: [id], onDelete: Restrict)
+  filhas        PlanoConta[]   @relation("PlanoContaHierarquia")
+  contasPagar   ContaPagar[]
 
   @@index([contaPaiId])
   @@map("planos_contas")
+}
+
+/// Dono: financeiro. Conta bancária usada nas baixas de Contas a Pagar. Ainda sem tela de
+/// cadastro própria (issue #47); cadastrada via seed/admin por enquanto.
+model ContaBancaria {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String
+  banco     String?
+  ativo     Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  baixas ContaPagarBaixa[]
+
+  @@map("contas_bancarias")
+}
+
+enum ContaPagarBeneficiarioTipo {
+  FORNECEDOR
+  FUNCIONARIO
+
+  @@map("conta_pagar_beneficiario_tipo")
+}
+
+enum ContaPagarStatus {
+  PENDENTE
+  PAGO
+  CANCELADO
+
+  @@map("conta_pagar_status")
+}
+
+/// Dono: financeiro. Conta a pagar (tela Contas a Pagar, `/pagar`). O beneficiário é um
+/// Fornecedor (compras-estoque) ou um Funcionário (regulatorio-qualidade), sem FK: o acesso é
+/// pelos services exportados de cada módulo (CLAUDE.md, seção 3). Exclusão lógica: histórico
+/// financeiro.
+model ContaPagar {
+  id               String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Número exibido na coluna "#".
+  numero           Int                        @unique @default(autoincrement())
+  descricao        String
+  beneficiarioTipo ContaPagarBeneficiarioTipo @default(FORNECEDOR) @map("beneficiario_tipo")
+  /// Preenchido quando beneficiarioTipo = FORNECEDOR (sem FK).
+  fornecedorId     String?                    @map("fornecedor_id") @db.Uuid
+  /// Preenchido quando beneficiarioTipo = FUNCIONARIO (sem FK).
+  funcionarioId    String?                    @map("funcionario_id") @db.Uuid
+  valor            Decimal                    @db.Decimal(12, 2)
+  dataVencimento   DateTime                   @map("data_vencimento") @db.Date
+  formaPagamentoId String?                    @map("forma_pagamento_id") @db.Uuid
+  planoContaId     String?                    @map("plano_conta_id") @db.Uuid
+  documento        String?
+  totalParcelas    Int                        @default(1) @map("total_parcelas")
+  status           ContaPagarStatus           @default(PENDENTE)
+  observacoes      String?
+  createdAt        DateTime                   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt        DateTime?                  @map("deleted_at") @db.Timestamptz(3)
+
+  formaPagamento FormaPagamento?   @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
+  planoConta     PlanoConta?       @relation(fields: [planoContaId], references: [id], onDelete: Restrict)
+  baixas         ContaPagarBaixa[]
+
+  @@index([fornecedorId])
+  @@index([funcionarioId])
+  @@index([formaPagamentoId])
+  @@index([planoContaId])
+  @@index([status])
+  @@index([dataVencimento])
+  @@map("contas_pagar")
+}
+
+/// Dono: financeiro. Baixa (pagamento total ou parcial) de uma conta a pagar. "Cancelar Baixa"
+/// exclui logicamente a baixa mais recente, sem apagar o histórico, e recalcula o status.
+model ContaPagarBaixa {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contaPagarId         String    @map("conta_pagar_id") @db.Uuid
+  dataPagamento        DateTime  @map("data_pagamento") @db.Date
+  valorPago            Decimal   @map("valor_pago") @db.Decimal(12, 2)
+  juros                Decimal   @default(0) @db.Decimal(12, 2)
+  desconto             Decimal   @default(0) @db.Decimal(12, 2)
+  formaPagamentoId     String?   @map("forma_pagamento_id") @db.Uuid
+  contaBancariaId      String?   @map("conta_bancaria_id") @db.Uuid
+  documento            String?
+  observacoes          String?
+  /// Arquivo enviado em `/api/arquivos` (uso `comprovante-conta-pagar`), sem FK.
+  comprovanteArquivoId String?   @map("comprovante_arquivo_id") @db.Uuid
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt            DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  contaPagar     ContaPagar      @relation(fields: [contaPagarId], references: [id], onDelete: Cascade)
+  formaPagamento FormaPagamento? @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
+  contaBancaria  ContaBancaria?  @relation(fields: [contaBancariaId], references: [id], onDelete: Restrict)
+
+  @@index([contaPagarId])
+  @@map("contas_pagar_baixas")
 }
