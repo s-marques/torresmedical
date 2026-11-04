@@ -74,6 +74,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'protocolos',
       'protocolos_mae',
       'redefinicoes_senha',
+      'respostas_rapidas',
       'salas',
       'servicos_profissionais',
       'sessoes',
