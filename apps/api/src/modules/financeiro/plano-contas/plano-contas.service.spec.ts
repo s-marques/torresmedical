@@ -36,12 +36,10 @@ function setup() {
     create: jest
       .fn()
       .mockImplementation(({ data }) => ({ ...conta('x', data.codigo, 1), ...data })),
-    update: jest
-      .fn()
-      .mockImplementation(({ where, data }) => ({
-        ...TODAS.find((c) => c.id === where.id),
-        ...data,
-      })),
+    update: jest.fn().mockImplementation(({ where, data }) => ({
+      ...TODAS.find((c) => c.id === where.id),
+      ...data,
+    })),
   };
   const txHost = { tx: { planoConta } } as unknown as TransactionHost<PrismaAdapter>;
   const exportService = {
