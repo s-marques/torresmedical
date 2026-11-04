@@ -31,7 +31,10 @@ export function ChipsStatus({
   valor,
   onChange,
 }: Readonly<{ status: FiltroStatus; valor?: string; onChange: (valor?: string) => void }>) {
-  const opcoes: OpcaoFiltro[] = [{ valor: '', rotulo: 'Todos' }, ...status.opcoes];
+  const opcoes: OpcaoFiltro[] = [
+    { valor: '', rotulo: status.rotuloTodos ?? 'Todos' },
+    ...status.opcoes,
+  ];
   return (
     <div
       role="group"

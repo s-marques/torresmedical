@@ -203,6 +203,29 @@ describe('ProdutosService', () => {
     expect(status?.value({ ...PRODUTO, ativo: false } as never)).toBe('Inativo');
   });
 
+  it('vendaveis: só ativos não excluídos, com busca, categoria e preço numérico', async () => {
+    const { service, produto } = setup();
+    produto.findMany.mockResolvedValue([
+      { ...PRODUTO, precoVenda: { toNumber: () => 10.5 }, categoria: { nome: 'Infusão' } },
+      { ...PRODUTO, id: CATEGORIA_ID, precoVenda: { toNumber: () => 0 }, categoria: null },
+    ]);
+
+    const page = await service.vendaveis({ page: 1, pageSize: 20, search: '789' });
+
+    expect(page.data).toEqual([
+      { id: ID, nome: 'Soro fisiológico', categoria: 'Infusão', precoVenda: 10.5 },
+      { id: CATEGORIA_ID, nome: 'Soro fisiológico', categoria: null, precoVenda: 0 },
+    ]);
+    expect(produto.count.mock.calls[0][0].where).toMatchObject({
+      deletedAt: null,
+      ativo: true,
+      OR: expect.any(Array),
+    });
+    expect(produto.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: [{ nome: 'asc' }, { id: 'asc' }], skip: 0, take: 20 }),
+    );
+  });
+
   it('404 quando não existe', async () => {
     const { service, produto } = setup();
     produto.findFirst.mockResolvedValue(null);
