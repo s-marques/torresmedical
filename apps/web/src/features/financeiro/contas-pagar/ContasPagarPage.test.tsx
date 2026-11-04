@@ -183,7 +183,10 @@ describe('Contas a Pagar (/pagar)', () => {
         [API]: (init) => {
           if (init?.method !== 'POST') return pagina(CONTAS);
           corpo = corpoDe(init);
-          return json(conta({ id: '00000000-0000-4000-8000-0000000000c3', descricao: 'Nova' }), 201);
+          return json(
+            conta({ id: '00000000-0000-4000-8000-0000000000c3', descricao: 'Nova' }),
+            201,
+          );
         },
       },
     });
