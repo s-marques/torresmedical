@@ -4,6 +4,8 @@ import { BandeirasController } from './bandeiras/bandeiras.controller';
 import { BandeirasService } from './bandeiras/bandeiras.service';
 import { CaixasController } from './caixas/caixas.controller';
 import { CaixasService } from './caixas/caixas.service';
+import { ContasReceberController } from './contas-receber/contas-receber.controller';
+import { ContasReceberService } from './contas-receber/contas-receber.service';
 import { FormasPagamentoController } from './formas-pagamento/formas-pagamento.controller';
 import { FormasPagamentoService } from './formas-pagamento/formas-pagamento.service';
 import { PlanoContasController } from './plano-contas/plano-contas.controller';
@@ -16,9 +18,16 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
     BandeirasController,
     CaixasController,
     PlanoContasController,
+    ContasReceberController,
     criarLookupController('formas-pagamento', FormasPagamentoService),
   ],
-  providers: [FormasPagamentoService, BandeirasService, CaixasService, PlanoContasService],
+  providers: [
+    FormasPagamentoService,
+    BandeirasService,
+    CaixasService,
+    PlanoContasService,
+    ContasReceberService,
+  ],
   exports: [FormasPagamentoService],
 })
 export class FinanceiroModule {}

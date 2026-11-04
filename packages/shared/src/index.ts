@@ -25,6 +25,7 @@ export * from './schemas/configuracoes-gestao/tipo-agendamento';
 export * from './schemas/configuracoes-gestao/unidade';
 export * from './schemas/financeiro/bandeira';
 export * from './schemas/financeiro/caixa';
+export * from './schemas/financeiro/conta-receber';
 export * from './schemas/financeiro/forma-pagamento';
 export * from './schemas/financeiro/plano-conta';
 export * from './schemas/gestao-profissionais/especialidade';

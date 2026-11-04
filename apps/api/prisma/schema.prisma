@@ -204,6 +204,7 @@ model Paciente {
   agendamentos  Agendamento[]
   orcamentos    Orcamento[]
   vendas        Venda[]
+  contasReceber ContaReceber[]
 
   @@index([documento])
   @@index([origemClienteId])
@@ -616,9 +617,10 @@ model FormaPagamento {
   updatedAt              DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt              DateTime?           @map("deleted_at") @db.Timestamptz(3)
 
-  orcamentos   Orcamento[]
-  agendamentos Agendamento[]
-  vendas       Venda[]
+  orcamentos    Orcamento[]
+  agendamentos  Agendamento[]
+  vendas        Venda[]
+  contasReceber ContaReceber[]
 
   @@map("formas_pagamento")
 }
@@ -1251,9 +1253,51 @@ model PlanoConta {
   updatedAt  DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt  DateTime?      @map("deleted_at") @db.Timestamptz(3)
 
-  contaPai PlanoConta?  @relation("PlanoContaHierarquia", fields: [contaPaiId], references: [id], onDelete: Restrict)
-  filhas   PlanoConta[] @relation("PlanoContaHierarquia")
+  contaPai      PlanoConta?    @relation("PlanoContaHierarquia", fields: [contaPaiId], references: [id], onDelete: Restrict)
+  filhas        PlanoConta[]   @relation("PlanoContaHierarquia")
+  contasReceber ContaReceber[]
 
   @@index([contaPaiId])
   @@map("planos_contas")
+}
+
+enum ContaReceberStatus {
+  PENDENTE
+  RECEBIDO
+  VENCIDO
+
+  @@map("conta_receber_status")
+}
+
+/// Dono: financeiro. Conta a receber (tela Contas a Receber, `/receber`). Exclusão lógica:
+/// histórico financeiro.
+model ContaReceber {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Número exibido na coluna "#".
+  numero           Int                @unique @default(autoincrement())
+  descricao        String
+  /// Opcional: o modal permite cadastrar sem cliente ("Buscar cliente (nome, telefone)...").
+  pacienteId       String?            @map("paciente_id") @db.Uuid
+  valor            Decimal            @db.Decimal(12, 2)
+  dataVencimento   DateTime           @map("data_vencimento") @db.Date
+  formaPagamentoId String?            @map("forma_pagamento_id") @db.Uuid
+  planoContaId     String?            @map("plano_conta_id") @db.Uuid
+  documento        String?
+  totalParcelas    Int                @default(1) @map("total_parcelas")
+  status           ContaReceberStatus @default(PENDENTE)
+  observacoes      String?
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt        DateTime?          @map("deleted_at") @db.Timestamptz(3)
+
+  paciente       Paciente?       @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
+  formaPagamento FormaPagamento? @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
+  planoConta     PlanoConta?     @relation(fields: [planoContaId], references: [id], onDelete: Restrict)
+
+  @@index([pacienteId])
+  @@index([formaPagamentoId])
+  @@index([planoContaId])
+  @@index([status])
+  @@index([dataVencimento])
+  @@map("contas_receber")
 }

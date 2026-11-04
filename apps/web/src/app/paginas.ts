@@ -32,6 +32,9 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
     () => import('@/features/compras-estoque/produtos-servicos/ProdutosServicosPage'),
   ),
   'financeiro.caixas': lazy(() => import('@/features/financeiro/caixas/CaixasPage')),
+  'financeiro.contas-receber': lazy(
+    () => import('@/features/financeiro/contas-receber/ContasReceberPage'),
+  ),
   'financeiro.formas-pagamento': lazy(
     () => import('@/features/financeiro/formas-pagamento/FormasPagamentoPage'),
   ),
