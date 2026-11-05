@@ -21,6 +21,8 @@ export interface ModalProdutoProps {
   /** Sem produto: "Novo Produto/Serviço". Com produto: "Editar Produto". */
   produto?: Produto;
   onFechar: () => void;
+  /** Chamado com o produto gravado, antes de `onFechar` (ex.: adicioná-lo a uma compra). */
+  onSalvo?: (produto: Produto) => void;
 }
 
 function numero(valor: string | null | undefined): number | null {
@@ -72,7 +74,7 @@ function CampoMargem() {
 }
 
 /** Modal "Novo Produto/Serviço" e "Editar Produto". */
-export function ModalProduto({ produto, onFechar }: Readonly<ModalProdutoProps>) {
+export function ModalProduto({ produto, onFechar, onSalvo }: Readonly<ModalProdutoProps>) {
   const criar = useCriarProduto();
   const editar = useEditarProduto(produto?.id ?? '');
   const form = useFormulario(createProdutoSchema, { defaultValues: valoresIniciais(produto) });
@@ -98,7 +100,8 @@ export function ModalProduto({ produto, onFechar }: Readonly<ModalProdutoProps>)
         acoes={null}
         colunas={2}
         onSubmit={async (valores) => {
-          await (produto ? editar : criar).mutateAsync(valores);
+          const salvo = await (produto ? editar : criar).mutateAsync(valores);
+          onSalvo?.(salvo);
           onFechar();
         }}
       >

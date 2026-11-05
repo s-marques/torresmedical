@@ -68,6 +68,11 @@ export const ARQUIVO_USOS = {
     maxBytes: 5 * MB,
   },
   'nfe-xml': { descricao: 'XML de NF-e de compra', formatos: ['xml'], maxBytes: 5 * MB },
+  'nota-fiscal-compra': {
+    descricao: 'Arquivo da NF de uma compra (PDF ou imagem)',
+    formatos: ['pdf', 'jpg', 'jpeg', 'png'],
+    maxBytes: 10 * MB,
+  },
   'whatsapp-anexo': {
     descricao: 'Anexo de mensagem do WhatsApp',
     formatos: ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'mp3', 'ogg', 'mp4'],
@@ -76,6 +81,11 @@ export const ARQUIVO_USOS = {
   'contrato-sala': {
     descricao: 'PDF do contrato de aluguel de sala',
     formatos: ['pdf'],
+    maxBytes: 10 * MB,
+  },
+  'comprovante-conta-pagar': {
+    descricao: 'Comprovante de pagamento de conta a pagar',
+    formatos: ['pdf', 'jpg', 'jpeg', 'png'],
     maxBytes: 10 * MB,
   },
   'base-conhecimento': {
