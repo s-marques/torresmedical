@@ -78,6 +78,11 @@ export const ARQUIVO_USOS = {
     formatos: ['pdf'],
     maxBytes: 10 * MB,
   },
+  'comprovante-conta-pagar': {
+    descricao: 'Comprovante de pagamento de conta a pagar',
+    formatos: ['pdf', 'jpg', 'jpeg', 'png'],
+    maxBytes: 10 * MB,
+  },
   'base-conhecimento': {
     descricao: 'Documento da Base de Conhecimento',
     formatos: ['pdf', 'txt', 'md', 'docx'],
