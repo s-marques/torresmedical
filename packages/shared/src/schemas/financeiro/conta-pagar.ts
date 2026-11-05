@@ -1,14 +1,18 @@
 import { z } from 'zod';
 import { exportQuerySchema, listQuerySchema } from '../common/list-query';
-import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
+import { mensagemObrigatoria } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
-
-export const CONTA_PAGAR_DESCRICAO_MAX = 200;
-export const CONTA_PAGAR_DOCUMENTO_MAX = 60;
-export const CONTA_PAGAR_OBSERVACOES_MAX = 2000;
-/** Cabe em DECIMAL(12,2). */
-export const CONTA_PAGAR_VALOR_MAX = 999_999_999;
-export const CONTA_PAGAR_TOTAL_PARCELAS_MAX = 360;
+import {
+  camposEntradaContaFinanceira,
+  camposSaidaContaFinanceira,
+  CONTA_FINANCEIRA_VALOR_MAX,
+  decimal,
+  documentoContaFinanceira,
+  filtrosContaFinanceira,
+  idOpcional,
+  observacoesContaFinanceira,
+  statusExibicaoContaFinanceira,
+} from './conta-financeira';
 
 /** Checkbox "Funcionário" do modal: desmarcado = Fornecedor (padrão), marcado = Funcionário. */
 export const CONTA_PAGAR_BENEFICIARIO_TIPOS = ['FORNECEDOR', 'FUNCIONARIO'] as const;
@@ -58,53 +62,8 @@ export const CONTA_PAGAR_ROTULO_STATUS_EXIBICAO: Readonly<
 export function statusExibicaoContaPagar(
   conta: Pick<ContaPagar, 'status' | 'dataVencimento'>,
 ): ContaPagarStatusExibicao {
-  const hoje = new Date().toISOString().slice(0, 10);
-  if (conta.status === 'PENDENTE' && conta.dataVencimento < hoje) return 'VENCIDO';
-  return conta.status;
+  return statusExibicaoContaFinanceira(conta);
 }
-
-const descricao = textoObrigatorio('Descrição', { max: CONTA_PAGAR_DESCRICAO_MAX });
-
-const valor = z
-  .number({ error: mensagemObrigatoria('Valor') })
-  .positive({ error: 'O valor deve ser maior que zero' })
-  .max(CONTA_PAGAR_VALOR_MAX, { error: 'Valor inválido' });
-
-const dataVencimento = z
-  .string({ error: mensagemObrigatoria('Data de vencimento', 'f') })
-  .min(1, { error: mensagemObrigatoria('Data de vencimento', 'f') })
-  .pipe(z.iso.date({ error: 'Data de vencimento inválida' }));
-
-const idOpcional = (rotulo: string) =>
-  z
-    .uuid({ error: `${rotulo} inválido` })
-    .nullish()
-    .transform((valor) => valor ?? null);
-
-const documento = z
-  .string({ error: 'Documento inválido' })
-  .trim()
-  .max(CONTA_PAGAR_DOCUMENTO_MAX, {
-    error: `Documento deve ter no máximo ${CONTA_PAGAR_DOCUMENTO_MAX} caracteres`,
-  })
-  .nullish()
-  .transform((valor) => valor || null);
-
-const totalParcelas = z
-  .number({ error: 'Total de parcelas inválido' })
-  .int({ error: 'Total de parcelas deve ser um número inteiro' })
-  .min(1, { error: 'Total de parcelas deve ser de 1 a 360' })
-  .max(CONTA_PAGAR_TOTAL_PARCELAS_MAX, { error: 'Total de parcelas deve ser de 1 a 360' })
-  .default(1);
-
-const observacoes = z
-  .string({ error: 'Observações inválidas' })
-  .trim()
-  .max(CONTA_PAGAR_OBSERVACOES_MAX, {
-    error: `Observações devem ter no máximo ${CONTA_PAGAR_OBSERVACOES_MAX} caracteres`,
-  })
-  .nullish()
-  .transform((valor) => valor || null);
 
 /**
  * `POST`/`PATCH /api/financeiro/contas-pagar` (modais "Nova Conta a Pagar" e "Editar Conta a
@@ -112,17 +71,10 @@ const observacoes = z
  * checkbox "Funcionário" do modal); ambos opcionais, como o Cliente em Contas a Receber.
  */
 export const contaPagarInputSchema = z.strictObject({
-  descricao,
+  ...camposEntradaContaFinanceira,
   beneficiarioTipo: contaPagarBeneficiarioTipoSchema.default('FORNECEDOR'),
   beneficiarioId: idOpcional('Beneficiário'),
-  valor,
-  dataVencimento,
-  formaPagamentoId: idOpcional('Forma de pagamento'),
-  planoContaId: idOpcional('Plano de contas'),
-  documento,
-  totalParcelas,
   status: contaPagarStatusSchema.default('PENDENTE'),
-  observacoes,
 });
 
 export type ContaPagarFormulario = z.input<typeof contaPagarInputSchema>;
@@ -144,11 +96,7 @@ export const CONTA_PAGAR_SORT_FIELDS = [
 export const listContasPagarQuerySchema = listQuerySchema({
   sortFields: CONTA_PAGAR_SORT_FIELDS,
   defaultSort: 'dataVencimento:asc',
-  filters: {
-    status: contaPagarFiltroStatusSchema.optional(),
-    vencimentoDe: z.iso.date({ error: 'Data inválida' }).optional(),
-    vencimentoAte: z.iso.date({ error: 'Data inválida' }).optional(),
-  },
+  filters: filtrosContaFinanceira(contaPagarFiltroStatusSchema),
 });
 export type ListContasPagarQuery = z.infer<typeof listContasPagarQuerySchema>;
 
@@ -169,31 +117,14 @@ export const exportContasPagarQuerySchema = exportQuerySchema(
 );
 export type ExportContasPagarQuery = z.infer<typeof exportContasPagarQuerySchema>;
 
-/** Valores monetários chegam como texto decimal (ex.: `"150.00"`), exatos como no banco. */
-const decimal = z.string();
-
 export const contaPagarSchema = z.object({
-  id: z.uuid(),
-  /** Número exibido na coluna "#". */
-  numero: z.number().int(),
-  descricao: z.string(),
+  ...camposSaidaContaFinanceira,
   beneficiarioTipo: contaPagarBeneficiarioTipoSchema,
   beneficiarioId: z.uuid().nullable(),
   beneficiarioNome: z.string().nullable(),
-  valor: decimal,
-  dataVencimento: z.iso.date(),
-  formaPagamentoId: z.uuid().nullable(),
-  formaPagamentoNome: z.string().nullable(),
-  planoContaId: z.uuid().nullable(),
-  planoContaNome: z.string().nullable(),
-  documento: z.string().nullable(),
-  totalParcelas: z.number().int(),
   status: contaPagarStatusSchema,
-  observacoes: z.string().nullable(),
   /** Soma das baixas não canceladas. */
   valorPago: decimal,
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
 });
 export type ContaPagar = z.infer<typeof contaPagarSchema>;
 
@@ -205,7 +136,7 @@ export type ContaPagarPage = z.infer<typeof contaPagarPageSchema>;
 const valorPago = z
   .number({ error: mensagemObrigatoria('Valor pago') })
   .positive({ error: 'O valor pago deve ser maior que zero' })
-  .max(CONTA_PAGAR_VALOR_MAX, { error: 'Valor inválido' });
+  .max(CONTA_FINANCEIRA_VALOR_MAX, { error: 'Valor inválido' });
 
 const dataPagamento = z
   .string({ error: mensagemObrigatoria('Data de pagamento', 'f') })
@@ -216,7 +147,7 @@ const valorAdicional = (rotulo: string) =>
   z
     .number({ error: `${rotulo} inválido` })
     .min(0, { error: `${rotulo} não pode ser negativo` })
-    .max(CONTA_PAGAR_VALOR_MAX, { error: `${rotulo} inválido` })
+    .max(CONTA_FINANCEIRA_VALOR_MAX, { error: `${rotulo} inválido` })
     .default(0);
 
 /**
@@ -231,8 +162,8 @@ export const baixarContaPagarSchema = z.strictObject({
   desconto: valorAdicional('Desconto'),
   formaPagamentoId: idOpcional('Forma de pagamento'),
   contaBancariaId: idOpcional('Conta bancária'),
-  documento,
-  observacoes,
+  documento: documentoContaFinanceira,
+  observacoes: observacoesContaFinanceira,
   comprovanteArquivoId: idOpcional('Comprovante'),
 });
 export type BaixarContaPagarFormulario = z.input<typeof baixarContaPagarSchema>;

@@ -2,33 +2,13 @@ import {
   CONTA_PAGAR_ROTULO_STATUS_EXIBICAO,
   statusExibicaoContaPagar,
   type ContaPagar,
-  type ContaPagarStatusExibicao,
 } from '@torres/shared';
-import { BanknoteIcon, PencilIcon, XCircleIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
-import { Modal } from '@/components/shared/Modal';
-import { SePermitido } from '@/components/shared/SePermitido';
-import { StatusBadge } from '@/components/shared/StatusBadge';
+import { BanknoteIcon, XCircleIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatarData, formatarDataHora } from '@/lib/formatar';
 import { formatarMoeda } from '@/lib/forms/mascaras';
+import { DetalheContaFinanceira, ItemDetalhe } from '../contas-financeiras/DetalheContaFinanceira';
 import { useBaixasContaPagar } from './use-contas-pagar';
-
-function Item({ rotulo, children }: Readonly<{ rotulo: string; children: ReactNode }>) {
-  return (
-    <div className="grid gap-1">
-      <dt className="text-sm text-muted-foreground">{rotulo}</dt>
-      <dd className="text-sm font-medium break-words">{children || '-'}</dd>
-    </div>
-  );
-}
-
-const TOM_STATUS: Record<ContaPagarStatusExibicao, 'sucesso' | 'alerta' | 'perigo'> = {
-  PENDENTE: 'alerta',
-  PAGO: 'sucesso',
-  CANCELADO: 'perigo',
-  VENCIDO: 'perigo',
-};
 
 export interface DetalheContaPagarProps {
   conta: ContaPagar;
@@ -40,64 +20,45 @@ export interface DetalheContaPagarProps {
 
 /** Modal de detalhe (clique na linha ou "Detalhar" no menu de ações). */
 export function DetalheContaPagar({
-  conta: c,
+  conta,
   onFechar,
   onEditar,
   onBaixar,
   onCancelarBaixa,
 }: Readonly<DetalheContaPagarProps>) {
-  const status = statusExibicaoContaPagar(c);
-  const baixas = useBaixasContaPagar(c.id);
+  const baixas = useBaixasContaPagar(conta.id);
   const temBaixa = (baixas.data?.length ?? 0) > 0;
 
   return (
-    <Modal
-      aberto
-      onAbertoChange={(aberto) => aberto || onFechar()}
-      titulo={c.descricao}
-      tamanho="lg"
-      rodape={
+    <DetalheContaFinanceira
+      conta={conta}
+      status={statusExibicaoContaPagar(conta)}
+      rotulosStatus={CONTA_PAGAR_ROTULO_STATUS_EXIBICAO}
+      pessoa={<ItemDetalhe rotulo="Fornecedor / Funcionário">{conta.beneficiarioNome}</ItemDetalhe>}
+      itensExtras={
+        <ItemDetalhe rotulo="Valor Pago">{formatarMoeda(Number(conta.valorPago))}</ItemDetalhe>
+      }
+      permissaoEditar="financeiro.contas-pagar.editar"
+      acoesExtras={
         <>
-          <Button type="button" variant="outline" onClick={onFechar}>
-            Fechar
-          </Button>
-          <SePermitido permissao="financeiro.contas-pagar.editar">
-            {temBaixa && (
-              <Button type="button" variant="outline" onClick={onCancelarBaixa}>
-                <XCircleIcon aria-hidden />
-                Cancelar Baixa
-              </Button>
-            )}
-            {c.status === 'PENDENTE' && (
-              <Button type="button" variant="outline" onClick={onBaixar}>
-                <BanknoteIcon aria-hidden />
-                Baixar
-              </Button>
-            )}
-            <Button type="button" onClick={onEditar}>
-              <PencilIcon aria-hidden />
-              Editar
+          {temBaixa && (
+            <Button type="button" variant="outline" onClick={onCancelarBaixa}>
+              <XCircleIcon aria-hidden />
+              Cancelar Baixa
             </Button>
-          </SePermitido>
+          )}
+          {conta.status === 'PENDENTE' && (
+            <Button type="button" variant="outline" onClick={onBaixar}>
+              <BanknoteIcon aria-hidden />
+              Baixar
+            </Button>
+          )}
         </>
       }
+      tamanho="lg"
+      onFechar={onFechar}
+      onEditar={onEditar}
     >
-      <dl className="grid gap-4 sm:grid-cols-2">
-        <Item rotulo="Fornecedor / Funcionário">{c.beneficiarioNome}</Item>
-        <Item rotulo="Valor">{formatarMoeda(Number(c.valor))}</Item>
-        <Item rotulo="Data de Vencimento">{formatarData(c.dataVencimento)}</Item>
-        <Item rotulo="Status">
-          <StatusBadge tom={TOM_STATUS[status]}>
-            {CONTA_PAGAR_ROTULO_STATUS_EXIBICAO[status]}
-          </StatusBadge>
-        </Item>
-        <Item rotulo="Valor Pago">{formatarMoeda(Number(c.valorPago))}</Item>
-        <Item rotulo="Forma de Pagamento">{c.formaPagamentoNome}</Item>
-        <Item rotulo="Plano de Contas">{c.planoContaNome}</Item>
-        <Item rotulo="Documento">{c.documento}</Item>
-        <Item rotulo="Total Parcelas">{c.totalParcelas}</Item>
-        <Item rotulo="Observações">{c.observacoes}</Item>
-      </dl>
       {temBaixa && (
         <div className="mt-4 grid gap-2">
           <h3 className="text-sm font-medium">Baixas</h3>
@@ -125,6 +86,6 @@ export function DetalheContaPagar({
           </div>
         </div>
       )}
-    </Modal>
+    </DetalheContaFinanceira>
   );
 }

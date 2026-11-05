@@ -5,67 +5,51 @@ import {
   statusExibicaoContaReceber,
   type ContaReceber,
   type ContaReceberExportColumn,
+  type ContaReceberStatus,
   type CreateContaReceberInput,
   type ExportContasReceberQuery,
   type ListContasReceberQuery,
   type UpdateContaReceberInput,
 } from '@torres/shared';
 import type { Prisma } from '../../../generated/prisma/client';
-import { BusinessException } from '../../../common/errors/api.exception';
-import { ErrorCode } from '../../../common/errors/error-codes';
 import { ExportService, selectColumns } from '../../../common/export/export.service';
-import type { ExportColumn, ExportFile } from '../../../common/export/export.types';
+import type { ExportFile } from '../../../common/export/export.types';
 import { paginate, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
+import {
+  camposContaFinanceira,
+  colunasExportContaFinanceira,
+  contaNaoEncontrada,
+  INCLUDE_CONTA_FINANCEIRA,
+  NAO_EXCLUIDAS,
+  orderByContaFinanceira,
+  whereContaFinanceira,
+} from '../conta-financeira';
 
 const INCLUDE = {
+  ...INCLUDE_CONTA_FINANCEIRA,
   paciente: { select: { nome: true } },
-  formaPagamento: { select: { nome: true } },
-  planoConta: { select: { nome: true } },
 } as const;
 
 type ContaReceberComRelacoes = Prisma.ContaReceberGetPayload<{ include: typeof INCLUDE }>;
 
-const NAO_EXCLUIDAS = { deletedAt: null } as const;
-
 export function toContaReceber(conta: ContaReceberComRelacoes): ContaReceber {
   return {
-    id: conta.id,
-    numero: conta.numero,
-    descricao: conta.descricao,
+    ...camposContaFinanceira(conta),
     pacienteId: conta.pacienteId,
     pacienteNome: conta.paciente?.nome ?? null,
-    valor: conta.valor.toString(),
-    dataVencimento: conta.dataVencimento.toISOString().slice(0, 10),
-    formaPagamentoId: conta.formaPagamentoId,
-    formaPagamentoNome: conta.formaPagamento?.nome ?? null,
-    planoContaId: conta.planoContaId,
-    planoContaNome: conta.planoConta?.nome ?? null,
-    documento: conta.documento,
-    totalParcelas: conta.totalParcelas,
     status: conta.status,
-    observacoes: conta.observacoes,
-    createdAt: conta.createdAt.toISOString(),
-    updatedAt: conta.updatedAt.toISOString(),
   };
 }
 
 /** Colunas exportáveis, iguais às do grid. */
-export const CONTA_RECEBER_EXPORT_DEFINITIONS: readonly ExportColumn<
+export const CONTA_RECEBER_EXPORT_DEFINITIONS = colunasExportContaFinanceira<
   ContaReceber,
   ContaReceberExportColumn
->[] = [
-  { key: 'id', header: '#', type: 'number', value: (c) => c.numero },
-  { key: 'descricao', header: 'Descrição', value: (c) => c.descricao, width: 3 },
+>(
   { key: 'cliente', header: 'Cliente', value: (c) => c.pacienteNome ?? '', width: 3 },
-  { key: 'valor', header: 'Valor', type: 'currency', value: (c) => c.valor },
-  { key: 'dataVencimento', header: 'Vencimento', type: 'date', value: (c) => c.dataVencimento },
-  {
-    key: 'status',
-    header: 'Status',
-    value: (c) => CONTA_RECEBER_ROTULO_STATUS_EXIBICAO[statusExibicaoContaReceber(c)],
-  },
-];
+  (c) => CONTA_RECEBER_ROTULO_STATUS_EXIBICAO[statusExibicaoContaReceber(c)],
+);
 
 /** Contas a Receber do Financeiro (tela `/receber`). */
 @Injectable()
@@ -91,11 +75,7 @@ export class ContasReceberService {
       where: { id, ...NAO_EXCLUIDAS },
       include: INCLUDE,
     });
-    if (!conta) {
-      throw new BusinessException(ErrorCode.NOT_FOUND, 'Conta a receber não encontrada', {
-        status: 404,
-      });
-    }
+    if (!conta) throw contaNaoEncontrada('Conta a receber não encontrada');
     return toContaReceber(conta);
   }
 
@@ -109,23 +89,13 @@ export class ContasReceberService {
 
   async update(id: string, input: UpdateContaReceberInput): Promise<ContaReceber> {
     await this.findById(id);
-    const conta = await this.txHost.tx.contaReceber.update({
-      where: { id },
-      data: this.dados(input),
-      include: INCLUDE,
-    });
-    return toContaReceber(conta);
+    return this.atualizar(id, this.dados(input));
   }
 
   /** Exclusão lógica: histórico financeiro. */
   async remove(id: string): Promise<ContaReceber> {
     await this.findById(id);
-    const conta = await this.txHost.tx.contaReceber.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-      include: INCLUDE,
-    });
-    return toContaReceber(conta);
+    return this.atualizar(id, { deletedAt: new Date() });
   }
 
   async export(query: ExportContasReceberQuery): Promise<ExportFile> {
@@ -145,6 +115,18 @@ export class ContasReceberService {
     });
   }
 
+  private async atualizar(
+    id: string,
+    data: Prisma.ContaReceberUncheckedUpdateInput,
+  ): Promise<ContaReceber> {
+    const conta = await this.txHost.tx.contaReceber.update({
+      where: { id },
+      data,
+      include: INCLUDE,
+    });
+    return toContaReceber(conta);
+  }
+
   private dados(input: CreateContaReceberInput): Prisma.ContaReceberUncheckedCreateInput {
     return { ...input, dataVencimento: new Date(input.dataVencimento) };
   }
@@ -152,36 +134,18 @@ export class ContasReceberService {
   private orderBy(
     sort: ListContasReceberQuery['sort'],
   ): Prisma.ContaReceberOrderByWithRelationInput[] {
-    const { field, direction } = sort;
-    const principal: Prisma.ContaReceberOrderByWithRelationInput =
-      field === 'id'
-        ? { numero: direction }
-        : field === 'cliente'
-          ? { paciente: { nome: direction } }
-          : { [field]: direction };
-    return [principal, { id: direction }];
+    return orderByContaFinanceira<Prisma.ContaReceberOrderByWithRelationInput>(
+      sort,
+      'cliente',
+      (direction) => ({ paciente: { nome: direction } }),
+    );
   }
 
-  /** O chip "Vencido" filtra contas Pendentes com vencimento antes de hoje (não é status gravado). */
   private where(
     query: Pick<ListContasReceberQuery, 'search' | 'status' | 'vencimentoDe' | 'vencimentoAte'>,
   ): Prisma.ContaReceberWhereInput {
-    const vencidas = query.status === 'VENCIDO';
-    return {
-      ...NAO_EXCLUIDAS,
-      status: vencidas ? 'PENDENTE' : query.status !== 'VENCIDO' ? query.status : undefined,
-      dataVencimento: {
-        gte: query.vencimentoDe ? new Date(query.vencimentoDe) : undefined,
-        lte: query.vencimentoAte ? new Date(query.vencimentoAte) : undefined,
-        lt: vencidas ? new Date() : undefined,
-      },
-      ...(query.search && {
-        OR: [
-          { descricao: { contains: query.search, mode: 'insensitive' } },
-          { documento: { contains: query.search, mode: 'insensitive' } },
-          { paciente: { nome: { contains: query.search, mode: 'insensitive' } } },
-        ],
-      }),
-    };
+    return whereContaFinanceira<ContaReceberStatus, Prisma.ContaReceberWhereInput>(query, [
+      { paciente: { nome: { contains: query.search, mode: 'insensitive' } } },
+    ]);
   }
 }

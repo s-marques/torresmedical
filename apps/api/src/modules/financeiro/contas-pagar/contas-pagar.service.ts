@@ -7,6 +7,7 @@ import {
   type ContaPagar,
   type ContaPagarBaixa,
   type ContaPagarExportColumn,
+  type ContaPagarStatus,
   type CreateContaPagarInput,
   type ExportContasPagarQuery,
   type ListContasPagarQuery,
@@ -18,13 +19,21 @@ import { FuncionariosService } from '../../regulatorio-qualidade/funcionarios/fu
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
 import { ExportService, selectColumns } from '../../../common/export/export.service';
-import type { ExportColumn, ExportFile } from '../../../common/export/export.types';
+import type { ExportFile } from '../../../common/export/export.types';
 import { paginate, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
+import {
+  camposContaFinanceira,
+  colunasExportContaFinanceira,
+  contaNaoEncontrada,
+  INCLUDE_CONTA_FINANCEIRA,
+  NAO_EXCLUIDAS,
+  orderByContaFinanceira,
+  whereContaFinanceira,
+} from '../conta-financeira';
 
 const INCLUDE = {
-  formaPagamento: { select: { nome: true } },
-  planoConta: { select: { nome: true } },
+  ...INCLUDE_CONTA_FINANCEIRA,
   baixas: { where: { deletedAt: null }, select: { valorPago: true } },
 } as const;
 
@@ -38,8 +47,6 @@ const INCLUDE_BAIXA = {
 type ContaPagarBaixaComRelacoes = Prisma.ContaPagarBaixaGetPayload<{
   include: typeof INCLUDE_BAIXA;
 }>;
-
-const NAO_EXCLUIDAS = { deletedAt: null } as const;
 
 function somaBaixas(baixas: readonly { valorPago: Prisma.Decimal }[]): Prisma.Decimal {
   return baixas.reduce((total, b) => total.add(b.valorPago), new Prisma.Decimal(0));
@@ -65,26 +72,18 @@ export function toContaPagarBaixa(baixa: ContaPagarBaixaComRelacoes): ContaPagar
 }
 
 /** Colunas exportáveis, iguais às do grid. */
-export const CONTA_PAGAR_EXPORT_DEFINITIONS: readonly ExportColumn<
+export const CONTA_PAGAR_EXPORT_DEFINITIONS = colunasExportContaFinanceira<
   ContaPagar,
   ContaPagarExportColumn
->[] = [
-  { key: 'id', header: '#', type: 'number', value: (c) => c.numero },
-  { key: 'descricao', header: 'Descrição', value: (c) => c.descricao, width: 3 },
+>(
   {
     key: 'beneficiario',
     header: 'Fornecedor / Funcionário',
     value: (c) => c.beneficiarioNome ?? '',
     width: 3,
   },
-  { key: 'valor', header: 'Valor', type: 'currency', value: (c) => c.valor },
-  { key: 'dataVencimento', header: 'Vencimento', type: 'date', value: (c) => c.dataVencimento },
-  {
-    key: 'status',
-    header: 'Status',
-    value: (c) => CONTA_PAGAR_ROTULO_STATUS_EXIBICAO[statusExibicaoContaPagar(c)],
-  },
-];
+  (c) => CONTA_PAGAR_ROTULO_STATUS_EXIBICAO[statusExibicaoContaPagar(c)],
+);
 
 /** Contas a Pagar do Financeiro (tela `/pagar`), com beneficiário Fornecedor ou Funcionário. */
 @Injectable()
@@ -235,11 +234,7 @@ export class ContasPagarService {
       where: { id, ...NAO_EXCLUIDAS },
       include: INCLUDE,
     });
-    if (!conta) {
-      throw new BusinessException(ErrorCode.NOT_FOUND, 'Conta a pagar não encontrada', {
-        status: 404,
-      });
-    }
+    if (!conta) throw contaNaoEncontrada('Conta a pagar não encontrada');
     return conta;
   }
 
@@ -248,11 +243,7 @@ export class ContasPagarService {
       where: { id, deletedAt: null },
       select: { id: true },
     });
-    if (!existe) {
-      throw new BusinessException(ErrorCode.NOT_FOUND, 'Forma de pagamento não encontrada', {
-        status: 404,
-      });
-    }
+    if (!existe) throw contaNaoEncontrada('Forma de pagamento não encontrada');
   }
 
   private async buscarContaBancaria(id: string): Promise<void> {
@@ -260,11 +251,7 @@ export class ContasPagarService {
       where: { id, deletedAt: null },
       select: { id: true },
     });
-    if (!existe) {
-      throw new BusinessException(ErrorCode.NOT_FOUND, 'Conta bancária não encontrada', {
-        status: 404,
-      });
-    }
+    if (!existe) throw contaNaoEncontrada('Conta bancária não encontrada');
   }
 
   /** Beneficiário opcional; quando informado, precisa existir no módulo dono (sem FK). */
@@ -297,25 +284,12 @@ export class ContasPagarService {
   private async toContaPagar(conta: ContaPagarComRelacoes): Promise<ContaPagar> {
     const beneficiarioId = conta.fornecedorId ?? conta.funcionarioId;
     return {
-      id: conta.id,
-      numero: conta.numero,
-      descricao: conta.descricao,
+      ...camposContaFinanceira(conta),
       beneficiarioTipo: conta.beneficiarioTipo,
       beneficiarioId,
       beneficiarioNome: await this.nomeBeneficiario(conta.beneficiarioTipo, beneficiarioId),
-      valor: conta.valor.toString(),
-      dataVencimento: conta.dataVencimento.toISOString().slice(0, 10),
-      formaPagamentoId: conta.formaPagamentoId,
-      formaPagamentoNome: conta.formaPagamento?.nome ?? null,
-      planoContaId: conta.planoContaId,
-      planoContaNome: conta.planoConta?.nome ?? null,
-      documento: conta.documento,
-      totalParcelas: conta.totalParcelas,
       status: conta.status,
-      observacoes: conta.observacoes,
       valorPago: somaBaixas(conta.baixas).toString(),
-      createdAt: conta.createdAt.toISOString(),
-      updatedAt: conta.updatedAt.toISOString(),
     };
   }
 
@@ -331,34 +305,16 @@ export class ContasPagarService {
   }
 
   private orderBy(sort: ListContasPagarQuery['sort']): Prisma.ContaPagarOrderByWithRelationInput[] {
-    const { field, direction } = sort;
-    const principal: Prisma.ContaPagarOrderByWithRelationInput =
-      field === 'id'
-        ? { numero: direction }
-        : field === 'beneficiario'
-          ? { descricao: direction }
-          : { [field]: direction };
-    return [principal, { id: direction }];
+    return orderByContaFinanceira<Prisma.ContaPagarOrderByWithRelationInput>(
+      sort,
+      'beneficiario',
+      (direction) => ({ descricao: direction }),
+    );
   }
 
   private where(
     query: Pick<ListContasPagarQuery, 'search' | 'status' | 'vencimentoDe' | 'vencimentoAte'>,
   ): Prisma.ContaPagarWhereInput {
-    const vencidas = query.status === 'VENCIDO';
-    return {
-      ...NAO_EXCLUIDAS,
-      status: vencidas ? 'PENDENTE' : query.status !== 'VENCIDO' ? query.status : undefined,
-      dataVencimento: {
-        gte: query.vencimentoDe ? new Date(query.vencimentoDe) : undefined,
-        lte: query.vencimentoAte ? new Date(query.vencimentoAte) : undefined,
-        lt: vencidas ? new Date() : undefined,
-      },
-      ...(query.search && {
-        OR: [
-          { descricao: { contains: query.search, mode: 'insensitive' } },
-          { documento: { contains: query.search, mode: 'insensitive' } },
-        ],
-      }),
-    };
+    return whereContaFinanceira<ContaPagarStatus, Prisma.ContaPagarWhereInput>(query);
   }
 }
