@@ -10,6 +10,8 @@ import { ContasBancariasController } from './contas-bancarias/contas-bancarias.c
 import { ContasBancariasService } from './contas-bancarias/contas-bancarias.service';
 import { ContasPagarController } from './contas-pagar/contas-pagar.controller';
 import { ContasPagarService } from './contas-pagar/contas-pagar.service';
+import { ContasReceberController } from './contas-receber/contas-receber.controller';
+import { ContasReceberService } from './contas-receber/contas-receber.service';
 import { FormasPagamentoController } from './formas-pagamento/formas-pagamento.controller';
 import { FormasPagamentoService } from './formas-pagamento/formas-pagamento.service';
 import { PlanoContasController } from './plano-contas/plano-contas.controller';
@@ -25,6 +27,7 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
     PlanoContasController,
     ContasBancariasController,
     ContasPagarController,
+    ContasReceberController,
     criarLookupController('formas-pagamento', FormasPagamentoService),
   ],
   providers: [
@@ -34,6 +37,7 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
     PlanoContasService,
     ContasBancariasService,
     ContasPagarService,
+    ContasReceberService,
   ],
   exports: [FormasPagamentoService, PlanoContasService],
 })

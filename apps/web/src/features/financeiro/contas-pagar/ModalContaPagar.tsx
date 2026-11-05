@@ -1,32 +1,21 @@
 import { contaPagarInputSchema, type ContaPagar, type ContaPagarFormulario } from '@torres/shared';
 import { useId } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { FormAcoes } from '@/components/shared/form/FormAcoes';
 import { FormField } from '@/components/shared/form/FormField';
-import { FormLayout } from '@/components/shared/form/FormLayout';
 import { useFormulario } from '@/components/shared/form/use-formulario';
-import { Modal } from '@/components/shared/Modal';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { usePlanoContas } from '../plano-contas/use-plano-contas';
+import { ModalContaFinanceira } from '../contas-financeiras/ModalContaFinanceira';
+import { valoresIniciaisContaFinanceira } from '../contas-financeiras/valores-iniciais';
 import { OPCOES_STATUS } from './opcoes';
 import { useCriarContaPagar, useEditarContaPagar } from './use-contas-pagar';
 
-const ID_FORMULARIO = 'form-conta-pagar';
-
 function valoresIniciais(conta?: ContaPagar): ContaPagarFormulario {
   return {
-    descricao: conta?.descricao ?? '',
+    ...valoresIniciaisContaFinanceira(conta),
     beneficiarioTipo: conta?.beneficiarioTipo ?? 'FORNECEDOR',
     beneficiarioId: conta?.beneficiarioId ?? null,
-    valor: conta ? Number(conta.valor) : 0,
-    dataVencimento: conta?.dataVencimento ?? '',
-    formaPagamentoId: conta?.formaPagamentoId ?? null,
-    planoContaId: conta?.planoContaId ?? null,
-    documento: conta?.documento ?? '',
-    totalParcelas: conta?.totalParcelas ?? 1,
     status: conta?.status ?? 'PENDENTE',
-    observacoes: conta?.observacoes ?? '',
   };
 }
 
@@ -93,65 +82,18 @@ export function ModalContaPagar({ conta, onFechar }: Readonly<ModalContaPagarPro
   const criar = useCriarContaPagar();
   const editar = useEditarContaPagar(conta?.id ?? '');
   const form = useFormulario(contaPagarInputSchema, { defaultValues: valoresIniciais(conta) });
-  const planoContas = usePlanoContas({ search: '' });
-  const opcoesPlanoContas = (planoContas.data?.data ?? []).map((pc) => ({
-    valor: pc.id,
-    rotulo: `${pc.codigo} - ${pc.nome}`,
-  }));
 
   return (
-    <Modal
-      aberto
-      onAbertoChange={(aberto) => aberto || onFechar()}
+    <ModalContaFinanceira
       titulo={conta ? 'Editar Conta a Pagar' : 'Nova Conta a Pagar'}
-      rodape={
-        <FormAcoes
-          form={form}
-          formId={ID_FORMULARIO}
-          rotuloEnviar={conta ? 'Salvar' : 'Cadastrar'}
-          onCancelar={onFechar}
-        />
-      }
-    >
-      <FormLayout
-        id={ID_FORMULARIO}
-        form={form}
-        acoes={null}
-        colunas={2}
-        onSubmit={async (valores) => {
-          await (conta ? editar : criar).mutateAsync(valores);
-          onFechar();
-        }}
-      >
-        <FormField name="descricao" label="Descrição" obrigatorio className="sm:col-span-2" />
-        <CampoBeneficiario />
-        <FormField name="valor" label="Valor" tipo="moeda" obrigatorio />
-        <FormField name="dataVencimento" label="Data de Vencimento" tipo="data" obrigatorio />
-        <FormField
-          name="formaPagamentoId"
-          label="Forma de Pagamento"
-          tipo="entidade"
-          entidade="formas-pagamento"
-          filtros={{ finalidade: 'pagar' }}
-          placeholder="Selecione"
-        />
-        <FormField
-          name="planoContaId"
-          label="Plano de Contas"
-          tipo="select"
-          opcoes={opcoesPlanoContas}
-          placeholder="Selecione (opcional)"
-        />
-        <FormField name="documento" label="Documento" />
-        <FormField name="totalParcelas" label="Total Parcelas" tipo="numero" />
-        <FormField name="status" label="Status" tipo="select" opcoes={OPCOES_STATUS} />
-        <FormField
-          name="observacoes"
-          label="Observações"
-          tipo="textarea"
-          className="sm:col-span-2"
-        />
-      </FormLayout>
-    </Modal>
+      editando={Boolean(conta)}
+      form={form}
+      formId="form-conta-pagar"
+      onSubmit={(valores) => (conta ? editar : criar).mutateAsync(valores)}
+      onFechar={onFechar}
+      finalidade="pagar"
+      opcoesStatus={OPCOES_STATUS}
+      pessoa={<CampoBeneficiario />}
+    />
   );
 }

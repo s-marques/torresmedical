@@ -28,6 +28,7 @@ export * from './schemas/financeiro/bandeira';
 export * from './schemas/financeiro/caixa';
 export * from './schemas/financeiro/conta-bancaria';
 export * from './schemas/financeiro/conta-pagar';
+export * from './schemas/financeiro/conta-receber';
 export * from './schemas/financeiro/forma-pagamento';
 export * from './schemas/financeiro/plano-conta';
 export * from './schemas/gestao-profissionais/especialidade';
