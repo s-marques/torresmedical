@@ -404,6 +404,8 @@ model Fornecedor {
   updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
 
+  compras Compra[]
+
   @@index([documento])
   @@map("fornecedores")
 }
@@ -483,12 +485,73 @@ model Produto {
   unidadeMedida UnidadeMedida? @relation(fields: [unidadeMedidaId], references: [id], onDelete: Restrict)
 
   protocoloItens ProtocoloItem[]
+  compraItens    CompraItem[]
 
   @@index([categoriaId])
   @@index([unidadeMedidaId])
   @@index([sku])
   @@index([codigoBarras])
   @@map("produtos")
+}
+
+enum CompraStatus {
+  PENDENTE
+  RECEBIDA
+  CANCELADA
+
+  @@map("compra_status")
+}
+
+/// Dono: compras-estoque. Entrada de compras (tela `/compras`). Registrar a compra como
+/// RECEBIDA soma os itens em `Produto.estoqueAtual`; cancelar ou excluir desfaz a entrada.
+/// O fornecedor é validado pelo service do módulo, mas tem FK (mesmo módulo). Exclusão lógica.
+model Compra {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Número exibido na coluna "#".
+  numero      Int          @unique @default(autoincrement())
+  fornecedorId String      @map("fornecedor_id") @db.Uuid
+  numeroNf    String?      @map("numero_nf")
+  serieNf     String?      @map("serie_nf")
+  dataEmissao DateTime?    @map("data_emissao") @db.Date
+  dataEntrada DateTime     @map("data_entrada") @db.Date
+  frete       Decimal      @default(0) @db.Decimal(12, 2)
+  desconto    Decimal      @default(0) @db.Decimal(12, 2)
+  valorTotal  Decimal      @map("valor_total") @db.Decimal(12, 2)
+  status      CompraStatus @default(RECEBIDA)
+  observacoes String?
+  /// Arquivo da NF (PDF ou imagem) em `arquivos`, sem FK.
+  arquivoNfId String?      @map("arquivo_nf_id") @db.Uuid
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt   DateTime?    @map("deleted_at") @db.Timestamptz(3)
+
+  fornecedor Fornecedor    @relation(fields: [fornecedorId], references: [id], onDelete: Restrict)
+  itens      CompraItem[]
+
+  @@index([fornecedorId])
+  @@index([status])
+  @@index([dataEntrada])
+  @@map("compras")
+}
+
+/// Dono: compras-estoque. Item da compra. `planoContaId` é a "Conta contábil (opcional)" (Plano
+/// de Contas do Financeiro, sem FK: o acesso é pelo service do módulo dono).
+model CompraItem {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  compraId      String   @map("compra_id") @db.Uuid
+  produtoId     String   @map("produto_id") @db.Uuid
+  descricao     String
+  quantidade    Decimal  @db.Decimal(12, 3)
+  valorUnitario Decimal  @map("valor_unitario") @db.Decimal(12, 2)
+  planoContaId  String?  @map("plano_conta_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  compra  Compra  @relation(fields: [compraId], references: [id], onDelete: Cascade)
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+
+  @@index([compraId])
+  @@index([produtoId])
+  @@map("compra_itens")
 }
 
 /// Dono: regulatorio-qualidade.

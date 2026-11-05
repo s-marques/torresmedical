@@ -50,6 +50,8 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'cargos',
       'categorias',
       'comissoes',
+      'compra_itens',
+      'compras',
       'contas_bancarias',
       'contas_pagar',
       'contas_pagar_baixas',
