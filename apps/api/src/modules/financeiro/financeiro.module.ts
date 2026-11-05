@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { ComprasEstoqueModule } from '../compras-estoque/compras-estoque.module';
 import { RegulatorioQualidadeModule } from '../regulatorio-qualidade/regulatorio-qualidade.module';
@@ -17,7 +17,7 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
 
 /** Módulo FINANCEIRO do inventário. Dono das entidades Forma de Pagamento e Bandeira. */
 @Module({
-  imports: [ComprasEstoqueModule, RegulatorioQualidadeModule],
+  imports: [forwardRef(() => ComprasEstoqueModule), RegulatorioQualidadeModule],
   controllers: [
     FormasPagamentoController,
     BandeirasController,
@@ -35,6 +35,6 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
     ContasBancariasService,
     ContasPagarService,
   ],
-  exports: [FormasPagamentoService],
+  exports: [FormasPagamentoService, PlanoContasService],
 })
 export class FinanceiroModule {}
