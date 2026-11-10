@@ -5,23 +5,17 @@ import {
   type Unidade,
 } from '@torres/shared';
 import { PencilIcon, Trash2Icon } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataGrid } from '@/components/shared/data-grid/DataGrid';
-import type {
-  AcaoLinha,
-  ColunaGrid,
-  FiltroGrid,
-  FiltroStatus,
-} from '@/components/shared/data-grid/tipos';
+import type { AcaoLinha, ColunaGrid, FiltroStatus } from '@/components/shared/data-grid/tipos';
 import { FormAcoes } from '@/components/shared/form/FormAcoes';
 import { FormField } from '@/components/shared/form/FormField';
 import { FormLayout } from '@/components/shared/form/FormLayout';
 import { useFormulario } from '@/components/shared/form/use-formulario';
 import { Modal } from '@/components/shared/Modal';
 import { StatusAtivo } from '@/components/shared/StatusBadge';
-import { useLookup } from '@/lib/api/lookups';
 import { formatarDataHora } from '@/lib/formatar';
 import { esperar, EXPORTACAO_UNIDADES, simularEnvio, URL_UNIDADES } from './exemplos';
 
@@ -54,18 +48,6 @@ const STATUS: FiltroStatus = {
 export function ExemploGrid() {
   const [editando, setEditando] = useState<Unidade | null>(null);
   const [excluindo, setExcluindo] = useState<Unidade | null>(null);
-  const empresas = useLookup('empresas', '');
-  const filtros = useMemo<FiltroGrid[]>(
-    () => [
-      {
-        tipo: 'select',
-        parametro: 'empresaId',
-        rotulo: 'Empresa',
-        opcoes: (empresas.data?.data ?? []).map((e) => ({ valor: e.id, rotulo: e.label })),
-      },
-    ],
-    [empresas.data],
-  );
   const acoes = useCallback(
     (unidade: Unidade): AcaoLinha[] => [
       {
@@ -94,7 +76,6 @@ export function ExemploGrid() {
         colunas={COLUNAS}
         busca="Buscar unidades..."
         status={STATUS}
-        filtros={filtros}
         exportacao={EXPORTACAO_UNIDADES}
         acoes={acoes}
         mensagemVazio="Nenhuma unidade encontrada."
