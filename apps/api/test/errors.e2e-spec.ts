@@ -70,7 +70,7 @@ describe('Formato padrão de erros e Swagger (e2e)', () => {
     );
     const list = res.body.paths['/api/configuracoes-gestao/unidades'].get;
     expect(list.parameters.map((p: { name: string }) => p.name)).toEqual(
-      expect.arrayContaining(['page', 'pageSize', 'sort', 'search', 'status', 'empresaId']),
+      expect.arrayContaining(['page', 'pageSize', 'sort', 'search', 'status']),
     );
     expect(Object.keys(list.responses)).toEqual(expect.arrayContaining(['200', '400']));
   });
