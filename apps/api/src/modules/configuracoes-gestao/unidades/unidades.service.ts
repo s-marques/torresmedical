@@ -13,6 +13,7 @@ import type {
 } from '@torres/shared';
 import type { Prisma, Unidade } from '../../../generated/prisma/client';
 import { BusinessException } from '../../../common/errors/api.exception';
+import { ErrorCode } from '../../../common/errors/error-codes';
 import { ExportService, selectColumns } from '../../../common/export/export.service';
 import type { ExportColumn, ExportFile } from '../../../common/export/export.types';
 import {
@@ -72,8 +73,8 @@ export class UnidadesService extends EntidadeLookupService<
     return { id: unidade.id, label: unidade.nome, descricao: null };
   }
 
-  list(query: ListUnidadesQuery): Promise<Page<Unidade>> {
-    const where = this.where(query);
+  list(query: ListUnidadesQuery, empresaId: string): Promise<Page<Unidade>> {
+    const where = this.where(query, empresaId);
     const orderBy = toOrderBy(query.sort);
     return paginate(query, {
       findMany: (page) => this.txHost.tx.unidade.findMany({ where, orderBy, ...page }),
@@ -81,26 +82,35 @@ export class UnidadesService extends EntidadeLookupService<
     });
   }
 
-  async create(input: CreateUnidadeInput): Promise<Unidade> {
-    await this.ensureEmpresaExists(input.empresaId);
-    await this.ensureNomeDisponivel(input.empresaId, input.nome);
-    return this.txHost.tx.unidade.create({ data: input });
+  /** Detalhe restrito à empresa do usuário logado (impede acessar a unidade de outra empresa). */
+  async findByIdDaEmpresa(id: string, empresaId: string): Promise<Unidade> {
+    const unidade = await this.findById(id);
+    if (unidade.empresaId !== empresaId) {
+      throw new BusinessException(ErrorCode.NOT_FOUND, this.naoEncontrado, { status: 404 });
+    }
+    return unidade;
   }
 
-  async update(id: string, input: UpdateUnidadeInput): Promise<Unidade> {
-    const atual = await this.findById(id);
+  async create(input: CreateUnidadeInput, empresaId: string): Promise<Unidade> {
+    await this.ensureEmpresaExists(empresaId);
+    await this.ensureNomeDisponivel(empresaId, input.nome);
+    return this.txHost.tx.unidade.create({ data: { ...input, empresaId } });
+  }
+
+  async update(id: string, input: UpdateUnidadeInput, empresaId: string): Promise<Unidade> {
+    const atual = await this.findByIdDaEmpresa(id, empresaId);
     if (input.nome !== undefined) await this.ensureNomeDisponivel(atual.empresaId, input.nome, id);
     return this.txHost.tx.unidade.update({ where: { id }, data: input });
   }
 
   /** Exclusão lógica: a unidade pode estar referenciada por dados financeiros e clínicos. */
-  async remove(id: string): Promise<Unidade> {
-    await this.findById(id);
+  async remove(id: string, empresaId: string): Promise<Unidade> {
+    await this.findByIdDaEmpresa(id, empresaId);
     return this.txHost.tx.unidade.update({ where: { id }, data: { deletedAt: new Date() } });
   }
 
-  async export(query: ExportUnidadesQuery): Promise<ExportFile> {
-    const where = this.where(query);
+  async export(query: ExportUnidadesQuery, empresaId: string): Promise<ExportFile> {
+    const where = this.where(query, empresaId);
     this.exportService.ensureWithinLimit(await this.txHost.tx.unidade.count({ where }));
     const rows = await this.txHost.tx.unidade.findMany({ where, orderBy: toOrderBy(query.sort) });
     return this.exportService.export({
@@ -134,11 +144,12 @@ export class UnidadesService extends EntidadeLookupService<
   }
 
   private where(
-    query: Pick<ListUnidadesQuery, 'search' | 'status' | 'empresaId'>,
+    query: Pick<ListUnidadesQuery, 'search' | 'status'>,
+    empresaId?: string,
   ): Prisma.UnidadeWhereInput {
     return {
       deletedAt: null,
-      empresaId: query.empresaId,
+      empresaId,
       ativo: query.status ? query.status === 'ativo' : undefined,
       ...searchWhere(query.search, ['nome']),
     };

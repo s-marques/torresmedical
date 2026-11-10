@@ -15,6 +15,7 @@ export interface UsuarioTeste {
   email: string;
   senha: string;
   perfilId: string;
+  empresaId: string;
   accessToken: string;
   refreshToken: string;
   /** Valor do header `Authorization`. */
@@ -70,6 +71,7 @@ export async function criarUsuarioTeste(
     email: usuario.email,
     senha: SENHA_TESTE,
     perfilId: perfil.id,
+    empresaId: empresa,
     accessToken,
     refreshToken,
     authorization: `Bearer ${accessToken}`,

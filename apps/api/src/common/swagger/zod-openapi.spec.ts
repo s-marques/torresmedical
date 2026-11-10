@@ -50,7 +50,7 @@ describe('decorators', () => {
       in: string;
     }[];
     expect(params.map((p) => p.name).sort()).toEqual(
-      ['empresaId', 'page', 'pageSize', 'search', 'sort', 'status'].sort(),
+      ['page', 'pageSize', 'search', 'sort', 'status'].sort(),
     );
     expect(params.every((p) => p.in === 'query')).toBe(true);
   });

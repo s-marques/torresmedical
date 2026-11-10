@@ -32,6 +32,7 @@ const ASSINATURAS: Readonly<Record<ArquivoFormato, Assinatura>> = {
   png: comeca([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
   gif: algum(ascii('GIF87a'), ascii('GIF89a')),
   webp: (conteudo) => ascii('RIFF')(conteudo) && ascii('WEBP', 8)(conteudo),
+  svg: texto,
   pdf: ascii('%PDF-'),
   docx: comeca([0x50, 0x4b, 0x03, 0x04]),
   mp3: algum(ascii('ID3'), frameMpeg),

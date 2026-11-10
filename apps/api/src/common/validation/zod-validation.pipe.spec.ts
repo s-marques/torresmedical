@@ -8,9 +8,7 @@ describe('ZodValidationPipe', () => {
   const pipe = new ZodValidationPipe(createUnidadeSchema);
 
   it('retorna o valor convertido pelo schema', () => {
-    const empresaId = '7a1d3c52-8d0f-4b8e-9f4c-2b2f3c4d5e6f';
-    expect(pipe.transform({ empresaId, nome: '  Matriz ' })).toEqual({
-      empresaId,
+    expect(pipe.transform({ nome: '  Matriz ' })).toMatchObject({
       nome: 'Matriz',
       ativo: true,
     });
@@ -21,7 +19,6 @@ describe('ZodValidationPipe', () => {
 
     expect(error).toBeInstanceOf(ValidationException);
     expect((error as ValidationException).details).toEqual([
-      { field: 'empresaId', message: 'Informe a empresa' },
       { field: 'nome', message: 'Informe o nome' },
     ]);
   });

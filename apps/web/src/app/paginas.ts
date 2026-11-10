@@ -73,4 +73,7 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   'configuracoes-gestao.relatorios': lazy(
     () => import('@/features/configuracoes-gestao/relatorios/RelatoriosGestaoPage'),
   ),
+  'configuracoes-gestao.minha-empresa': lazy(
+    () => import('@/features/configuracoes-gestao/minha-empresa/MinhaEmpresaPage'),
+  ),
 };
