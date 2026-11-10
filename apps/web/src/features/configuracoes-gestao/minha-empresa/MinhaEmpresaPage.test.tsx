@@ -85,7 +85,14 @@ describe('Minha Empresa (/settings/empresa)', () => {
     renderTela();
 
     expect(await screen.findByRole('heading', { name: 'Configurações da Empresa' })).toBeVisible();
-    for (const aba of ['Dados', 'Plano e Faturas', 'Integrações', 'Usuários', 'Unidades', 'Horários']) {
+    for (const aba of [
+      'Dados',
+      'Plano e Faturas',
+      'Integrações',
+      'Usuários',
+      'Unidades',
+      'Horários',
+    ]) {
       expect(screen.getByRole('tab', { name: aba })).toBeVisible();
     }
   });
@@ -101,9 +108,9 @@ describe('Minha Empresa (/settings/empresa)', () => {
     });
     const { user } = renderTela(fetchMock);
 
-    expect(
-      await screen.findByLabelText('Nome da Empresa', {}, { timeout: 10_000 }),
-    ).toHaveValue('TORRES MEDICAL CENTER CORP.');
+    expect(await screen.findByLabelText('Nome da Empresa', {}, { timeout: 10_000 })).toHaveValue(
+      'TORRES MEDICAL CENTER CORP.',
+    );
     expect(screen.getByLabelText('E-mail')).toHaveValue('contato@torresmedical.com');
 
     await user.click(screen.getByRole('button', { name: 'Salvar Alterações' }));
@@ -140,11 +147,7 @@ describe('Minha Empresa (/settings/empresa)', () => {
     await screen.findByRole('heading', { name: 'Configurações da Empresa' }, { timeout: 10_000 });
     await user.click(screen.getByRole('tab', { name: 'Horários' }));
 
-    const painel = await screen.findByRole(
-      'tabpanel',
-      { name: 'Horários' },
-      { timeout: 10_000 },
-    );
+    const painel = await screen.findByRole('tabpanel', { name: 'Horários' }, { timeout: 10_000 });
     for (const dia of ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']) {
       expect(within(painel).getByText(dia)).toBeVisible();
     }

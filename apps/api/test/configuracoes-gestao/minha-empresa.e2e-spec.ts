@@ -57,7 +57,13 @@ describe('Minha Empresa (e2e)', () => {
 
   async function criarArquivo(uso: string) {
     return prisma.arquivo.create({
-      data: { uso, nomeOriginal: 'logo.png', contentType: 'image/png', tamanho: 10, chave: `${uso}/${Math.random()}` },
+      data: {
+        uso,
+        nomeOriginal: 'logo.png',
+        contentType: 'image/png',
+        tamanho: 10,
+        chave: `${uso}/${Math.random()}`,
+      },
     });
   }
 
@@ -76,7 +82,12 @@ describe('Minha Empresa (e2e)', () => {
 
       const res = await http()
         .put(BASE)
-        .send({ nome: 'Nova Razão Social', documento: '11222333000181', email: 'a@b.com', telefone: '65999998888' })
+        .send({
+          nome: 'Nova Razão Social',
+          documento: '11222333000181',
+          email: 'a@b.com',
+          telefone: '65999998888',
+        })
         .expect(200);
 
       expect(res.body).toMatchObject({ nome: 'Nova Razão Social', documento: '11222333000181' });
@@ -91,7 +102,10 @@ describe('Minha Empresa (e2e)', () => {
     });
 
     it('400 com mensagens em português por campo', async () => {
-      const res = await http().put(BASE).send({ nome: '', documento: '123', email: 'x' }).expect(400);
+      const res = await http()
+        .put(BASE)
+        .send({ nome: '', documento: '123', email: 'x' })
+        .expect(400);
 
       expect(res.body.details).toEqual(
         expect.arrayContaining([
@@ -152,7 +166,11 @@ describe('Minha Empresa (e2e)', () => {
         data: { nome: faker.company.name(), documento: faker.string.numeric(14) },
       });
       await prisma.usuario.create({
-        data: { empresaId: outraEmpresa.id, nome: 'De Outra Empresa', email: `x.${faker.string.uuid()}@ex.com` },
+        data: {
+          empresaId: outraEmpresa.id,
+          nome: 'De Outra Empresa',
+          email: `x.${faker.string.uuid()}@ex.com`,
+        },
       });
       await prisma.usuario.create({
         data: {
@@ -209,7 +227,9 @@ describe('Minha Empresa (e2e)', () => {
     });
 
     it('400 quando falta abre/fecha de um dia aberto ou a pausa fica fora do expediente', async () => {
-      const dias = Array.from({ length: 7 }, (_, dia) => (dia === 1 ? { diaSemana: 1, fechado: false } : { diaSemana: dia, fechado: true }));
+      const dias = Array.from({ length: 7 }, (_, dia) =>
+        dia === 1 ? { diaSemana: 1, fechado: false } : { diaSemana: dia, fechado: true },
+      );
 
       const res = await http().put(`${BASE}/horarios`).send({ dias }).expect(400);
 
