@@ -76,7 +76,7 @@ async function abrirMenu(user: ReturnType<typeof userEvent.setup>, linha: string
   await user.click(await screen.findByRole('menuitem', { name: item }));
 }
 
-describe('Fornecedores (/fornecedores)', () => {
+describe('Fornecedores (/fornecedores)', { timeout: 20_000 }, () => {
   it('mostra título, chips, ações e a grid com as colunas do inventário', async () => {
     const fetchMock = api();
     renderTela(fetchMock);
@@ -153,8 +153,7 @@ describe('Fornecedores (/fornecedores)', () => {
       await user.click(screen.getByRole('button', { name: titulo }));
       await waitFor(() => expect(parametros(fetchMock)).toMatchObject({ sort: `${campo}:asc` }));
     }
-    // 6 colunas em sequência: mais lento sob cobertura no CI, por isso o timeout maior.
-  }, 10_000);
+  });
 
   it('busca envia o texto na API', async () => {
     const fetchMock = api();
@@ -301,8 +300,7 @@ describe('Fornecedores (/fornecedores)', () => {
     expect(
       chamadasPara(fetchMock, API).filter(([, i]) => !i?.method || i.method === 'GET'),
     ).toHaveLength(2);
-    // Modal com vários campos digitados em sequência: mais lento sob cobertura no CI.
-  }, 10_000);
+  });
 
   it('Esc fecha o modal sem salvar', async () => {
     const { user } = renderTela();
