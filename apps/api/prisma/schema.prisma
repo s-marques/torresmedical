@@ -1514,3 +1514,88 @@ model ContaPagarBaixa {
   @@index([contaPagarId])
   @@map("contas_pagar_baixas")
 }
+
+enum AtendimentoTipo {
+  CONSULTA
+  RETORNO
+  PROCEDIMENTO
+  EXAME
+
+  @@map("atendimento_tipo")
+}
+
+enum AtendimentoStatus {
+  EM_ANDAMENTO
+  FINALIZADO
+
+  @@map("atendimento_status")
+}
+
+/// Dono: consultorio-assistencial. Prontuário médico (aba "Prontuário" da tela Prontuários,
+/// `/prontuarios`): alergias, medicamentos em uso etc. 1 por paciente, criado/atualizado pelo
+/// único botão "Salvar" (upsert). `id` é o mesmo id do Paciente (comercial-atendimento, sem FK:
+/// CLAUDE.md, seção 3), por isso não tem `@default`.
+model Prontuario {
+  id                  String   @id @map("paciente_id") @db.Uuid
+  alergias            String?
+  medicamentosEmUso   String?  @map("medicamentos_em_uso")
+  doencasCronicas     String?  @map("doencas_cronicas")
+  cirurgiasAnteriores String?  @map("cirurgias_anteriores")
+  historicoFamiliar   String?  @map("historico_familiar")
+  observacoes         String?
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("prontuarios")
+}
+
+/// Dono: consultorio-assistencial. Atendimento clínico (aba "Atendimentos" da tela Prontuários).
+/// `horario`/`procedimentoId`/`pagamentoStatus` ficam reservados para a tela Atendimento Médico
+/// (#38, agenda do dia), que deve reaproveitar esta mesma entidade.
+model Atendimento {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Paciente (comercial-atendimento), sem FK: acesso pelo service exportado.
+  pacienteId     String            @map("paciente_id") @db.Uuid
+  /// Profissional (gestao-profissionais), sem FK: acesso pelo service exportado.
+  profissionalId String            @map("profissional_id") @db.Uuid
+  tipo           AtendimentoTipo?
+  queixa         String?
+  evolucao       String?
+  diagnostico    String?
+  conduta        String?
+  observacoes    String?
+  status         AtendimentoStatus @default(EM_ANDAMENTO)
+  /// Reservado para #38 (agenda do dia): data/hora do agendamento.
+  horario         DateTime? @db.Timestamptz(3)
+  /// Reservado para #38: procedimento da agenda, sem FK.
+  procedimentoId  String?   @map("procedimento_id") @db.Uuid
+  /// Reservado para #38: situação do pagamento do atendimento.
+  pagamentoStatus String?   @map("pagamento_status")
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime?         @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([pacienteId])
+  @@index([profissionalId])
+  @@map("atendimentos")
+}
+
+/// Dono: consultorio-assistencial. Anamnese clínica (aba "Anamneses" da tela Prontuários).
+model Anamnese {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Paciente (comercial-atendimento), sem FK.
+  pacienteId          String    @map("paciente_id") @db.Uuid
+  /// Profissional (gestao-profissionais), sem FK. Opcional neste formulário.
+  profissionalId      String?   @map("profissional_id") @db.Uuid
+  queixaPrincipal     String?   @map("queixa_principal")
+  historiaDoencaAtual String?   @map("historia_doenca_atual")
+  exameFisico         String?   @map("exame_fisico")
+  hipoteseDiagnostica String?   @map("hipotese_diagnostica")
+  conduta             String?
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([pacienteId])
+  @@map("anamneses")
+}

@@ -15,6 +15,7 @@ import { HealthModule } from './health/health.module';
 import { ComercialAtendimentoModule } from './modules/comercial-atendimento/comercial-atendimento.module';
 import { ComprasEstoqueModule } from './modules/compras-estoque/compras-estoque.module';
 import { ConfiguracoesGestaoModule } from './modules/configuracoes-gestao/configuracoes-gestao.module';
+import { ConsultorioAssistencialModule } from './modules/consultorio-assistencial/consultorio-assistencial.module';
 import { FinanceiroModule } from './modules/financeiro/financeiro.module';
 import { GestaoProfissionaisModule } from './modules/gestao-profissionais/gestao-profissionais.module';
 import { PainelModule } from './modules/painel/painel.module';
@@ -35,6 +36,7 @@ import { RegulatorioQualidadeModule } from './modules/regulatorio-qualidade/regu
     HealthModule,
     PainelModule,
     ComercialAtendimentoModule,
+    ConsultorioAssistencialModule,
     GestaoProfissionaisModule,
     FinanceiroModule,
     ComprasEstoqueModule,
