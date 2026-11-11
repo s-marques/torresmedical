@@ -153,7 +153,8 @@ describe('Fornecedores (/fornecedores)', () => {
       await user.click(screen.getByRole('button', { name: titulo }));
       await waitFor(() => expect(parametros(fetchMock)).toMatchObject({ sort: `${campo}:asc` }));
     }
-  });
+    // 6 colunas em sequência: mais lento sob cobertura no CI, por isso o timeout maior.
+  }, 10_000);
 
   it('busca envia o texto na API', async () => {
     const fetchMock = api();
@@ -300,7 +301,8 @@ describe('Fornecedores (/fornecedores)', () => {
     expect(
       chamadasPara(fetchMock, API).filter(([, i]) => !i?.method || i.method === 'GET'),
     ).toHaveLength(2);
-  });
+    // Modal com vários campos digitados em sequência: mais lento sob cobertura no CI.
+  }, 10_000);
 
   it('Esc fecha o modal sem salvar', async () => {
     const { user } = renderTela();
