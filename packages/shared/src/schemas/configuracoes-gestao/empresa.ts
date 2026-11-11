@@ -27,7 +27,7 @@ const telefone = z
     error: 'Telefone inválido',
   });
 
-/** `PATCH /api/configuracoes-gestao/empresas/minha` (aba Dados, botão "Salvar Alterações"). */
+/** `PUT /api/configuracoes-gestao/minha-empresa` (aba Dados, botão "Salvar Alterações"). */
 export const empresaInputSchema = z.strictObject({ nome, documento, email, telefone });
 
 export type EmpresaInput = z.infer<typeof empresaInputSchema>;
@@ -45,7 +45,7 @@ export const empresaSchema = z.object({
 
 export type Empresa = z.infer<typeof empresaSchema>;
 
-/** `PUT /api/configuracoes-gestao/empresas/logo` (enviado antes em `/api/arquivos`). */
+/** `PUT /api/configuracoes-gestao/minha-empresa/logo` (enviado antes em `/api/arquivos`). */
 export const empresaLogoInputSchema = z.strictObject({
   arquivoId: z.uuid({ error: 'Arquivo inválido' }).nullable(),
 });

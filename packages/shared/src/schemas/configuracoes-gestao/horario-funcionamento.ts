@@ -64,7 +64,7 @@ const diaHorarioInputSchema = z
 
 export type DiaHorarioInput = z.input<typeof diaHorarioInputSchema>;
 
-/** `PUT /api/configuracoes-gestao/empresas/horarios` ("Salvar Horários"): substitui a semana inteira. */
+/** `PUT /api/configuracoes-gestao/minha-empresa/horarios` ("Salvar Horários"): substitui a semana inteira. */
 export const salvarHorariosFuncionamentoSchema = z
   .strictObject({ dias: z.array(diaHorarioInputSchema).length(7, { error: 'Informe os 7 dias' }) })
   .refine((v) => new Set(v.dias.map((d) => d.diaSemana)).size === 7, {
