@@ -16,6 +16,7 @@ export * from './schemas/comercial-atendimento/consulta-realizada';
 export * from './schemas/comercial-atendimento/venda';
 export * from './schemas/comercial-atendimento/origem-cliente';
 export * from './schemas/comercial-atendimento/paciente';
+export * from './schemas/consultorio-assistencial/prontuario';
 export * from './schemas/compras-estoque/categoria';
 export * from './schemas/compras-estoque/compra';
 export * from './schemas/compras-estoque/fornecedor';
