@@ -24,6 +24,7 @@ export const LOOKUP_ENTIDADES = [
   'formas-pagamento',
   'tipos-agendamento',
   'origens-cliente',
+  'perfis',
 ] as const;
 
 export type LookupEntidade = (typeof LOOKUP_ENTIDADES)[number];
@@ -82,6 +83,7 @@ export const lookupQuerySchemas = {
   }),
   'tipos-agendamento': lookupQuerySchema({}),
   'origens-cliente': lookupQuerySchema({}),
+  perfis: lookupQuerySchema({}),
 } satisfies Record<LookupEntidade, z.ZodType>;
 
 export type LookupQuery<E extends LookupEntidade = LookupEntidade> = z.infer<
@@ -184,4 +186,5 @@ export const LOOKUP_PERMISSOES: Readonly<Record<LookupEntidade, PermissoesLookup
     'comercial-atendimento.origens-cliente',
     'comercial-atendimento.pacientes',
   ),
+  perfis: telas('configuracoes-gestao.usuarios', 'configuracoes-gestao.perfis-acesso'),
 };
