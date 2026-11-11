@@ -80,6 +80,7 @@ function configs(prisma: PrismaService, empresaId: string): Record<LookupEntidad
           },
         }),
     },
+    perfis: { criar: (data) => prisma.perfil.create({ data }) },
   };
 }
 

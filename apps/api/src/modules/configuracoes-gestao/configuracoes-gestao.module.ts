@@ -11,6 +11,8 @@ import { TiposAgendamentoController } from './tipos-agendamento/tipos-agendament
 import { TiposAgendamentoService } from './tipos-agendamento/tipos-agendamento.service';
 import { UnidadesController } from './unidades/unidades.controller';
 import { UnidadesService } from './unidades/unidades.service';
+import { UsuariosController } from './usuarios/usuarios.controller';
+import { PerfisLookupService, UsuariosService } from './usuarios/usuarios.service';
 
 const SERVICES = [
   UnidadesService,
@@ -18,11 +20,13 @@ const SERVICES = [
   TiposAgendamentoService,
   RespostasRapidasService,
   PerfisAcessoService,
+  UsuariosService,
+  PerfisLookupService,
 ];
 
 /**
  * Módulo CONFIGURAÇÕES / GESTÃO do inventário. Dono das entidades Empresa, Unidade,
- * Tipo de Agendamento, Resposta Rápida e Perfil de Acesso.
+ * Tipo de Agendamento, Resposta Rápida, Perfil de Acesso e Usuário.
  */
 @Module({
   controllers: [
@@ -30,9 +34,11 @@ const SERVICES = [
     TiposAgendamentoController,
     RespostasRapidasController,
     PerfisAcessoController,
+    UsuariosController,
     criarLookupController('empresas', EmpresasService),
     criarLookupController('unidades', UnidadesService),
     criarLookupController('tipos-agendamento', TiposAgendamentoService),
+    criarLookupController('perfis', PerfisLookupService),
     criarRelatoriosController('configuracoes-gestao.relatorios', RelatoriosGestao),
   ],
   providers: [...SERVICES, RelatoriosGestao],

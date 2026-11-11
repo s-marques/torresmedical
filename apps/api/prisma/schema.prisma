@@ -51,8 +51,11 @@ model Usuario {
   nome          String
   email         String    @unique
   telefone      String?
+  cargo         String?
   /// Hash argon2id. Nunca sai em resposta, log ou audit_log.
   senhaHash     String?   @map("senha_hash")
+  /// Libera ver CPF, RG, endereço e e-mail dos pacientes (tela Usuários).
+  verDadosSensiveis Boolean @default(false) @map("ver_dados_sensiveis")
   ativo         Boolean   @default(true)
   ultimoLoginEm DateTime? @map("ultimo_login_em") @db.Timestamptz(3)
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)

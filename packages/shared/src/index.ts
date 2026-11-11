@@ -25,6 +25,7 @@ export * from './schemas/configuracoes-gestao/perfil';
 export * from './schemas/configuracoes-gestao/resposta-rapida';
 export * from './schemas/configuracoes-gestao/tipo-agendamento';
 export * from './schemas/configuracoes-gestao/unidade';
+export * from './schemas/configuracoes-gestao/usuario';
 export * from './schemas/financeiro/bandeira';
 export * from './schemas/financeiro/caixa';
 export * from './schemas/financeiro/conta-bancaria';
