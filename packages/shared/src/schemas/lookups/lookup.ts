@@ -25,6 +25,7 @@ export const LOOKUP_ENTIDADES = [
   'tipos-agendamento',
   'origens-cliente',
   'perfis',
+  'canais-whatsapp',
 ] as const;
 
 export type LookupEntidade = (typeof LOOKUP_ENTIDADES)[number];
@@ -84,6 +85,7 @@ export const lookupQuerySchemas = {
   'tipos-agendamento': lookupQuerySchema({}),
   'origens-cliente': lookupQuerySchema({}),
   perfis: lookupQuerySchema({}),
+  'canais-whatsapp': lookupQuerySchema({}),
 } satisfies Record<LookupEntidade, z.ZodType>;
 
 export type LookupQuery<E extends LookupEntidade = LookupEntidade> = z.infer<
@@ -110,6 +112,7 @@ const PACIENTE = telas(
   'financeiro.contas-receber',
   'regulatorio-qualidade.fiscal',
   'gestao-profissionais.salas',
+  'comercial-atendimento.whatsapp',
 );
 
 const PROFISSIONAL = telas(
@@ -187,4 +190,5 @@ export const LOOKUP_PERMISSOES: Readonly<Record<LookupEntidade, PermissoesLookup
     'comercial-atendimento.pacientes',
   ),
   perfis: telas('configuracoes-gestao.usuarios', 'configuracoes-gestao.perfis-acesso'),
+  'canais-whatsapp': telas('comercial-atendimento.whatsapp', 'configuracoes-gestao.agentes-ia'),
 };
