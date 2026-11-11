@@ -64,6 +64,9 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   'regulatorio-qualidade.funcionarios': lazy(
     () => import('@/features/regulatorio-qualidade/funcionarios/FuncionariosPage'),
   ),
+  'configuracoes-gestao.perfis-acesso': lazy(
+    () => import('@/features/configuracoes-gestao/perfis-acesso/PerfisAcessoPage'),
+  ),
   'configuracoes-gestao.tipos-agendamento': lazy(
     () => import('@/features/configuracoes-gestao/tipos-agendamento/TiposAgendamentoPage'),
   ),
@@ -75,5 +78,8 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   ),
   'configuracoes-gestao.minha-empresa': lazy(
     () => import('@/features/configuracoes-gestao/minha-empresa/MinhaEmpresaPage'),
+  ),
+  'configuracoes-gestao.usuarios': lazy(
+    () => import('@/features/configuracoes-gestao/usuarios/UsuariosPage'),
   ),
 };
