@@ -81,6 +81,12 @@ function configs(prisma: PrismaService, empresaId: string): Record<LookupEntidad
         }),
     },
     perfis: { criar: (data) => prisma.perfil.create({ data }) },
+    // Conectado ou não, o canal aparece nos chips; só o excluído some.
+    'canais-whatsapp': {
+      semStatus: true,
+      criar: ({ nome, deletedAt }) =>
+        prisma.canalWhatsapp.create({ data: { nome, deletedAt, numero: '5565999990000' } }),
+    },
   };
 }
 

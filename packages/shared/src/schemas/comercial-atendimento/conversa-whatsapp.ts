@@ -4,7 +4,12 @@ import { mensagemObrigatoria } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 
 /** Situação da conversa (chips e badge da lista da tela WhatsApp, `/atendimento`). */
-export const CONVERSA_WHATSAPP_STATUS = ['BOT', 'AGUARDANDO', 'EM_ATENDIMENTO', 'FINALIZADA'] as const;
+export const CONVERSA_WHATSAPP_STATUS = [
+  'BOT',
+  'AGUARDANDO',
+  'EM_ATENDIMENTO',
+  'FINALIZADA',
+] as const;
 export type ConversaWhatsappStatus = (typeof CONVERSA_WHATSAPP_STATUS)[number];
 
 export const CONVERSA_WHATSAPP_ROTULO_STATUS: Readonly<Record<ConversaWhatsappStatus, string>> = {
