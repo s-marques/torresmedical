@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { criarRelatoriosController } from '../../common/relatorios/relatorios.controller';
 import { EmpresasService } from './empresas/empresas.service';
+import { PerfisAcessoController } from './perfis-acesso/perfis-acesso.controller';
+import { PerfisAcessoService } from './perfis-acesso/perfis-acesso.service';
 import { RelatoriosGestao } from './relatorios/relatorios-gestao';
 import { RespostasRapidasController } from './respostas-rapidas/respostas-rapidas.controller';
 import { RespostasRapidasService } from './respostas-rapidas/respostas-rapidas.service';
@@ -17,19 +19,21 @@ const SERVICES = [
   EmpresasService,
   TiposAgendamentoService,
   RespostasRapidasService,
+  PerfisAcessoService,
   UsuariosService,
   PerfisLookupService,
 ];
 
 /**
  * Módulo CONFIGURAÇÕES / GESTÃO do inventário. Dono das entidades Empresa, Unidade,
- * Tipo de Agendamento, Resposta Rápida e Usuário.
+ * Tipo de Agendamento, Resposta Rápida, Perfil de Acesso e Usuário.
  */
 @Module({
   controllers: [
     UnidadesController,
     TiposAgendamentoController,
     RespostasRapidasController,
+    PerfisAcessoController,
     UsuariosController,
     criarLookupController('empresas', EmpresasService),
     criarLookupController('unidades', UnidadesService),
