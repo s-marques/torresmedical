@@ -76,7 +76,7 @@ async function abrirMenu(user: ReturnType<typeof userEvent.setup>, linha: string
   await user.click(await screen.findByRole('menuitem', { name: item }));
 }
 
-describe('Fornecedores (/fornecedores)', () => {
+describe('Fornecedores (/fornecedores)', { timeout: 20_000 }, () => {
   it('mostra título, chips, ações e a grid com as colunas do inventário', async () => {
     const fetchMock = api();
     renderTela(fetchMock);

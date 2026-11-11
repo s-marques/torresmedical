@@ -12,18 +12,21 @@ datasource db {
 }
 
 model Empresa {
-  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  nome      String
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome          String
   /// CNPJ ou CPF, somente dígitos.
-  documento String    @unique
-  email     String?
-  telefone  String?
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+  documento     String    @unique
+  email         String?
+  telefone      String?
+  /// Id do Arquivo (common/storage) com o logo. Sem FK: módulos não acessam tabelas um do outro.
+  logoArquivoId String?   @map("logo_arquivo_id") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(3)
 
-  unidades Unidade[]
-  usuarios Usuario[]
+  unidades              Unidade[]
+  usuarios              Usuario[]
+  horariosFuncionamento HorarioFuncionamento[]
 
   @@map("empresas")
 }
@@ -32,6 +35,14 @@ model Unidade {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   empresaId String    @map("empresa_id") @db.Uuid
   nome      String
+  endereco  String?
+  cidade    String?
+  uf        String?   @db.VarChar(2)
+  telefone  String?
+  /// CNPJ, somente dígitos.
+  cnpj      String?
+  /// Código CNES (Cadastro Nacional de Estabelecimentos de Saúde).
+  cnes      String?
   ativo     Boolean   @default(true)
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
@@ -41,6 +52,41 @@ model Unidade {
 
   @@index([empresaId])
   @@map("unidades")
+}
+
+/// Horário de funcionamento de um dia da semana (aba Horários de Minha Empresa).
+model HorarioFuncionamento {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId String   @map("empresa_id") @db.Uuid
+  /// 0 = domingo .. 6 = sábado.
+  diaSemana Int      @map("dia_semana")
+  fechado   Boolean  @default(false)
+  /// Formato "HH:mm". Nulo quando `fechado`.
+  abre      String?  @db.VarChar(5)
+  fecha     String?  @db.VarChar(5)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  empresa    Empresa            @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  intervalos HorarioIntervalo[]
+
+  @@unique([empresaId, diaSemana])
+  @@map("horarios_funcionamento")
+}
+
+/// Pausa (ex.: almoço) dentro do horário de um dia. Um dia pode ter zero ou mais.
+model HorarioIntervalo {
+  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  horarioId String @map("horario_id") @db.Uuid
+  /// Formato "HH:mm".
+  inicio    String @db.VarChar(5)
+  fim       String @db.VarChar(5)
+  ordem     Int    @default(0)
+
+  horario HorarioFuncionamento @relation(fields: [horarioId], references: [id], onDelete: Cascade)
+
+  @@index([horarioId])
+  @@map("horarios_intervalos")
 }
 
 /// Usuário do sistema. Sem `senhaHash` não há login (até definir a senha pela redefinição).
@@ -510,26 +556,26 @@ enum CompraStatus {
 /// RECEBIDA soma os itens em `Produto.estoqueAtual`; cancelar ou excluir desfaz a entrada.
 /// O fornecedor é validado pelo service do módulo, mas tem FK (mesmo módulo). Exclusão lógica.
 model Compra {
-  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   /// Número exibido na coluna "#".
-  numero      Int          @unique @default(autoincrement())
-  fornecedorId String      @map("fornecedor_id") @db.Uuid
-  numeroNf    String?      @map("numero_nf")
-  serieNf     String?      @map("serie_nf")
-  dataEmissao DateTime?    @map("data_emissao") @db.Date
-  dataEntrada DateTime     @map("data_entrada") @db.Date
-  frete       Decimal      @default(0) @db.Decimal(12, 2)
-  desconto    Decimal      @default(0) @db.Decimal(12, 2)
-  valorTotal  Decimal      @map("valor_total") @db.Decimal(12, 2)
-  status      CompraStatus @default(RECEBIDA)
-  observacoes String?
+  numero       Int          @unique @default(autoincrement())
+  fornecedorId String       @map("fornecedor_id") @db.Uuid
+  numeroNf     String?      @map("numero_nf")
+  serieNf      String?      @map("serie_nf")
+  dataEmissao  DateTime?    @map("data_emissao") @db.Date
+  dataEntrada  DateTime     @map("data_entrada") @db.Date
+  frete        Decimal      @default(0) @db.Decimal(12, 2)
+  desconto     Decimal      @default(0) @db.Decimal(12, 2)
+  valorTotal   Decimal      @map("valor_total") @db.Decimal(12, 2)
+  status       CompraStatus @default(RECEBIDA)
+  observacoes  String?
   /// Arquivo da NF (PDF ou imagem) em `arquivos`, sem FK.
-  arquivoNfId String?      @map("arquivo_nf_id") @db.Uuid
-  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt   DateTime?    @map("deleted_at") @db.Timestamptz(3)
+  arquivoNfId  String?      @map("arquivo_nf_id") @db.Uuid
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt    DateTime?    @map("deleted_at") @db.Timestamptz(3)
 
-  fornecedor Fornecedor    @relation(fields: [fornecedorId], references: [id], onDelete: Restrict)
+  fornecedor Fornecedor   @relation(fields: [fornecedorId], references: [id], onDelete: Restrict)
   itens      CompraItem[]
 
   @@index([fornecedorId])

@@ -98,9 +98,21 @@ describe('Unidades: padrão de API (e2e)', () => {
         'Centro',
         'Asa Norte',
       ]);
+    });
 
-      const outraEmpresa = await http().get(BASE).query({ empresaId: INEXISTENTE }).expect(200);
-      expect(outraEmpresa.body.meta.total).toBe(0);
+    it('não lista unidade de outra empresa, mesmo pedindo pelo id', async () => {
+      const outraEmpresa = await prisma.empresa.create({
+        data: { nome: faker.company.name(), documento: faker.string.numeric(14) },
+      });
+      const deOutraEmpresa = await prisma.unidade.create({
+        data: { empresaId: outraEmpresa.id, nome: 'De Outra Empresa' },
+      });
+
+      const lista = await http().get(BASE).expect(200);
+      expect(lista.body.data.map((u: { nome: string }) => u.nome)).not.toContain(
+        'De Outra Empresa',
+      );
+      await http().get(`${BASE}/${deOutraEmpresa.id}`).expect(404);
     });
 
     it('400 com details para sort fora da whitelist, pageSize acima do máximo e status inválido', async () => {
@@ -152,17 +164,18 @@ describe('Unidades: padrão de API (e2e)', () => {
   });
 
   describe('POST', () => {
-    it('201 e audita CREATE com o usuário', async () => {
+    it('201 e audita CREATE com o usuário; empresaId vem do usuário logado', async () => {
       const res = await http()
         .post(BASE)
 
-        .send({ empresaId, nome: '  Matriz  ' })
+        .send({ nome: '  Matriz  ', cnpj: '11.222.333/0001-81' })
         .expect(201);
 
       expect(unidadeSchema.parse(res.body)).toMatchObject({
         nome: 'Matriz',
         ativo: true,
         empresaId,
+        cnpj: '11222333000181',
       });
       await expectAudit(prisma, {
         action: 'CREATE',
@@ -179,13 +192,28 @@ describe('Unidades: padrão de API (e2e)', () => {
 
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'empresaId', message: 'Informe a empresa' },
           { field: 'nome', message: 'Informe o nome' },
           { field: 'ativo', message: 'Valor inválido' },
           { field: 'extra', message: 'Campo não permitido' },
         ]),
       );
       await expectNoAudit(prisma, { entity: 'Unidade' });
+    });
+
+    it('ignora empresaId no corpo: sempre usa a empresa do usuário logado', async () => {
+      const outraEmpresa = await prisma.empresa.create({
+        data: { nome: faker.company.name(), documento: faker.string.numeric(14) },
+      });
+
+      const res = await http()
+        .post(BASE)
+        .send({ nome: 'Matriz', empresaId: outraEmpresa.id })
+        .expect(400);
+
+      expect(res.body.details).toContainEqual({
+        field: 'empresaId',
+        message: 'Campo não permitido',
+      });
     });
 
     it('400 para JSON malformado', async () => {
@@ -204,7 +232,7 @@ describe('Unidades: padrão de API (e2e)', () => {
     it('409 UNIDADE_DUPLICADA (nome igual sem diferenciar maiúsculas) e não audita', async () => {
       await criarNoBanco('Matriz');
 
-      const res = await http().post(BASE).send({ empresaId, nome: 'MATRIZ' }).expect(409);
+      const res = await http().post(BASE).send({ nome: 'MATRIZ' }).expect(409);
 
       expect(res.body).toMatchObject({
         code: 'UNIDADE_DUPLICADA',
@@ -216,14 +244,16 @@ describe('Unidades: padrão de API (e2e)', () => {
     it('permite reutilizar o nome de uma unidade excluída', async () => {
       await criarNoBanco('Matriz', { deletedAt: new Date() });
 
-      const res = await http().post(BASE).send({ empresaId, nome: 'Matriz' }).expect(201);
+      const res = await http().post(BASE).send({ nome: 'Matriz' }).expect(201);
 
       expect(await prisma.unidade.count({ where: { nome: 'Matriz', deletedAt: null } })).toBe(1);
       expect(res.body.nome).toBe('Matriz');
     });
 
-    it('422 EMPRESA_NAO_ENCONTRADA', async () => {
-      const res = await http().post(BASE).send({ empresaId: INEXISTENTE, nome: 'X' }).expect(422);
+    it('422 EMPRESA_NAO_ENCONTRADA quando a empresa do usuário foi excluída', async () => {
+      await prisma.empresa.update({ where: { id: empresaId }, data: { deletedAt: new Date() } });
+
+      const res = await http().post(BASE).send({ nome: 'X' }).expect(422);
 
       expect(res.body).toMatchObject({
         statusCode: 422,

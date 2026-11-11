@@ -5,11 +5,18 @@ import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { UNIDADE_EXPORT_DEFINITIONS, UnidadesService } from './unidades.service';
 
 const EMPRESA_ID = '7a1d3c52-8d0f-4b8e-9f4c-2b2f3c4d5e6f';
+const OUTRA_EMPRESA_ID = 'aaaaaaaa-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 const ID = '0b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 const UNIDADE = {
   id: ID,
   empresaId: EMPRESA_ID,
   nome: 'Matriz',
+  endereco: null,
+  cidade: null,
+  uf: null,
+  telefone: null,
+  cnpj: null,
+  cnes: null,
   ativo: true,
   createdAt: new Date('2026-10-14T12:00:00.000Z'),
   updatedAt: new Date('2026-10-14T12:00:00.000Z'),
@@ -41,14 +48,16 @@ describe('UnidadesService', () => {
     it('filtra excluídas, status, empresa e busca; ordena e pagina', async () => {
       const { service, unidade } = setup();
 
-      const page = await service.list({
-        page: 2,
-        pageSize: 5,
-        sort: { field: 'createdAt', direction: 'desc' },
-        search: 'mat',
-        status: 'inativo',
-        empresaId: EMPRESA_ID,
-      });
+      const page = await service.list(
+        {
+          page: 2,
+          pageSize: 5,
+          sort: { field: 'createdAt', direction: 'desc' },
+          search: 'mat',
+          status: 'inativo',
+        },
+        EMPRESA_ID,
+      );
 
       const where = {
         deletedAt: null,
@@ -69,26 +78,35 @@ describe('UnidadesService', () => {
     it('sem status lista ativas e inativas', async () => {
       const { service, unidade } = setup();
 
-      await service.list({ page: 1, pageSize: 10, sort: SORT, search: undefined });
+      await service.list({ page: 1, pageSize: 10, sort: SORT, search: undefined }, EMPRESA_ID);
 
       expect(unidade.findMany.mock.calls[0][0].where).toEqual({
         deletedAt: null,
-        empresaId: undefined,
+        empresaId: EMPRESA_ID,
         ativo: undefined,
       });
     });
   });
 
-  describe('findById', () => {
+  describe('findByIdDaEmpresa', () => {
     it('404 para inexistente ou excluída', async () => {
       const { service, unidade } = setup();
       unidade.findFirst.mockResolvedValue(null);
 
-      await expect(service.findById(ID)).rejects.toMatchObject({
+      await expect(service.findByIdDaEmpresa(ID, EMPRESA_ID)).rejects.toMatchObject({
         code: 'NOT_FOUND',
         message: 'Unidade não encontrada',
       });
       expect(unidade.findFirst).toHaveBeenCalledWith({ where: { id: ID, deletedAt: null } });
+    });
+
+    it('404 quando a unidade é de outra empresa', async () => {
+      const { service } = setup();
+
+      await expect(service.findByIdDaEmpresa(ID, OUTRA_EMPRESA_ID)).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+        message: 'Unidade não encontrada',
+      });
     });
   });
 
@@ -97,7 +115,19 @@ describe('UnidadesService', () => {
       const { service, unidade } = setup();
       unidade.findFirst.mockResolvedValue(null);
 
-      await service.create({ empresaId: EMPRESA_ID, nome: 'Filial', ativo: true });
+      await service.create(
+        {
+          nome: 'Filial',
+          endereco: null,
+          cidade: null,
+          uf: null,
+          telefone: null,
+          cnpj: null,
+          cnes: null,
+          ativo: true,
+        },
+        EMPRESA_ID,
+      );
 
       expect(unidade.findFirst).toHaveBeenCalledWith({
         where: {
@@ -109,7 +139,17 @@ describe('UnidadesService', () => {
         select: { id: true },
       });
       expect(unidade.create).toHaveBeenCalledWith({
-        data: { empresaId: EMPRESA_ID, nome: 'Filial', ativo: true },
+        data: {
+          nome: 'Filial',
+          endereco: null,
+          cidade: null,
+          uf: null,
+          telefone: null,
+          cnpj: null,
+          cnes: null,
+          ativo: true,
+          empresaId: EMPRESA_ID,
+        },
       });
     });
 
@@ -118,7 +158,19 @@ describe('UnidadesService', () => {
       empresa.findFirst.mockResolvedValue(null);
 
       const error = await service
-        .create({ empresaId: EMPRESA_ID, nome: 'X', ativo: true })
+        .create(
+          {
+            nome: 'X',
+            endereco: null,
+            cidade: null,
+            uf: null,
+            telefone: null,
+            cnpj: null,
+            cnes: null,
+            ativo: true,
+          },
+          EMPRESA_ID,
+        )
         .catch((e) => e);
 
       expect(error).toBeInstanceOf(BusinessException);
@@ -131,7 +183,19 @@ describe('UnidadesService', () => {
       const { service, unidade } = setup();
 
       const error = await service
-        .create({ empresaId: EMPRESA_ID, nome: 'Matriz', ativo: true })
+        .create(
+          {
+            nome: 'Matriz',
+            endereco: null,
+            cidade: null,
+            uf: null,
+            telefone: null,
+            cnpj: null,
+            cnes: null,
+            ativo: true,
+          },
+          EMPRESA_ID,
+        )
         .catch((e) => e);
 
       expect(error).toMatchObject({
@@ -148,7 +212,7 @@ describe('UnidadesService', () => {
       const { service, unidade } = setup();
       unidade.findFirst.mockResolvedValueOnce(UNIDADE).mockResolvedValueOnce(null);
 
-      await service.update(ID, { nome: 'Novo' });
+      await service.update(ID, { nome: 'Novo' }, EMPRESA_ID);
 
       expect(unidade.findFirst.mock.calls[1][0].where).toMatchObject({
         id: { not: ID },
@@ -160,16 +224,24 @@ describe('UnidadesService', () => {
     it('só ativo: não verifica nome', async () => {
       const { service, unidade } = setup();
 
-      await service.update(ID, { ativo: false });
+      await service.update(ID, { ativo: false }, EMPRESA_ID);
 
       expect(unidade.findFirst).toHaveBeenCalledTimes(1);
+    });
+
+    it('404 ao tentar alterar unidade de outra empresa', async () => {
+      const { service } = setup();
+
+      await expect(service.update(ID, { ativo: false }, OUTRA_EMPRESA_ID)).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+      });
     });
   });
 
   it('remove: exclusão lógica', async () => {
     const { service, unidade } = setup();
 
-    await service.remove(ID);
+    await service.remove(ID, EMPRESA_ID);
 
     expect(unidade.update).toHaveBeenCalledWith({
       where: { id: ID },
@@ -181,17 +253,20 @@ describe('UnidadesService', () => {
     const { service, unidade, exportService } = setup();
     unidade.count.mockResolvedValue(3);
 
-    await service.export({
-      sort: SORT,
-      search: undefined,
-      status: 'ativo',
-      format: 'pdf',
-      columns: ['status', 'nome'],
-    });
+    await service.export(
+      {
+        sort: SORT,
+        search: undefined,
+        status: 'ativo',
+        format: 'pdf',
+        columns: ['status', 'nome'],
+      },
+      EMPRESA_ID,
+    );
 
     expect(exportService.ensureWithinLimit).toHaveBeenCalledWith(3);
     expect(unidade.findMany).toHaveBeenCalledWith({
-      where: { deletedAt: null, empresaId: undefined, ativo: true },
+      where: { deletedAt: null, empresaId: EMPRESA_ID, ativo: true },
       orderBy: [{ nome: 'asc' }, { id: 'asc' }],
     });
     const request = exportService.export.mock.calls[0][0];

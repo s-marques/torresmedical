@@ -5,6 +5,7 @@ import type { Request } from 'express';
 export interface UsuarioAutenticado {
   id: string;
   sessaoId: string;
+  empresaId: string;
   nome: string;
   email: string;
   perfil: { id: string; nome: string } | null;

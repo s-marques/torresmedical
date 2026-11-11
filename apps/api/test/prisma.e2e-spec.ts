@@ -65,6 +65,8 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'fornecedores',
       'funcionarios',
       'horarios_atendimento',
+      'horarios_funcionamento',
+      'horarios_intervalos',
       'orcamento_itens',
       'orcamentos',
       'origens_cliente',

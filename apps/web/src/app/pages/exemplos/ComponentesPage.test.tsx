@@ -8,6 +8,12 @@ const UNIDADE = {
   id: '00000000-0000-4000-8000-000000000001',
   empresaId: '7a1d3c52-8d0f-4b8e-9f4c-2b2f3c4d5e6f',
   nome: 'Unidade Centro',
+  endereco: null,
+  cidade: null,
+  uf: null,
+  telefone: null,
+  cnpj: null,
+  cnes: null,
   ativo: true,
   createdAt: '2026-10-01T12:00:00.000Z',
   updatedAt: '2026-10-01T12:00:00.000Z',
@@ -20,8 +26,6 @@ function abrir() {
   const fetchMock = apiFalsa({
     rotas: {
       '/api/configuracoes-gestao/unidades': () => pagina([UNIDADE]),
-      '/api/lookups/empresas': () =>
-        pagina([{ id: UNIDADE.empresaId, label: 'Empresa Exemplo', descricao: null }]),
     },
   });
   renderApp(ROTA_EXEMPLOS, fetchMock);

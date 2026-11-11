@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { criarRelatoriosController } from '../../common/relatorios/relatorios.controller';
 import { EmpresasService } from './empresas/empresas.service';
+import { MinhaEmpresaController } from './minha-empresa/minha-empresa.controller';
+import { MinhaEmpresaService } from './minha-empresa/minha-empresa.service';
 import { PerfisAcessoController } from './perfis-acesso/perfis-acesso.controller';
 import { PerfisAcessoService } from './perfis-acesso/perfis-acesso.service';
 import { RelatoriosGestao } from './relatorios/relatorios-gestao';
@@ -17,6 +19,7 @@ import { PerfisLookupService, UsuariosService } from './usuarios/usuarios.servic
 const SERVICES = [
   UnidadesService,
   EmpresasService,
+  MinhaEmpresaService,
   TiposAgendamentoService,
   RespostasRapidasService,
   PerfisAcessoService,
@@ -30,6 +33,7 @@ const SERVICES = [
  */
 @Module({
   controllers: [
+    MinhaEmpresaController,
     UnidadesController,
     TiposAgendamentoController,
     RespostasRapidasController,

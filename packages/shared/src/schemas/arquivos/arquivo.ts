@@ -9,6 +9,7 @@ export const ARQUIVO_FORMATOS = {
   png: { rotulo: 'PNG', mimes: ['image/png'] },
   gif: { rotulo: 'GIF', mimes: ['image/gif'] },
   webp: { rotulo: 'WEBP', mimes: ['image/webp'] },
+  svg: { rotulo: 'SVG', mimes: ['image/svg+xml'] },
   pdf: { rotulo: 'PDF', mimes: ['application/pdf'] },
   ofx: { rotulo: 'OFX', mimes: ['application/x-ofx', 'application/ofx', 'text/plain'] },
   csv: {
@@ -49,7 +50,7 @@ export const ARQUIVO_USOS = {
   },
   'logo-empresa': {
     descricao: 'Logo da empresa',
-    formatos: ['jpg', 'jpeg', 'png'],
+    formatos: ['jpg', 'jpeg', 'png', 'svg'],
     maxBytes: 2 * MB,
   },
   'foto-profissional': {

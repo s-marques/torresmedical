@@ -38,6 +38,7 @@ export function toUsuarioAutenticado(
   return {
     id: usuario.id,
     sessaoId,
+    empresaId: usuario.empresaId,
     nome: usuario.nome,
     email: usuario.email,
     perfil: perfil ? { id: perfil.id, nome: perfil.nome } : null,

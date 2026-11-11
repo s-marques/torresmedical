@@ -24,7 +24,8 @@ import {
 } from '@torres/shared';
 import type { Unidade } from '../../../generated/prisma/client';
 import { Audit } from '../../../common/audit/audit.decorator';
-import { RequirePermission } from '../../../common/auth/auth.decorators';
+import { CurrentUser, RequirePermission } from '../../../common/auth/auth.decorators';
+import type { UsuarioAutenticado } from '../../../common/auth/usuario-autenticado';
 import { toStreamableFile } from '../../../common/export/export-response';
 import type { Page } from '../../../common/pagination/paginate';
 import {
@@ -56,8 +57,9 @@ export class UnidadesController {
   @ApiErrorResponses(400, 401, 403)
   list(
     @Query(new ZodValidationPipe(listUnidadesQuerySchema)) query: ListUnidadesQuery,
+    @CurrentUser() usuario: UsuarioAutenticado,
   ): Promise<Page<Unidade>> {
-    return this.unidades.list(query);
+    return this.unidades.list(query, usuario.empresaId);
   }
 
   // Antes de ":id" para "export" não ser tratado como id.
@@ -75,8 +77,9 @@ export class UnidadesController {
   @ApiErrorResponses(400, 401, 403, 422)
   async export(
     @Query(new ZodValidationPipe(exportUnidadesQuerySchema)) query: ExportUnidadesQuery,
+    @CurrentUser() usuario: UsuarioAutenticado,
   ): Promise<StreamableFile> {
-    return toStreamableFile(await this.unidades.export(query));
+    return toStreamableFile(await this.unidades.export(query, usuario.empresaId));
   }
 
   @Get(':id')
@@ -84,8 +87,8 @@ export class UnidadesController {
   @ApiOperation({ summary: 'Detalhe' })
   @ApiZodResponse(200, unidadeSchema)
   @ApiErrorResponses(400, 401, 403, 404)
-  findById(@IdParam() id: string): Promise<Unidade> {
-    return this.unidades.findById(id);
+  findById(@IdParam() id: string, @CurrentUser() usuario: UsuarioAutenticado): Promise<Unidade> {
+    return this.unidades.findByIdDaEmpresa(id, usuario.empresaId);
   }
 
   @Post()
@@ -97,8 +100,9 @@ export class UnidadesController {
   @ApiErrorResponses(400, 401, 403, 409, 422)
   create(
     @Body(new ZodValidationPipe(createUnidadeSchema)) body: CreateUnidadeInput,
+    @CurrentUser() usuario: UsuarioAutenticado,
   ): Promise<Unidade> {
-    return this.unidades.create(body);
+    return this.unidades.create(body, usuario.empresaId);
   }
 
   @Patch(':id')
@@ -111,8 +115,9 @@ export class UnidadesController {
   update(
     @IdParam() id: string,
     @Body(new ZodValidationPipe(updateUnidadeSchema)) body: UpdateUnidadeInput,
+    @CurrentUser() usuario: UsuarioAutenticado,
   ): Promise<Unidade> {
-    return this.unidades.update(id, body);
+    return this.unidades.update(id, body, usuario.empresaId);
   }
 
   @Delete(':id')
@@ -122,7 +127,7 @@ export class UnidadesController {
   @ApiOperation({ summary: 'Exclui (exclusão lógica)' })
   @ApiZodResponse(200, unidadeSchema)
   @ApiErrorResponses(400, 401, 403, 404)
-  remove(@IdParam() id: string): Promise<Unidade> {
-    return this.unidades.remove(id);
+  remove(@IdParam() id: string, @CurrentUser() usuario: UsuarioAutenticado): Promise<Unidade> {
+    return this.unidades.remove(id, usuario.empresaId);
   }
 }

@@ -28,6 +28,7 @@ class Rotas {
 const USUARIO: UsuarioAutenticado = {
   id: randomUUID(),
   sessaoId: randomUUID(),
+  empresaId: randomUUID(),
   nome: 'Pessoa Teste',
   email: 'pessoa@example.com',
   perfil: null,
