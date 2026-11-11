@@ -21,6 +21,7 @@ export * from './schemas/compras-estoque/compra';
 export * from './schemas/compras-estoque/fornecedor';
 export * from './schemas/compras-estoque/produto';
 export * from './schemas/compras-estoque/unidade-medida';
+export * from './schemas/configuracoes-gestao/perfil';
 export * from './schemas/configuracoes-gestao/resposta-rapida';
 export * from './schemas/configuracoes-gestao/tipo-agendamento';
 export * from './schemas/configuracoes-gestao/unidade';
