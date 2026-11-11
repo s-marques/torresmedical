@@ -9,9 +9,9 @@ async function main(): Promise<void> {
   const senhaAdmin = process.env.SEED_ADMIN_PASSWORD;
   if (!senhaAdmin) throw new Error('Defina SEED_ADMIN_PASSWORD (senha de admin@example.com).');
   try {
-    const { unidades, usuarios, entidades } = await applySeed(prisma, senhaAdmin);
+    const { unidades, usuarios, entidades, whatsapp } = await applySeed(prisma, senhaAdmin);
     // Só contagens: nada de dados pessoais no log (CLAUDE.md, seção 6).
-    const contagens = Object.entries(entidades)
+    const contagens = Object.entries({ ...entidades, ...whatsapp })
       .map(([nome, registros]) => `${registros.length} ${nome}`)
       .join(', ');
     console.log(

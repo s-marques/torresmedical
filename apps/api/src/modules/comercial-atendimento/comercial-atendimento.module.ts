@@ -16,8 +16,12 @@ import { VendasController } from './vendas/vendas.controller';
 import { VendasService } from './vendas/vendas.service';
 import { PacientesController } from './pacientes/pacientes.controller';
 import { PacientesService } from './pacientes/pacientes.service';
+import { ConversasWhatsappController } from './whatsapp/conversas-whatsapp.controller';
+import { ConversasWhatsappService } from './whatsapp/conversas-whatsapp.service';
+import { TagsAtendimentoController } from './whatsapp/tags-atendimento.controller';
+import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
 
-/** Módulo COMERCIAL / ATENDIMENTO do inventário. Dono das entidades Paciente/Cliente, Origem de Cliente, Agendamento, Orçamento e Venda (Vendas/PDV). */
+/** Módulo COMERCIAL / ATENDIMENTO do inventário. Dono das entidades Paciente/Cliente, Origem de Cliente, Agendamento, Orçamento, Venda (Vendas/PDV) e Conversa WhatsApp. */
 @Module({
   // Profissional pertence a gestao-profissionais, que por sua vez usa Paciente daqui.
   imports: [
@@ -29,11 +33,13 @@ import { PacientesService } from './pacientes/pacientes.service';
   controllers: [
     AgendaController,
     ConsultasRealizadasController,
+    ConversasWhatsappController,
     criarLookupController('pacientes', PacientesService),
     criarLookupController('origens-cliente', OrigensClienteService),
     OrcamentosController,
     OrigensClienteController,
     PacientesController,
+    TagsAtendimentoController,
     VendasController,
   ],
   providers: [
@@ -43,6 +49,8 @@ import { PacientesService } from './pacientes/pacientes.service';
     OrcamentosService,
     ConsultasRealizadasService,
     VendasService,
+    ConversasWhatsappService,
+    TagsAtendimentoService,
   ],
   exports: [PacientesService, OrigensClienteService],
 })

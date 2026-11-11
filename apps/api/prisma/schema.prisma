@@ -254,6 +254,7 @@ model Paciente {
   orcamentos    Orcamento[]
   vendas        Venda[]
   contasReceber ContaReceber[]
+  contatosWhatsapp ContatoWhatsapp[]
 
   @@index([documento])
   @@index([origemClienteId])
@@ -819,6 +820,138 @@ model RespostaRapida {
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
 
   @@map("respostas_rapidas")
+}
+
+enum CanalWhatsappTipo {
+  DINASTI_API
+  CLOUD_API
+
+  @@map("canal_whatsapp_tipo")
+}
+
+enum CanalWhatsappStatus {
+  CONECTADO
+  DESCONECTADO
+
+  @@map("canal_whatsapp_status")
+}
+
+/// Dono: configuracoes-gestao. Número de WhatsApp conectado a um provedor (tela Agentes IA,
+/// "Canais WhatsApp", #26). Usado nos chips "Canal" da tela WhatsApp.
+model CanalWhatsapp {
+  id        String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String
+  /// Somente dígitos, com DDI (ex.: 5565999990000).
+  numero    String
+  tipo      CanalWhatsappTipo   @default(DINASTI_API)
+  status    CanalWhatsappStatus @default(DESCONECTADO)
+  createdAt DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime?           @map("deleted_at") @db.Timestamptz(3)
+
+  conversas ConversaWhatsapp[]
+
+  @@map("canais_whatsapp")
+}
+
+/// Dono: comercial-atendimento. Pessoa que conversa pelo WhatsApp; pode ser ou não um paciente.
+model ContatoWhatsapp {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Nome do perfil no WhatsApp ou do paciente. Pode faltar.
+  nome       String?
+  /// Somente dígitos, com DDI (`normalizarTelefoneWhatsapp`).
+  telefone   String   @unique
+  pacienteId String?  @map("paciente_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  paciente  Paciente?          @relation(fields: [pacienteId], references: [id], onDelete: SetNull)
+  conversas ConversaWhatsapp[]
+
+  @@index([pacienteId])
+  @@map("contatos_whatsapp")
+}
+
+enum ConversaWhatsappStatus {
+  BOT
+  AGUARDANDO
+  EM_ATENDIMENTO
+  FINALIZADA
+
+  @@map("conversa_whatsapp_status")
+}
+
+/// Dono: comercial-atendimento. Conversa de um contato num canal (tela WhatsApp, `/atendimento`).
+model ConversaWhatsapp {
+  id               String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contatoId        String                 @map("contato_id") @db.Uuid
+  canalId          String                 @map("canal_id") @db.Uuid
+  status           ConversaWhatsappStatus @default(AGUARDANDO)
+  /// Mensagens recebidas ainda não lidas (badge da lista).
+  naoLidas         Int                    @default(0) @map("nao_lidas")
+  /// Data da última mensagem, para ordenar a lista sem consultar as mensagens.
+  ultimaMensagemEm DateTime?              @map("ultima_mensagem_em") @db.Timestamptz(3)
+  createdAt        DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  contato   ContatoWhatsapp    @relation(fields: [contatoId], references: [id], onDelete: Restrict)
+  canal     CanalWhatsapp      @relation(fields: [canalId], references: [id], onDelete: Restrict)
+  mensagens MensagemWhatsapp[]
+  tags      ConversaTag[]
+
+  @@index([canalId, status, ultimaMensagemEm])
+  @@index([contatoId])
+  @@map("conversas_whatsapp")
+}
+
+enum MensagemWhatsappDirecao {
+  RECEBIDA
+  ENVIADA
+
+  @@map("mensagem_whatsapp_direcao")
+}
+
+/// Dono: comercial-atendimento. Mensagem de uma conversa. Conteúdo é dado pessoal: nunca logar.
+model MensagemWhatsapp {
+  id         String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversaId String                  @map("conversa_id") @db.Uuid
+  direcao    MensagemWhatsappDirecao
+  conteudo   String
+  enviadaEm  DateTime                @map("enviada_em") @db.Timestamptz(3)
+  createdAt  DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  conversa ConversaWhatsapp @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+
+  @@index([conversaId, enviadaEm])
+  @@map("mensagens_whatsapp")
+}
+
+/// Dono: comercial-atendimento. Etiqueta das conversas (modal "Gerenciar Tags").
+model TagAtendimento {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String
+  cor       String
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  conversas ConversaTag[]
+
+  @@map("tags_atendimento")
+}
+
+/// Tags aplicadas a uma conversa.
+model ConversaTag {
+  conversaId String   @map("conversa_id") @db.Uuid
+  tagId      String   @map("tag_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  conversa ConversaWhatsapp @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+  tag      TagAtendimento   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([conversaId, tagId])
+  @@index([tagId])
+  @@map("conversas_tags")
 }
 
 enum AgendamentoStatus {

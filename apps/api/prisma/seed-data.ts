@@ -3,6 +3,7 @@ import { PERMISSOES } from '@torres/shared';
 import { hashSenha } from '../src/common/auth/senhas';
 import type { PrismaClient } from '../src/generated/prisma/client';
 import { applySeedEntidades, buildSeedEntidades, type SeedEntidades } from './seed-entidades';
+import { applySeedWhatsapp, buildSeedWhatsapp, type SeedWhatsapp } from './seed-whatsapp';
 
 /**
  * Dados de desenvolvimento 100% fictícios (CLAUDE.md, seção 6).
@@ -30,6 +31,8 @@ export interface SeedData {
   };
   /** Entidades compartilhadas (pacientes, profissionais, produtos…). */
   entidades: SeedEntidades;
+  /** Atendimento WhatsApp: canais, contatos, conversas, mensagens e tags. */
+  whatsapp: SeedWhatsapp;
 }
 
 /** Gera um CNPJ fictício com dígitos verificadores válidos (somente dígitos). */
@@ -55,8 +58,11 @@ function gerarCelular(): string {
   return faker.helpers.fromRegExp(/[1-9]{2}9[0-9]{8}/);
 }
 
-/** Determinístico: a mesma semente gera os mesmos dados (e os mesmos ids). */
-export function buildSeedData(): SeedData {
+/**
+ * Determinístico: a mesma semente gera os mesmos dados (e os mesmos ids). `agora` é a
+ * referência das datas relativas (ex.: conversas de hoje e de ontem no WhatsApp).
+ */
+export function buildSeedData(agora: Date = new Date()): SeedData {
   faker.seed(SEED);
 
   const empresa = {
@@ -107,8 +113,9 @@ export function buildSeedData(): SeedData {
 
   // Também depois dos demais, pelo mesmo motivo.
   const entidades = buildSeedEntidades(SEED_EMAIL_DOMAIN);
+  const whatsapp = buildSeedWhatsapp(entidades.pacientes, agora);
 
-  return { empresa, unidades, usuarios, perfilAdmin, admin, entidades };
+  return { empresa, unidades, usuarios, perfilAdmin, admin, entidades, whatsapp };
 }
 
 /**
@@ -117,7 +124,7 @@ export function buildSeedData(): SeedData {
  */
 export async function applySeed(prisma: PrismaClient, senhaAdmin: string): Promise<SeedData> {
   const data = buildSeedData();
-  const { empresa, unidades, usuarios, perfilAdmin, admin, entidades } = data;
+  const { empresa, unidades, usuarios, perfilAdmin, admin, entidades, whatsapp } = data;
   const senhaHash = await hashSenha(senhaAdmin);
 
   await prisma.$transaction(
@@ -145,6 +152,7 @@ export async function applySeed(prisma: PrismaClient, senhaAdmin: string): Promi
         update: usuarioAdmin,
       });
       await applySeedEntidades(tx, entidades);
+      await applySeedWhatsapp(tx, whatsapp);
     },
     { timeout: 60_000 },
   );

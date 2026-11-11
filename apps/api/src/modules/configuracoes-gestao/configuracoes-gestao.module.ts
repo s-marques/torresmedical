@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { criarRelatoriosController } from '../../common/relatorios/relatorios.controller';
+import { CanaisWhatsappService } from './canais-whatsapp/canais-whatsapp.service';
 import { EmpresasService } from './empresas/empresas.service';
 import { MinhaEmpresaController } from './minha-empresa/minha-empresa.controller';
 import { MinhaEmpresaService } from './minha-empresa/minha-empresa.service';
@@ -25,11 +26,12 @@ const SERVICES = [
   PerfisAcessoService,
   UsuariosService,
   PerfisLookupService,
+  CanaisWhatsappService,
 ];
 
 /**
  * Módulo CONFIGURAÇÕES / GESTÃO do inventário. Dono das entidades Empresa, Unidade,
- * Tipo de Agendamento, Resposta Rápida, Perfil de Acesso e Usuário.
+ * Tipo de Agendamento, Resposta Rápida, Perfil de Acesso, Usuário e Canal WhatsApp.
  */
 @Module({
   controllers: [
@@ -43,6 +45,7 @@ const SERVICES = [
     criarLookupController('unidades', UnidadesService),
     criarLookupController('tipos-agendamento', TiposAgendamentoService),
     criarLookupController('perfis', PerfisLookupService),
+    criarLookupController('canais-whatsapp', CanaisWhatsappService),
     criarRelatoriosController('configuracoes-gestao.relatorios', RelatoriosGestao),
   ],
   providers: [...SERVICES, RelatoriosGestao],
