@@ -29,11 +29,12 @@ function cnpjValido(cnpj: string): boolean {
 }
 
 describe('buildSeedData', () => {
-  const data = buildSeedData();
+  const agora = new Date('2026-10-15T12:00:00.000Z');
+  const data = buildSeedData(agora);
   const pessoas = [data.empresa, ...data.usuarios, data.admin];
 
   it('é determinístico (mesma semente, mesmos dados e ids)', () => {
-    expect(buildSeedData()).toEqual(data);
+    expect(buildSeedData(agora)).toEqual(data);
   });
 
   it('usa somente e-mails do domínio reservado para exemplos', () => {
@@ -85,7 +86,7 @@ describe('buildSeedData', () => {
 
   describe('entidades compartilhadas', () => {
     const { entidades } = data;
-    const todas = Object.values(entidades).flat();
+    const todas = [...Object.values(entidades), ...Object.values(data.whatsapp)].flat();
 
     it('gera ids únicos, sem repetir os dos demais dados', () => {
       const ids = [data.empresa.id, data.admin.id, ...todas.map((r) => r.id)];
@@ -125,6 +126,33 @@ describe('buildSeedData', () => {
       expect(entidades.produtos.map((p) => p.tipo)).toEqual(
         expect.arrayContaining(['PRODUTO', 'SERVICO']),
       );
+    });
+  });
+
+  describe('atendimento WhatsApp', () => {
+    const { whatsapp, entidades } = data;
+
+    it('liga contatos a pacientes do seed e conversas a canais e contatos do seed', () => {
+      const ids = (lista: { id: string }[]) => new Set(lista.map((r) => r.id));
+      const pacientes = ids(entidades.pacientes);
+      const canais = ids(whatsapp.canaisWhatsapp);
+      const contatos = ids(whatsapp.contatosWhatsapp);
+      const conversas = ids(whatsapp.conversasWhatsapp);
+      const vinculados = whatsapp.contatosWhatsapp.filter((c) => c.pacienteId);
+      expect(vinculados.length).toBeGreaterThan(0);
+      expect(vinculados.every((c) => pacientes.has(String(c.pacienteId)))).toBe(true);
+      expect(whatsapp.conversasWhatsapp.every((c) => canais.has(c.canalId))).toBe(true);
+      expect(whatsapp.conversasWhatsapp.every((c) => contatos.has(c.contatoId))).toBe(true);
+      expect(whatsapp.mensagensWhatsapp.every((m) => conversas.has(m.conversaId))).toBe(true);
+    });
+
+    it('tem conversas em todos os status e telefones únicos com DDI 55', () => {
+      expect(new Set(whatsapp.conversasWhatsapp.map((c) => c.status))).toEqual(
+        new Set(['BOT', 'AGUARDANDO', 'EM_ATENDIMENTO', 'FINALIZADA']),
+      );
+      const telefones = whatsapp.contatosWhatsapp.map((c) => c.telefone);
+      expect(new Set(telefones).size).toBe(telefones.length);
+      for (const telefone of telefones) expect(telefone).toMatch(/^55[1-9]{2}9\d{8}$/);
     });
   });
 });
