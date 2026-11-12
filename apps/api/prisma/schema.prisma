@@ -253,6 +253,7 @@ model Paciente {
   agendamentos  Agendamento[]
   orcamentos    Orcamento[]
   vendas        Venda[]
+  pacotes       Pacote[]
   contasReceber ContaReceber[]
   contatosWhatsapp ContatoWhatsapp[]
 
@@ -384,6 +385,8 @@ model Profissional {
   contratosSala ContratoSala[]
   agendamentos  Agendamento[]
   protocolos    Protocolo[]
+  pacotes       Pacote[]
+  usosPacote    PacoteUso[]
 
   @@index([especialidadeId])
   @@map("profissionais")
@@ -1477,6 +1480,82 @@ model VendaItem {
 
   @@index([vendaId])
   @@map("venda_itens")
+}
+
+enum PacoteStatus {
+  ATIVO
+  CANCELADO
+
+  @@map("pacote_status")
+}
+
+/// Dono: comercial-atendimento. Pacote de sessões do paciente (tela Pacotes, `/pacotes`). Só
+/// ATIVO e CANCELADO são gravados: Finalizado (saldo zerado) e Vencido (passou a data) são
+/// calculados na leitura. `sessoesTotal` (soma das quantidades dos itens) e `sessoesUsadas` (soma
+/// dos usos) são mantidos pelo service. Exclusão lógica: histórico comercial.
+model Pacote {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pacienteId     String       @map("paciente_id") @db.Uuid
+  nome           String
+  descricao      String?
+  /// Valor informado no modal ou, na falta dele, a soma dos itens.
+  valorTotal     Decimal      @map("valor_total") @db.Decimal(12, 2)
+  dataInicio     DateTime?    @map("data_inicio") @db.Date
+  dataVencimento DateTime?    @map("data_vencimento") @db.Date
+  profissionalId String?      @map("profissional_id") @db.Uuid
+  observacoes    String?
+  sessoesTotal   Int          @map("sessoes_total")
+  sessoesUsadas  Int          @default(0) @map("sessoes_usadas")
+  status         PacoteStatus @default(ATIVO)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime?    @map("deleted_at") @db.Timestamptz(3)
+
+  paciente     Paciente      @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
+  profissional Profissional? @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+  itens        PacoteItem[]
+  usos         PacoteUso[]
+
+  @@index([pacienteId])
+  @@index([status])
+  @@index([dataVencimento])
+  @@index([createdAt])
+  @@map("pacotes")
+}
+
+/// Dono: comercial-atendimento. Item do pacote: nome e preço ficam copiados do produto (snapshot)
+/// e a quantidade é o número de sessões do item.
+model PacoteItem {
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pacoteId      String  @map("pacote_id") @db.Uuid
+  /// Produto/procedimento de origem (sem FK: o item é um snapshot).
+  produtoId     String  @map("produto_id") @db.Uuid
+  descricao     String
+  quantidade    Int
+  valorUnitario Decimal @map("valor_unitario") @db.Decimal(12, 2)
+  posicao       Int     @default(0)
+
+  pacote Pacote @relation(fields: [pacoteId], references: [id], onDelete: Cascade)
+
+  @@index([pacoteId])
+  @@map("pacote_itens")
+}
+
+/// Dono: comercial-atendimento. Uso de sessões do pacote ("Registrar Uso de Sessão").
+model PacoteUso {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pacoteId       String   @map("pacote_id") @db.Uuid
+  profissionalId String   @map("profissional_id") @db.Uuid
+  quantidade     Int      @default(1)
+  observacoes    String?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  pacote       Pacote       @relation(fields: [pacoteId], references: [id], onDelete: Cascade)
+  profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+
+  @@index([pacoteId])
+  @@index([profissionalId])
+  @@map("pacote_usos")
 }
 
 enum PlanoContaTipo {
