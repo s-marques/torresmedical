@@ -1,10 +1,14 @@
 import {
   arquivoLinkSchema,
   contratoSalaSchema,
+  descreverResumoGerarCobrancas,
+  gerarCobrancasMesResumoSchema,
   type CancelarContratoSalaInput,
+  type ConfirmarSemCobrancaInput,
   type ContratoSala,
   type CreateContratoSalaInput,
   type EncerrarContratoSalaInput,
+  type GerarParcelaContratoInput,
   type UpdateContratoSalaInput,
 } from '@torres/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -85,4 +89,48 @@ export function useCancelarContrato(id: string) {
     (dados: CancelarContratoSalaInput) => chamar(`/${id}/cancelar`, 'POST', dados),
     { formulario: true, sucesso: 'Contrato cancelado.' },
   );
+}
+
+/**
+ * "Gerar Cobranças do Mês" (aba Contratos): gera a cobrança dos contratos Mensal ativos do mês
+ * atual, sem duplicar. O aviso de resultado segue o texto da issue #115.
+ */
+export function useGerarCobrancasDoMes() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      apiFetch(`${URL_CONTRATOS}/gerar-cobrancas-mes`, {
+        method: 'POST',
+        schema: gerarCobrancasMesResumoSchema,
+      }),
+    onSuccess: async (resumo) => {
+      await queryClient.invalidateQueries({ queryKey: ['data-grid', URL_CONTRATOS] });
+      toast.success(descreverResumoGerarCobrancas(resumo));
+    },
+  });
+}
+
+/** "Gerar parcela de mês/ano" (linha "Contrato sem cobrança"): informa o valor manualmente. */
+export function useGerarParcelaContrato(contratoId: string) {
+  return useMutationContrato(
+    (dados: GerarParcelaContratoInput) => chamar(`/${contratoId}/gerar-parcela`, 'POST', dados),
+    { formulario: true, sucesso: 'Parcela gerada.' },
+  );
+}
+
+/** Confirma que o contrato não terá cobrança no mês informado. */
+export function useConfirmarSemCobranca(contratoId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    meta: META_FORMULARIO,
+    mutationFn: (dados: ConfirmarSemCobrancaInput) =>
+      apiFetch(`${URL_CONTRATOS}/${contratoId}/confirmar-sem-cobranca`, {
+        method: 'POST',
+        body: dados,
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['data-grid', URL_CONTRATOS] });
+      toast.success('Confirmado: sem cobrança nesse mês.');
+    },
+  });
 }

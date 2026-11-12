@@ -5,11 +5,21 @@ import {
   descreverDiaContrato,
   descreverValorContrato,
   exportContratosSalaQuerySchema,
+  formatarCompetencia,
   listContratosSalaQuerySchema,
   type ContratoModalidade,
   type ContratoSala,
 } from '@torres/shared';
-import { BanIcon, PencilIcon, SearchIcon, TimerIcon, Trash2Icon, XCircleIcon } from 'lucide-react';
+import {
+  AlertTriangleIcon,
+  BanIcon,
+  CoinsIcon,
+  PencilIcon,
+  SearchIcon,
+  TimerIcon,
+  Trash2Icon,
+  XCircleIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataGrid } from '@/components/shared/data-grid/DataGrid';
@@ -17,20 +27,24 @@ import type { ColunaGrid, ExportacaoGrid } from '@/components/shared/data-grid/t
 import { SePermitido } from '@/components/shared/SePermitido';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { hojeISO } from '@/lib/datas';
 import { formatarData } from '@/lib/formatar';
 import { ModalContrato } from './ModalContrato';
 import { ModalDetalhesContrato } from './ModalDetalhesContrato';
 import { ModalFecharContrato } from './ModalFecharContrato';
+import { ModalGerarParcelaContrato } from './ModalGerarParcelaContrato';
 import { ModalHorasContrato } from './ModalHorasContrato';
 import { PdfContrato } from './PdfContrato';
 import { StatusContrato } from './StatusContrato';
-import { URL_CONTRATOS, useExcluirContrato } from './use-contratos-sala';
+import { URL_CONTRATOS, useExcluirContrato, useGerarCobrancasDoMes } from './use-contratos-sala';
 
 const EXPORTACAO: ExportacaoGrid = {
   permissao: 'gestao-profissionais.salas.exportar',
   nomeArquivo: 'contratos-salas',
   schema: exportContratosSalaQuerySchema,
 };
+
+const COMPETENCIA_ATUAL = hojeISO().slice(0, 7);
 
 /** Rótulo do Tipo na tabela (o de Hora Avulsa é "Por Hora Avulsa"). */
 const TIPO_NA_TABELA: Record<ContratoModalidade, string> = {
@@ -69,7 +83,9 @@ export function AbaContratos({ criando, onFecharCriar }: Readonly<AbaContratosPr
     tipo: 'encerrar' | 'cancelar';
   } | null>(null);
   const [excluindo, setExcluindo] = useState<ContratoSala | null>(null);
+  const [gerandoParcela, setGerandoParcela] = useState<ContratoSala | null>(null);
   const excluir = useExcluirContrato();
+  const gerarCobrancasDoMes = useGerarCobrancasDoMes();
 
   const colunas: ColunaGrid<ContratoSala>[] = [
     {
@@ -131,6 +147,12 @@ export function AbaContratos({ criando, onFecharCriar }: Readonly<AbaContratosPr
               Enc. {formatarData(c.encerradoEm)}
             </span>
           )}
+          {c.semCobrancaNoMes && (
+            <span className="flex items-center gap-1 text-xs text-amber-600">
+              <AlertTriangleIcon aria-hidden className="size-3" />
+              Sem cobrança em {formatarCompetencia(COMPETENCIA_ATUAL)}
+            </span>
+          )}
         </div>
       ),
     },
@@ -164,6 +186,21 @@ export function AbaContratos({ criando, onFecharCriar }: Readonly<AbaContratosPr
             >
               <TimerIcon aria-hidden />
             </Button>
+          )}
+          {c.semCobrancaNoMes && (
+            <SePermitido permissao="gestao-profissionais.salas.editar">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="text-amber-600 hover:text-amber-600"
+                aria-label={`Gerar parcela de ${formatarCompetencia(COMPETENCIA_ATUAL)} de ${c.locatarioNome}`}
+                title={`Contrato sem cobrança em ${formatarCompetencia(COMPETENCIA_ATUAL)}: gerar parcela do mês`}
+                onClick={() => setGerandoParcela(c)}
+              >
+                <CoinsIcon aria-hidden />
+              </Button>
+            </SePermitido>
           )}
           {c.status === 'ATIVO' && (
             <SePermitido permissao="gestao-profissionais.salas.editar">
@@ -223,6 +260,19 @@ export function AbaContratos({ criando, onFecharCriar }: Readonly<AbaContratosPr
 
   return (
     <div className="grid gap-4">
+      <div className="flex justify-end">
+        <SePermitido permissao="gestao-profissionais.salas.editar">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={gerarCobrancasDoMes.isPending}
+            onClick={() => gerarCobrancasDoMes.mutate()}
+          >
+            <CoinsIcon aria-hidden />
+            Gerar Cobranças do Mês
+          </Button>
+        </SePermitido>
+      </div>
       <DataGrid
         url={URL_CONTRATOS}
         schema={contratoSalaPageSchema}
@@ -236,6 +286,12 @@ export function AbaContratos({ criando, onFecharCriar }: Readonly<AbaContratosPr
       {editando && <ModalContrato contrato={editando} onFechar={() => setEditando(null)} />}
       {lancandoHoras && (
         <ModalHorasContrato contrato={lancandoHoras} onFechar={() => setLancandoHoras(null)} />
+      )}
+      {gerandoParcela && (
+        <ModalGerarParcelaContrato
+          contrato={gerandoParcela}
+          onFechar={() => setGerandoParcela(null)}
+        />
       )}
       {fechando && (
         <ModalFecharContrato

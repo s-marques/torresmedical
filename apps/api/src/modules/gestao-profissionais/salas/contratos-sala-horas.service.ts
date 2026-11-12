@@ -1,8 +1,10 @@
-import { TransactionHost } from '@nestjs-cls/transactional';
+import { Transactional, TransactionHost } from '@nestjs-cls/transactional';
 import { Injectable } from '@nestjs/common';
 import {
+  descreverValorContrato,
   minutosEntre,
   valorDasHoras,
+  type ContaReceber,
   type ContratoHora as ContratoHoraDto,
   type ContratoHorasResponse,
   type CreateContratoHoraInput,
@@ -13,6 +15,9 @@ import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import type { ContratoSala, ContratoSalaHora } from '../../../generated/prisma/client';
+import { ContasReceberService } from '../../financeiro/contas-receber/contas-receber.service';
+import { dataVencimentoDoMes } from './competencia-cobranca';
+import { ContratosSalaService } from './contratos-sala.service';
 
 const diaISO = (data: Date) => data.toISOString().slice(0, 10);
 const paraData = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
@@ -42,7 +47,11 @@ function limitesDoMes(mes: string): { inicio: Date; fim: Date } {
 /** Horas utilizadas dos contratos de Hora Avulsa (modal "Horas Utilizadas"). */
 @Injectable()
 export class ContratosSalaHorasService {
-  constructor(private readonly txHost: TransactionHost<PrismaAdapter>) {}
+  constructor(
+    private readonly txHost: TransactionHost<PrismaAdapter>,
+    private readonly contratos: ContratosSalaService,
+    private readonly contasReceber: ContasReceberService,
+  ) {}
 
   async list(contratoId: string, query: ListContratoHorasQuery): Promise<ContratoHorasResponse> {
     const contrato = await this.buscarContrato(contratoId);
@@ -86,6 +95,56 @@ export class ContratosSalaHorasService {
     }
     await this.txHost.tx.contratoSalaHora.delete({ where: { id: horaId } });
     return toDto(hora);
+  }
+
+  /** "Gerar Cobrança" do modal: cobra as horas lançadas no mês, sem duplicar. */
+  @Transactional()
+  async gerarCobranca(contratoId: string, mes: string): Promise<ContaReceber> {
+    const contrato = await this.buscarContrato(contratoId);
+    const { inicio, fim } = limitesDoMes(mes);
+    const horas = await this.txHost.tx.contratoSalaHora.findMany({
+      where: { contratoId, data: { gte: inicio, lt: fim } },
+    });
+    const minutosUtilizados = horas.reduce(
+      (total, hora) => total + minutosEntre(hora.entrada, hora.saida),
+      0,
+    );
+    const valorHora = Number(contrato.valorUnitario);
+    const valorTotal = valorDasHoras(minutosUtilizados, valorHora);
+    if (valorTotal <= 0) {
+      throw new BusinessException(
+        'CONTRATO_SEM_HORAS_NO_MES',
+        'Não há horas lançadas nesse mês para gerar a cobrança.',
+        { status: 409 },
+      );
+    }
+    const existente = await this.txHost.tx.contratoSalaCobranca.findUnique({
+      where: { contratoSalaId_competencia: { contratoSalaId: contratoId, competencia: mes } },
+    });
+    if (existente) {
+      throw new BusinessException(
+        'CONTRATO_JA_TEM_COBRANCA',
+        'A cobrança desse mês já foi gerada.',
+        { status: 409 },
+      );
+    }
+    const dto = await this.contratos.findById(contratoId);
+    const conta = await this.contasReceber.criarDeOrigemExterna({
+      descricao: `Aluguel de sala - ${dto.salaNome} - ${dto.locatarioNome} (${descreverValorContrato(dto)})`,
+      pacienteId: dto.locatarioTipo === 'CLIENTE' ? dto.locatarioId : null,
+      valor: valorTotal,
+      dataVencimento: dataVencimentoDoMes(mes, dto.diaVencimento),
+      formaPagamentoId: dto.formaPagamentoId,
+      planoContaId: null,
+      documento: null,
+      totalParcelas: 1,
+      status: 'PENDENTE',
+      observacoes: null,
+    });
+    await this.txHost.tx.contratoSalaCobranca.create({
+      data: { contratoSalaId: contratoId, competencia: mes, contaReceberId: conta.id },
+    });
+    return conta;
   }
 
   /** Contrato não excluído e de Hora Avulsa: só ele tem horas utilizadas. */

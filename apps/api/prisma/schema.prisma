@@ -1219,16 +1219,36 @@ model ContratoSala {
   updatedAt          DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt          DateTime?                  @map("deleted_at") @db.Timestamptz(3)
 
-  sala         Sala               @relation(fields: [salaId], references: [id])
-  profissional Profissional?      @relation(fields: [profissionalId], references: [id])
+  sala         Sala                   @relation(fields: [salaId], references: [id])
+  profissional Profissional?          @relation(fields: [profissionalId], references: [id])
   dias         ContratoSalaDia[]
   horas        ContratoSalaHora[]
+  cobrancas    ContratoSalaCobranca[]
 
   @@index([salaId])
   @@index([profissionalId])
   @@index([pacienteId])
   @@index([status])
   @@map("contratos_sala")
+}
+
+/// Dono: gestao-profissionais. Idempotência da cobrança mensal de um contrato de sala: no
+/// máximo uma linha por contrato e mês de competência ("Gerar Cobranças do Mês" não duplica).
+/// `contaReceberId` nulo = "sem cobrança" confirmada pelo usuário; preenchido = cobrança gerada
+/// em Contas a Receber (módulo financeiro, sem FK).
+model ContratoSalaCobranca {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contratoSalaId String   @map("contrato_sala_id") @db.Uuid
+  /// `AAAA-MM`.
+  competencia    String   @db.VarChar(7)
+  contaReceberId String?  @map("conta_receber_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  contrato ContratoSala @relation(fields: [contratoSalaId], references: [id])
+
+  @@unique([contratoSalaId, competencia])
+  @@index([contratoSalaId])
+  @@map("contratos_sala_cobranca")
 }
 
 /// Dia da semana (0 = domingo) e horário "HH:MM" em que o locatário usa a sala.

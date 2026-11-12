@@ -12,6 +12,7 @@ import {
   type UpdateContaReceberInput,
 } from '@torres/shared';
 import type { Prisma } from '../../../generated/prisma/client';
+import { AuditService } from '../../../common/audit/audit.service';
 import { ExportService, selectColumns } from '../../../common/export/export.service';
 import type { ExportFile } from '../../../common/export/export.types';
 import { paginate, type Page } from '../../../common/pagination/paginate';
@@ -57,6 +58,7 @@ export class ContasReceberService {
   constructor(
     private readonly txHost: TransactionHost<PrismaAdapter>,
     private readonly exportService: ExportService,
+    private readonly audit: AuditService,
   ) {}
 
   async list(query: ListContasReceberQuery): Promise<Page<ContaReceber>> {
@@ -113,6 +115,55 @@ export class ContasReceberService {
       columns: selectColumns(CONTA_RECEBER_EXPORT_DEFINITIONS, query.columns),
       rows: rows.map(toContaReceber),
     });
+  }
+
+  /**
+   * Cria uma conta a receber fora do fluxo da tela (ex.: cobrança de contrato de sala, Gestão
+   * Profissionais), com auditoria própria já que não passa pelo `AuditInterceptor` do controller.
+   */
+  async criarDeOrigemExterna(input: CreateContaReceberInput): Promise<ContaReceber> {
+    const conta = await this.create(input);
+    await this.audit.record({
+      action: 'CREATE',
+      entity: 'ContaReceber',
+      entityId: conta.id,
+      before: null,
+      after: conta,
+    });
+    return conta;
+  }
+
+  /**
+   * Cancela (status `CANCELADO`) as contas pendentes entre os ids informados com vencimento
+   * depois de `apartirDe` (`AAAA-MM-DD`). Usado quando um contrato de sala é encerrado ou
+   * cancelado: as parcelas futuras não são mais cobradas. Retorna quantas foram canceladas.
+   */
+  async cancelarPendentesComVencimentoApos(
+    ids: readonly string[],
+    apartirDe: string,
+  ): Promise<number> {
+    if (ids.length === 0) return 0;
+    const contas = await this.txHost.tx.contaReceber.findMany({
+      where: {
+        id: { in: [...ids] },
+        status: 'PENDENTE',
+        dataVencimento: { gt: new Date(`${apartirDe}T00:00:00.000Z`) },
+        ...NAO_EXCLUIDAS,
+      },
+      include: INCLUDE,
+    });
+    for (const conta of contas) {
+      const antes = toContaReceber(conta);
+      const depois = await this.atualizar(conta.id, { status: 'CANCELADO' });
+      await this.audit.record({
+        action: 'UPDATE',
+        entity: 'ContaReceber',
+        entityId: conta.id,
+        before: antes,
+        after: depois,
+      });
+    }
+    return contas.length;
   }
 
   private async atualizar(

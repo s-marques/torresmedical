@@ -39,6 +39,6 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
     ContasPagarService,
     ContasReceberService,
   ],
-  exports: [FormasPagamentoService, PlanoContasService],
+  exports: [FormasPagamentoService, PlanoContasService, ContasReceberService],
 })
 export class FinanceiroModule {}

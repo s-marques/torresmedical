@@ -1,4 +1,5 @@
 import {
+  contaReceberSchema,
   contratoHoraSchema,
   contratoHorasResponseSchema,
   type CreateContratoHoraInput,
@@ -38,6 +39,24 @@ export function useLancarHora(contratoId: string) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: [CHAVE, contratoId] });
       toast.success('Hora lançada.');
+    },
+  });
+}
+
+/** "Gerar Cobrança" do modal: cobra as horas lançadas no mês informado, sem duplicar. */
+export function useGerarCobrancaHoras(contratoId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (mes: string) =>
+      apiFetch(`${URL_CONTRATOS}/${contratoId}/horas/gerar-cobranca`, {
+        method: 'POST',
+        body: { mes },
+        schema: contaReceberSchema,
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: [CHAVE, contratoId] });
+      await queryClient.invalidateQueries({ queryKey: ['data-grid', URL_CONTRATOS] });
+      toast.success('Cobrança gerada.');
     },
   });
 }

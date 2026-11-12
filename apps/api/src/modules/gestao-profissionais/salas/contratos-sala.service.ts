@@ -24,8 +24,10 @@ import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { ArquivosService } from '../../../common/storage/arquivos.service';
 import type { ContratoSalaStatus, Prisma } from '../../../generated/prisma/client';
 import { PacientesService } from '../../comercial-atendimento/pacientes/pacientes.service';
+import { ContasReceberService } from '../../financeiro/contas-receber/contas-receber.service';
 import { FormasPagamentoService } from '../../financeiro/formas-pagamento/formas-pagamento.service';
 import { ProfissionaisService } from '../profissionais/profissionais.service';
+import { competenciaAtual } from './competencia-cobranca';
 import type { SalaEmUsoVerificador } from './sala-em-uso';
 
 const NAO_EXCLUIDOS = { deletedAt: null } as const;
@@ -89,6 +91,7 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
     private readonly formasPagamento: FormasPagamentoService,
     private readonly arquivos: ArquivosService,
     private readonly exportService: ExportService,
+    private readonly contasReceber: ContasReceberService,
   ) {}
 
   async emUso(ids: readonly string[]): Promise<ReadonlySet<string>> {
@@ -112,8 +115,11 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
         }),
       count: () => this.txHost.tx.contratoSala.count({ where }),
     });
-    const nomes = await this.resolverNomes(page.data);
-    return { ...page, data: page.data.map((c) => this.toDto(c, nomes)) };
+    const [nomes, semCobranca] = await Promise.all([
+      this.resolverNomes(page.data),
+      this.semCobrancaIds(page.data),
+    ]);
+    return { ...page, data: page.data.map((c) => this.toDto(c, nomes, semCobranca)) };
   }
 
   /**
@@ -137,13 +143,20 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
       include: INCLUDE,
     });
-    const nomes = await this.resolverNomes(contratos);
-    return contratos.map((c) => this.toDto(c, nomes));
+    const [nomes, semCobranca] = await Promise.all([
+      this.resolverNomes(contratos),
+      this.semCobrancaIds(contratos),
+    ]);
+    return contratos.map((c) => this.toDto(c, nomes, semCobranca));
   }
 
   async findById(id: string): Promise<ContratoSalaDto> {
     const contrato = await this.buscar(id);
-    return this.toDto(contrato, await this.resolverNomes([contrato]));
+    const [nomes, semCobranca] = await Promise.all([
+      this.resolverNomes([contrato]),
+      this.semCobrancaIds([contrato]),
+    ]);
+    return this.toDto(contrato, nomes, semCobranca);
   }
 
   async create(input: CreateContratoSalaInput): Promise<ContratoSalaDto> {
@@ -152,7 +165,7 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       data: { ...this.dados(input), dias: { create: input.dias } },
       include: INCLUDE,
     });
-    return this.toDto(criado, await this.resolverNomes([criado]));
+    return this.toDto(criado, await this.resolverNomes([criado]), await this.semCobrancaIds([criado]));
   }
 
   async update(id: string, input: UpdateContratoSalaInput): Promise<ContratoSalaDto> {
@@ -163,7 +176,7 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       data: { ...this.dados(input), dias: { deleteMany: {}, create: input.dias } },
       include: INCLUDE,
     });
-    return this.toDto(alterado, await this.resolverNomes([alterado]));
+    return this.toDto(alterado, await this.resolverNomes([alterado]), await this.semCobrancaIds([alterado]));
   }
 
   /** Grava (ou remove, com `null`) o PDF do contrato, já enviado em `/api/arquivos`. */
@@ -183,7 +196,7 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       data: { pdfArquivoId: arquivoId },
       include: INCLUDE,
     });
-    return this.toDto(alterado, await this.resolverNomes([alterado]));
+    return this.toDto(alterado, await this.resolverNomes([alterado]), await this.semCobrancaIds([alterado]));
   }
 
   /** Término natural: o contrato ativo passa a "encerrado" na data informada. */
@@ -197,8 +210,9 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
   }
 
   /**
-   * Só contrato ativo muda de status. As parcelas pendentes depois da data serão canceladas
-   * quando existir a tela Contas a Receber (#48), que passa a ouvir este fato.
+   * Só contrato ativo muda de status. As parcelas pendentes com vencimento depois da data são
+   * canceladas em Contas a Receber (módulo financeiro), pelos ids gravados em
+   * `ContratoSalaCobranca` ao gerar cada cobrança.
    */
   private async fechar(
     id: string,
@@ -219,7 +233,15 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       data: { status, encerradoEm: paraData(data), motivoEncerramento: motivo },
       include: INCLUDE,
     });
-    return this.toDto(alterado, await this.resolverNomes([alterado]));
+    const cobrancas = await this.txHost.tx.contratoSalaCobranca.findMany({
+      where: { contratoSalaId: id, contaReceberId: { not: null } },
+      select: { contaReceberId: true },
+    });
+    const contaReceberIds = cobrancas
+      .map((c) => c.contaReceberId)
+      .filter((v): v is string => v !== null);
+    await this.contasReceber.cancelarPendentesComVencimentoApos(contaReceberIds, data);
+    return this.toDto(alterado, await this.resolverNomes([alterado]), await this.semCobrancaIds([alterado]));
   }
 
   /** Exclusão lógica: cobranças e o histórico continuam apontando para o contrato. */
@@ -230,7 +252,7 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       data: { deletedAt: new Date() },
       include: INCLUDE,
     });
-    return this.toDto(excluido, await this.resolverNomes([excluido]));
+    return this.toDto(excluido, await this.resolverNomes([excluido]), await this.semCobrancaIds([excluido]));
   }
 
   async export(query: ExportContratosSalaQuery): Promise<ExportFile> {
@@ -241,13 +263,16 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       orderBy: toOrderBy(query.sort),
       include: INCLUDE,
     });
-    const nomes = await this.resolverNomes(rows);
+    const [nomes, semCobranca] = await Promise.all([
+      this.resolverNomes(rows),
+      this.semCobrancaIds(rows),
+    ]);
     return this.exportService.export({
       format: query.format,
       title: 'Contratos de salas',
       filename: 'contratos-salas',
       columns: selectColumns(CONTRATO_EXPORT_DEFINITIONS, query.columns),
-      rows: rows.map((c) => this.toDto(c, nomes)),
+      rows: rows.map((c) => this.toDto(c, nomes, semCobranca)),
     });
   }
 
@@ -370,7 +395,32 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
     return { pacientes, formas, pdfs };
   }
 
-  private toDto(contrato: ContratoComRelacoes, nomes: Nomes): ContratoSalaDto {
+  /**
+   * Contratos Por Turno, ativos e sem permuta, sem cobrança registrada (`ContratoSalaCobranca`)
+   * no mês atual: só eles mostram o aviso "Contrato sem cobrança" (Mensal vai por "Gerar
+   * Cobranças do Mês" e Hora Avulsa pelo modal "Horas Utilizadas").
+   */
+  private async semCobrancaIds(
+    contratos: readonly ContratoComRelacoes[],
+  ): Promise<ReadonlySet<string>> {
+    const elegiveis = contratos.filter(
+      (c) => c.status === 'ATIVO' && !c.permuta && c.modalidade === 'TURNO',
+    );
+    if (elegiveis.length === 0) return new Set();
+    const competencia = competenciaAtual();
+    const cobrancas = await this.txHost.tx.contratoSalaCobranca.findMany({
+      where: { contratoSalaId: { in: elegiveis.map((c) => c.id) }, competencia },
+      select: { contratoSalaId: true },
+    });
+    const cobrados = new Set(cobrancas.map((c) => c.contratoSalaId));
+    return new Set(elegiveis.filter((c) => !cobrados.has(c.id)).map((c) => c.id));
+  }
+
+  private toDto(
+    contrato: ContratoComRelacoes,
+    nomes: Nomes,
+    semCobranca: ReadonlySet<string>,
+  ): ContratoSalaDto {
     const profissional = contrato.locatarioTipo === 'PROFISSIONAL';
     const locatarioId = (profissional ? contrato.profissionalId : contrato.pacienteId) ?? '';
     const valorUnitario = Number(contrato.valorUnitario);
@@ -406,6 +456,7 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       participaEventos: contrato.participaEventos,
       observacoes: contrato.observacoes,
       status: contrato.status,
+      semCobrancaNoMes: semCobranca.has(contrato.id),
       encerradoEm: contrato.encerradoEm ? diaISO(contrato.encerradoEm) : null,
       motivoEncerramento: contrato.motivoEncerramento,
       pdfArquivoId: contrato.pdfArquivoId,
