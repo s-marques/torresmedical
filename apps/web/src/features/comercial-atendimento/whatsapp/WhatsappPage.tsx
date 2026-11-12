@@ -1,4 +1,3 @@
-import type { ConversaWhatsapp } from '@torres/shared';
 import { MegaphoneIcon, MessageSquareIcon, SearchIcon, TagIcon } from 'lucide-react';
 import { useState } from 'react';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -12,18 +11,19 @@ import { ChipsStatusConversa, ListaConversas } from './ListaConversas';
 import { ModalAnuncios } from './ModalAnuncios';
 import { ModalBuscarConversas } from './ModalBuscarConversas';
 import { ModalGerenciarTags } from './ModalGerenciarTags';
+import { PainelConversa } from './PainelConversa';
 import { useCanaisWhatsapp, useContadores } from './use-whatsapp';
 
 type ModalAberto = 'anuncios' | 'tags' | 'busca' | null;
 
 /**
  * Tela WhatsApp (`/atendimento`): conversas por canal e status, Nova conversa, busca, tags e
- * anúncios. O painel da conversa aberta depende do print do dev (item 👤 da issue #16).
+ * anúncios. Ao escolher uma conversa, o painel dela abre à direita (`PainelConversa`).
  */
 export default function WhatsappPage() {
   const [canalId, setCanalId] = useState<string | undefined>();
   const [status, setStatus] = useState<FiltroStatusConversa>('aguardando');
-  const [selecionada, setSelecionada] = useState<ConversaWhatsapp | null>(null);
+  const [selecionadaId, setSelecionadaId] = useState<string | null>(null);
   const [novaAberta, setNovaAberta] = useState(false);
   const [modal, setModal] = useState<ModalAberto>(null);
   const canais = useCanaisWhatsapp().data?.data ?? [];
@@ -53,7 +53,7 @@ export default function WhatsappPage() {
       />
       <ChipsCanal canais={canais} canalId={canalId} onChange={setCanalId} />
 
-      <div className="grid min-h-[32rem] overflow-hidden rounded-xl border md:grid-cols-[22rem_1fr]">
+      <div className="grid min-h-[32rem] overflow-hidden rounded-xl border md:h-[42rem] md:grid-cols-[22rem_1fr]">
         <aside
           aria-label="Conversas"
           className="flex min-h-0 flex-col border-b md:border-r md:border-b-0"
@@ -80,22 +80,26 @@ export default function WhatsappPage() {
           </div>
           {novaAberta && <FormNovaConversa canais={canais} onFechar={() => setNovaAberta(false)} />}
           <ChipsStatusConversa valor={status} contadores={contadores.data} onChange={setStatus} />
-          <div className="mt-3 min-h-0 flex-1 overflow-y-auto border-t md:max-h-[40rem]">
+          <div className="mt-3 min-h-0 flex-1 overflow-y-auto border-t">
             <ListaConversas
               canalId={canalId}
               status={status}
-              selecionadaId={selecionada?.id ?? null}
-              onSelecionar={setSelecionada}
+              selecionadaId={selecionadaId}
+              onSelecionar={(conversa) => setSelecionadaId(conversa.id)}
             />
           </div>
         </aside>
-        <section aria-label="Conversa" className="flex items-center justify-center p-6">
-          <EmptyState
-            icone={MessageSquareIcon}
-            titulo="Selecione uma conversa"
-            descricao="Escolha uma conversa na lista ao lado para começar."
-          />
-        </section>
+        {selecionadaId ? (
+          <PainelConversa key={selecionadaId} conversaId={selecionadaId} />
+        ) : (
+          <section aria-label="Conversa" className="flex items-center justify-center p-6">
+            <EmptyState
+              icone={MessageSquareIcon}
+              titulo="Selecione uma conversa"
+              descricao="Escolha uma conversa na lista ao lado para começar."
+            />
+          </section>
+        )}
       </div>
 
       <ModalAnuncios aberto={modal === 'anuncios'} onAbertoChange={alterarModal('anuncios')} />
@@ -103,7 +107,7 @@ export default function WhatsappPage() {
       <ModalBuscarConversas
         aberto={modal === 'busca'}
         onAbertoChange={alterarModal('busca')}
-        onSelecionar={setSelecionada}
+        onSelecionar={(conversa) => setSelecionadaId(conversa.id)}
       />
     </div>
   );

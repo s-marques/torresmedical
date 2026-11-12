@@ -1,13 +1,18 @@
 import {
   BUSCA_CONVERSAS_MIN,
   contadoresConversasWhatsappSchema,
+  conversaWhatsappDetalheSchema,
   conversaWhatsappPageSchema,
   conversaWhatsappSchema,
+  mensagemWhatsappPageSchema,
+  mensagemWhatsappSchema,
   tagAtendimentoPageSchema,
   tagAtendimentoSchema,
   type ConversaWhatsappStatusFiltro,
   type CreateTagAtendimentoInput,
+  type EnviarMensagemWhatsappInput,
   type NovaConversaWhatsappInput,
+  type TransferirConversaWhatsappInput,
 } from '@torres/shared';
 import {
   keepPreviousData,
@@ -33,6 +38,8 @@ export const ATUALIZACAO_MS = 10_000;
 export const TAMANHO_PAGINA_CONVERSAS = 30;
 /** Resultados do modal "Buscar Conversas". */
 export const TAMANHO_PAGINA_BUSCA = 50;
+/** Mensagens por página do painel; as anteriores carregam sob demanda. */
+export const TAMANHO_PAGINA_MENSAGENS = 30;
 /** Todas as tags cabem no modal "Gerenciar Tags". */
 export const TAMANHO_PAGINA_TAGS = 100;
 
@@ -141,5 +148,94 @@ export function useExcluirTag() {
     (id: string) =>
       apiFetch(`${URL_TAGS}/${id}`, { method: 'DELETE', schema: tagAtendimentoSchema }),
     false,
+  );
+}
+
+/** Cabeçalho e painel direito da conversa aberta. */
+export function useConversa(id: string) {
+  return useQuery({
+    queryKey: [...RAIZ, 'conversa', id] as const,
+    queryFn: ({ signal }) =>
+      apiFetch(`${URL_CONVERSAS}/${id}`, { schema: conversaWhatsappDetalheSchema, signal }),
+    refetchInterval: ATUALIZACAO_MS,
+  });
+}
+
+/** Mensagens da conversa. A API devolve as mais recentes primeiro; `mensagens` já vem na ordem da tela. */
+export function useMensagens(id: string) {
+  const consulta = useInfiniteQuery({
+    queryKey: [...RAIZ, 'mensagens', id] as const,
+    initialPageParam: 1,
+    queryFn: ({ pageParam, signal }) =>
+      apiFetch(`${URL_CONVERSAS}/${id}/mensagens`, {
+        query: { page: pageParam, pageSize: TAMANHO_PAGINA_MENSAGENS },
+        schema: mensagemWhatsappPageSchema,
+        signal,
+      }),
+    getNextPageParam: ({ meta }) => (meta.page < meta.totalPages ? meta.page + 1 : undefined),
+    refetchInterval: ATUALIZACAO_MS,
+  });
+  const mensagens = (consulta.data?.pages ?? []).flatMap((pagina) => pagina.data).reverse();
+  return { ...consulta, mensagens };
+}
+
+/** Mutations do painel: ao concluir, lista, contadores, cabeçalho e mensagens são buscados de novo. */
+function useMutationConversa<TVariaveis, TResposta>(
+  mutationFn: (variaveis: TVariaveis) => Promise<TResposta>,
+  { formulario = false, sucesso }: { formulario?: boolean; sucesso?: string } = {},
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    meta: formulario ? META_FORMULARIO : undefined,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: RAIZ });
+      if (sucesso) toast.success(sucesso);
+    },
+  });
+}
+
+function acao(id: string, caminho: string, body?: unknown) {
+  return apiFetch(`${URL_CONVERSAS}/${id}/${caminho}`, {
+    method: 'POST',
+    body,
+    schema: conversaWhatsappDetalheSchema,
+  });
+}
+
+export function useEnviarMensagem(id: string) {
+  return useMutationConversa(
+    (dados: EnviarMensagemWhatsappInput) =>
+      apiFetch(`${URL_CONVERSAS}/${id}/mensagens`, {
+        method: 'POST',
+        body: dados,
+        schema: mensagemWhatsappSchema,
+      }),
+    { formulario: true },
+  );
+}
+
+export function useAssumirConversa(id: string) {
+  return useMutationConversa(() => acao(id, 'assumir'), { sucesso: 'Conversa assumida.' });
+}
+
+export function useEncerrarConversa(id: string) {
+  return useMutationConversa(() => acao(id, 'encerrar'), { sucesso: 'Conversa encerrada.' });
+}
+
+export function useTransferirConversa(id: string) {
+  return useMutationConversa(
+    (dados: TransferirConversaWhatsappInput) => acao(id, 'transferir', dados),
+    { formulario: true, sucesso: 'Conversa transferida.' },
+  );
+}
+
+/** Aplica (`aplicar`) ou remove a tag da conversa. */
+export function useAlterarTagDaConversa(id: string) {
+  return useMutationConversa(({ tagId, aplicar }: { tagId: string; aplicar: boolean }) =>
+    apiFetch(`${URL_CONVERSAS}/${id}/tags/${tagId}`, {
+      method: aplicar ? 'PUT' : 'DELETE',
+      schema: conversaWhatsappDetalheSchema,
+    }),
   );
 }

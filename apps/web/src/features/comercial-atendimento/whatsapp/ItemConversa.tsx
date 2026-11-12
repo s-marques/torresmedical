@@ -1,18 +1,8 @@
-import {
-  CONVERSA_WHATSAPP_ROTULO_STATUS,
-  type ConversaWhatsapp,
-  type ConversaWhatsappStatus,
-} from '@torres/shared';
-import { StatusBadge, type TomStatus } from '@/components/shared/StatusBadge';
+import { CONVERSA_WHATSAPP_ROTULO_STATUS, type ConversaWhatsapp } from '@torres/shared';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { cn } from '@/lib/utils';
+import { TOM_STATUS } from './filtros-status';
 import { iniciais, quandoDaConversa, textoNaoLidas } from './formatar';
-
-const TOM_STATUS: Readonly<Record<ConversaWhatsappStatus, TomStatus>> = {
-  BOT: 'destaque',
-  AGUARDANDO: 'alerta',
-  EM_ATENDIMENTO: 'info',
-  FINALIZADA: 'neutro',
-};
 
 export interface ItemConversaProps {
   conversa: ConversaWhatsapp;
