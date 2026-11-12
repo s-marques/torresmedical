@@ -154,5 +154,22 @@ describe('buildSeedData', () => {
       expect(new Set(telefones).size).toBe(telefones.length);
       for (const telefone of telefones) expect(telefone).toMatch(/^55[1-9]{2}9\d{8}$/);
     });
+
+    it('exercita o painel: autores, status de envio, áudio, citação, atendente e anúncio', () => {
+      const { mensagensWhatsapp, conversasWhatsapp } = whatsapp;
+      expect(new Set(mensagensWhatsapp.map((m) => m.autor ?? 'CLIENTE'))).toEqual(
+        new Set(['CLIENTE', 'ATENDENTE', 'ASSISTENTE_VIRTUAL', 'CELULAR']),
+      );
+      expect(new Set(mensagensWhatsapp.map((m) => m.status ?? 'ENVIADA'))).toContain('FALHA');
+      expect(mensagensWhatsapp.some((m) => m.tipo === 'AUDIO' && m.duracaoSegundos)).toBe(true);
+      const ids = new Set(mensagensWhatsapp.map((m) => m.id));
+      const respostas = mensagensWhatsapp.filter((m) => m.respondeAId);
+      expect(respostas.length).toBeGreaterThan(0);
+      expect(respostas.every((m) => ids.has(String(m.respondeAId)))).toBe(true);
+      const emAtendimento = conversasWhatsapp.filter((c) => c.status === 'EM_ATENDIMENTO');
+      expect(emAtendimento.every((c) => c.atendenteId === data.admin.id)).toBe(true);
+      expect(conversasWhatsapp.some((c) => c.anuncioOrigem === 'Facebook')).toBe(true);
+      expect(conversasWhatsapp.some((c) => c.anuncioOrigem === 'Instagram')).toBe(true);
+    });
   });
 });

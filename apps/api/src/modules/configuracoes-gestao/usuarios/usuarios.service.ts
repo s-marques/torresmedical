@@ -78,6 +78,64 @@ export class PerfisLookupService extends EntidadeLookupService<
   }
 }
 
+/**
+ * Usuário como lookup (combobox "Transferir" da tela WhatsApp). Só ativos e não excluídos;
+ * `nomesPorIds` devolve o nome de quem aparece em registros de outros módulos (atendente).
+ */
+@Injectable()
+export class UsuariosLookupService extends EntidadeLookupService<
+  LookupQuery<'usuarios'>,
+  Prisma.UsuarioWhereInput,
+  { id: string; nome: string; cargo: string | null }
+> {
+  protected readonly naoEncontrado = 'Usuário não encontrado';
+  protected readonly fonte: FonteLookup<
+    Prisma.UsuarioWhereInput,
+    { id: string; nome: string; cargo: string | null }
+  > = {
+    findMany: (args) =>
+      this.txHost.tx.usuario.findMany({
+        ...args,
+        select: { id: true, nome: true, cargo: true },
+      }),
+    count: (args) => this.txHost.tx.usuario.count(args),
+    findFirst: (args) =>
+      this.txHost.tx.usuario.findFirst({ ...args, select: { id: true, nome: true, cargo: true } }),
+  };
+
+  constructor(private readonly txHost: TransactionHost<PrismaAdapter>) {
+    super();
+  }
+
+  protected filtro(query: LookupQuery<'usuarios'>): Prisma.UsuarioWhereInput {
+    return { ...SELECIONAVEIS, ...searchWhere(query.search, ['nome', 'cargo']) };
+  }
+
+  protected toItem(usuario: { id: string; nome: string; cargo: string | null }): LookupItem {
+    return { id: usuario.id, label: usuario.nome, descricao: usuario.cargo };
+  }
+
+  /** Usuário ativo e não excluído, para ser destino de uma ação (ex.: transferir conversa). */
+  async selecionarPorId(id: string): Promise<{ id: string; nome: string }> {
+    const usuario = await this.fonte.findFirst({ where: { id, ...SELECIONAVEIS } });
+    if (!usuario) {
+      throw new BusinessException(ErrorCode.NOT_FOUND, this.naoEncontrado, { status: 404 });
+    }
+    return usuario;
+  }
+
+  /** `id → nome`, inclusive de usuários inativos ou excluídos (histórico). */
+  async nomesPorIds(ids: readonly string[]): Promise<Map<string, string>> {
+    const unicos = [...new Set(ids)];
+    if (unicos.length === 0) return new Map();
+    const usuarios = await this.txHost.tx.usuario.findMany({
+      where: { id: { in: unicos } },
+      select: { id: true, nome: true },
+    });
+    return new Map(usuarios.map((u) => [u.id, u.nome]));
+  }
+}
+
 /** Tela Usuários (`/usuarios`): usuários do sistema e o perfil de acesso de cada um. */
 @Injectable()
 export class UsuariosService {

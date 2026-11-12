@@ -113,7 +113,7 @@ export function buildSeedData(agora: Date = new Date()): SeedData {
 
   // Também depois dos demais, pelo mesmo motivo.
   const entidades = buildSeedEntidades(SEED_EMAIL_DOMAIN);
-  const whatsapp = buildSeedWhatsapp(entidades.pacientes, agora);
+  const whatsapp = buildSeedWhatsapp(entidades.pacientes, agora, admin.id);
 
   return { empresa, unidades, usuarios, perfilAdmin, admin, entidades, whatsapp };
 }

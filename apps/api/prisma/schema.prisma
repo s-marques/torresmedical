@@ -113,6 +113,8 @@ model Usuario {
   sessoes      Sessao[]
   redefinicoes RedefinicaoSenha[]
   caixas       Caixa[]
+  conversasWhatsapp ConversaWhatsapp[]
+  mensagensWhatsapp MensagemWhatsapp[]
 
   @@index([empresaId])
   @@index([perfilId])
@@ -891,16 +893,24 @@ model ConversaWhatsapp {
   naoLidas         Int                    @default(0) @map("nao_lidas")
   /// Data da última mensagem, para ordenar a lista sem consultar as mensagens.
   ultimaMensagemEm DateTime?              @map("ultima_mensagem_em") @db.Timestamptz(3)
+  /// Usuário que assumiu a conversa (botão Assumir) ou para quem foi transferida.
+  atendenteId      String?                @map("atendente_id") @db.Uuid
+  /// "Veio de anúncio · Facebook": origem, título e link do anúncio, vindos do provedor.
+  anuncioOrigem    String?                @map("anuncio_origem")
+  anuncioTitulo    String?                @map("anuncio_titulo")
+  anuncioUrl       String?                @map("anuncio_url")
   createdAt        DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt        DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   contato   ContatoWhatsapp    @relation(fields: [contatoId], references: [id], onDelete: Restrict)
   canal     CanalWhatsapp      @relation(fields: [canalId], references: [id], onDelete: Restrict)
+  atendente Usuario?           @relation(fields: [atendenteId], references: [id], onDelete: SetNull)
   mensagens MensagemWhatsapp[]
   tags      ConversaTag[]
 
   @@index([canalId, status, ultimaMensagemEm])
   @@index([contatoId])
+  @@index([atendenteId])
   @@map("conversas_whatsapp")
 }
 
@@ -911,18 +921,64 @@ enum MensagemWhatsappDirecao {
   @@map("mensagem_whatsapp_direcao")
 }
 
+enum MensagemWhatsappAutor {
+  CLIENTE
+  ATENDENTE
+  ASSISTENTE_VIRTUAL
+  /// Enviada direto do celular da clínica, fora do sistema.
+  CELULAR
+
+  @@map("mensagem_whatsapp_autor")
+}
+
+enum MensagemWhatsappStatus {
+  /// Gravada e na fila para o provedor.
+  PENDENTE
+  ENVIADA
+  ENTREGUE
+  LIDA
+  FALHA
+
+  @@map("mensagem_whatsapp_status")
+}
+
+enum MensagemWhatsappTipo {
+  TEXTO
+  AUDIO
+  IMAGEM
+  DOCUMENTO
+  VIDEO
+
+  @@map("mensagem_whatsapp_tipo")
+}
+
 /// Dono: comercial-atendimento. Mensagem de uma conversa. Conteúdo é dado pessoal: nunca logar.
 model MensagemWhatsapp {
-  id         String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  conversaId String                  @map("conversa_id") @db.Uuid
-  direcao    MensagemWhatsappDirecao
-  conteudo   String
-  enviadaEm  DateTime                @map("enviada_em") @db.Timestamptz(3)
-  createdAt  DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  id              String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversaId      String                  @map("conversa_id") @db.Uuid
+  direcao         MensagemWhatsappDirecao
+  autor           MensagemWhatsappAutor   @default(CLIENTE)
+  /// Atendente que escreveu a mensagem (autor ATENDENTE).
+  autorUsuarioId  String?                 @map("autor_usuario_id") @db.Uuid
+  status          MensagemWhatsappStatus  @default(ENVIADA)
+  tipo            MensagemWhatsappTipo    @default(TEXTO)
+  /// Texto, ou a legenda de mídia. Vazio quando a mensagem é só mídia.
+  conteudo        String
+  /// Duração de áudio e vídeo.
+  duracaoSegundos Int?                    @map("duracao_segundos")
+  /// Mensagem respondida (balão de citação).
+  respondeAId     String?                 @map("responde_a_id") @db.Uuid
+  enviadaEm       DateTime                @map("enviada_em") @db.Timestamptz(3)
+  createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  conversa ConversaWhatsapp @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+  conversa    ConversaWhatsapp   @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+  autorUsuario Usuario?          @relation(fields: [autorUsuarioId], references: [id], onDelete: SetNull)
+  respondeA   MensagemWhatsapp?  @relation("MensagemResposta", fields: [respondeAId], references: [id], onDelete: SetNull)
+  respostas   MensagemWhatsapp[] @relation("MensagemResposta")
 
   @@index([conversaId, enviadaEm])
+  @@index([autorUsuarioId])
+  @@index([respondeAId])
   @@map("mensagens_whatsapp")
 }
 

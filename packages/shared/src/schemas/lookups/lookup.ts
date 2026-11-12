@@ -26,6 +26,7 @@ export const LOOKUP_ENTIDADES = [
   'origens-cliente',
   'perfis',
   'canais-whatsapp',
+  'usuarios',
 ] as const;
 
 export type LookupEntidade = (typeof LOOKUP_ENTIDADES)[number];
@@ -86,6 +87,7 @@ export const lookupQuerySchemas = {
   'origens-cliente': lookupQuerySchema({}),
   perfis: lookupQuerySchema({}),
   'canais-whatsapp': lookupQuerySchema({}),
+  usuarios: lookupQuerySchema({}),
 } satisfies Record<LookupEntidade, z.ZodType>;
 
 export type LookupQuery<E extends LookupEntidade = LookupEntidade> = z.infer<
@@ -191,4 +193,5 @@ export const LOOKUP_PERMISSOES: Readonly<Record<LookupEntidade, PermissoesLookup
   ),
   perfis: telas('configuracoes-gestao.usuarios', 'configuracoes-gestao.perfis-acesso'),
   'canais-whatsapp': telas('comercial-atendimento.whatsapp', 'configuracoes-gestao.agentes-ia'),
+  usuarios: telas('comercial-atendimento.whatsapp', 'configuracoes-gestao.usuarios'),
 };

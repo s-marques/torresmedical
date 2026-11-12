@@ -87,6 +87,18 @@ function configs(prisma: PrismaService, empresaId: string): Record<LookupEntidad
       criar: ({ nome, deletedAt }) =>
         prisma.canalWhatsapp.create({ data: { nome, deletedAt, numero: '5565999990000' } }),
     },
+    usuarios: {
+      criar: ({ nome, ativo, deletedAt }) =>
+        prisma.usuario.create({
+          data: {
+            nome,
+            ativo,
+            deletedAt,
+            empresaId,
+            email: `${nome.toLowerCase().replaceAll(' ', '.')}@example.com`,
+          },
+        }),
+    },
   };
 }
 
