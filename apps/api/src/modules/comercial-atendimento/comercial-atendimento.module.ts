@@ -14,6 +14,8 @@ import { ConsultasRealizadasController } from './vendas/consultas-realizadas.con
 import { ConsultasRealizadasService } from './vendas/consultas-realizadas.service';
 import { VendasController } from './vendas/vendas.controller';
 import { VendasService } from './vendas/vendas.service';
+import { PacotesController } from './pacotes/pacotes.controller';
+import { PacotesService } from './pacotes/pacotes.service';
 import { PacientesController } from './pacientes/pacientes.controller';
 import { PacientesService } from './pacientes/pacientes.service';
 import { ConversasWhatsappController } from './whatsapp/conversas-whatsapp.controller';
@@ -39,6 +41,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     OrcamentosController,
     OrigensClienteController,
     PacientesController,
+    PacotesController,
     TagsAtendimentoController,
     VendasController,
   ],
@@ -48,6 +51,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     AgendaService,
     OrcamentosService,
     ConsultasRealizadasService,
+    PacotesService,
     VendasService,
     ConversasWhatsappService,
     TagsAtendimentoService,
