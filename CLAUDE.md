@@ -4,6 +4,9 @@ Reconstrução do sistema de gestão da clínica Torres Medical. O sistema atual
 documentado em `docs/inventario/`. São 70 telas em 9 módulos: um `.md` e um screenshot
 por tela, com índice em `docs/inventario/README.md`. Cada tela tem uma issue no board.
 
+Os requisitos do cliente (regras de negócio, prioridades e lacunas que o inventário não mostra)
+estão em `docs/requisitos-cliente/`, e a matriz requisito → card fica na issue #135.
+
 - Repositório: `s-marques/torresmedical`
 - Board: https://github.com/users/s-marques/projects/2 (projeto **2** do usuário `s-marques`)
 - Equipe: `s-marques` e `mmfla12silva`. Cada dev usa o próprio Claude Code.
@@ -321,7 +324,8 @@ Antes de mover o card para **"Em revisão"**:
 
 ## 9. Como implementar uma tela
 
-1. Leia a issue e os **critérios de aceite**.
+1. Leia a issue e os **critérios de aceite**, inclusive a seção **"Requisitos do cliente"**
+   quando houver (fonte em `docs/requisitos-cliente/`).
 2. Leia `docs/inventario/telas/<arquivo>.md` (o link está na issue) e veja o screenshot em
    `docs/inventario/img/<arquivo>.png`.
    - A seção **"Estados capturados"** do `.md` traz o que abre ao clicar em cada item de
