@@ -111,10 +111,19 @@ describe('Pipeline / CRM (e2e)', () => {
     });
 
     it('400 sem pipeline, 404 pipeline inexistente, 403 sem permissão', async () => {
-      await http().get(`${BASE}/quadro`).expect(400);
-      await http().get(`${BASE}/quadro`).query({ pipelineId: INEXISTENTE }).expect(404);
+      const semPipeline = await http().get(`${BASE}/quadro`).expect(400);
+      expect(semPipeline.body.code).toBe('VALIDATION_ERROR');
+      const inexistente = await http()
+        .get(`${BASE}/quadro`)
+        .query({ pipelineId: INEXISTENTE })
+        .expect(404);
+      expect(inexistente.body.message).toBe('Pipeline não encontrado');
       const sem = await criarUsuarioTeste(app, { permissoes: [] });
-      await comUsuario(app, sem).get(`${BASE}/quadro`).query({ pipelineId }).expect(403);
+      const proibido = await comUsuario(app, sem)
+        .get(`${BASE}/quadro`)
+        .query({ pipelineId })
+        .expect(403);
+      expect(proibido.body.code).toBe('FORBIDDEN');
     });
   });
 
@@ -183,7 +192,9 @@ describe('Pipeline / CRM (e2e)', () => {
     });
 
     it('403 sem permissão de criar', async () => {
-      await (await soVer()).post(`${BASE}/negocios`).send(corpo()).expect(403);
+      const res = await (await soVer()).post(`${BASE}/negocios`).send(corpo()).expect(403);
+      expect(res.body.code).toBe('FORBIDDEN');
+      await expectNoAudit(prisma, { entity: 'Negocio' });
     });
   });
 
@@ -291,7 +302,9 @@ describe('Pipeline / CRM (e2e)', () => {
 
     it('403 sem permissão de editar', async () => {
       const { id } = await criarNegocio();
-      await (await soVer()).patch(`${BASE}/negocios/${id}/ganho`).expect(403);
+      const res = await (await soVer()).patch(`${BASE}/negocios/${id}/ganho`).expect(403);
+      expect(res.body.code).toBe('FORBIDDEN');
+      expect((await prisma.negocio.findUniqueOrThrow({ where: { id } })).status).toBe('ABERTO');
     });
   });
 
