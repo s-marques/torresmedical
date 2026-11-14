@@ -33,7 +33,9 @@ function setup() {
   };
   const paciente = { count: jest.fn().mockResolvedValue(0) };
   const negocio = { count: jest.fn().mockResolvedValue(0) };
-  const txHost = { tx: { origemCliente, paciente, negocio } } as unknown as TransactionHost<PrismaAdapter>;
+  const txHost = {
+    tx: { origemCliente, paciente, negocio },
+  } as unknown as TransactionHost<PrismaAdapter>;
   const exportService = {
     ensureWithinLimit: jest.fn(),
     export: jest.fn().mockResolvedValue({ filename: 'origens-cliente.xlsx' }),
