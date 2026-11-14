@@ -193,6 +193,26 @@ export class PacientesService extends EntidadeLookupService<
     });
   }
 
+  /** Nome dos pacientes não excluídos entre os ids (cartões do CRM). */
+  async nomesPorIds(ids: readonly string[]): Promise<ReadonlyMap<string, string>> {
+    if (ids.length === 0) return new Map();
+    const pacientes = await this.txHost.tx.paciente.findMany({
+      where: { id: { in: [...new Set(ids)] }, ...NAO_EXCLUIDOS },
+      select: { id: true, nome: true },
+    });
+    return new Map(pacientes.map((p) => [p.id, p.nome]));
+  }
+
+  /** Ids dos pacientes que casam com a busca da tela Pacientes (nome, tel, CPF, CNPJ). */
+  async idsPorBusca(search: string, limite = 500): Promise<string[]> {
+    const pacientes = await this.txHost.tx.paciente.findMany({
+      where: { ...NAO_EXCLUIDOS, ...buscaLista(search) },
+      select: { id: true },
+      take: limite,
+    });
+    return pacientes.map((p) => p.id);
+  }
+
   private where(query: Pick<ListPacientesQuery, 'search' | 'status'>): Prisma.PacienteWhereInput {
     return { ...NAO_EXCLUIDOS, status: query.status, ...buscaLista(query.search) };
   }

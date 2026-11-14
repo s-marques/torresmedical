@@ -32,7 +32,8 @@ function setup() {
     update: jest.fn().mockResolvedValue(ORIGEM),
   };
   const paciente = { count: jest.fn().mockResolvedValue(0) };
-  const txHost = { tx: { origemCliente, paciente } } as unknown as TransactionHost<PrismaAdapter>;
+  const negocio = { count: jest.fn().mockResolvedValue(0) };
+  const txHost = { tx: { origemCliente, paciente, negocio } } as unknown as TransactionHost<PrismaAdapter>;
   const exportService = {
     ensureWithinLimit: jest.fn(),
     export: jest.fn().mockResolvedValue({ filename: 'origens-cliente.xlsx' }),
@@ -43,7 +44,7 @@ function setup() {
     exportService as unknown as ExportService,
     audit as unknown as AuditService,
   );
-  return { service, origemCliente, paciente, exportService, audit };
+  return { service, origemCliente, paciente, negocio, exportService, audit };
 }
 
 const SORT = { field: 'ordem', direction: 'asc' } as const;
@@ -277,6 +278,21 @@ describe('OrigensClienteService', () => {
       await expect(service.remove(ID)).rejects.toMatchObject({
         status: 409,
         code: 'ORIGEM_CLIENTE_EM_USO',
+      });
+      expect(origemCliente.update).not.toHaveBeenCalled();
+    });
+
+    it('409 ORIGEM_CLIENTE_EM_USO quando há negócios do CRM usando', async () => {
+      const { service, origemCliente, negocio } = setup();
+      negocio.count.mockResolvedValue(1);
+
+      await expect(service.remove(ID)).rejects.toMatchObject({
+        status: 409,
+        code: 'ORIGEM_CLIENTE_EM_USO',
+        message: 'Não é possível excluir: há negócios do CRM usando esta origem.',
+      });
+      expect(negocio.count).toHaveBeenCalledWith({
+        where: { origemClienteId: ID, deletedAt: null },
       });
       expect(origemCliente.update).not.toHaveBeenCalled();
     });
