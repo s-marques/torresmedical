@@ -28,7 +28,8 @@ describe('Cobranças dos contratos de salas (e2e)', () => {
     await truncateAll(prisma);
     usuario = await criarUsuarioTeste(app, { permissoes: PERMISSOES });
     salaId = (await prisma.sala.create({ data: { nome: 'Sala 20' } })).id;
-    profissionalId = (await prisma.profissional.create({ data: { nome: 'Dr. Cobrança Teste' } })).id;
+    profissionalId = (await prisma.profissional.create({ data: { nome: 'Dr. Cobrança Teste' } }))
+      .id;
   });
 
   afterAll(async () => {
@@ -68,9 +69,7 @@ describe('Cobranças dos contratos de salas (e2e)', () => {
       expect(res.competencia).toBe(COMPETENCIA);
       expect(res.geradas).toBe(1);
       expect(res.jaExistentes).toBe(0);
-      expect(res.semValorCalculavel).toEqual([
-        expect.objectContaining({ contratoId: turno.id }),
-      ]);
+      expect(res.semValorCalculavel).toEqual([expect.objectContaining({ contratoId: turno.id })]);
 
       const conta = await prisma.contaReceber.findFirst({ where: { valor: 1500 } });
       expect(conta).not.toBeNull();
@@ -83,7 +82,9 @@ describe('Cobranças dos contratos de salas (e2e)', () => {
       });
 
       const cobranca = await prisma.contratoSalaCobranca.findUnique({
-        where: { contratoSalaId_competencia: { contratoSalaId: mensal.id, competencia: COMPETENCIA } },
+        where: {
+          contratoSalaId_competencia: { contratoSalaId: mensal.id, competencia: COMPETENCIA },
+        },
       });
       expect(cobranca?.contaReceberId).toBe(conta?.id);
     });
@@ -144,8 +145,13 @@ describe('Cobranças dos contratos de salas (e2e)', () => {
       await http().post(`${BASE}/${turno.id}/gerar-parcela`).send(corpo).expect(409);
       await http().post(`${BASE}/${encerrado.id}/gerar-parcela`).send(corpo).expect(409);
       await http().post(`${BASE}/${INEXISTENTE}/gerar-parcela`).send(corpo).expect(404);
-      const leitor = await criarUsuarioTeste(app, { permissoes: ['gestao-profissionais.salas.ver'] });
-      await comUsuario(app, leitor).post(`${BASE}/${turno.id}/gerar-parcela`).send(corpo).expect(403);
+      const leitor = await criarUsuarioTeste(app, {
+        permissoes: ['gestao-profissionais.salas.ver'],
+      });
+      await comUsuario(app, leitor)
+        .post(`${BASE}/${turno.id}/gerar-parcela`)
+        .send(corpo)
+        .expect(403);
     });
   });
 
@@ -160,7 +166,9 @@ describe('Cobranças dos contratos de salas (e2e)', () => {
 
       expect(await prisma.contaReceber.count()).toBe(0);
       const cobranca = await prisma.contratoSalaCobranca.findUnique({
-        where: { contratoSalaId_competencia: { contratoSalaId: turno.id, competencia: COMPETENCIA } },
+        where: {
+          contratoSalaId_competencia: { contratoSalaId: turno.id, competencia: COMPETENCIA },
+        },
       });
       expect(cobranca?.contaReceberId).toBeNull();
       await expectAudit(prisma, {
@@ -198,12 +206,12 @@ describe('Cobranças dos contratos de salas (e2e)', () => {
         .send({ data: '2026-11-01', observacao: null })
         .expect(200);
 
-      expect((await prisma.contaReceber.findUniqueOrThrow({ where: { id: futura.id } })).status).toBe(
-        'CANCELADO',
-      );
-      expect((await prisma.contaReceber.findUniqueOrThrow({ where: { id: passada.id } })).status).toBe(
-        'PENDENTE',
-      );
+      expect(
+        (await prisma.contaReceber.findUniqueOrThrow({ where: { id: futura.id } })).status,
+      ).toBe('CANCELADO');
+      expect(
+        (await prisma.contaReceber.findUniqueOrThrow({ where: { id: passada.id } })).status,
+      ).toBe('PENDENTE');
       await expectAudit(prisma, {
         action: 'UPDATE',
         entity: 'ContaReceber',
@@ -211,7 +219,11 @@ describe('Cobranças dos contratos de salas (e2e)', () => {
         before: { status: 'PENDENTE' },
         after: { status: 'CANCELADO' },
       });
-      await expectNoAudit(prisma, { entity: 'ContaReceber', entityId: passada.id, action: 'UPDATE' });
+      await expectNoAudit(prisma, {
+        entity: 'ContaReceber',
+        entityId: passada.id,
+        action: 'UPDATE',
+      });
     });
   });
 });

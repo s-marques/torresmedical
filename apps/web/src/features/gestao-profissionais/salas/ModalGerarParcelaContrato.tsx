@@ -32,10 +32,12 @@ export function ModalGerarParcelaContrato({
   const competencia = hojeISO().slice(0, 7);
   const gerar = useGerarParcelaContrato(contrato.id);
   const confirmarSemCobranca = useConfirmarSemCobranca(contrato.id);
-  const form = useFormulario<GerarParcelaContratoFormulario, ReturnType<typeof gerarParcelaContratoSchema.parse>>(
-    gerarParcelaContratoSchema,
-    { defaultValues: { competencia, valor: undefined, dataVencimento: hojeISO() } },
-  );
+  const form = useFormulario<
+    GerarParcelaContratoFormulario,
+    ReturnType<typeof gerarParcelaContratoSchema.parse>
+  >(gerarParcelaContratoSchema, {
+    defaultValues: { competencia, valor: undefined, dataVencimento: hojeISO() },
+  });
   const { isSubmitting } = useFormState({ control: form.control });
 
   return (
@@ -77,8 +79,8 @@ export function ModalGerarParcelaContrato({
     >
       <p className="mb-4 text-sm text-muted-foreground">
         Contrato de <strong>{contrato.locatarioNome}</strong> ({contrato.salaNome}): não há regra
-        automática para calcular o valor de {formatarCompetencia(competencia)}. Informe o valor e
-        o vencimento, ou confirme que não haverá cobrança nesse mês.
+        automática para calcular o valor de {formatarCompetencia(competencia)}. Informe o valor e o
+        vencimento, ou confirme que não haverá cobrança nesse mês.
       </p>
       <FormLayout
         id={ID_FORMULARIO}

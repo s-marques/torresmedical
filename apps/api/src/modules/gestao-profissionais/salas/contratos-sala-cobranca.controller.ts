@@ -11,11 +11,7 @@ import {
   type GerarParcelaContratoInput,
 } from '@torres/shared';
 import { RequirePermission } from '../../../common/auth/auth.decorators';
-import {
-  ApiErrorResponses,
-  ApiZodBody,
-  ApiZodResponse,
-} from '../../../common/swagger/zod-openapi';
+import { ApiErrorResponses, ApiZodBody, ApiZodResponse } from '../../../common/swagger/zod-openapi';
 import { IdParam } from '../../../common/validation/id-param.decorator';
 import { ZodValidationPipe } from '../../../common/validation/zod-validation.pipe';
 import { ContratosSalaCobrancaService } from './contratos-sala-cobranca.service';

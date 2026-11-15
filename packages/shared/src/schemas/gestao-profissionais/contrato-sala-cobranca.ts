@@ -39,7 +39,9 @@ export function descreverResumoGerarCobrancas(resumo: GerarCobrancasMesResumo): 
   ];
   if (resumo.semValorCalculavel.length > 0) {
     const ids = resumo.semValorCalculavel.map((c) => c.contratoId).join(', ');
-    partes.push(`${resumo.semValorCalculavel.length} contrato(s) sem valor calculável (ids ${ids})`);
+    partes.push(
+      `${resumo.semValorCalculavel.length} contrato(s) sem valor calculável (ids ${ids})`,
+    );
   }
   return `${partes.join('; ')}.`;
 }

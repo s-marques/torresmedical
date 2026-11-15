@@ -165,7 +165,11 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       data: { ...this.dados(input), dias: { create: input.dias } },
       include: INCLUDE,
     });
-    return this.toDto(criado, await this.resolverNomes([criado]), await this.semCobrancaIds([criado]));
+    return this.toDto(
+      criado,
+      await this.resolverNomes([criado]),
+      await this.semCobrancaIds([criado]),
+    );
   }
 
   async update(id: string, input: UpdateContratoSalaInput): Promise<ContratoSalaDto> {
@@ -176,7 +180,11 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       data: { ...this.dados(input), dias: { deleteMany: {}, create: input.dias } },
       include: INCLUDE,
     });
-    return this.toDto(alterado, await this.resolverNomes([alterado]), await this.semCobrancaIds([alterado]));
+    return this.toDto(
+      alterado,
+      await this.resolverNomes([alterado]),
+      await this.semCobrancaIds([alterado]),
+    );
   }
 
   /** Grava (ou remove, com `null`) o PDF do contrato, já enviado em `/api/arquivos`. */
@@ -196,7 +204,11 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       data: { pdfArquivoId: arquivoId },
       include: INCLUDE,
     });
-    return this.toDto(alterado, await this.resolverNomes([alterado]), await this.semCobrancaIds([alterado]));
+    return this.toDto(
+      alterado,
+      await this.resolverNomes([alterado]),
+      await this.semCobrancaIds([alterado]),
+    );
   }
 
   /** Término natural: o contrato ativo passa a "encerrado" na data informada. */
@@ -241,7 +253,11 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       .map((c) => c.contaReceberId)
       .filter((v): v is string => v !== null);
     await this.contasReceber.cancelarPendentesComVencimentoApos(contaReceberIds, data);
-    return this.toDto(alterado, await this.resolverNomes([alterado]), await this.semCobrancaIds([alterado]));
+    return this.toDto(
+      alterado,
+      await this.resolverNomes([alterado]),
+      await this.semCobrancaIds([alterado]),
+    );
   }
 
   /** Exclusão lógica: cobranças e o histórico continuam apontando para o contrato. */
@@ -252,7 +268,11 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       data: { deletedAt: new Date() },
       include: INCLUDE,
     });
-    return this.toDto(excluido, await this.resolverNomes([excluido]), await this.semCobrancaIds([excluido]));
+    return this.toDto(
+      excluido,
+      await this.resolverNomes([excluido]),
+      await this.semCobrancaIds([excluido]),
+    );
   }
 
   async export(query: ExportContratosSalaQuery): Promise<ExportFile> {

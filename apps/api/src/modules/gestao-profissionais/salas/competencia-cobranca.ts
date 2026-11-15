@@ -20,7 +20,10 @@ function ultimoDiaDoMes(competencia: string): number {
 
 /** Primeiro e último dia (`AAAA-MM-DD`) do mês de competência. */
 export function limitesCompetencia(competencia: string): { de: string; ate: string } {
-  return { de: `${competencia}-01`, ate: `${competencia}-${String(ultimoDiaDoMes(competencia)).padStart(2, '0')}` };
+  return {
+    de: `${competencia}-01`,
+    ate: `${competencia}-${String(ultimoDiaDoMes(competencia)).padStart(2, '0')}`,
+  };
 }
 
 /** Vencimento (`AAAA-MM-DD`) no mês de competência, no dia do contrato (ajustado se o mês for menor). */
