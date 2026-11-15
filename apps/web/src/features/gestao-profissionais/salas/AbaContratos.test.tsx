@@ -49,6 +49,7 @@ function contrato(parcial: Partial<ContratoSala>): ContratoSala {
     participaEventos: false,
     observacoes: null,
     status: 'ATIVO',
+    semCobrancaNoMes: false,
     encerradoEm: null,
     motivoEncerramento: null,
     pdfArquivoId: null,
@@ -861,5 +862,98 @@ describe('Gestão de Salas: encerrar e cancelar contrato', () => {
     modal = await screen.findByRole('dialog', { name: 'Detalhes do Contrato' });
     expect(valorDe('Cancelado em')).toHaveTextContent('30/09/2026');
     expect(valorDe('Motivo da rescisão')).toHaveTextContent('Rescisão amigável');
+  });
+
+  describe('Cobranças (issue #115)', () => {
+    it('Gerar Cobranças do Mês chama a API e atualiza a tabela', async () => {
+      let chamou = false;
+      const { user } = await renderAba(
+        api({
+          rotas: {
+            [`${API}/gerar-cobrancas-mes`]: (init) => {
+              chamou = true;
+              expect(init?.method).toBe('POST');
+              return json({
+                competencia: '2026-11',
+                geradas: 1,
+                jaExistentes: 1,
+                semValorCalculavel: [],
+              });
+            },
+          },
+        }),
+      );
+      await screen.findByText('Dra. Ana Teste');
+
+      await user.click(await screen.findByRole('button', { name: 'Gerar Cobranças do Mês' }));
+
+      await waitFor(() => expect(chamou).toBe(true));
+    });
+
+    it('Contrato sem cobrança: mostra o aviso e gera a parcela manualmente', async () => {
+      const semCobranca = contrato({
+        id: ID_1,
+        modalidade: 'TURNO',
+        locatarioNome: 'Dra. Ana Teste',
+        semCobrancaNoMes: true,
+      });
+      let corpo: Record<string, unknown> | null = null;
+      const { user } = await renderAba(
+        api({
+          rotas: {
+            [API]: () => pagina([semCobranca]),
+            [`${API}/${ID_1}/gerar-parcela`]: (init) => {
+              corpo = corpoDe(init);
+              return json({ ...semCobranca, semCobrancaNoMes: false });
+            },
+          },
+        }),
+      );
+      await screen.findByText('Dra. Ana Teste');
+      expect(screen.getByText(/Sem cobrança em/)).toBeVisible();
+
+      await user.click(
+        screen.getByRole('button', { name: /Gerar parcela de .* de Dra\. Ana Teste/ }),
+      );
+      const modal = await screen.findByRole('dialog', { name: 'Contrato sem cobrança' });
+      await user.type(within(modal).getByLabelText('Valor (R$)'), '80000');
+      await user.clear(within(modal).getByLabelText('Data de Vencimento'));
+      await user.type(within(modal).getByLabelText('Data de Vencimento'), '2026-11-10');
+      await user.click(within(modal).getByRole('button', { name: 'Gerar Parcela' }));
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(corpo).toMatchObject({ valor: 800, dataVencimento: '2026-11-10' });
+    });
+
+    it('Contrato sem cobrança: Confirmar sem cobrança chama a API e fecha o modal', async () => {
+      const semCobranca = contrato({
+        id: ID_1,
+        modalidade: 'TURNO',
+        locatarioNome: 'Dra. Ana Teste',
+        semCobrancaNoMes: true,
+      });
+      let chamou = false;
+      const { user } = await renderAba(
+        api({
+          rotas: {
+            [API]: () => pagina([semCobranca]),
+            [`${API}/${ID_1}/confirmar-sem-cobranca`]: () => {
+              chamou = true;
+              return new Response(null, { status: 204 });
+            },
+          },
+        }),
+      );
+      await screen.findByText('Dra. Ana Teste');
+
+      await user.click(
+        screen.getByRole('button', { name: /Gerar parcela de .* de Dra\. Ana Teste/ }),
+      );
+      const modal = await screen.findByRole('dialog', { name: 'Contrato sem cobrança' });
+      await user.click(within(modal).getByRole('button', { name: 'Confirmar sem cobrança' }));
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(chamou).toBe(true);
+    });
   });
 });

@@ -61,6 +61,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'contas_receber',
       'contatos_whatsapp',
       'contratos_sala',
+      'contratos_sala_cobranca',
       'contratos_sala_dias',
       'contratos_sala_horas',
       'conversas_tags',

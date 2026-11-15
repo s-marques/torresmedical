@@ -209,6 +209,42 @@ describe('Horas utilizadas dos contratos de salas (e2e)', () => {
     });
   });
 
+  describe('POST gerar-cobranca', () => {
+    it('gera a cobrança das horas do mês e audita, sem duplicar', async () => {
+      await lancar('2026-10-21', '08:00', '09:00');
+      await lancar('2026-10-22', '14:00', '15:30');
+
+      const res = await http()
+        .post(`${url()}/gerar-cobranca`)
+        .send({ mes: '2026-10' })
+        .expect(200);
+      expect(res.body.valor).toBe('218.75');
+
+      await expectAudit(prisma, {
+        action: 'CREATE',
+        entity: 'ContaReceber',
+        entityId: res.body.id,
+        before: null,
+        after: { valor: '218.75' },
+      });
+
+      await http().post(`${url()}/gerar-cobranca`).send({ mes: '2026-10' }).expect(409);
+    });
+
+    it('409 sem horas lançadas no mês, 404, 409 em contrato Mensal e 403 sem permissão', async () => {
+      await http().post(`${url()}/gerar-cobranca`).send({ mes: '2026-12' }).expect(409);
+      await http().post(`${url(INEXISTENTE)}/gerar-cobranca`).send({ mes: '2026-10' }).expect(404);
+      await http().post(`${url(mensalId)}/gerar-cobranca`).send({ mes: '2026-10' }).expect(409);
+      const leitor = await criarUsuarioTeste(app, {
+        permissoes: ['gestao-profissionais.salas.ver'],
+      });
+      await comUsuario(app, leitor)
+        .post(`${url()}/gerar-cobranca`)
+        .send({ mes: '2026-10' })
+        .expect(403);
+    });
+  });
+
   it('excluir o contrato apaga as horas dele (cascata no banco)', async () => {
     await lancar('2026-10-21', '08:00', '09:00');
     await prisma.contratoSala.delete({ where: { id: contratoId } });
