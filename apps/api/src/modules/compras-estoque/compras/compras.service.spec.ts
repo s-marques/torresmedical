@@ -3,6 +3,7 @@ import { Prisma } from '../../../generated/prisma/client';
 import type { ExportService } from '../../../common/export/export.service';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import type { PlanoContasService } from '../../financeiro/plano-contas/plano-contas.service';
+import type { EstoqueService } from '../estoque/estoque.service';
 import type { FornecedoresService } from '../fornecedores/fornecedores.service';
 import { COMPRA_EXPORT_DEFINITIONS, ComprasService } from './compras.service';
 
@@ -81,7 +82,6 @@ function setup(status: 'PENDENTE' | 'RECEBIDA' | 'CANCELADA' = 'RECEBIDA') {
     produto: {
       findMany: jest.fn().mockResolvedValue([{ id: PRODUTO_ID }]),
       findFirst: jest.fn().mockResolvedValue({ id: PRODUTO_ID }),
-      updateMany: jest.fn().mockResolvedValue({}),
     },
     fornecedor: { findFirst: jest.fn().mockResolvedValue({ id: FORNECEDOR_ID }) },
   };
@@ -91,19 +91,23 @@ function setup(status: 'PENDENTE' | 'RECEBIDA' | 'CANCELADA' = 'RECEBIDA') {
   };
   const fornecedores = { findById: jest.fn().mockResolvedValue({ id: FORNECEDOR_ID }) };
   const planoContas = { findById: jest.fn().mockResolvedValue({ id: CONTA_ID, nome: 'Móveis' }) };
+  const estoque = { movimentarCompra: jest.fn().mockResolvedValue(undefined) };
   const service = new ComprasService(
     { tx } as unknown as TransactionHost<PrismaAdapter>,
     exportService as unknown as ExportService,
     fornecedores as unknown as FornecedoresService,
     planoContas as unknown as PlanoContasService,
+    estoque as unknown as EstoqueService,
   );
-  return { service, tx, exportService, fornecedores, planoContas };
+  return { service, tx, exportService, fornecedores, planoContas, estoque };
 }
 
-const incremento = (quantidade: string, op: 'increment' | 'decrement') => ({
-  where: { id: PRODUTO_ID, controlaEstoque: true },
-  data: { estoqueAtual: { [op]: new Prisma.Decimal(quantidade) } },
-});
+/** Compra e itens repassados ao `EstoqueService`, que soma ou estorna e registra a movimentação. */
+const movimento = (operacao: 'ENTRADA' | 'ESTORNO') => [
+  expect.objectContaining({ id: ID, numero: 7, numeroNf: '55252', fornecedorId: FORNECEDOR_ID }),
+  [expect.objectContaining({ produtoId: PRODUTO_ID, quantidade: new Prisma.Decimal('2') })],
+  operacao,
+];
 
 describe('ComprasService', () => {
   it('findById monta a compra com datas, valores e nome da conta contábil', async () => {
@@ -128,7 +132,7 @@ describe('ComprasService', () => {
   });
 
   it('create valida fornecedor, produto e conta; grava o total e soma no estoque', async () => {
-    const { service, tx, fornecedores, planoContas } = setup();
+    const { service, tx, fornecedores, planoContas, estoque } = setup();
     await service.create(INPUT);
     expect(fornecedores.findById).toHaveBeenCalledWith(FORNECEDOR_ID);
     expect(planoContas.findById).toHaveBeenCalledWith(CONTA_ID);
@@ -136,7 +140,7 @@ describe('ComprasService', () => {
       status: 'RECEBIDA',
       valorTotal: 205,
     });
-    expect(tx.produto.updateMany).toHaveBeenCalledWith(incremento('2', 'increment'));
+    expect(estoque.movimentarCompra).toHaveBeenCalledWith(...movimento('ENTRADA'));
   });
 
   it('create 404 quando algum produto não existe', async () => {
@@ -147,23 +151,23 @@ describe('ComprasService', () => {
   });
 
   it('update devolve a entrada antiga e soma a nova', async () => {
-    const { service, tx } = setup();
+    const { service, tx, estoque } = setup();
     await service.update(ID, INPUT);
     expect(tx.compraItem.deleteMany).toHaveBeenCalledWith({ where: { compraId: ID } });
-    expect(tx.produto.updateMany).toHaveBeenNthCalledWith(1, incremento('2', 'decrement'));
-    expect(tx.produto.updateMany).toHaveBeenNthCalledWith(2, incremento('2', 'increment'));
+    expect(estoque.movimentarCompra).toHaveBeenNthCalledWith(1, ...movimento('ESTORNO'));
+    expect(estoque.movimentarCompra).toHaveBeenNthCalledWith(2, ...movimento('ENTRADA'));
   });
 
   it('update recusa compra cancelada', async () => {
-    const { service, tx } = setup('CANCELADA');
+    const { service, estoque } = setup('CANCELADA');
     await expect(service.update(ID, INPUT)).rejects.toMatchObject({ status: 422 });
-    expect(tx.produto.updateMany).not.toHaveBeenCalled();
+    expect(estoque.movimentarCompra).not.toHaveBeenCalled();
   });
 
   it('cancelar devolve a entrada; recusa se já cancelada', async () => {
-    const { service, tx } = setup();
+    const { service, tx, estoque } = setup();
     await service.cancelar(ID);
-    expect(tx.produto.updateMany).toHaveBeenCalledWith(incremento('2', 'decrement'));
+    expect(estoque.movimentarCompra).toHaveBeenCalledWith(...movimento('ESTORNO'));
     expect(tx.compra.update.mock.calls[0]?.[0].data).toEqual({ status: 'CANCELADA' });
     await expect(setup('CANCELADA').service.cancelar(ID)).rejects.toMatchObject({ status: 422 });
   });
@@ -172,11 +176,11 @@ describe('ComprasService', () => {
     const recebida = setup();
     await recebida.service.remove(ID);
     expect(recebida.tx.compra.update.mock.calls[0]?.[0].data.deletedAt).toBeInstanceOf(Date);
-    expect(recebida.tx.produto.updateMany).toHaveBeenCalledTimes(1);
+    expect(recebida.estoque.movimentarCompra).toHaveBeenCalledWith(...movimento('ESTORNO'));
 
     const cancelada = setup('CANCELADA');
     await cancelada.service.remove(ID);
-    expect(cancelada.tx.produto.updateMany).not.toHaveBeenCalled();
+    expect(cancelada.estoque.movimentarCompra).not.toHaveBeenCalled();
   });
 
   it('404 quando a compra não existe', async () => {

@@ -74,6 +74,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'horarios_funcionamento',
       'horarios_intervalos',
       'mensagens_whatsapp',
+      'movimentacoes_estoque',
       'orcamento_itens',
       'orcamentos',
       'origens_cliente',
