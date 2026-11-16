@@ -40,6 +40,7 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   'compras-estoque.entrada-compras': lazy(
     () => import('@/features/compras-estoque/compras/ComprasPage'),
   ),
+  'compras-estoque.estoque': lazy(() => import('@/features/compras-estoque/estoque/EstoquePage')),
   'compras-estoque.fornecedores': lazy(
     () => import('@/features/compras-estoque/fornecedores/FornecedoresPage'),
   ),

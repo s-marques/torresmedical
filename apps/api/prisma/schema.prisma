@@ -459,7 +459,8 @@ model Fornecedor {
   updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
 
-  compras Compra[]
+  compras              Compra[]
+  movimentacoesEstoque MovimentacaoEstoque[]
 
   @@index([documento])
   @@map("fornecedores")
@@ -539,8 +540,9 @@ model Produto {
   categoria     Categoria?     @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
   unidadeMedida UnidadeMedida? @relation(fields: [unidadeMedidaId], references: [id], onDelete: Restrict)
 
-  protocoloItens ProtocoloItem[]
-  compraItens    CompraItem[]
+  protocoloItens       ProtocoloItem[]
+  compraItens          CompraItem[]
+  movimentacoesEstoque MovimentacaoEstoque[]
 
   @@index([categoriaId])
   @@index([unidadeMedidaId])
@@ -580,13 +582,58 @@ model Compra {
   updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt    DateTime?    @map("deleted_at") @db.Timestamptz(3)
 
-  fornecedor Fornecedor   @relation(fields: [fornecedorId], references: [id], onDelete: Restrict)
-  itens      CompraItem[]
+  fornecedor           Fornecedor            @relation(fields: [fornecedorId], references: [id], onDelete: Restrict)
+  itens                CompraItem[]
+  movimentacoesEstoque MovimentacaoEstoque[]
 
   @@index([fornecedorId])
   @@index([status])
   @@index([dataEntrada])
   @@map("compras")
+}
+
+enum MovimentacaoEstoqueTipo {
+  ENTRADA
+  SAIDA
+  AJUSTE
+
+  @@map("movimentacao_estoque_tipo")
+}
+
+/// Dono: compras-estoque. Histórico do saldo dos produtos (tela Estoque, `/estoque`, issue #20):
+/// entradas e saídas manuais, ajustes de inventário e entradas/estornos das compras. Só aceita
+/// inserção: corrigir é registrar outra movimentação. `quantidade` é sempre positiva; no ajuste a
+/// direção vem de `saldoAnterior` → `saldoPosterior` (nulos só nas entradas de compras anteriores
+/// a esta tabela, geradas na migration).
+model MovimentacaoEstoque {
+  id             String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  produtoId      String                  @map("produto_id") @db.Uuid
+  tipo           MovimentacaoEstoqueTipo
+  quantidade     Decimal                 @db.Decimal(12, 3)
+  saldoAnterior  Decimal?                @map("saldo_anterior") @db.Decimal(12, 3)
+  saldoPosterior Decimal?                @map("saldo_posterior") @db.Decimal(12, 3)
+  /// Rótulo do motivo (ex.: "Uso Interno") ou o texto do ajuste.
+  motivo         String?
+  documento      String?
+  custoUnitario  Decimal?                @map("custo_unitario") @db.Decimal(12, 2)
+  lote           String?
+  validade       DateTime?               @db.Date
+  fornecedorId   String?                 @map("fornecedor_id") @db.Uuid
+  /// Compra que gerou a movimentação (entrada ou estorno).
+  compraId       String?                 @map("compra_id") @db.Uuid
+  /// Responsável. Usuário é de configuracoes-gestao: sem FK.
+  usuarioId      String?                 @map("usuario_id") @db.Uuid
+  createdAt      DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  produto    Produto     @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+  fornecedor Fornecedor? @relation(fields: [fornecedorId], references: [id], onDelete: Restrict)
+  compra     Compra?     @relation(fields: [compraId], references: [id], onDelete: Restrict)
+
+  @@index([produtoId, createdAt])
+  @@index([createdAt])
+  @@index([tipo])
+  @@index([compraId])
+  @@map("movimentacoes_estoque")
 }
 
 /// Dono: compras-estoque. Item da compra. `planoContaId` é a "Conta contábil (opcional)" (Plano

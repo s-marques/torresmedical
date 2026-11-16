@@ -136,6 +136,7 @@ const EMPRESA = telas(
 const FORNECEDOR = telas(
   'compras-estoque.fornecedores',
   'compras-estoque.entrada-compras',
+  'compras-estoque.estoque',
   'compras-estoque.pedidos-transito',
   'financeiro.contas-pagar',
 );
