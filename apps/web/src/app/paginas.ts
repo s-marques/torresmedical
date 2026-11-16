@@ -16,6 +16,12 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   'comercial-atendimento.orcamentos': lazy(
     () => import('@/features/comercial-atendimento/orcamentos/OrcamentosPage'),
   ),
+  'comercial-atendimento.pipeline': lazy(
+    () => import('@/features/comercial-atendimento/pipeline/PipelinePage'),
+  ),
+  'comercial-atendimento.pacotes': lazy(
+    () => import('@/features/comercial-atendimento/pacotes/PacotesPage'),
+  ),
   'comercial-atendimento.vendas-pdv': lazy(
     () => import('@/features/comercial-atendimento/vendas/VendasPage'),
   ),
@@ -34,6 +40,7 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   'compras-estoque.entrada-compras': lazy(
     () => import('@/features/compras-estoque/compras/ComprasPage'),
   ),
+  'compras-estoque.estoque': lazy(() => import('@/features/compras-estoque/estoque/EstoquePage')),
   'compras-estoque.fornecedores': lazy(
     () => import('@/features/compras-estoque/fornecedores/FornecedoresPage'),
   ),

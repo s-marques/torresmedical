@@ -225,6 +225,38 @@ export class UsuariosService {
     return { ...pagina, data: pagina.data.map((u) => this.toDto(u)) };
   }
 
+  /** Usuários ativos para combobox de responsável (CRM), por nome. */
+  responsaveis(): Promise<{ id: string; nome: string }[]> {
+    return this.txHost.tx.usuario.findMany({
+      where: SELECIONAVEIS,
+      select: { id: true, nome: true },
+      orderBy: [{ nome: 'asc' }, { id: 'asc' }],
+    });
+  }
+
+  /** Nome dos usuários não excluídos entre os ids. */
+  async nomesPorIds(ids: readonly string[]): Promise<ReadonlyMap<string, string>> {
+    if (ids.length === 0) return new Map();
+    const usuarios = await this.txHost.tx.usuario.findMany({
+      where: { id: { in: [...new Set(ids)] }, ...NAO_EXCLUIDOS },
+      select: { id: true, nome: true },
+    });
+    return new Map(usuarios.map((u) => [u.id, u.nome]));
+  }
+
+  /** Usuário ativo e não excluído; senão 404 com o rótulo do campo. */
+  async garantirAtivo(id: string, rotulo = 'Usuário'): Promise<void> {
+    const usuario = await this.txHost.tx.usuario.findFirst({
+      where: { id, ...SELECIONAVEIS },
+      select: { id: true },
+    });
+    if (!usuario) {
+      throw new BusinessException(ErrorCode.NOT_FOUND, `${rotulo} não encontrado`, {
+        status: 404,
+      });
+    }
+  }
+
   private async buscar(id: string): Promise<UsuarioComPerfil> {
     const usuario = await this.txHost.tx.usuario.findFirst({
       where: { id, deletedAt: null },

@@ -25,7 +25,12 @@ import {
 import { hojeISO } from '@/lib/datas';
 import { formatarData } from '@/lib/formatar';
 import { formatarMoeda } from '@/lib/forms/mascaras';
-import { useHorasContrato, useLancarHora, useRemoverHora } from './use-horas-contrato';
+import {
+  useGerarCobrancaHoras,
+  useHorasContrato,
+  useLancarHora,
+  useRemoverHora,
+} from './use-horas-contrato';
 
 const ID_FORMULARIO = 'form-horas-contrato';
 
@@ -47,10 +52,7 @@ export interface ModalHorasContratoProps {
   onFechar: () => void;
 }
 
-/**
- * Relógio da tabela (contratos de Hora Avulsa): "Horas Utilizadas". Lança e lista as horas do
- * mês e mostra o total a cobrar. Gerar a cobrança depende da tela Contas a Receber.
- */
+/** Relógio da tabela (contratos de Hora Avulsa): "Horas Utilizadas". Lança, lista e cobra as horas do mês. */
 export function ModalHorasContrato({ contrato, onFechar }: Readonly<ModalHorasContratoProps>) {
   const hoje = new Date();
   const [mes, setMes] = useState(hoje.getMonth());
@@ -60,6 +62,7 @@ export function ModalHorasContrato({ contrato, onFechar }: Readonly<ModalHorasCo
   const horas = useHorasContrato(contrato.id, ano >= 2000 && ano <= 2100 ? periodo : '');
   const lancar = useLancarHora(contrato.id);
   const remover = useRemoverHora(contrato.id);
+  const gerarCobranca = useGerarCobrancaHoras(contrato.id);
   const form = useFormulario(createContratoHoraSchema, { defaultValues: valoresIniciais() });
   const resumo = horas.data?.resumo;
   const utilizadas = horasDe(resumo?.minutosUtilizados ?? 0);
@@ -77,14 +80,17 @@ export function ModalHorasContrato({ contrato, onFechar }: Readonly<ModalHorasCo
             Total: {HORAS.format(utilizadas)}h × {formatarMoeda(valorHora)} ={' '}
             <strong className="text-foreground">{formatarMoeda(resumo?.valorTotal ?? 0)}</strong>
           </p>
-          <Button
-            type="button"
-            disabled
-            title="Disponível quando a tela Contas a Receber for entregue"
-          >
-            <DollarSignIcon aria-hidden />
-            Gerar Cobrança
-          </Button>
+          <SePermitido permissao="gestao-profissionais.salas.editar">
+            <Button
+              type="button"
+              disabled={!resumo?.valorTotal || gerarCobranca.isPending}
+              title="Gera a cobrança das horas lançadas neste mês"
+              onClick={() => gerarCobranca.mutate(periodo)}
+            >
+              <DollarSignIcon aria-hidden />
+              Gerar Cobrança
+            </Button>
+          </SePermitido>
         </div>
       }
     >

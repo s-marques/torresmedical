@@ -6,6 +6,8 @@ import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { EspecialidadesController } from './especialidades/especialidades.controller';
 import { EspecialidadesService } from './especialidades/especialidades.service';
 import { ContratosSalaController } from './salas/contratos-sala.controller';
+import { ContratosSalaCobrancaController } from './salas/contratos-sala-cobranca.controller';
+import { ContratosSalaCobrancaService } from './salas/contratos-sala-cobranca.service';
 import { ContratosSalaHorasController } from './salas/contratos-sala-horas.controller';
 import { ContratosSalaHorasService } from './salas/contratos-sala-horas.service';
 import { ContratosSalaService } from './salas/contratos-sala.service';
@@ -42,6 +44,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     SalasPainelController,
     SalasController,
     ContratosSalaController,
+    ContratosSalaCobrancaController,
     ContratosSalaHorasController,
   ],
   providers: [
@@ -54,6 +57,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     SalasService,
     SalasPainelService,
     ContratosSalaService,
+    ContratosSalaCobrancaService,
     ContratosSalaHorasService,
     // Sala com contrato não pode ser excluída.
     {

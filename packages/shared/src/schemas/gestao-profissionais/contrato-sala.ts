@@ -353,6 +353,11 @@ export const contratoSalaSchema = z.object({
   participaEventos: z.boolean(),
   observacoes: z.string().nullable(),
   status: contratoStatusSchema,
+  /**
+   * Por Turno, ativo e sem cobrança gerada no mês atual (Mensal é coberto por "Gerar Cobranças
+   * do Mês" e Hora Avulsa pelo "Gerar Cobrança" do modal Horas Utilizadas).
+   */
+  semCobrancaNoMes: z.boolean(),
   /** Data em que o contrato foi encerrado ou cancelado (`null` enquanto ativo). */
   encerradoEm: z.iso.date().nullable(),
   /** Observação do encerramento ou motivo da rescisão. */

@@ -1,5 +1,6 @@
 import type { TransactionHost } from '@nestjs-cls/transactional';
 import { Prisma } from '../../../generated/prisma/client';
+import type { AuditService } from '../../../common/audit/audit.service';
 import type { ExportService } from '../../../common/export/export.service';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import {
@@ -44,8 +45,13 @@ function setup() {
     ensureWithinLimit: jest.fn(),
     export: jest.fn().mockResolvedValue({ filename: 'contas-receber.xlsx' }),
   };
-  const service = new ContasReceberService(txHost, exportService as unknown as ExportService);
-  return { service, contaReceber, exportService };
+  const audit = { record: jest.fn() };
+  const service = new ContasReceberService(
+    txHost,
+    exportService as unknown as ExportService,
+    audit as unknown as AuditService,
+  );
+  return { service, contaReceber, exportService, audit };
 }
 
 describe('ContasReceberService', () => {
@@ -173,5 +179,50 @@ describe('ContasReceberService', () => {
       exportService.export.mock.calls[0][0].columns.map((c: { key: string }) => c.key),
     ).toEqual(['descricao', 'status']);
     expect(CONTA_RECEBER_EXPORT_DEFINITIONS.map((c) => c.key)).toContain('cliente');
+  });
+
+  it('criarDeOrigemExterna cria a conta e grava a auditoria sem passar pelo interceptor', async () => {
+    const { service, contaReceber, audit } = setup();
+    const conta = await service.criarDeOrigemExterna({
+      descricao: 'Aluguel de sala - Sala 1 - Dr. Teste - 10/2026',
+      pacienteId: null,
+      valor: 1500,
+      dataVencimento: '2026-10-10',
+      formaPagamentoId: null,
+      planoContaId: null,
+      documento: null,
+      totalParcelas: 1,
+      status: 'PENDENTE',
+      observacoes: null,
+    });
+    expect(contaReceber.create).toHaveBeenCalled();
+    expect(audit.record).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'CREATE', entity: 'ContaReceber', entityId: conta.id }),
+    );
+  });
+
+  it('cancelarPendentesComVencimentoApos só cancela pendentes com vencimento depois da data', async () => {
+    const { service, contaReceber, audit } = setup();
+    contaReceber.findMany.mockResolvedValueOnce([CONTA]);
+    const total = await service.cancelarPendentesComVencimentoApos([ID], '2026-10-01');
+    expect(contaReceber.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ status: 'PENDENTE' }),
+      }),
+    );
+    expect(contaReceber.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: ID }, data: { status: 'CANCELADO' } }),
+    );
+    expect(audit.record).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'UPDATE', entity: 'ContaReceber', entityId: ID }),
+    );
+    expect(total).toBe(1);
+  });
+
+  it('cancelarPendentesComVencimentoApos não consulta o banco sem ids', async () => {
+    const { service, contaReceber } = setup();
+    const total = await service.cancelarPendentesComVencimentoApos([], '2026-10-01');
+    expect(contaReceber.findMany).not.toHaveBeenCalled();
+    expect(total).toBe(0);
   });
 });

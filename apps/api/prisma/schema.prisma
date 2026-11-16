@@ -255,6 +255,7 @@ model Paciente {
   agendamentos  Agendamento[]
   orcamentos    Orcamento[]
   vendas        Venda[]
+  pacotes       Pacote[]
   contasReceber ContaReceber[]
   contatosWhatsapp ContatoWhatsapp[]
 
@@ -277,6 +278,7 @@ model OrigemCliente {
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
 
   pacientes Paciente[]
+  negocios  Negocio[]
 
   @@index([ordem])
   @@map("origens_cliente")
@@ -386,6 +388,8 @@ model Profissional {
   contratosSala ContratoSala[]
   agendamentos  Agendamento[]
   protocolos    Protocolo[]
+  pacotes       Pacote[]
+  usosPacote    PacoteUso[]
 
   @@index([especialidadeId])
   @@map("profissionais")
@@ -457,7 +461,8 @@ model Fornecedor {
   updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
 
-  compras Compra[]
+  compras              Compra[]
+  movimentacoesEstoque MovimentacaoEstoque[]
 
   @@index([documento])
   @@map("fornecedores")
@@ -537,8 +542,9 @@ model Produto {
   categoria     Categoria?     @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
   unidadeMedida UnidadeMedida? @relation(fields: [unidadeMedidaId], references: [id], onDelete: Restrict)
 
-  protocoloItens ProtocoloItem[]
-  compraItens    CompraItem[]
+  protocoloItens       ProtocoloItem[]
+  compraItens          CompraItem[]
+  movimentacoesEstoque MovimentacaoEstoque[]
 
   @@index([categoriaId])
   @@index([unidadeMedidaId])
@@ -578,13 +584,58 @@ model Compra {
   updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt    DateTime?    @map("deleted_at") @db.Timestamptz(3)
 
-  fornecedor Fornecedor   @relation(fields: [fornecedorId], references: [id], onDelete: Restrict)
-  itens      CompraItem[]
+  fornecedor           Fornecedor            @relation(fields: [fornecedorId], references: [id], onDelete: Restrict)
+  itens                CompraItem[]
+  movimentacoesEstoque MovimentacaoEstoque[]
 
   @@index([fornecedorId])
   @@index([status])
   @@index([dataEntrada])
   @@map("compras")
+}
+
+enum MovimentacaoEstoqueTipo {
+  ENTRADA
+  SAIDA
+  AJUSTE
+
+  @@map("movimentacao_estoque_tipo")
+}
+
+/// Dono: compras-estoque. Histórico do saldo dos produtos (tela Estoque, `/estoque`, issue #20):
+/// entradas e saídas manuais, ajustes de inventário e entradas/estornos das compras. Só aceita
+/// inserção: corrigir é registrar outra movimentação. `quantidade` é sempre positiva; no ajuste a
+/// direção vem de `saldoAnterior` → `saldoPosterior` (nulos só nas entradas de compras anteriores
+/// a esta tabela, geradas na migration).
+model MovimentacaoEstoque {
+  id             String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  produtoId      String                  @map("produto_id") @db.Uuid
+  tipo           MovimentacaoEstoqueTipo
+  quantidade     Decimal                 @db.Decimal(12, 3)
+  saldoAnterior  Decimal?                @map("saldo_anterior") @db.Decimal(12, 3)
+  saldoPosterior Decimal?                @map("saldo_posterior") @db.Decimal(12, 3)
+  /// Rótulo do motivo (ex.: "Uso Interno") ou o texto do ajuste.
+  motivo         String?
+  documento      String?
+  custoUnitario  Decimal?                @map("custo_unitario") @db.Decimal(12, 2)
+  lote           String?
+  validade       DateTime?               @db.Date
+  fornecedorId   String?                 @map("fornecedor_id") @db.Uuid
+  /// Compra que gerou a movimentação (entrada ou estorno).
+  compraId       String?                 @map("compra_id") @db.Uuid
+  /// Responsável. Usuário é de configuracoes-gestao: sem FK.
+  usuarioId      String?                 @map("usuario_id") @db.Uuid
+  createdAt      DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  produto    Produto     @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+  fornecedor Fornecedor? @relation(fields: [fornecedorId], references: [id], onDelete: Restrict)
+  compra     Compra?     @relation(fields: [compraId], references: [id], onDelete: Restrict)
+
+  @@index([produtoId, createdAt])
+  @@index([createdAt])
+  @@index([tipo])
+  @@index([compraId])
+  @@map("movimentacoes_estoque")
 }
 
 /// Dono: compras-estoque. Item da compra. `planoContaId` é a "Conta contábil (opcional)" (Plano
@@ -1272,16 +1323,36 @@ model ContratoSala {
   updatedAt          DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt          DateTime?                  @map("deleted_at") @db.Timestamptz(3)
 
-  sala         Sala               @relation(fields: [salaId], references: [id])
-  profissional Profissional?      @relation(fields: [profissionalId], references: [id])
+  sala         Sala                   @relation(fields: [salaId], references: [id])
+  profissional Profissional?          @relation(fields: [profissionalId], references: [id])
   dias         ContratoSalaDia[]
   horas        ContratoSalaHora[]
+  cobrancas    ContratoSalaCobranca[]
 
   @@index([salaId])
   @@index([profissionalId])
   @@index([pacienteId])
   @@index([status])
   @@map("contratos_sala")
+}
+
+/// Dono: gestao-profissionais. Idempotência da cobrança mensal de um contrato de sala: no
+/// máximo uma linha por contrato e mês de competência ("Gerar Cobranças do Mês" não duplica).
+/// `contaReceberId` nulo = "sem cobrança" confirmada pelo usuário; preenchido = cobrança gerada
+/// em Contas a Receber (módulo financeiro, sem FK).
+model ContratoSalaCobranca {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contratoSalaId String   @map("contrato_sala_id") @db.Uuid
+  /// `AAAA-MM`.
+  competencia    String   @db.VarChar(7)
+  contaReceberId String?  @map("conta_receber_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  contrato ContratoSala @relation(fields: [contratoSalaId], references: [id])
+
+  @@unique([contratoSalaId, competencia])
+  @@index([contratoSalaId])
+  @@map("contratos_sala_cobranca")
 }
 
 /// Dia da semana (0 = domingo) e horário "HH:MM" em que o locatário usa a sala.
@@ -1533,6 +1604,82 @@ model VendaItem {
 
   @@index([vendaId])
   @@map("venda_itens")
+}
+
+enum PacoteStatus {
+  ATIVO
+  CANCELADO
+
+  @@map("pacote_status")
+}
+
+/// Dono: comercial-atendimento. Pacote de sessões do paciente (tela Pacotes, `/pacotes`). Só
+/// ATIVO e CANCELADO são gravados: Finalizado (saldo zerado) e Vencido (passou a data) são
+/// calculados na leitura. `sessoesTotal` (soma das quantidades dos itens) e `sessoesUsadas` (soma
+/// dos usos) são mantidos pelo service. Exclusão lógica: histórico comercial.
+model Pacote {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pacienteId     String       @map("paciente_id") @db.Uuid
+  nome           String
+  descricao      String?
+  /// Valor informado no modal ou, na falta dele, a soma dos itens.
+  valorTotal     Decimal      @map("valor_total") @db.Decimal(12, 2)
+  dataInicio     DateTime?    @map("data_inicio") @db.Date
+  dataVencimento DateTime?    @map("data_vencimento") @db.Date
+  profissionalId String?      @map("profissional_id") @db.Uuid
+  observacoes    String?
+  sessoesTotal   Int          @map("sessoes_total")
+  sessoesUsadas  Int          @default(0) @map("sessoes_usadas")
+  status         PacoteStatus @default(ATIVO)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime?    @map("deleted_at") @db.Timestamptz(3)
+
+  paciente     Paciente      @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
+  profissional Profissional? @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+  itens        PacoteItem[]
+  usos         PacoteUso[]
+
+  @@index([pacienteId])
+  @@index([status])
+  @@index([dataVencimento])
+  @@index([createdAt])
+  @@map("pacotes")
+}
+
+/// Dono: comercial-atendimento. Item do pacote: nome e preço ficam copiados do produto (snapshot)
+/// e a quantidade é o número de sessões do item.
+model PacoteItem {
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pacoteId      String  @map("pacote_id") @db.Uuid
+  /// Produto/procedimento de origem (sem FK: o item é um snapshot).
+  produtoId     String  @map("produto_id") @db.Uuid
+  descricao     String
+  quantidade    Int
+  valorUnitario Decimal @map("valor_unitario") @db.Decimal(12, 2)
+  posicao       Int     @default(0)
+
+  pacote Pacote @relation(fields: [pacoteId], references: [id], onDelete: Cascade)
+
+  @@index([pacoteId])
+  @@map("pacote_itens")
+}
+
+/// Dono: comercial-atendimento. Uso de sessões do pacote ("Registrar Uso de Sessão").
+model PacoteUso {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pacoteId       String   @map("pacote_id") @db.Uuid
+  profissionalId String   @map("profissional_id") @db.Uuid
+  quantidade     Int      @default(1)
+  observacoes    String?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  pacote       Pacote       @relation(fields: [pacoteId], references: [id], onDelete: Cascade)
+  profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+
+  @@index([pacoteId])
+  @@index([profissionalId])
+  @@map("pacote_usos")
 }
 
 enum PlanoContaTipo {
@@ -1787,4 +1934,162 @@ model Anamnese {
 
   @@index([pacienteId])
   @@map("anamneses")
+}
+
+/// Marco do dashboard: a data é gravada no negócio quando ele entra no estágio com o marco.
+enum MarcoEstagio {
+  PRIMEIRO_CONTATO
+  VISITA
+  PROPOSTA
+  CONTRATO
+
+  @@map("marco_estagio")
+}
+
+enum NegocioStatus {
+  ABERTO
+  GANHO
+  PERDIDO
+
+  @@map("negocio_status")
+}
+
+enum NegocioContatoTipo {
+  PACIENTE
+  PROFISSIONAL
+
+  @@map("negocio_contato_tipo")
+}
+
+enum AtividadeNegocioTipo {
+  FOLLOW_UP
+  TAREFA
+  VISITA
+  ENVIO_PROPOSTA
+
+  @@map("atividade_negocio_tipo")
+}
+
+enum AtividadeNegocioStatus {
+  PENDENTE
+  CONCLUIDA
+
+  @@map("atividade_negocio_status")
+}
+
+/// Dono: comercial-atendimento. Funil do CRM (tela Pipeline, `/crm`, modal "Configurações do CRM").
+model Pipeline {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String
+  ordem     Int
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  estagios EstagioPipeline[]
+  negocios Negocio[]
+
+  @@index([ordem])
+  @@map("pipelines")
+}
+
+/// Dono: comercial-atendimento. Coluna do pipeline, com cor e marco do dashboard.
+model EstagioPipeline {
+  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pipelineId String        @map("pipeline_id") @db.Uuid
+  nome       String
+  /// Hexadecimal `#rrggbb`.
+  cor        String
+  marco      MarcoEstagio?
+  ordem      Int
+  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt  DateTime?     @map("deleted_at") @db.Timestamptz(3)
+
+  pipeline Pipeline  @relation(fields: [pipelineId], references: [id], onDelete: Restrict)
+  negocios Negocio[]
+
+  @@index([pipelineId, ordem])
+  @@map("estagios_pipeline")
+}
+
+/// Dono: comercial-atendimento. Lista padronizada de motivos de perda do negócio.
+model MotivoPerda {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String
+  /// Gerado a partir do nome, como nas Origens de Cliente.
+  codigo    String
+  ordem     Int
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  negocios Negocio[]
+
+  @@index([ordem])
+  @@map("motivos_perda")
+}
+
+/// Dono: comercial-atendimento. Negócio/oportunidade do CRM (telas Pipeline, Negócios e
+/// Atividades). Exclusão lógica: histórico comercial.
+model Negocio {
+  id                     String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pipelineId             String              @map("pipeline_id") @db.Uuid
+  estagioId              String              @map("estagio_id") @db.Uuid
+  titulo                 String
+  valor                  Decimal?            @db.Decimal(12, 2)
+  /// Contato: paciente (comercial-atendimento) ou profissional (gestao-profissionais), sem FK.
+  contatoTipo            NegocioContatoTipo? @map("contato_tipo")
+  contatoId              String?             @map("contato_id") @db.Uuid
+  /// Usuário (configuracoes-gestao), sem FK.
+  responsavelId          String?             @map("responsavel_id") @db.Uuid
+  previsaoFechamento     DateTime?           @map("previsao_fechamento") @db.Date
+  origemClienteId        String?             @map("origem_cliente_id") @db.Uuid
+  status                 NegocioStatus       @default(ABERTO)
+  motivoPerdaId          String?             @map("motivo_perda_id") @db.Uuid
+  /// Quando foi marcado como ganho ou perdido.
+  fechadoEm              DateTime?           @map("fechado_em") @db.Timestamptz(3)
+  /// Datas dos marcos do dashboard: primeira entrada num estágio com o marco.
+  marcoPrimeiroContatoEm DateTime?           @map("marco_primeiro_contato_em") @db.Timestamptz(3)
+  marcoVisitaEm          DateTime?           @map("marco_visita_em") @db.Timestamptz(3)
+  marcoPropostaEm        DateTime?           @map("marco_proposta_em") @db.Timestamptz(3)
+  marcoContratoEm        DateTime?           @map("marco_contrato_em") @db.Timestamptz(3)
+  createdAt              DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt              DateTime?           @map("deleted_at") @db.Timestamptz(3)
+
+  pipeline      Pipeline           @relation(fields: [pipelineId], references: [id], onDelete: Restrict)
+  estagio       EstagioPipeline    @relation(fields: [estagioId], references: [id], onDelete: Restrict)
+  origemCliente OrigemCliente?     @relation(fields: [origemClienteId], references: [id], onDelete: Restrict)
+  motivoPerda   MotivoPerda?       @relation(fields: [motivoPerdaId], references: [id], onDelete: Restrict)
+  atividades    AtividadeNegocio[]
+
+  @@index([pipelineId, status])
+  @@index([estagioId])
+  @@index([contatoId])
+  @@index([origemClienteId])
+  @@map("negocios")
+}
+
+/// Dono: comercial-atendimento. Próxima ação do negócio ("Agendar Follow-up"); a tela Atividades
+/// (#2) completa o cadastro.
+model AtividadeNegocio {
+  id            String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  negocioId     String                 @map("negocio_id") @db.Uuid
+  tipo          AtividadeNegocioTipo
+  titulo        String
+  dataHora      DateTime               @map("data_hora") @db.Timestamptz(3)
+  /// Usuário (configuracoes-gestao), sem FK.
+  responsavelId String?                @map("responsavel_id") @db.Uuid
+  status        AtividadeNegocioStatus @default(PENDENTE)
+  concluidaEm   DateTime?              @map("concluida_em") @db.Timestamptz(3)
+  createdAt     DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt     DateTime?              @map("deleted_at") @db.Timestamptz(3)
+
+  negocio Negocio @relation(fields: [negocioId], references: [id], onDelete: Restrict)
+
+  @@index([negocioId, status, dataHora])
+  @@index([responsavelId])
+  @@map("atividades_negocio")
 }

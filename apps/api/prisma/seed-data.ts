@@ -3,6 +3,7 @@ import { PERMISSOES } from '@torres/shared';
 import { hashSenha } from '../src/common/auth/senhas';
 import type { PrismaClient } from '../src/generated/prisma/client';
 import { applySeedEntidades, buildSeedEntidades, type SeedEntidades } from './seed-entidades';
+import { applySeedCrm, buildSeedCrm, type SeedCrm } from './seed-crm';
 import { applySeedWhatsapp, buildSeedWhatsapp, type SeedWhatsapp } from './seed-whatsapp';
 
 /**
@@ -33,6 +34,8 @@ export interface SeedData {
   entidades: SeedEntidades;
   /** Atendimento WhatsApp: canais, contatos, conversas, mensagens e tags. */
   whatsapp: SeedWhatsapp;
+  /** CRM: pipelines padrão, motivos de perda, negócios e próximas ações. */
+  crm: SeedCrm;
 }
 
 /** Gera um CNPJ fictício com dígitos verificadores válidos (somente dígitos). */
@@ -114,8 +117,17 @@ export function buildSeedData(agora: Date = new Date()): SeedData {
   // Também depois dos demais, pelo mesmo motivo.
   const entidades = buildSeedEntidades(SEED_EMAIL_DOMAIN);
   const whatsapp = buildSeedWhatsapp(entidades.pacientes, agora, admin.id);
+  const crm = buildSeedCrm(
+    {
+      pacientes: entidades.pacientes,
+      profissionais: entidades.profissionais,
+      origens: entidades.origensCliente,
+      responsaveis: [admin, ...usuarios],
+    },
+    agora,
+  );
 
-  return { empresa, unidades, usuarios, perfilAdmin, admin, entidades, whatsapp };
+  return { empresa, unidades, usuarios, perfilAdmin, admin, entidades, whatsapp, crm };
 }
 
 /**
@@ -124,7 +136,7 @@ export function buildSeedData(agora: Date = new Date()): SeedData {
  */
 export async function applySeed(prisma: PrismaClient, senhaAdmin: string): Promise<SeedData> {
   const data = buildSeedData();
-  const { empresa, unidades, usuarios, perfilAdmin, admin, entidades, whatsapp } = data;
+  const { empresa, unidades, usuarios, perfilAdmin, admin, entidades, whatsapp, crm } = data;
   const senhaHash = await hashSenha(senhaAdmin);
 
   await prisma.$transaction(
@@ -153,6 +165,7 @@ export async function applySeed(prisma: PrismaClient, senhaAdmin: string): Promi
       });
       await applySeedEntidades(tx, entidades);
       await applySeedWhatsapp(tx, whatsapp);
+      await applySeedCrm(tx, crm);
     },
     { timeout: 60_000 },
   );

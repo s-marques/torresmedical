@@ -14,6 +14,12 @@ import { ConsultasRealizadasController } from './vendas/consultas-realizadas.con
 import { ConsultasRealizadasService } from './vendas/consultas-realizadas.service';
 import { VendasController } from './vendas/vendas.controller';
 import { VendasService } from './vendas/vendas.service';
+import { PacotesController } from './pacotes/pacotes.controller';
+import { PacotesService } from './pacotes/pacotes.service';
+import { CrmConfigController } from './pipeline/crm-config.controller';
+import { CrmConfigService } from './pipeline/crm-config.service';
+import { NegociosController } from './pipeline/negocios.controller';
+import { NegociosService } from './pipeline/negocios.service';
 import { PacientesController } from './pacientes/pacientes.controller';
 import { PacientesService } from './pacientes/pacientes.service';
 import { AtendimentoWhatsappController } from './whatsapp/atendimento-whatsapp.controller';
@@ -23,7 +29,7 @@ import { ConversasWhatsappService } from './whatsapp/conversas-whatsapp.service'
 import { TagsAtendimentoController } from './whatsapp/tags-atendimento.controller';
 import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
 
-/** Módulo COMERCIAL / ATENDIMENTO do inventário. Dono das entidades Paciente/Cliente, Origem de Cliente, Agendamento, Orçamento, Venda (Vendas/PDV) e Conversa WhatsApp. */
+/** Módulo COMERCIAL / ATENDIMENTO do inventário. Dono das entidades Paciente/Cliente, Origem de Cliente, Agendamento, Orçamento, Venda (Vendas/PDV), Conversa WhatsApp e Negócio (CRM). */
 @Module({
   // Profissional pertence a gestao-profissionais, que por sua vez usa Paciente daqui.
   imports: [
@@ -36,11 +42,14 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     AgendaController,
     ConsultasRealizadasController,
     ConversasWhatsappController,
+    CrmConfigController,
     criarLookupController('pacientes', PacientesService),
     criarLookupController('origens-cliente', OrigensClienteService),
     OrcamentosController,
     OrigensClienteController,
     PacientesController,
+    PacotesController,
+    NegociosController,
     TagsAtendimentoController,
     VendasController,
     // Depois de ConversasWhatsappController: "contadores" não pode ser lido como `:id`.
@@ -52,10 +61,13 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     AgendaService,
     OrcamentosService,
     ConsultasRealizadasService,
+    PacotesService,
     VendasService,
     ConversasWhatsappService,
     AtendimentoWhatsappService,
     TagsAtendimentoService,
+    CrmConfigService,
+    NegociosService,
   ],
   exports: [PacientesService, OrigensClienteService],
 })

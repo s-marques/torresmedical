@@ -5,6 +5,8 @@ import { CategoriasController } from './categorias/categorias.controller';
 import { CategoriasService } from './categorias/categorias.service';
 import { ComprasController } from './compras/compras.controller';
 import { ComprasService } from './compras/compras.service';
+import { EstoqueController } from './estoque/estoque.controller';
+import { EstoqueService } from './estoque/estoque.service';
 import { FornecedoresController } from './fornecedores/fornecedores.controller';
 import { FornecedoresService } from './fornecedores/fornecedores.service';
 import { ProdutosController } from './produtos/produtos.controller';
@@ -18,11 +20,12 @@ const SERVICES = [
   CategoriasService,
   UnidadesMedidaService,
   ComprasService,
+  EstoqueService,
 ];
 
 /**
  * Módulo COMPRAS / ESTOQUE do inventário. Dono das entidades Fornecedor, Produto/Serviço,
- * Categoria e Unidade de medida, e da Entrada de Compras.
+ * Categoria e Unidade de medida, da Entrada de Compras e do Estoque (saldo e movimentações).
  */
 @Module({
   imports: [forwardRef(() => FinanceiroModule)],
@@ -36,6 +39,7 @@ const SERVICES = [
     criarLookupController('unidades-medida', UnidadesMedidaService),
     UnidadesMedidaController,
     ComprasController,
+    EstoqueController,
   ],
   providers: SERVICES,
   exports: SERVICES,

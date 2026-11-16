@@ -20,6 +20,7 @@ import type { ExportColumn, ExportFile } from '../../../common/export/export.typ
 import { paginate, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { PlanoContasService } from '../../financeiro/plano-contas/plano-contas.service';
+import { EstoqueService } from '../estoque/estoque.service';
 import { FornecedoresService } from '../fornecedores/fornecedores.service';
 import { lerNfeXml } from './nfe-xml';
 
@@ -50,7 +51,8 @@ export const COMPRA_EXPORT_DEFINITIONS: readonly ExportColumn<Compra, CompraExpo
 /**
  * Entrada de Compras (tela `/compras`). Compra registrada nasce RECEBIDA e soma os itens no
  * estoque dos produtos que controlam estoque; cancelar, excluir ou editar desfaz e refaz a
- * entrada (decisão confirmada com o dev na issue #19).
+ * entrada (decisão confirmada com o dev na issue #19). Cada entrada e estorno vira uma
+ * movimentação na tela Estoque (`EstoqueService.movimentarCompra`, issue #20).
  */
 @Injectable()
 export class ComprasService {
@@ -60,6 +62,7 @@ export class ComprasService {
     private readonly fornecedores: FornecedoresService,
     @Inject(forwardRef(() => PlanoContasService))
     private readonly planoContas: PlanoContasService,
+    private readonly estoque: EstoqueService,
   ) {}
 
   async list(query: ListComprasQuery): Promise<Page<Compra>> {
@@ -83,7 +86,7 @@ export class ComprasService {
       data: { ...this.dados(input), status: 'RECEBIDA', itens: { create: this.itens(input) } },
       include: INCLUDE,
     });
-    await this.movimentarEstoque(compra.itens, 1);
+    await this.estoque.movimentarCompra(compra, compra.itens, 'ENTRADA');
     return this.toCompra(compra);
   }
 
@@ -96,14 +99,16 @@ export class ComprasService {
       );
     }
     await this.validar(input);
-    if (atual.status === 'RECEBIDA') await this.movimentarEstoque(atual.itens, -1);
+    if (atual.status === 'RECEBIDA')
+      await this.estoque.movimentarCompra(atual, atual.itens, 'ESTORNO');
     await this.txHost.tx.compraItem.deleteMany({ where: { compraId: id } });
     const compra = await this.txHost.tx.compra.update({
       where: { id },
       data: { ...this.dados(input), itens: { create: this.itens(input) } },
       include: INCLUDE,
     });
-    if (compra.status === 'RECEBIDA') await this.movimentarEstoque(compra.itens, 1);
+    if (compra.status === 'RECEBIDA')
+      await this.estoque.movimentarCompra(compra, compra.itens, 'ENTRADA');
     return this.toCompra(compra);
   }
 
@@ -113,7 +118,8 @@ export class ComprasService {
     if (atual.status === 'CANCELADA') {
       throw new BusinessException(ErrorCode.BUSINESS_RULE, 'Esta compra já está cancelada.');
     }
-    if (atual.status === 'RECEBIDA') await this.movimentarEstoque(atual.itens, -1);
+    if (atual.status === 'RECEBIDA')
+      await this.estoque.movimentarCompra(atual, atual.itens, 'ESTORNO');
     const compra = await this.txHost.tx.compra.update({
       where: { id },
       data: { status: 'CANCELADA' },
@@ -125,7 +131,8 @@ export class ComprasService {
   /** Exclusão lógica: histórico financeiro. Desfaz a entrada se a compra estava Recebida. */
   async remove(id: string): Promise<Compra> {
     const atual = await this.buscarAtiva(id);
-    if (atual.status === 'RECEBIDA') await this.movimentarEstoque(atual.itens, -1);
+    if (atual.status === 'RECEBIDA')
+      await this.estoque.movimentarCompra(atual, atual.itens, 'ESTORNO');
     const compra = await this.txHost.tx.compra.update({
       where: { id },
       data: { deletedAt: new Date() },
@@ -193,19 +200,6 @@ export class ComprasService {
       columns: selectColumns(COMPRA_EXPORT_DEFINITIONS, query.columns),
       rows: data,
     });
-  }
-
-  /** Soma (`sinal` 1) ou devolve (`sinal` -1) a quantidade no estoque dos produtos controlados. */
-  private async movimentarEstoque(
-    itens: readonly { produtoId: string; quantidade: Prisma.Decimal }[],
-    sinal: 1 | -1,
-  ): Promise<void> {
-    for (const item of itens) {
-      await this.txHost.tx.produto.updateMany({
-        where: { id: item.produtoId, controlaEstoque: true },
-        data: { estoqueAtual: { [sinal === 1 ? 'increment' : 'decrement']: item.quantidade } },
-      });
-    }
   }
 
   private async buscarAtiva(id: string): Promise<CompraComRelacoes> {
