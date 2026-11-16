@@ -1,13 +1,17 @@
 import { Body, Controller, Delete, Get, HttpCode, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
+  contaReceberSchema,
   contratoHoraSchema,
   contratoHorasResponseSchema,
   createContratoHoraSchema,
+  gerarCobrancaHorasSchema,
   listContratoHorasQuerySchema,
+  type ContaReceber,
   type ContratoHora,
   type ContratoHorasResponse,
   type CreateContratoHoraInput,
+  type GerarCobrancaHorasInput,
   type ListContratoHorasQuery,
 } from '@torres/shared';
 import { Audit } from '../../../common/audit/audit.decorator';
@@ -55,6 +59,20 @@ export class ContratosSalaHorasController {
     @Body(new ZodValidationPipe(createContratoHoraSchema)) body: CreateContratoHoraInput,
   ): Promise<ContratoHora> {
     return this.horas.create(id, body);
+  }
+
+  @Post('gerar-cobranca')
+  @RequirePermission('gestao-profissionais.salas.editar')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Gera a cobrança das horas lançadas no mês, sem duplicar' })
+  @ApiZodBody(gerarCobrancaHorasSchema)
+  @ApiZodResponse(200, contaReceberSchema)
+  @ApiErrorResponses(400, 401, 403, 404, 409)
+  gerarCobranca(
+    @IdParam() id: string,
+    @Body(new ZodValidationPipe(gerarCobrancaHorasSchema)) body: GerarCobrancaHorasInput,
+  ): Promise<ContaReceber> {
+    return this.horas.gerarCobranca(id, body.mes);
   }
 
   @Delete(':horaId')
