@@ -272,6 +272,33 @@ export class ProfissionaisService extends EntidadeLookupService<
     await this.buscar(id);
   }
 
+  /** Nome dos profissionais não excluídos entre os ids (cartões do CRM). */
+  async nomesPorIds(ids: readonly string[]): Promise<ReadonlyMap<string, string>> {
+    if (ids.length === 0) return new Map();
+    const profissionais = await this.txHost.tx.profissional.findMany({
+      where: { id: { in: [...new Set(ids)] }, ...NAO_EXCLUIDOS },
+      select: { id: true, nome: true },
+    });
+    return new Map(profissionais.map((p) => [p.id, p.nome]));
+  }
+
+  /** Ids dos profissionais cujo nome, CPF ou telefone casam com a busca (busca do CRM). */
+  async idsPorBusca(search: string, limite = 500): Promise<string[]> {
+    const digitos = search.replaceAll(/\D/g, '');
+    const profissionais = await this.txHost.tx.profissional.findMany({
+      where: {
+        ...NAO_EXCLUIDOS,
+        OR: [
+          { nome: { contains: search, mode: 'insensitive' } },
+          ...(digitos ? [{ cpf: { contains: digitos } }, { telefone: { contains: digitos } }] : []),
+        ],
+      },
+      select: { id: true },
+      take: limite,
+    });
+    return profissionais.map((p) => p.id);
+  }
+
   private where(
     query: Pick<ListProfissionaisQuery, 'search' | 'status'>,
   ): Prisma.ProfissionalWhereInput {

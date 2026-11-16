@@ -156,3 +156,42 @@ describe('buildSeedData', () => {
     });
   });
 });
+
+describe('buildSeedData: CRM', () => {
+  const { crm, entidades } = buildSeedData(new Date('2026-10-15T12:00:00.000Z'));
+
+  it('cria os dois pipelines padrão: 9 estágios do cliente e 14 do sistema atual', () => {
+    expect(crm.pipelines.map((p) => p.nome)).toEqual(['Pipeline Torres', 'VENDAS DE LOCAÇÕES']);
+    const contagem = crm.pipelines.map(
+      (p) => crm.estagios.filter((e) => e.pipelineId === p.id).length,
+    );
+    expect(contagem).toEqual([9, 14]);
+    expect(crm.estagios.slice(0, 9).map((e) => e.nome)).toEqual([
+      'Prospecção',
+      'Contato inicial',
+      'Qualificação',
+      'Score',
+      'Visita',
+      'Proposta',
+      'Negociação',
+      'Aprovação',
+      'Contrato',
+    ]);
+  });
+
+  it('liga negócios a estágios, contatos e motivos do próprio seed, com os três status', () => {
+    const estagios = new Map(crm.estagios.map((e) => [e.id, e.pipelineId]));
+    const contatos = new Set([...entidades.pacientes, ...entidades.profissionais].map((c) => c.id));
+    const motivos = new Set(crm.motivosPerda.map((m) => m.id));
+    for (const n of crm.negocios) {
+      expect(estagios.get(n.estagioId)).toBe(n.pipelineId);
+      if (n.contatoId) expect(contatos.has(n.contatoId)).toBe(true);
+      if (n.status === 'PERDIDO') expect(motivos.has(String(n.motivoPerdaId))).toBe(true);
+    }
+    expect(new Set(crm.negocios.map((n) => n.status))).toEqual(
+      new Set(['ABERTO', 'GANHO', 'PERDIDO']),
+    );
+    const negocios = new Set(crm.negocios.map((n) => n.id));
+    expect(crm.atividades.every((a) => negocios.has(a.negocioId))).toBe(true);
+  });
+});

@@ -133,7 +133,7 @@ export class OrigensClienteService extends EntidadeLookupService<
     return movida;
   }
 
-  /** Exclusão lógica. Só é possível se nenhum cliente estiver usando a origem. */
+  /** Exclusão lógica. Só é possível se nenhum cliente (nem negócio do CRM) estiver usando a origem. */
   async remove(id: string): Promise<OrigemCliente> {
     await this.findById(id);
     const emUso = await this.txHost.tx.paciente.count({
@@ -143,6 +143,16 @@ export class OrigensClienteService extends EntidadeLookupService<
       throw new BusinessException(
         'ORIGEM_CLIENTE_EM_USO',
         'Não é possível excluir: há clientes usando esta origem.',
+        { status: 409 },
+      );
+    }
+    const negocios = await this.txHost.tx.negocio.count({
+      where: { origemClienteId: id, ...NAO_EXCLUIDAS },
+    });
+    if (negocios > 0) {
+      throw new BusinessException(
+        'ORIGEM_CLIENTE_EM_USO',
+        'Não é possível excluir: há negócios do CRM usando esta origem.',
         { status: 409 },
       );
     }

@@ -113,6 +113,7 @@ const PACIENTE = telas(
   'regulatorio-qualidade.fiscal',
   'gestao-profissionais.salas',
   'comercial-atendimento.whatsapp',
+  'comercial-atendimento.pipeline',
 );
 
 const PROFISSIONAL = telas(
@@ -124,6 +125,7 @@ const PROFISSIONAL = telas(
   'gestao-profissionais.protocolos',
   'gestao-profissionais.receita-profissionais',
   'configuracoes-gestao.base-conhecimento',
+  'comercial-atendimento.pipeline',
 );
 
 const EMPRESA = telas(
@@ -188,6 +190,7 @@ export const LOOKUP_PERMISSOES: Readonly<Record<LookupEntidade, PermissoesLookup
   'origens-cliente': telas(
     'comercial-atendimento.origens-cliente',
     'comercial-atendimento.pacientes',
+    'comercial-atendimento.pipeline',
   ),
   perfis: telas('configuracoes-gestao.usuarios', 'configuracoes-gestao.perfis-acesso'),
   'canais-whatsapp': telas('comercial-atendimento.whatsapp', 'configuracoes-gestao.agentes-ia'),
