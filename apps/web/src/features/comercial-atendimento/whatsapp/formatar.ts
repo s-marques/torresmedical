@@ -1,3 +1,5 @@
+import { MENSAGEM_WHATSAPP_ROTULO_AUTOR, type MensagemWhatsappAutor } from '@torres/shared';
+
 const UM_DIA_MS = 24 * 60 * 60 * 1000;
 
 function inicioDoDia(data: Date): number {
@@ -44,4 +46,28 @@ export function periodoInicialAnuncios(hoje: Date = new Date()): { de: string; a
   const inicio = new Date(hoje);
   inicio.setDate(inicio.getDate() - DIAS_PERIODO_ANUNCIOS);
   return { de: dataLocal(inicio), ate: dataLocal(hoje) };
+}
+
+/** Horário do balão: `08:15`. */
+export function horaDaMensagem(data: Date): string {
+  return data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+/** Separador de dia da conversa: `Hoje` ou `25/09/2026`. */
+export function rotuloDoDia(data: Date, agora: Date = new Date()): string {
+  return inicioDoDia(data) === inicioDoDia(agora)
+    ? 'Hoje'
+    : data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+/** Duração de áudio e vídeo: `47` → `0:47`, `125` → `2:05`. */
+export function formatarDuracao(segundos: number): string {
+  return `${Math.floor(segundos / 60)}:${String(segundos % 60).padStart(2, '0')}`;
+}
+
+/** Quem escreveu, para a legenda do balão: nome do atendente ou o rótulo do autor. */
+export function legendaDoAutor(autor: MensagemWhatsappAutor, autorNome: string | null): string {
+  if (autor === 'CLIENTE') return 'Cliente';
+  if (autor === 'ATENDENTE') return autorNome ?? 'Atendente';
+  return MENSAGEM_WHATSAPP_ROTULO_AUTOR[autor];
 }

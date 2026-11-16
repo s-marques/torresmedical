@@ -15,7 +15,11 @@ import { TiposAgendamentoService } from './tipos-agendamento/tipos-agendamento.s
 import { UnidadesController } from './unidades/unidades.controller';
 import { UnidadesService } from './unidades/unidades.service';
 import { UsuariosController } from './usuarios/usuarios.controller';
-import { PerfisLookupService, UsuariosService } from './usuarios/usuarios.service';
+import {
+  PerfisLookupService,
+  UsuariosLookupService,
+  UsuariosService,
+} from './usuarios/usuarios.service';
 
 const SERVICES = [
   UnidadesService,
@@ -27,6 +31,7 @@ const SERVICES = [
   UsuariosService,
   PerfisLookupService,
   CanaisWhatsappService,
+  UsuariosLookupService,
 ];
 
 /**
@@ -46,6 +51,7 @@ const SERVICES = [
     criarLookupController('tipos-agendamento', TiposAgendamentoService),
     criarLookupController('perfis', PerfisLookupService),
     criarLookupController('canais-whatsapp', CanaisWhatsappService),
+    criarLookupController('usuarios', UsuariosLookupService),
     criarRelatoriosController('configuracoes-gestao.relatorios', RelatoriosGestao),
   ],
   providers: [...SERVICES, RelatoriosGestao],

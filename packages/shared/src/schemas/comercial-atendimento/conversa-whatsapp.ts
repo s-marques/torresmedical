@@ -121,3 +121,142 @@ export function normalizarTelefoneWhatsapp(telefone: string): string {
   const digitos = telefone.replaceAll(/\D/g, '');
   return digitos.length === 10 || digitos.length === 11 ? `55${digitos}` : digitos;
 }
+
+/** Quem escreveu a mensagem (cor e legenda do balão no painel da conversa). */
+export const MENSAGEM_WHATSAPP_AUTOR = [
+  'CLIENTE',
+  'ATENDENTE',
+  'ASSISTENTE_VIRTUAL',
+  'CELULAR',
+] as const;
+export type MensagemWhatsappAutor = (typeof MENSAGEM_WHATSAPP_AUTOR)[number];
+
+/** Legenda do balão enviado. Atendente mostra o nome do usuário; cliente não tem legenda. */
+export const MENSAGEM_WHATSAPP_ROTULO_AUTOR: Readonly<
+  Record<Exclude<MensagemWhatsappAutor, 'CLIENTE' | 'ATENDENTE'>, string>
+> = {
+  ASSISTENTE_VIRTUAL: 'Assistente Virtual',
+  CELULAR: 'Enviado pelo celular',
+};
+
+/** Pendente (na fila), enviada (✓), entregue (✓✓), lida (✓✓ azul) ou "Não enviada". */
+export const MENSAGEM_WHATSAPP_STATUS = [
+  'PENDENTE',
+  'ENVIADA',
+  'ENTREGUE',
+  'LIDA',
+  'FALHA',
+] as const;
+export type MensagemWhatsappStatus = (typeof MENSAGEM_WHATSAPP_STATUS)[number];
+
+export const MENSAGEM_WHATSAPP_TIPO = ['TEXTO', 'AUDIO', 'IMAGEM', 'DOCUMENTO', 'VIDEO'] as const;
+export type MensagemWhatsappTipo = (typeof MENSAGEM_WHATSAPP_TIPO)[number];
+
+export const MENSAGEM_WHATSAPP_ROTULO_TIPO: Readonly<Record<MensagemWhatsappTipo, string>> = {
+  TEXTO: 'Texto',
+  AUDIO: 'Áudio',
+  IMAGEM: 'Imagem',
+  DOCUMENTO: 'Documento',
+  VIDEO: 'Vídeo',
+};
+
+export const MENSAGEM_WHATSAPP_MAX = 4096;
+
+/** `POST /api/comercial-atendimento/conversas-whatsapp/:id/mensagens`: texto digitado no painel. */
+export const enviarMensagemWhatsappSchema = z.strictObject({
+  conteudo: z
+    .string({ error: mensagemObrigatoria('Mensagem', 'f') })
+    .trim()
+    .min(1, { error: mensagemObrigatoria('Mensagem', 'f') })
+    .max(MENSAGEM_WHATSAPP_MAX, {
+      error: `A mensagem deve ter no máximo ${MENSAGEM_WHATSAPP_MAX} caracteres`,
+    }),
+});
+
+export type EnviarMensagemWhatsappInput = z.infer<typeof enviarMensagemWhatsappSchema>;
+
+/** `POST /api/comercial-atendimento/conversas-whatsapp/:id/transferir`. */
+export const transferirConversaWhatsappSchema = z.strictObject({
+  usuarioId: z.uuid({ error: mensagemObrigatoria('Usuário') }),
+});
+
+export type TransferirConversaWhatsappInput = z.infer<typeof transferirConversaWhatsappSchema>;
+
+export const MENSAGENS_WHATSAPP_SORT_FIELDS = ['enviadaEm'] as const;
+
+/** `GET /api/comercial-atendimento/conversas-whatsapp/:id/mensagens`: as mais recentes primeiro. */
+export const listMensagensWhatsappQuerySchema = listQuerySchema({
+  sortFields: MENSAGENS_WHATSAPP_SORT_FIELDS,
+  defaultSort: 'enviadaEm:desc',
+  filters: {},
+});
+
+export type ListMensagensWhatsappQuery = z.infer<typeof listMensagensWhatsappQuerySchema>;
+
+export const mensagemWhatsappSchema = z.object({
+  id: z.uuid(),
+  autor: z.enum(MENSAGEM_WHATSAPP_AUTOR),
+  /** Nome do atendente (autor ATENDENTE). */
+  autorNome: z.string().nullable(),
+  status: z.enum(MENSAGEM_WHATSAPP_STATUS),
+  tipo: z.enum(MENSAGEM_WHATSAPP_TIPO),
+  conteudo: z.string(),
+  duracaoSegundos: z.number().int().nullable(),
+  enviadaEm: z.iso.datetime(),
+  /** Mensagem respondida (balão com "Cliente: …"). */
+  citacao: z
+    .object({
+      autor: z.enum(MENSAGEM_WHATSAPP_AUTOR),
+      autorNome: z.string().nullable(),
+      conteudo: z.string(),
+    })
+    .nullable(),
+});
+
+export type MensagemWhatsapp = z.infer<typeof mensagemWhatsappSchema>;
+
+export const mensagemWhatsappPageSchema = paginatedResponseSchema(mensagemWhatsappSchema);
+
+export type MensagemWhatsappPage = z.infer<typeof mensagemWhatsappPageSchema>;
+
+/** Tag aplicada à conversa (chip do painel direito). */
+export const tagDaConversaSchema = z.object({ id: z.uuid(), nome: z.string(), cor: z.string() });
+
+export type TagDaConversa = z.infer<typeof tagDaConversaSchema>;
+
+/** `GET /api/comercial-atendimento/conversas-whatsapp/:id`: cabeçalho e painel direito. */
+export const conversaWhatsappDetalheSchema = z.object({
+  id: z.uuid(),
+  status: z.enum(CONVERSA_WHATSAPP_STATUS),
+  naoLidas: z.number().int(),
+  ultimaMensagemEm: z.iso.datetime().nullable(),
+  createdAt: z.iso.datetime(),
+  contato: z.object({
+    id: z.uuid(),
+    nome: z.string().nullable(),
+    telefone: z.string(),
+    /** E-mail e observações vêm do cadastro do paciente, quando o contato está vinculado. */
+    email: z.string().nullable(),
+    observacoes: z.string().nullable(),
+    pacienteId: z.uuid().nullable(),
+  }),
+  canal: z.object({ id: z.uuid(), nome: z.string() }),
+  atendente: z.object({ id: z.uuid(), nome: z.string() }).nullable(),
+  /** "Veio de anúncio · Facebook": preenchido pela integração com o provedor. */
+  anuncio: z
+    .object({ origem: z.string(), titulo: z.string().nullable(), url: z.string().nullable() })
+    .nullable(),
+  tags: z.array(tagDaConversaSchema),
+});
+
+export type ConversaWhatsappDetalhe = z.infer<typeof conversaWhatsappDetalheSchema>;
+
+/**
+ * Telefone do WhatsApp para exibição: `5565999979796` → `(65) 99997-9796`. Só os números
+ * brasileiros (DDI 55, que `normalizarTelefoneWhatsapp` sempre acrescenta) recebem a máscara;
+ * os demais ficam como vieram.
+ */
+export function formatarTelefoneWhatsapp(telefone: string): string {
+  const partes = /^55(\d{2})(\d{4,5})(\d{4})$/.exec(telefone.replaceAll(/\D/g, ''));
+  return partes ? `(${partes[1]}) ${partes[2]}-${partes[3]}` : telefone;
+}

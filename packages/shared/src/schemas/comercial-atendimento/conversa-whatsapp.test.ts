@@ -2,9 +2,14 @@ import { describe, expect, it } from 'vitest';
 import '../../zod-pt-br';
 import {
   contadoresConversasWhatsappQuerySchema,
+  enviarMensagemWhatsappSchema,
+  formatarTelefoneWhatsapp,
   listConversasWhatsappQuerySchema,
+  listMensagensWhatsappQuerySchema,
+  MENSAGEM_WHATSAPP_MAX,
   normalizarTelefoneWhatsapp,
   novaConversaWhatsappSchema,
+  transferirConversaWhatsappSchema,
 } from './conversa-whatsapp';
 
 const UUID = '00000000-0000-4000-8000-000000000001';
@@ -84,5 +89,62 @@ describe('normalizarTelefoneWhatsapp', () => {
     expect(normalizarTelefoneWhatsapp('6533330000')).toBe('556533330000');
     expect(normalizarTelefoneWhatsapp('+55 65 99999-0000')).toBe('5565999990000');
     expect(normalizarTelefoneWhatsapp('999990000')).toBe('999990000');
+  });
+});
+
+describe('enviarMensagemWhatsappSchema', () => {
+  it('apara o texto', () => {
+    expect(enviarMensagemWhatsappSchema.parse({ conteudo: '  Olá  ' })).toEqual({
+      conteudo: 'Olá',
+    });
+  });
+
+  it('"Mensagem é obrigatória." quando ausente, vazia ou só espaços', () => {
+    for (const input of [{}, { conteudo: '' }, { conteudo: '   ' }]) {
+      expect(messages(enviarMensagemWhatsappSchema.safeParse(input))).toEqual({
+        conteudo: 'Mensagem é obrigatória.',
+      });
+    }
+  });
+
+  it('limita o tamanho e não aceita campos extras', () => {
+    expect(
+      messages(
+        enviarMensagemWhatsappSchema.safeParse({ conteudo: 'x'.repeat(MENSAGEM_WHATSAPP_MAX + 1) }),
+      ),
+    ).toEqual({
+      conteudo: `A mensagem deve ter no máximo ${MENSAGEM_WHATSAPP_MAX} caracteres`,
+    });
+    expect(enviarMensagemWhatsappSchema.safeParse({ conteudo: 'a', x: 1 }).success).toBe(false);
+  });
+});
+
+describe('transferirConversaWhatsappSchema', () => {
+  it('"Usuário é obrigatório." sem usuário', () => {
+    expect(messages(transferirConversaWhatsappSchema.safeParse({}))).toEqual({
+      usuarioId: 'Usuário é obrigatório.',
+    });
+    expect(transferirConversaWhatsappSchema.parse({ usuarioId: UUID })).toEqual({
+      usuarioId: UUID,
+    });
+  });
+});
+
+describe('listMensagensWhatsappQuerySchema', () => {
+  it('as mais recentes primeiro', () => {
+    expect(listMensagensWhatsappQuerySchema.parse({}).sort).toEqual({
+      field: 'enviadaEm',
+      direction: 'desc',
+    });
+  });
+});
+
+describe('formatarTelefoneWhatsapp', () => {
+  it('celular e fixo brasileiros (DDI 55); os demais ficam como vieram', () => {
+    expect(formatarTelefoneWhatsapp('5565999979796')).toBe('(65) 99997-9796');
+    expect(formatarTelefoneWhatsapp('556533330000')).toBe('(65) 3333-0000');
+    // Sem DDI 55 não é brasileiro normalizado: não arrisca uma máscara errada.
+    expect(formatarTelefoneWhatsapp('12025550100')).toBe('12025550100');
+    expect(formatarTelefoneWhatsapp('+1 202 555 0100')).toBe('+1 202 555 0100');
   });
 });

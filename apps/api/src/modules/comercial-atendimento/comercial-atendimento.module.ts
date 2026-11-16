@@ -22,6 +22,8 @@ import { NegociosController } from './pipeline/negocios.controller';
 import { NegociosService } from './pipeline/negocios.service';
 import { PacientesController } from './pacientes/pacientes.controller';
 import { PacientesService } from './pacientes/pacientes.service';
+import { AtendimentoWhatsappController } from './whatsapp/atendimento-whatsapp.controller';
+import { AtendimentoWhatsappService } from './whatsapp/atendimento-whatsapp.service';
 import { ConversasWhatsappController } from './whatsapp/conversas-whatsapp.controller';
 import { ConversasWhatsappService } from './whatsapp/conversas-whatsapp.service';
 import { TagsAtendimentoController } from './whatsapp/tags-atendimento.controller';
@@ -50,6 +52,8 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     NegociosController,
     TagsAtendimentoController,
     VendasController,
+    // Depois de ConversasWhatsappController: "contadores" não pode ser lido como `:id`.
+    AtendimentoWhatsappController,
   ],
   providers: [
     PacientesService,
@@ -60,6 +64,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     PacotesService,
     VendasService,
     ConversasWhatsappService,
+    AtendimentoWhatsappService,
     TagsAtendimentoService,
     CrmConfigService,
     NegociosService,

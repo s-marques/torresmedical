@@ -1,5 +1,10 @@
 import { fakerPT_BR as faker } from '@faker-js/faker';
-import type { ConversaWhatsappStatus, Prisma } from '../src/generated/prisma/client';
+import type {
+  ConversaWhatsappStatus,
+  MensagemWhatsappAutor,
+  MensagemWhatsappStatus,
+  Prisma,
+} from '../src/generated/prisma/client';
 
 /**
  * Atendimento WhatsApp do seed (issue #16), 100% fictício: canais, contatos (parte deles
@@ -24,6 +29,12 @@ const TAGS: [string, string][] = [
 ];
 const STATUS: ConversaWhatsappStatus[] = ['AGUARDANDO', 'EM_ATENDIMENTO', 'FINALIZADA', 'BOT'];
 // Mensagens genéricas, sem dados pessoais.
+const ENVIOS: [MensagemWhatsappAutor, MensagemWhatsappStatus][] = [
+  ['ATENDENTE', 'LIDA'],
+  ['ASSISTENTE_VIRTUAL', 'ENTREGUE'],
+  ['CELULAR', 'ENVIADA'],
+  ['ATENDENTE', 'FALHA'],
+];
 const RECEBIDAS = [
   'Olá, gostaria de agendar uma consulta.',
   'Vocês atendem no sábado?',
@@ -46,6 +57,7 @@ function numeroWhatsapp(): string {
 export function buildSeedWhatsapp(
   pacientes: { id: string; telefone?: string | null }[],
   agora: Date,
+  atendenteId: string,
 ): SeedWhatsapp {
   const canaisWhatsapp = CANAIS.map((nome) => ({
     id: faker.string.uuid(),
@@ -72,16 +84,47 @@ export function buildSeedWhatsapp(
     const status = STATUS[i % STATUS.length] ?? 'AGUARDANDO';
     // Uma conversa a cada ~3 horas para trás: hoje, ontem, dias da semana e datas antigas.
     const ultima = new Date(agora.getTime() - i * 3 * 60 * 60 * 1000);
+    let primeiraId = '';
     for (let m = 2; m >= 0; m--) {
+      const mensagemId = faker.string.uuid();
+      if (m === 2) primeiraId = mensagemId;
       const recebida = m % 2 === 0;
-      mensagensWhatsapp.push({
-        id: faker.string.uuid(),
+      const base = {
+        id: mensagemId,
         conversaId: id,
-        direcao: recebida ? 'RECEBIDA' : 'ENVIADA',
-        conteudo: faker.helpers.arrayElement(recebida ? RECEBIDAS : ENVIADAS),
+        direcao: recebida ? ('RECEBIDA' as const) : ('ENVIADA' as const),
         enviadaEm: new Date(ultima.getTime() - m * 5 * 60 * 1000),
-      });
+      };
+      if (recebida) {
+        mensagensWhatsapp.push({
+          ...base,
+          conteudo: faker.helpers.arrayElement(RECEBIDAS),
+          // A mais recente responde à primeira (balão de citação).
+          respondeAId: m === 0 && i % 5 === 0 ? primeiraId : null,
+        });
+      } else if (i % 7 === 3) {
+        // Áudio enviado, sem arquivo: o painel mostra o tipo e a duração.
+        mensagensWhatsapp.push({
+          ...base,
+          autor: 'CELULAR',
+          tipo: 'AUDIO',
+          duracaoSegundos: 47,
+          conteudo: '',
+          status: 'ENTREGUE',
+        });
+      } else {
+        const [autor, statusEnvio] = ENVIOS[i % ENVIOS.length] ??
+          ENVIOS[0] ?? ['ATENDENTE', 'ENVIADA'];
+        mensagensWhatsapp.push({
+          ...base,
+          autor,
+          autorUsuarioId: autor === 'ATENDENTE' ? atendenteId : null,
+          status: statusEnvio,
+          conteudo: faker.helpers.arrayElement(ENVIADAS),
+        });
+      }
     }
+    const comAnuncio = i % 4 === 0;
     return {
       id,
       contatoId: contato.id,
@@ -89,6 +132,10 @@ export function buildSeedWhatsapp(
       status,
       naoLidas: status === 'AGUARDANDO' ? (i % 12) + 1 : 0,
       ultimaMensagemEm: ultima,
+      atendenteId: status === 'EM_ATENDIMENTO' ? atendenteId : null,
+      anuncioOrigem: comAnuncio ? (i % 8 === 0 ? 'Facebook' : 'Instagram') : null,
+      anuncioTitulo: comAnuncio ? 'Anúncio de consultórios (fictício)' : null,
+      anuncioUrl: comAnuncio ? 'https://example.com/anuncio' : null,
     };
   });
 

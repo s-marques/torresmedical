@@ -1,4 +1,5 @@
-import type { ContadoresConversasWhatsapp } from '@torres/shared';
+import type { ContadoresConversasWhatsapp, ConversaWhatsappStatus } from '@torres/shared';
+import type { TomStatus } from '@/components/shared/StatusBadge';
 
 /**
  * Chips de status da lista. "Alertas" não tem regra definida ainda (pendente com o dev):
@@ -17,3 +18,11 @@ export const FILTROS_STATUS = [
 }[];
 
 export type FiltroStatusConversa = (typeof FILTROS_STATUS)[number]['valor'];
+
+/** Cor da badge de status da conversa (lista e cabeçalho do painel). */
+export const TOM_STATUS: Readonly<Record<ConversaWhatsappStatus, TomStatus>> = {
+  BOT: 'destaque',
+  AGUARDANDO: 'alerta',
+  EM_ATENDIMENTO: 'info',
+  FINALIZADA: 'neutro',
+};
