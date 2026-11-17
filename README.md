@@ -77,6 +77,7 @@ O `.env` nunca é commitado. O [`.env.example`](.env.example) lista as variávei
 | `RABBITMQ_URL`                                      | Conexão da API com o RabbitMQ (host `rabbitmq`)   |
 | `RABBITMQ_URL_TEST`                                 | RabbitMQ dos testes (opcional)                    |
 | `MESSAGING_*`                                       | Retry, prefetch e outbox (ver `.env.example`)     |
+| `CAMPANHAS_AGENDADOR`                               | `off` desliga o agendador de campanhas            |
 | `API_PORT`                                          | Porta interna da API (padrão 3000)                |
 | `LOG_LEVEL`                                         | Nível do log da API (`info`, `debug`…)            |
 | `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`            | Credenciais do MinIO                              |

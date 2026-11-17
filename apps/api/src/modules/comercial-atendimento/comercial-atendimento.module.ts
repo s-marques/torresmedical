@@ -7,6 +7,16 @@ import { GestaoProfissionaisModule } from '../gestao-profissionais/gestao-profis
 import { AgendaController } from './agenda/agenda.controller';
 import { AtividadesController } from './atividades/atividades.controller';
 import { AtividadesService } from './atividades/atividades.service';
+import { CampanhasAgendador } from './campanhas/campanhas.agendador';
+import {
+  CampanhasController,
+  MensagensAutomaticasController,
+} from './campanhas/campanhas.controller';
+import { CampanhasService } from './campanhas/campanhas.service';
+import { DestinatariosService } from './campanhas/destinatarios.service';
+import { EnviosCampanhaService } from './campanhas/envios-campanha.service';
+import { MensagensAutomaticasService } from './campanhas/mensagens-automaticas.service';
+import { PrepararEnviosConsumer } from './campanhas/preparar-envios.consumer';
 import { AgendaService } from './agenda/agenda.service';
 import { OrcamentosController } from './orcamentos/orcamentos.controller';
 import { OrcamentosService } from './orcamentos/orcamentos.service';
@@ -32,6 +42,7 @@ import { AtendimentoWhatsappService } from './whatsapp/atendimento-whatsapp.serv
 import { ConversasWhatsappController } from './whatsapp/conversas-whatsapp.controller';
 import { ConversasWhatsappService } from './whatsapp/conversas-whatsapp.service';
 import { TagsAtendimentoController } from './whatsapp/tags-atendimento.controller';
+import { MensagensSaidaWhatsappService } from './whatsapp/mensagens-saida-whatsapp.service';
 import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
 
 /** Módulo COMERCIAL / ATENDIMENTO do inventário. Dono das entidades Paciente/Cliente, Origem de Cliente, Agendamento, Orçamento, Venda (Vendas/PDV), Conversa WhatsApp e Negócio (CRM). */
@@ -46,12 +57,14 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
   controllers: [
     AgendaController,
     AtividadesController,
+    CampanhasController,
     ConsultasRealizadasController,
     ConversasWhatsappController,
     CrmConfigController,
     criarLookupController('pacientes', PacientesService),
     criarLookupController('origens-cliente', OrigensClienteService),
     criarLookupController('negocios', NegociosLookupService),
+    MensagensAutomaticasController,
     OrcamentosController,
     OrigensClienteController,
     PacientesController,
@@ -79,6 +92,13 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     NegociosListaService,
     NegociosLookupService,
     AtividadesService,
+    MensagensSaidaWhatsappService,
+    DestinatariosService,
+    CampanhasService,
+    MensagensAutomaticasService,
+    EnviosCampanhaService,
+    PrepararEnviosConsumer,
+    CampanhasAgendador,
   ],
   exports: [PacientesService, OrigensClienteService],
 })

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AuditModule } from './common/audit/audit.module';
 import { AuthModule } from './common/auth/auth.module';
 import { CryptoModule } from './common/crypto/crypto.module';
@@ -29,6 +30,8 @@ import { RegulatorioQualidadeModule } from './modules/regulatorio-qualidade/regu
     AuditModule,
     AuthModule,
     MessagingModule,
+    // Tarefas periódicas (ex.: agendador de campanhas).
+    ScheduleModule.forRoot(),
     ExportModule,
     CryptoModule,
     RelatoriosModule,
