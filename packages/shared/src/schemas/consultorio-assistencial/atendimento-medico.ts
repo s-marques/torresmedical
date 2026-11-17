@@ -7,6 +7,7 @@ import {
   type AgendamentoStatus,
 } from '../comercial-atendimento/agendamento';
 import { pacienteSexoSchema } from '../comercial-atendimento/paciente';
+import { lookupItemSchema } from '../lookups/lookup';
 import { atendimentoStatusSchema } from './prontuario';
 
 /**
@@ -184,3 +185,162 @@ export const pacienteDadosAtendimentoSchema = z.object({
   observacoes: z.string().nullable(),
 });
 export type PacienteDadosAtendimento = z.infer<typeof pacienteDadosAtendimentoSchema>;
+
+// --- Aba Receita -------------------------------------------------------------------------
+
+/** Select de validade da "Nova Receita Manual", em dias, na ordem do inventário. */
+export const RECEITA_VALIDADES = [30, 60, 90, 180, 365] as const;
+export type ReceitaValidade = (typeof RECEITA_VALIDADES)[number];
+
+export const RECEITA_VALIDADE_ROTULOS: Record<ReceitaValidade, string> = {
+  30: '30 dias',
+  60: '60 dias',
+  90: '90 dias',
+  180: '180 dias',
+  365: '1 ano',
+};
+
+export const RECEITA_TEXTO_MAX = 10_000;
+export const RECEITA_OBSERVACOES_MAX = 2000;
+
+/** Corpo de `POST .../atendimento-medico/:agendamentoId/receitas` ("Salvar Receita"). */
+export const receitaInputSchema = z.strictObject({
+  tipo: evolucaoTipoSchema.default('EVOLUCAO'),
+  /** "Receita Amarela (Controlada)". */
+  controlada: z.boolean({ error: 'Controlada inválida' }).default(false),
+  /** O select do formulário envia texto; a API aceita número. */
+  validadeDias: z.coerce
+    .number({ error: 'Validade inválida' })
+    .refine((v) => (RECEITA_VALIDADES as readonly number[]).includes(v), {
+      error: 'Validade inválida',
+    })
+    .default(30),
+  texto: z
+    .string({ error: mensagemObrigatoria('Receita', 'f') })
+    .trim()
+    .min(1, { error: mensagemObrigatoria('Receita', 'f') })
+    .max(RECEITA_TEXTO_MAX, {
+      error: `A receita deve ter no máximo ${RECEITA_TEXTO_MAX} caracteres`,
+    }),
+  observacoes: z
+    .string({ error: 'Observações inválidas' })
+    .trim()
+    .max(RECEITA_OBSERVACOES_MAX, {
+      error: `As observações devem ter no máximo ${RECEITA_OBSERVACOES_MAX} caracteres`,
+    })
+    .optional()
+    .transform((v) => v || null),
+});
+export type ReceitaFormulario = z.input<typeof receitaInputSchema>;
+export type CreateReceitaInput = z.output<typeof receitaInputSchema>;
+
+export const receitaSchema = z.object({
+  id: z.uuid(),
+  atendimentoId: z.uuid(),
+  tipo: evolucaoTipoSchema,
+  controlada: z.boolean(),
+  validadeDias: z.number().int(),
+  texto: z.string(),
+  observacoes: z.string().nullable(),
+  profissionalNome: z.string().nullable(),
+  createdAt: z.iso.datetime(),
+});
+export type Receita = z.infer<typeof receitaSchema>;
+
+/** "Receitas Anteriores": receitas do paciente, da mais recente para a mais antiga. */
+export const receitaPageSchema = paginatedResponseSchema(receitaSchema);
+export type ReceitaPage = z.infer<typeof receitaPageSchema>;
+
+/** `GET .../atendimento-medico/protocolos`: "Selecionar Protocolo/Receita". */
+export const listProtocolosReceitaQuerySchema = listQuerySchema({
+  sortFields: ['nome'] as const,
+  defaultSort: 'nome:asc',
+  filters: {
+    /** Select "Todas": categoria do protocolo. */
+    categoria: z.string().trim().min(1).optional(),
+  },
+});
+export type ListProtocolosReceitaQuery = z.infer<typeof listProtocolosReceitaQuerySchema>;
+
+/** Protocolo escolhido: nome e observações entram no texto da receita. */
+export const protocoloReceitaSchema = z.object({
+  id: z.uuid(),
+  nome: z.string(),
+  categoria: z.string(),
+  texto: z.string().nullable(),
+});
+export type ProtocoloReceita = z.infer<typeof protocoloReceitaSchema>;
+
+export const protocoloReceitaPageSchema = paginatedResponseSchema(protocoloReceitaSchema);
+export type ProtocoloReceitaPage = z.infer<typeof protocoloReceitaPageSchema>;
+
+/** Texto acrescentado à receita ao escolher um protocolo (nome e observações). */
+export function textoDoProtocolo(protocolo: Pick<ProtocoloReceita, 'nome' | 'texto'>): string {
+  return protocolo.texto ? `${protocolo.nome}\n${protocolo.texto}` : protocolo.nome;
+}
+
+// --- Aba Pagamento -----------------------------------------------------------------------
+
+export const RECEBIMENTO_VALOR_MAX = 999_999_999;
+
+/** Corpo de `POST .../atendimento-medico/:agendamentoId/recebimentos` ("Registrar Pagamento"). */
+export const recebimentoInputSchema = z.strictObject({
+  valor: z
+    .number({ error: mensagemObrigatoria('Valor a receber') })
+    .positive({ error: 'O valor a receber deve ser maior que zero' })
+    .max(RECEBIMENTO_VALOR_MAX, { error: 'Valor inválido' }),
+  formaPagamentoId: z.uuid({ error: mensagemObrigatoria('Forma de pagamento', 'f') }),
+});
+export type RecebimentoFormulario = z.input<typeof recebimentoInputSchema>;
+export type CreateRecebimentoInput = z.output<typeof recebimentoInputSchema>;
+
+export const recebimentoSchema = z.object({
+  id: z.uuid(),
+  agendamentoId: z.uuid(),
+  valor: z.number(),
+  formaPagamentoId: z.uuid(),
+  formaPagamentoNome: z.string(),
+  recebidoEm: z.iso.datetime(),
+});
+export type Recebimento = z.infer<typeof recebimentoSchema>;
+
+/** `GET .../atendimento-medico/:agendamentoId/pagamento`: card "Registrar Recebimento". */
+export const pagamentoAtendimentoSchema = z.object({
+  /** "Valor da consulta"; `null` quando o agendamento não tem valor. */
+  valorConsulta: z.number().nullable(),
+  /** "Já recebido": soma dos recebimentos. */
+  recebido: z.number(),
+  /** "Saldo a receber"; `null` sem valor da consulta. */
+  saldo: z.number().nullable(),
+  pago: z.boolean(),
+  recebimentos: z.array(recebimentoSchema),
+  /** Opções de "Forma de Pagamento": de recebimento, sem cartão (lançado pela Agenda). */
+  formasPagamento: z.array(lookupItemSchema),
+});
+export type PagamentoAtendimento = z.infer<typeof pagamentoAtendimentoSchema>;
+
+// --- Aba Histórico -----------------------------------------------------------------------
+
+/** Atendimento do paciente, com as evoluções e a quantidade de receitas. */
+export const historicoAtendimentoSchema = z.object({
+  id: z.uuid(),
+  agendamentoId: z.uuid().nullable(),
+  status: atendimentoStatusSchema,
+  iniciadoEm: z.iso.datetime(),
+  finalizadoEm: z.iso.datetime().nullable(),
+  profissionalNome: z.string().nullable(),
+  evolucoes: z.array(
+    z.object({
+      id: z.uuid(),
+      tipo: evolucaoTipoSchema,
+      texto: z.string(),
+      createdAt: z.iso.datetime(),
+    }),
+  ),
+  totalReceitas: z.number().int(),
+});
+export type HistoricoAtendimento = z.infer<typeof historicoAtendimentoSchema>;
+
+/** `GET .../atendimento-medico/:agendamentoId/historico`: atendimentos do paciente, mais recente primeiro. */
+export const historicoAtendimentoPageSchema = paginatedResponseSchema(historicoAtendimentoSchema);
+export type HistoricoAtendimentoPage = z.infer<typeof historicoAtendimentoPageSchema>;

@@ -7,17 +7,36 @@ import {
   evolucaoInputSchema,
   evolucaoPageSchema,
   evolucaoSchema,
+  historicoAtendimentoPageSchema,
   listAtendimentoMedicoQuerySchema,
+  listProtocolosReceitaQuerySchema,
   listRegistrosQuerySchema,
   pacienteDadosAtendimentoSchema,
+  pagamentoAtendimentoSchema,
+  protocoloCategoriasSchema,
+  protocoloReceitaPageSchema,
+  receitaInputSchema,
+  receitaPageSchema,
+  receitaSchema,
+  recebimentoInputSchema,
+  recebimentoSchema,
   type AtendimentoEmCurso,
   type AtendimentoMedicoDetalhe,
   type AtendimentoMedicoItem,
   type CreateEvolucaoInput,
+  type CreateReceitaInput,
+  type CreateRecebimentoInput,
   type Evolucao,
+  type HistoricoAtendimento,
   type ListAtendimentoMedicoQuery,
+  type ListProtocolosReceitaQuery,
   type ListRegistrosQuery,
   type PacienteDadosAtendimento,
+  type PagamentoAtendimento,
+  type ProtocoloCategorias,
+  type ProtocoloReceita,
+  type Receita,
+  type Recebimento,
 } from '@torres/shared';
 import { Audit } from '../../../common/audit/audit.decorator';
 import { RequirePermission } from '../../../common/auth/auth.decorators';
@@ -49,6 +68,29 @@ export class AtendimentoMedicoController {
     query: ListAtendimentoMedicoQuery,
   ): Promise<Page<AtendimentoMedicoItem>> {
     return this.service.listar(query);
+  }
+
+  // Rotas fixas antes de `:agendamentoId`.
+  @Get('protocolos')
+  @RequirePermission('consultorio-assistencial.atendimento-medico.ver')
+  @ApiOperation({ summary: '"Selecionar Protocolo/Receita": protocolos do cadastro' })
+  @ApiZodQuery(listProtocolosReceitaQuerySchema)
+  @ApiZodResponse(200, protocoloReceitaPageSchema)
+  @ApiErrorResponses(400, 401, 403)
+  listarProtocolos(
+    @Query(new ZodValidationPipe(listProtocolosReceitaQuerySchema))
+    query: ListProtocolosReceitaQuery,
+  ): Promise<Page<ProtocoloReceita>> {
+    return this.service.listarProtocolos(query);
+  }
+
+  @Get('protocolos/categorias')
+  @RequirePermission('consultorio-assistencial.atendimento-medico.ver')
+  @ApiOperation({ summary: 'Categorias do select "Todas" do seletor de protocolos' })
+  @ApiZodResponse(200, protocoloCategoriasSchema)
+  @ApiErrorResponses(401, 403)
+  categoriasProtocolos(): Promise<ProtocoloCategorias> {
+    return this.service.categoriasProtocolos();
   }
 
   @Get(':agendamentoId')
@@ -97,6 +139,81 @@ export class AtendimentoMedicoController {
     @Body(new ZodValidationPipe(evolucaoInputSchema)) body: CreateEvolucaoInput,
   ): Promise<Evolucao> {
     return this.service.criarEvolucao(agendamentoId, body);
+  }
+
+  @Get(':agendamentoId/receitas')
+  @RequirePermission('consultorio-assistencial.atendimento-medico.ver')
+  @ApiOperation({ summary: '"Receitas Anteriores" do paciente' })
+  @ApiZodQuery(listRegistrosQuerySchema)
+  @ApiZodResponse(200, receitaPageSchema)
+  @ApiErrorResponses(400, 401, 403, 404)
+  listarReceitas(
+    @IdParam('agendamentoId') agendamentoId: string,
+    @Query(new ZodValidationPipe(listRegistrosQuerySchema)) query: ListRegistrosQuery,
+  ): Promise<Page<Receita>> {
+    return this.service.listarReceitas(agendamentoId, query);
+  }
+
+  @Post(':agendamentoId/receitas')
+  @RequirePermission('consultorio-assistencial.atendimento-medico.criar')
+  @Audit({ entity: 'AtendimentoReceita' })
+  @ApiOperation({ summary: '"Salvar Receita" (receita manual) do atendimento em andamento' })
+  @ApiZodBody(receitaInputSchema)
+  @ApiZodResponse(201, receitaSchema)
+  @ApiErrorResponses(400, 401, 403, 404, 422)
+  criarReceita(
+    @IdParam('agendamentoId') agendamentoId: string,
+    @Body(new ZodValidationPipe(receitaInputSchema)) body: CreateReceitaInput,
+  ): Promise<Receita> {
+    return this.service.criarReceita(agendamentoId, body);
+  }
+
+  @Get(':agendamentoId/pagamento')
+  @RequirePermission('consultorio-assistencial.atendimento-medico.ver')
+  @ApiOperation({ summary: 'Aba "Pagamento": valor, já recebido, saldo e formas aceitas' })
+  @ApiZodResponse(200, pagamentoAtendimentoSchema)
+  @ApiErrorResponses(400, 401, 403, 404)
+  pagamento(@IdParam('agendamentoId') agendamentoId: string): Promise<PagamentoAtendimento> {
+    return this.service.pagamento(agendamentoId);
+  }
+
+  @Post(':agendamentoId/recebimentos')
+  @RequirePermission('consultorio-assistencial.atendimento-medico.criar')
+  @Audit({ entity: 'AgendamentoRecebimento' })
+  @ApiOperation({ summary: '"Registrar Pagamento": recebimento parcial ou total da consulta' })
+  @ApiZodBody(recebimentoInputSchema)
+  @ApiZodResponse(201, recebimentoSchema)
+  @ApiErrorResponses(400, 401, 403, 404, 422)
+  registrarRecebimento(
+    @IdParam('agendamentoId') agendamentoId: string,
+    @Body(new ZodValidationPipe(recebimentoInputSchema)) body: CreateRecebimentoInput,
+  ): Promise<Recebimento> {
+    return this.service.registrarRecebimento(agendamentoId, body);
+  }
+
+  @Get(':agendamentoId/historico')
+  @RequirePermission('consultorio-assistencial.atendimento-medico.ver')
+  @ApiOperation({ summary: 'Aba "Histórico": atendimentos do paciente com as evoluções' })
+  @ApiZodQuery(listRegistrosQuerySchema)
+  @ApiZodResponse(200, historicoAtendimentoPageSchema)
+  @ApiErrorResponses(400, 401, 403, 404)
+  historico(
+    @IdParam('agendamentoId') agendamentoId: string,
+    @Query(new ZodValidationPipe(listRegistrosQuerySchema)) query: ListRegistrosQuery,
+  ): Promise<Page<HistoricoAtendimento>> {
+    return this.service.historico(agendamentoId, query);
+  }
+
+  /** Auditado no service: o `before` é o atendimento, achado pelo agendamento. */
+  @Post(':agendamentoId/finalizar')
+  @RequirePermission('consultorio-assistencial.atendimento-medico.editar')
+  @ApiOperation({
+    summary: '"Finalizar": grava o horário de fim e muda o agendamento para Atendido',
+  })
+  @ApiZodResponse(201, atendimentoEmCursoSchema)
+  @ApiErrorResponses(400, 401, 403, 404, 422)
+  finalizar(@IdParam('agendamentoId') agendamentoId: string): Promise<AtendimentoEmCurso> {
+    return this.service.finalizar(agendamentoId);
   }
 
   @Get(':agendamentoId/paciente')

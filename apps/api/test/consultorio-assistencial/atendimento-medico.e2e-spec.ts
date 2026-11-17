@@ -5,7 +5,13 @@ import {
   atendimentoMedicoPageSchema,
   evolucaoPageSchema,
   evolucaoSchema,
+  historicoAtendimentoPageSchema,
   pacienteDadosAtendimentoSchema,
+  pagamentoAtendimentoSchema,
+  protocoloReceitaPageSchema,
+  receitaPageSchema,
+  receitaSchema,
+  recebimentoSchema,
 } from '@torres/shared';
 import { PrismaService } from '../../src/common/prisma/prisma.service';
 import { comUsuario, criarUsuarioTeste, type UsuarioTeste } from '../utils/auth';
@@ -17,6 +23,7 @@ const BASE = '/api/consultorio-assistencial/atendimento-medico';
 const PERMISSOES = [
   'consultorio-assistencial.atendimento-medico.ver',
   'consultorio-assistencial.atendimento-medico.criar',
+  'consultorio-assistencial.atendimento-medico.editar',
 ] as const;
 const INEXISTENTE = '00000000-0000-4000-8000-000000000000';
 const DIA = '2026-11-17';
@@ -272,6 +279,301 @@ describe('Atendimento Médico (e2e)', () => {
         .post(`${BASE}/${confirmado.id}/evolucoes`)
         .send({ texto: 'x' })
         .expect(403);
+    });
+  });
+
+  describe('Receitas', () => {
+    it('POST salva no atendimento em andamento, audita e aparece nas anteriores', async () => {
+      const { confirmado } = await cenario();
+      await http().post(`${BASE}/${confirmado.id}/iniciar`).expect(201);
+
+      const res = await http()
+        .post(`${BASE}/${confirmado.id}/receitas`)
+        .send({
+          tipo: 'PRESCRICAO',
+          controlada: true,
+          validadeDias: 90,
+          texto: ' 1) Medicamento fictício - 1x ao dia ',
+          observacoes: 'Tomar após as refeições',
+        })
+        .expect(201);
+      const receita = receitaSchema.parse(res.body);
+      expect(receita).toMatchObject({
+        controlada: true,
+        validadeDias: 90,
+        texto: '1) Medicamento fictício - 1x ao dia',
+        profissionalNome: 'Dra. Fictícia',
+      });
+      await expectAudit(prisma, {
+        action: 'CREATE',
+        entity: 'AtendimentoReceita',
+        entityId: receita.id,
+        before: null,
+        after: { controlada: true, validadeDias: 90 },
+        userId: usuario.id,
+      });
+
+      const anteriores = await http().get(`${BASE}/${confirmado.id}/receitas`).expect(200);
+      expect(receitaPageSchema.parse(anteriores.body).data.map((r) => r.id)).toEqual([receita.id]);
+    });
+
+    it('422 antes de iniciar, 400 sem texto ou validade fora do select, sem auditar', async () => {
+      const { confirmado } = await cenario();
+      const naoIniciado = await http()
+        .post(`${BASE}/${confirmado.id}/receitas`)
+        .send({ texto: 'x' })
+        .expect(422);
+      expect(naoIniciado.body.code).toBe('ATENDIMENTO_NAO_INICIADO');
+
+      await http().post(`${BASE}/${confirmado.id}/iniciar`).expect(201);
+      const invalida = await http()
+        .post(`${BASE}/${confirmado.id}/receitas`)
+        .send({ texto: ' ', validadeDias: 45 })
+        .expect(400);
+      expect(invalida.body.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ field: 'texto', message: 'Receita é obrigatória.' }),
+          expect.objectContaining({ field: 'validadeDias', message: 'Validade inválida' }),
+        ]),
+      );
+      await expectNoAudit(prisma, { entity: 'AtendimentoReceita' });
+    });
+
+    it('404 inexistente e 403 sem permissão', async () => {
+      const { confirmado } = await cenario();
+      await http().get(`${BASE}/${INEXISTENTE}/receitas`).expect(404);
+      await (await semPermissao()).get(`${BASE}/${confirmado.id}/receitas`).expect(403);
+      await (
+        await semPermissao()
+      )
+        .post(`${BASE}/${confirmado.id}/receitas`)
+        .send({ texto: 'x' })
+        .expect(403);
+    });
+
+    it('GET /protocolos lista o cadastro com busca e categoria; 403 sem permissão', async () => {
+      await prisma.protocolo.create({
+        data: { nome: 'Limpeza de pele', categoria: 'Estética', observacoes: 'Aplicar 2x' },
+      });
+      await prisma.protocolo.create({ data: { nome: 'Fisioterapia', categoria: 'Reabilitação' } });
+
+      const res = await http()
+        .get(`${BASE}/protocolos`)
+        .query({ categoria: 'Estética' })
+        .expect(200);
+      expect(protocoloReceitaPageSchema.parse(res.body).data).toEqual([
+        expect.objectContaining({ nome: 'Limpeza de pele', texto: 'Aplicar 2x' }),
+      ]);
+      const busca = await http().get(`${BASE}/protocolos`).query({ search: 'fisio' }).expect(200);
+      expect(busca.body.data.map((p: { nome: string }) => p.nome)).toEqual(['Fisioterapia']);
+
+      const categorias = await http().get(`${BASE}/protocolos/categorias`).expect(200);
+      expect(categorias.body).toEqual({ data: ['Estética', 'Reabilitação'] });
+      await (await semPermissao()).get(`${BASE}/protocolos`).expect(403);
+    });
+  });
+
+  describe('Pagamento', () => {
+    async function formas() {
+      const pix = await prisma.formaPagamento.create({
+        data: { nome: 'PIX', finalidade: 'RECEBER', tipo: 'PIX' },
+      });
+      const cartao = await prisma.formaPagamento.create({
+        data: { nome: 'Cartão de Crédito', finalidade: 'RECEBER', tipo: 'CARTAO_CREDITO' },
+      });
+      await prisma.formaPagamento.create({
+        data: { nome: 'Boleto Fornecedor', finalidade: 'PAGAR', tipo: 'BOLETO' },
+      });
+      return { pix, cartao };
+    }
+
+    it('GET mostra valor, saldo e só as formas de receber sem cartão', async () => {
+      const { confirmado } = await cenario();
+      await prisma.agendamento.update({ where: { id: confirmado.id }, data: { valor: '250' } });
+      const { pix } = await formas();
+
+      const res = await http().get(`${BASE}/${confirmado.id}/pagamento`).expect(200);
+      expect(pagamentoAtendimentoSchema.parse(res.body)).toEqual({
+        valorConsulta: 250,
+        recebido: 0,
+        saldo: 250,
+        pago: false,
+        recebimentos: [],
+        formasPagamento: [expect.objectContaining({ id: pix.id, label: 'PIX' })],
+      });
+    });
+
+    it('recebimento parcial e depois o restante: marca pago e audita', async () => {
+      const { confirmado } = await cenario();
+      await prisma.agendamento.update({ where: { id: confirmado.id }, data: { valor: '250' } });
+      const { pix } = await formas();
+
+      const parcial = await http()
+        .post(`${BASE}/${confirmado.id}/recebimentos`)
+        .send({ valor: 100, formaPagamentoId: pix.id })
+        .expect(201);
+      const recebimento = recebimentoSchema.parse(parcial.body);
+      await expectAudit(prisma, {
+        action: 'CREATE',
+        entity: 'AgendamentoRecebimento',
+        entityId: recebimento.id,
+        before: null,
+        after: { valor: 100, formaPagamentoNome: 'PIX' },
+        userId: usuario.id,
+      });
+      await expectNoAudit(prisma, { entity: 'Agendamento' });
+
+      const acima = await http()
+        .post(`${BASE}/${confirmado.id}/recebimentos`)
+        .send({ valor: 200, formaPagamentoId: pix.id })
+        .expect(422);
+      expect(acima.body.code).toBe('VALOR_ACIMA_DO_SALDO');
+
+      await http()
+        .post(`${BASE}/${confirmado.id}/recebimentos`)
+        .send({ valor: 150, formaPagamentoId: pix.id })
+        .expect(201);
+      const situacao = await http().get(`${BASE}/${confirmado.id}/pagamento`).expect(200);
+      expect(situacao.body).toMatchObject({ recebido: 250, saldo: 0, pago: true });
+      const agendamento = await prisma.agendamento.findUniqueOrThrow({
+        where: { id: confirmado.id },
+      });
+      expect(agendamento.pagoEm).toBeInstanceOf(Date);
+      expect(agendamento.formaPagamentoId).toBe(pix.id);
+      await expectAudit(prisma, {
+        action: 'UPDATE',
+        entity: 'Agendamento',
+        entityId: confirmado.id,
+        before: { pagoEm: null },
+        after: { formaPagamentoId: pix.id },
+        userId: usuario.id,
+      });
+
+      const lista = await http().get(BASE).query({ data: DIA }).expect(200);
+      expect(lista.body.data.find((a: { id: string }) => a.id === confirmado.id).pago).toBe(true);
+
+      const jaPago = await http()
+        .post(`${BASE}/${confirmado.id}/recebimentos`)
+        .send({ valor: 1, formaPagamentoId: pix.id })
+        .expect(422);
+      expect(jaPago.body.code).toBe('AGENDAMENTO_JA_PAGO');
+    });
+
+    it('422 para cartão e cancelado; 400 sem valor e forma; 404 forma inexistente', async () => {
+      const { confirmado, cancelado } = await cenario();
+      const { pix, cartao } = await formas();
+
+      const comCartao = await http()
+        .post(`${BASE}/${confirmado.id}/recebimentos`)
+        .send({ valor: 10, formaPagamentoId: cartao.id })
+        .expect(422);
+      expect(comCartao.body.code).toBe('FORMA_PAGAMENTO_CARTAO');
+      const comCancelado = await http()
+        .post(`${BASE}/${cancelado.id}/recebimentos`)
+        .send({ valor: 10, formaPagamentoId: pix.id })
+        .expect(422);
+      expect(comCancelado.body.code).toBe('AGENDAMENTO_CANCELADO');
+
+      const vazio = await http().post(`${BASE}/${confirmado.id}/recebimentos`).send({}).expect(400);
+      expect(vazio.body.details.map((d: { field: string }) => d.field)).toEqual([
+        'valor',
+        'formaPagamentoId',
+      ]);
+      await http()
+        .post(`${BASE}/${confirmado.id}/recebimentos`)
+        .send({ valor: 10, formaPagamentoId: INEXISTENTE })
+        .expect(404);
+      await expectNoAudit(prisma, { entity: 'AgendamentoRecebimento' });
+    });
+
+    it('404 inexistente e 403 sem permissão', async () => {
+      const { confirmado } = await cenario();
+      await http().get(`${BASE}/${INEXISTENTE}/pagamento`).expect(404);
+      await (await semPermissao()).get(`${BASE}/${confirmado.id}/pagamento`).expect(403);
+      await (
+        await semPermissao()
+      )
+        .post(`${BASE}/${confirmado.id}/recebimentos`)
+        .send({ valor: 1, formaPagamentoId: INEXISTENTE })
+        .expect(403);
+    });
+  });
+
+  describe('Histórico e Finalizar', () => {
+    it('finaliza: grava o fim, muda para Atendido, audita os dois e aparece no histórico', async () => {
+      const { confirmado } = await cenario();
+      const iniciado = await http().post(`${BASE}/${confirmado.id}/iniciar`).expect(201);
+      await http()
+        .post(`${BASE}/${confirmado.id}/evolucoes`)
+        .send({ texto: 'Evolução fictícia' })
+        .expect(201);
+
+      const res = await http().post(`${BASE}/${confirmado.id}/finalizar`).expect(201);
+      const finalizado = atendimentoEmCursoSchema.parse(res.body);
+      expect(finalizado).toMatchObject({ id: iniciado.body.id, status: 'FINALIZADO' });
+      expect(finalizado.finalizadoEm).not.toBeNull();
+
+      const agendamento = await prisma.agendamento.findUniqueOrThrow({
+        where: { id: confirmado.id },
+      });
+      expect(agendamento.status).toBe('ATENDIDO');
+      await expectAudit(prisma, {
+        action: 'UPDATE',
+        entity: 'Atendimento',
+        entityId: finalizado.id,
+        before: { status: 'EM_ANDAMENTO', finalizadoEm: null },
+        after: { status: 'FINALIZADO' },
+        userId: usuario.id,
+      });
+      // O agendamento tem dois UPDATE (iniciar e finalizar); o mais recente é o do finalizar.
+      const [ultimo] = await prisma.auditLog.findMany({
+        where: { action: 'UPDATE', entity: 'Agendamento', entityId: confirmado.id },
+        orderBy: { occurredAt: 'desc' },
+        take: 1,
+      });
+      expect(ultimo).toMatchObject({
+        userId: usuario.id,
+        before: expect.objectContaining({ status: 'EM_ATENDIMENTO' }),
+        after: expect.objectContaining({ status: 'ATENDIDO' }),
+      });
+
+      const historico = await http().get(`${BASE}/${confirmado.id}/historico`).expect(200);
+      expect(historicoAtendimentoPageSchema.parse(historico.body).data).toEqual([
+        expect.objectContaining({
+          id: finalizado.id,
+          status: 'FINALIZADO',
+          profissionalNome: 'Dra. Fictícia',
+          totalReceitas: 0,
+          evolucoes: [expect.objectContaining({ texto: 'Evolução fictícia' })],
+        }),
+      ]);
+
+      const deNovo = await http().post(`${BASE}/${confirmado.id}/finalizar`).expect(422);
+      expect(deNovo.body.code).toBe('ATENDIMENTO_FINALIZADO');
+      const evolucaoDepois = await http()
+        .post(`${BASE}/${confirmado.id}/evolucoes`)
+        .send({ texto: 'x' })
+        .expect(422);
+      expect(evolucaoDepois.body.code).toBe('ATENDIMENTO_FINALIZADO');
+    });
+
+    it('422 sem iniciar, 404 inexistente e 403 sem a permissão de editar', async () => {
+      const { confirmado } = await cenario();
+      const naoIniciado = await http().post(`${BASE}/${confirmado.id}/finalizar`).expect(422);
+      expect(naoIniciado.body.code).toBe('ATENDIMENTO_NAO_INICIADO');
+      await http().post(`${BASE}/${INEXISTENTE}/finalizar`).expect(404);
+      await http().get(`${BASE}/${INEXISTENTE}/historico`).expect(404);
+
+      await http().post(`${BASE}/${confirmado.id}/iniciar`).expect(201);
+      const semEditar = await criarUsuarioTeste(app, {
+        permissoes: [
+          'consultorio-assistencial.atendimento-medico.ver',
+          'consultorio-assistencial.atendimento-medico.criar',
+        ],
+      });
+      await comUsuario(app, semEditar).post(`${BASE}/${confirmado.id}/finalizar`).expect(403);
+      await (await semPermissao()).get(`${BASE}/${confirmado.id}/historico`).expect(403);
+      await expectNoAudit(prisma, { entity: 'Atendimento', action: 'UPDATE' });
     });
   });
 

@@ -3,7 +3,9 @@ import type { AtendimentoMedicoItem, Paciente } from '@torres/shared';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import type { AgendamentosAtendimentoService } from '../../comercial-atendimento/agenda/agendamentos-atendimento.service';
 import type { PacientesService } from '../../comercial-atendimento/pacientes/pacientes.service';
+import type { AuditService } from '../../../common/audit/audit.service';
 import type { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
+import type { ProtocolosService } from '../../gestao-profissionais/protocolos/protocolos.service';
 import {
   AtendimentoMedicoService,
   enderecoEmLinha,
@@ -50,6 +52,18 @@ const EVOLUCAO = {
   atendimento: { profissionalId: ID_PROF },
 };
 
+const RECEITA = {
+  id: ID_EV,
+  atendimentoId: ID_AT,
+  tipo: 'PRESCRICAO' as const,
+  controlada: true,
+  validadeDias: 60,
+  texto: '1) Medicamento',
+  observacoes: null as string | null,
+  createdAt: AGORA,
+  atendimento: { profissionalId: ID_PROF },
+};
+
 function setup({
   item = ITEM,
   atendimento = null as typeof ATENDIMENTO | null,
@@ -62,6 +76,26 @@ function setup({
         .mockImplementation(({ data }: { data: object }) =>
           Promise.resolve({ ...ATENDIMENTO, ...data, id: ID_AT, createdAt: AGORA }),
         ),
+      update: jest
+        .fn()
+        .mockImplementation(({ data }: { data: object }) =>
+          Promise.resolve({ ...ATENDIMENTO, ...data }),
+        ),
+      findMany: jest
+        .fn()
+        .mockResolvedValue([
+          { ...ATENDIMENTO, evolucoes: [{ ...EVOLUCAO }], _count: { receitas: 2 } },
+        ]),
+      count: jest.fn().mockResolvedValue(1),
+    },
+    atendimentoReceita: {
+      findMany: jest.fn().mockResolvedValue([RECEITA]),
+      count: jest.fn().mockResolvedValue(1),
+      create: jest
+        .fn()
+        .mockImplementation(({ data }: { data: object }) =>
+          Promise.resolve({ ...RECEITA, ...data, createdAt: AGORA }),
+        ),
     },
     atendimentoEvolucao: {
       findMany: jest.fn().mockResolvedValue([EVOLUCAO]),
@@ -73,12 +107,27 @@ function setup({
         ),
     },
   };
-  const txHost = { tx } as unknown as TransactionHost<PrismaAdapter>;
+  const txHost = {
+    tx,
+    withTransaction: (fn: () => Promise<unknown>) => fn(),
+  } as unknown as TransactionHost<PrismaAdapter>;
   const agendamentos = {
     listarDoDia: jest.fn().mockResolvedValue({ data: [item], meta: {} }),
     resumo: jest.fn().mockResolvedValue(item),
     alterarStatus: jest.fn().mockResolvedValue({ ...item, status: 'EM_ATENDIMENTO' }),
+    pagamento: jest.fn().mockResolvedValue({ pago: false }),
+    registrarRecebimento: jest.fn().mockResolvedValue({ id: 'r1' }),
   };
+  const protocolos = {
+    list: jest.fn().mockResolvedValue({
+      data: [
+        { id: ID_EV, nome: 'Limpeza de pele', categoria: 'Estética', observacoes: 'Aplicar 2x' },
+      ],
+      meta: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
+    }),
+    categorias: jest.fn().mockResolvedValue({ data: ['Estética'] }),
+  };
+  const audit = { record: jest.fn().mockResolvedValue(undefined) };
   const pacientes = { detalhe: jest.fn() };
   const profissionais = {
     detalhe: jest.fn().mockResolvedValue({ id: ID_PROF, nome: 'Profissional Fictício' }),
@@ -88,8 +137,10 @@ function setup({
     agendamentos as unknown as AgendamentosAtendimentoService,
     pacientes as unknown as PacientesService,
     profissionais as unknown as ProfissionaisService,
+    protocolos as unknown as ProtocolosService,
+    audit as unknown as AuditService,
   );
-  return { service, tx, agendamentos, pacientes, profissionais };
+  return { service, tx, agendamentos, pacientes, profissionais, protocolos, audit };
 }
 
 describe('AtendimentoMedicoService', () => {
@@ -267,6 +318,103 @@ describe('funções de mapeamento', () => {
       agendamentoId: '',
       iniciadoEm: AGORA.toISOString(),
       finalizadoEm: fim.toISOString(),
+    });
+  });
+  describe('receitas', () => {
+    it('lista as receitas do paciente com o nome do profissional', async () => {
+      const { service, tx } = setup();
+      const pagina = await service.listarReceitas(ID_AG, { page: 1, pageSize: 20 } as never);
+      expect(pagina.data[0]).toMatchObject({
+        controlada: true,
+        profissionalNome: 'Profissional Fictício',
+      });
+      expect(tx.atendimentoReceita.findMany.mock.calls[0][0].where).toMatchObject({
+        atendimento: { pacienteId: ID_PAC },
+      });
+    });
+
+    it('salva só com o atendimento em andamento', async () => {
+      const entrada = {
+        tipo: 'PRESCRICAO' as const,
+        controlada: false,
+        validadeDias: 30,
+        texto: 'x',
+        observacoes: null,
+      };
+      await expect(setup().service.criarReceita(ID_AG, entrada)).rejects.toMatchObject({
+        code: 'ATENDIMENTO_NAO_INICIADO',
+      });
+      const finalizado = setup({ atendimento: { ...ATENDIMENTO, status: 'FINALIZADO' as never } });
+      await expect(finalizado.service.criarReceita(ID_AG, entrada)).rejects.toMatchObject({
+        code: 'ATENDIMENTO_FINALIZADO',
+      });
+      const { service, tx } = setup({ atendimento: ATENDIMENTO });
+      await expect(service.criarReceita(ID_AG, entrada)).resolves.toMatchObject({ texto: 'x' });
+      expect(tx.atendimentoReceita.create).toHaveBeenCalledWith({
+        data: { atendimentoId: ID_AT, ...entrada },
+      });
+    });
+
+    it('protocolos vêm do cadastro, com as observações como texto', async () => {
+      const { service, protocolos } = setup();
+      const pagina = await service.listarProtocolos({
+        page: 1,
+        pageSize: 20,
+        sort: { field: 'nome', direction: 'asc' },
+        search: 'limp',
+        categoria: 'Estética',
+      } as never);
+      expect(pagina.data).toEqual([
+        { id: ID_EV, nome: 'Limpeza de pele', categoria: 'Estética', texto: 'Aplicar 2x' },
+      ]);
+      expect(protocolos.list.mock.calls[0][0]).toMatchObject({
+        search: 'limp',
+        categoria: 'Estética',
+      });
+      await expect(service.categoriasProtocolos()).resolves.toEqual({ data: ['Estética'] });
+    });
+  });
+
+  it('pagamento e recebimento delegam ao service de agendamentos', async () => {
+    const { service, agendamentos } = setup();
+    await service.pagamento(ID_AG);
+    const entrada = { valor: 10, formaPagamentoId: ID_PROF };
+    await service.registrarRecebimento(ID_AG, entrada);
+    expect(agendamentos.pagamento).toHaveBeenCalledWith(ID_AG);
+    expect(agendamentos.registrarRecebimento).toHaveBeenCalledWith(ID_AG, entrada);
+  });
+
+  it('histórico: atendimentos do paciente com evoluções e total de receitas', async () => {
+    const { service } = setup();
+    const pagina = await service.historico(ID_AG, { page: 1, pageSize: 20 } as never);
+    expect(pagina.data[0]).toMatchObject({
+      id: ID_AT,
+      profissionalNome: 'Profissional Fictício',
+      totalReceitas: 2,
+      evolucoes: [{ id: ID_EV, tipo: 'EVOLUCAO', texto: 'Paciente estável' }],
+    });
+  });
+
+  describe('finalizar', () => {
+    it('grava o fim, audita o atendimento e muda o agendamento para Atendido', async () => {
+      const { service, tx, audit, agendamentos } = setup({ atendimento: ATENDIMENTO });
+      const r = await service.finalizar(ID_AG);
+      expect(r.status).toBe('FINALIZADO');
+      expect(r.finalizadoEm).not.toBeNull();
+      expect(tx.atendimento.update).toHaveBeenCalledWith({
+        where: { id: ID_AT },
+        data: { status: 'FINALIZADO', finalizadoEm: expect.any(Date) },
+      });
+      expect(audit.record).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'UPDATE', entity: 'Atendimento', entityId: ID_AT }),
+      );
+      expect(agendamentos.alterarStatus).toHaveBeenCalledWith(ID_AG, 'ATENDIDO');
+    });
+
+    it('recusa atendimento não iniciado', async () => {
+      await expect(setup().service.finalizar(ID_AG)).rejects.toMatchObject({
+        code: 'ATENDIMENTO_NAO_INICIADO',
+      });
     });
   });
 });

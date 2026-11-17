@@ -146,7 +146,11 @@ export const ORCAMENTO_SORT_FIELDS = ['id', 'data', 'cliente', 'total', 'status'
 export const listOrcamentosQuerySchema = listQuerySchema({
   sortFields: ORCAMENTO_SORT_FIELDS,
   defaultSort: 'data:desc',
-  filters: { status: orcamentoStatusFiltroSchema.optional() },
+  filters: {
+    status: orcamentoStatusFiltroSchema.optional(),
+    /** Orçamentos de um paciente (aba Orçamento do Atendimento Médico, #38). */
+    pacienteId: z.uuid({ error: 'Paciente inválido' }).optional(),
+  },
 });
 export type ListOrcamentosQuery = z.infer<typeof listOrcamentosQuerySchema>;
 

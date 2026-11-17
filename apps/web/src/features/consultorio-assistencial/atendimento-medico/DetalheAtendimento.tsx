@@ -1,13 +1,19 @@
 import { podeAtender } from '@torres/shared';
 import {
+  CheckCircle2Icon,
   ChevronLeftIcon,
+  CreditCardIcon,
+  DollarSignIcon,
   FileTextIcon,
+  HistoryIcon,
+  Link2Icon,
   PlayIcon,
   UserIcon,
   UserRoundIcon,
   type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,17 +22,26 @@ import { cn } from '@/lib/utils';
 import { horaLocal } from '@/features/comercial-atendimento/agenda/agenda-datas';
 import { AbaDados } from './AbaDados';
 import { AbaEvolucao } from './AbaEvolucao';
+import { AbaHistorico } from './AbaHistorico';
+import { AbaOrcamento } from './AbaOrcamento';
+import { AbaPagamento } from './AbaPagamento';
+import { AbaReceita } from './AbaReceita';
 import { StatusAgendamento } from './StatusAgendamento';
-import { useDetalheAtendimento, useIniciarAtendimento } from './use-atendimento-medico';
+import {
+  useDetalheAtendimento,
+  useFinalizarAtendimento,
+  useIniciarAtendimento,
+} from './use-atendimento-medico';
 
-type IdAba = 'evolucao' | 'dados';
+type IdAba = 'evolucao' | 'receita' | 'orcamento' | 'historico' | 'pagamento' | 'dados';
 
-/**
- * Abas desta entrega. Receita, Orçamento, Histórico e Pagamento ficam para a segunda parte da
- * issue #38, junto com o "Finalizar".
- */
+/** Abas na ordem do sistema atual. */
 const ABAS: readonly { id: IdAba; rotulo: string; icone: LucideIcon }[] = [
   { id: 'evolucao', rotulo: 'Evolução', icone: FileTextIcon },
+  { id: 'receita', rotulo: 'Receita', icone: Link2Icon },
+  { id: 'orcamento', rotulo: 'Orçamento', icone: DollarSignIcon },
+  { id: 'historico', rotulo: 'Histórico', icone: HistoryIcon },
+  { id: 'pagamento', rotulo: 'Pagamento', icone: CreditCardIcon },
   { id: 'dados', rotulo: 'Dados', icone: UserIcon },
 ];
 
@@ -39,8 +54,11 @@ export interface DetalheAtendimentoProps {
 export function DetalheAtendimento({ agendamentoId, onVoltar }: Readonly<DetalheAtendimentoProps>) {
   const { data, isPending, isError } = useDetalheAtendimento(agendamentoId);
   const iniciar = useIniciarAtendimento();
+  const finalizar = useFinalizarAtendimento();
   const podeIniciar = usePermissao('consultorio-assistencial.atendimento-medico.criar');
+  const podeFinalizar = usePermissao('consultorio-assistencial.atendimento-medico.editar');
   const [aba, setAba] = useState<IdAba>('evolucao');
+  const [confirmandoFim, setConfirmandoFim] = useState(false);
 
   if (isPending) return <Skeleton className="h-24 w-full" aria-label="Carregando" />;
   if (isError || !data) {
@@ -65,6 +83,9 @@ export function DetalheAtendimento({ agendamentoId, onVoltar }: Readonly<Detalhe
     !atendimento &&
     podeAtender(agendamento.status) &&
     agendamento.status !== 'ATENDIDO';
+  const mostrarFinalizar = podeFinalizar && atendimento?.status === 'EM_ANDAMENTO';
+  // O "!" da aba Pagamento: consulta ainda não paga.
+  const pagamentoPendente = !agendamento.pago && agendamento.status !== 'CANCELADO';
 
   return (
     <div className="grid gap-4">
@@ -99,6 +120,15 @@ export function DetalheAtendimento({ agendamentoId, onVoltar }: Readonly<Detalhe
               Iniciar Atendimento
             </Button>
           )}
+          {mostrarFinalizar && (
+            <Button
+              className="bg-emerald-600 text-white hover:bg-emerald-700"
+              onClick={() => setConfirmandoFim(true)}
+            >
+              <CheckCircle2Icon aria-hidden />
+              Finalizar
+            </Button>
+          )}
         </div>
       </header>
 
@@ -125,6 +155,15 @@ export function DetalheAtendimento({ agendamentoId, onVoltar }: Readonly<Detalhe
           >
             <Icone aria-hidden className="size-4" />
             {rotulo}
+            {id === 'pagamento' && pagamentoPendente && (
+              <span
+                className="flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white"
+                aria-label="Pagamento pendente"
+                role="img"
+              >
+                !
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -132,8 +171,29 @@ export function DetalheAtendimento({ agendamentoId, onVoltar }: Readonly<Detalhe
         {aba === 'evolucao' && (
           <AbaEvolucao agendamentoId={agendamentoId} atendimento={atendimento} />
         )}
+        {aba === 'receita' && (
+          <AbaReceita agendamentoId={agendamentoId} atendimento={atendimento} />
+        )}
+        {aba === 'orcamento' && <AbaOrcamento pacienteId={agendamento.pacienteId} />}
+        {aba === 'historico' && <AbaHistorico agendamentoId={agendamentoId} />}
+        {aba === 'pagamento' && (
+          <AbaPagamento
+            agendamentoId={agendamentoId}
+            cancelado={agendamento.status === 'CANCELADO'}
+          />
+        )}
         {aba === 'dados' && <AbaDados agendamentoId={agendamentoId} />}
       </div>
+
+      <ConfirmDialog
+        aberto={confirmandoFim}
+        onAbertoChange={setConfirmandoFim}
+        titulo="Finalizar atendimento?"
+        descricao="O horário de fim será registrado e o agendamento passará para Atendido."
+        rotuloConfirmar="Finalizar"
+        destrutivo={false}
+        onConfirmar={() => finalizar.mutateAsync(agendamentoId)}
+      />
     </div>
   );
 }

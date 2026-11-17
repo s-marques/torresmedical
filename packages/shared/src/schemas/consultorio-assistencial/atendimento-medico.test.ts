@@ -4,6 +4,10 @@ import {
   EVOLUCAO_TEXTO_MAX,
   listAtendimentoMedicoQuerySchema,
   podeAtender,
+  receitaInputSchema,
+  recebimentoInputSchema,
+  listProtocolosReceitaQuerySchema,
+  textoDoProtocolo,
 } from './atendimento-medico';
 
 function mensagens(resultado: { success: boolean; error?: { issues: { message: string }[] } }) {
@@ -77,5 +81,69 @@ describe('podeAtender', () => {
     expect(podeAtender('CANCELADO')).toBe(false);
     expect(podeAtender('AGENDADO')).toBe(true);
     expect(podeAtender('EM_ATENDIMENTO')).toBe(true);
+  });
+});
+
+describe('receitaInputSchema', () => {
+  it('aplica os padrões do formulário e limpa observações vazias', () => {
+    expect(receitaInputSchema.parse({ texto: ' 1) Dipirona ', observacoes: '  ' })).toEqual({
+      tipo: 'EVOLUCAO',
+      controlada: false,
+      validadeDias: 30,
+      texto: '1) Dipirona',
+      observacoes: null,
+    });
+  });
+
+  it('exige o texto e aceita só as validades do select', () => {
+    expect(mensagens(receitaInputSchema.safeParse({ texto: '   ' }))).toContain(
+      'Receita é obrigatória.',
+    );
+    expect(mensagens(receitaInputSchema.safeParse({ texto: 'x', validadeDias: 45 }))).toContain(
+      'Validade inválida',
+    );
+    expect(
+      receitaInputSchema.parse({ texto: 'x', validadeDias: 365, controlada: true }),
+    ).toMatchObject({ validadeDias: 365, controlada: true });
+    expect(receitaInputSchema.safeParse({ texto: 'x', extra: 1 }).success).toBe(false);
+  });
+});
+
+describe('recebimentoInputSchema', () => {
+  it('exige valor positivo e forma de pagamento', () => {
+    expect(mensagens(recebimentoInputSchema.safeParse({}))).toEqual([
+      'Valor a receber é obrigatório.',
+      'Forma de pagamento é obrigatória.',
+    ]);
+    expect(
+      mensagens(
+        recebimentoInputSchema.safeParse({
+          valor: 0,
+          formaPagamentoId: '00000000-0000-4000-8000-000000000000',
+        }),
+      ),
+    ).toContain('O valor a receber deve ser maior que zero');
+  });
+});
+
+describe('protocolos da receita', () => {
+  it('ordena por nome e filtra por categoria', () => {
+    expect(listProtocolosReceitaQuerySchema.parse({ categoria: 'Estética' })).toMatchObject({
+      categoria: 'Estética',
+      sort: { field: 'nome', direction: 'asc' },
+    });
+  });
+
+  it('monta o texto com o nome e as observações do protocolo', () => {
+    expect(textoDoProtocolo({ nome: 'Limpeza de pele', texto: 'Aplicar 2x' })).toBe(
+      'Limpeza de pele\nAplicar 2x',
+    );
+    expect(textoDoProtocolo({ nome: 'Limpeza de pele', texto: null })).toBe('Limpeza de pele');
+  });
+});
+
+describe('receitaInputSchema: validade vinda do select', () => {
+  it('converte o texto do select em número', () => {
+    expect(receitaInputSchema.parse({ texto: 'x', validadeDias: '180' }).validadeDias).toBe(180);
   });
 });

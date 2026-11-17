@@ -1,26 +1,39 @@
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { Injectable } from '@nestjs/common';
-import type {
-  AtendimentoEmCurso,
-  AtendimentoMedicoDetalhe,
-  AtendimentoMedicoItem,
-  CreateEvolucaoInput,
-  Evolucao,
-  ListAtendimentoMedicoQuery,
-  ListRegistrosQuery,
-  Paciente,
-  PacienteDadosAtendimento,
+import {
+  listProtocolosQuerySchema,
+  type AtendimentoEmCurso,
+  type AtendimentoMedicoDetalhe,
+  type AtendimentoMedicoItem,
+  type CreateEvolucaoInput,
+  type CreateReceitaInput,
+  type CreateRecebimentoInput,
+  type Evolucao,
+  type HistoricoAtendimento,
+  type ListAtendimentoMedicoQuery,
+  type ListProtocolosReceitaQuery,
+  type ListRegistrosQuery,
+  type Paciente,
+  type PacienteDadosAtendimento,
+  type PagamentoAtendimento,
+  type ProtocoloCategorias,
+  type ProtocoloReceita,
+  type Receita,
+  type Recebimento,
 } from '@torres/shared';
 import type {
   Atendimento as AtendimentoModel,
   AtendimentoEvolucao,
+  AtendimentoReceita,
 } from '../../../generated/prisma/client';
+import { AuditService } from '../../../common/audit/audit.service';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { paginate, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { AgendamentosAtendimentoService } from '../../comercial-atendimento/agenda/agendamentos-atendimento.service';
 import { PacientesService } from '../../comercial-atendimento/pacientes/pacientes.service';
 import { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
+import { ProtocolosService } from '../../gestao-profissionais/protocolos/protocolos.service';
 
 export function toAtendimentoEmCurso(a: AtendimentoModel): AtendimentoEmCurso {
   return {
@@ -41,6 +54,20 @@ export function toEvolucao(e: AtendimentoEvolucao, profissionalNome: string | nu
     texto: e.texto,
     profissionalNome,
     createdAt: e.createdAt.toISOString(),
+  };
+}
+
+export function toReceita(r: AtendimentoReceita, profissionalNome: string | null): Receita {
+  return {
+    id: r.id,
+    atendimentoId: r.atendimentoId,
+    tipo: r.tipo,
+    controlada: r.controlada,
+    validadeDias: r.validadeDias,
+    texto: r.texto,
+    observacoes: r.observacoes,
+    profissionalNome,
+    createdAt: r.createdAt.toISOString(),
   };
 }
 
@@ -83,6 +110,8 @@ export class AtendimentoMedicoService {
     private readonly agendamentos: AgendamentosAtendimentoService,
     private readonly pacientes: PacientesService,
     private readonly profissionais: ProfissionaisService,
+    private readonly protocolos: ProtocolosService,
+    private readonly audit: AuditService,
   ) {}
 
   listar(query: ListAtendimentoMedicoQuery): Promise<Page<AtendimentoMedicoItem>> {
@@ -153,6 +182,161 @@ export class AtendimentoMedicoService {
 
   /** "Salvar Evolução": só com o atendimento em andamento. */
   async criarEvolucao(agendamentoId: string, input: CreateEvolucaoInput): Promise<Evolucao> {
+    const atendimento = await this.atendimentoEmAndamento(agendamentoId);
+    const criada = await this.txHost.tx.atendimentoEvolucao.create({
+      data: { atendimentoId: atendimento.id, tipo: input.tipo, texto: input.texto },
+    });
+    const nomes = await this.nomesProfissionais([atendimento.profissionalId]);
+    return toEvolucao(criada, nomes.get(atendimento.profissionalId) ?? null);
+  }
+
+  // --- Aba Receita ---------------------------------------------------------------------
+
+  /** "Receitas Anteriores": receitas do paciente em todos os atendimentos. */
+  async listarReceitas(agendamentoId: string, query: ListRegistrosQuery): Promise<Page<Receita>> {
+    const { pacienteId } = await this.agendamentos.resumo(agendamentoId);
+    const where = { ...NAO_EXCLUIDO, atendimento: { pacienteId, ...NAO_EXCLUIDO } };
+    const pagina = await paginate(query, {
+      findMany: (p) =>
+        this.txHost.tx.atendimentoReceita.findMany({
+          where,
+          include: { atendimento: { select: { profissionalId: true } } },
+          orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+          ...p,
+        }),
+      count: () => this.txHost.tx.atendimentoReceita.count({ where }),
+    });
+    const nomes = await this.nomesProfissionais(
+      pagina.data.map((r) => r.atendimento.profissionalId),
+    );
+    return {
+      ...pagina,
+      data: pagina.data.map((r) => toReceita(r, nomes.get(r.atendimento.profissionalId) ?? null)),
+    };
+  }
+
+  /** "Salvar Receita": só com o atendimento em andamento. */
+  async criarReceita(agendamentoId: string, input: CreateReceitaInput): Promise<Receita> {
+    const atendimento = await this.atendimentoEmAndamento(agendamentoId);
+    const criada = await this.txHost.tx.atendimentoReceita.create({
+      data: { atendimentoId: atendimento.id, ...input },
+    });
+    const nomes = await this.nomesProfissionais([atendimento.profissionalId]);
+    return toReceita(criada, nomes.get(atendimento.profissionalId) ?? null);
+  }
+
+  /** "Selecionar Protocolo/Receita": protocolos do cadastro (gestao-profissionais). */
+  async listarProtocolos(query: ListProtocolosReceitaQuery): Promise<Page<ProtocoloReceita>> {
+    const pagina = await this.protocolos.list(
+      listProtocolosQuerySchema.parse({
+        page: query.page,
+        pageSize: query.pageSize,
+        search: query.search,
+        categoria: query.categoria,
+      }),
+    );
+    return {
+      ...pagina,
+      data: pagina.data.map((p) => ({
+        id: p.id,
+        nome: p.nome,
+        categoria: p.categoria,
+        texto: p.observacoes,
+      })),
+    };
+  }
+
+  /** Opções do select "Todas" do seletor de protocolos. */
+  categoriasProtocolos(): Promise<ProtocoloCategorias> {
+    return this.protocolos.categorias();
+  }
+
+  // --- Aba Pagamento -------------------------------------------------------------------
+
+  pagamento(agendamentoId: string): Promise<PagamentoAtendimento> {
+    return this.agendamentos.pagamento(agendamentoId);
+  }
+
+  registrarRecebimento(agendamentoId: string, input: CreateRecebimentoInput): Promise<Recebimento> {
+    return this.agendamentos.registrarRecebimento(agendamentoId, input);
+  }
+
+  // --- Aba Histórico -------------------------------------------------------------------
+
+  /** Atendimentos do paciente, do mais recente para o mais antigo, com as evoluções. */
+  async historico(
+    agendamentoId: string,
+    query: ListRegistrosQuery,
+  ): Promise<Page<HistoricoAtendimento>> {
+    const { pacienteId } = await this.agendamentos.resumo(agendamentoId);
+    const where = { pacienteId, ...NAO_EXCLUIDO };
+    const pagina = await paginate(query, {
+      findMany: (p) =>
+        this.txHost.tx.atendimento.findMany({
+          where,
+          include: {
+            evolucoes: { where: NAO_EXCLUIDO, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
+            _count: { select: { receitas: { where: NAO_EXCLUIDO } } },
+          },
+          orderBy: [{ iniciadoEm: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }],
+          ...p,
+        }),
+      count: () => this.txHost.tx.atendimento.count({ where }),
+    });
+    const nomes = await this.nomesProfissionais(pagina.data.map((a) => a.profissionalId));
+    return {
+      ...pagina,
+      data: pagina.data.map((a) => ({
+        id: a.id,
+        agendamentoId: a.agendamentoId,
+        status: a.status,
+        iniciadoEm: (a.iniciadoEm ?? a.createdAt).toISOString(),
+        finalizadoEm: a.finalizadoEm?.toISOString() ?? null,
+        profissionalNome: nomes.get(a.profissionalId) ?? null,
+        evolucoes: a.evolucoes.map((e) => ({
+          id: e.id,
+          tipo: e.tipo,
+          texto: e.texto,
+          createdAt: e.createdAt.toISOString(),
+        })),
+        totalReceitas: a._count.receitas,
+      })),
+    };
+  }
+
+  // --- Finalizar -----------------------------------------------------------------------
+
+  /**
+   * "Finalizar": grava o horário de fim, encerra o atendimento e muda o agendamento para
+   * `ATENDIDO`. Os dois registros vão para o audit_log na mesma transação.
+   */
+  finalizar(agendamentoId: string): Promise<AtendimentoEmCurso> {
+    return this.txHost.withTransaction(async () => {
+      const antes = await this.atendimentoEmAndamento(agendamentoId);
+      const depois = await this.txHost.tx.atendimento.update({
+        where: { id: antes.id },
+        data: { status: 'FINALIZADO', finalizadoEm: new Date() },
+      });
+      await this.audit.record({
+        action: 'UPDATE',
+        entity: 'Atendimento',
+        entityId: antes.id,
+        before: antes,
+        after: depois,
+      });
+      await this.agendamentos.alterarStatus(agendamentoId, 'ATENDIDO');
+      return toAtendimentoEmCurso(depois);
+    });
+  }
+
+  /** Aba "Dados": informações pessoais e contato do paciente do agendamento. */
+  async dadosPaciente(agendamentoId: string): Promise<PacienteDadosAtendimento> {
+    const { pacienteId } = await this.agendamentos.resumo(agendamentoId);
+    return toPacienteDados(await this.pacientes.detalhe(pacienteId));
+  }
+
+  /** Atendimento iniciado e não finalizado; 404 sem agendamento, 422 nos demais casos. */
+  private async atendimentoEmAndamento(agendamentoId: string): Promise<AtendimentoModel> {
     await this.agendamentos.resumo(agendamentoId);
     const atendimento = await this.atendimentoDo(agendamentoId);
     if (!atendimento) {
@@ -161,17 +345,7 @@ export class AtendimentoMedicoService {
     if (atendimento.status !== 'EM_ANDAMENTO') {
       throw new BusinessException('ATENDIMENTO_FINALIZADO', 'O atendimento já foi finalizado.');
     }
-    const criada = await this.txHost.tx.atendimentoEvolucao.create({
-      data: { atendimentoId: atendimento.id, tipo: input.tipo, texto: input.texto },
-    });
-    const nomes = await this.nomesProfissionais([atendimento.profissionalId]);
-    return toEvolucao(criada, nomes.get(atendimento.profissionalId) ?? null);
-  }
-
-  /** Aba "Dados": informações pessoais e contato do paciente do agendamento. */
-  async dadosPaciente(agendamentoId: string): Promise<PacienteDadosAtendimento> {
-    const { pacienteId } = await this.agendamentos.resumo(agendamentoId);
-    return toPacienteDados(await this.pacientes.detalhe(pacienteId));
+    return atendimento;
   }
 
   private atendimentoDo(agendamentoId: string): Promise<AtendimentoModel | null> {
