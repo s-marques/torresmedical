@@ -20,6 +20,7 @@ export * from './schemas/comercial-atendimento/paciente';
 export * from './schemas/comercial-atendimento/conversa-whatsapp';
 export * from './schemas/comercial-atendimento/crm-config';
 export * from './schemas/comercial-atendimento/negocio';
+export * from './schemas/comercial-atendimento/atividade';
 export * from './schemas/comercial-atendimento/tag-atendimento';
 export * from './schemas/consultorio-assistencial/prontuario';
 export * from './schemas/compras-estoque/categoria';

@@ -30,6 +30,16 @@ interface Config {
 
 const sigla = (nome: string) => nome.slice(0, 2).toUpperCase();
 
+/** Estágio do CRM para os negócios do cenário (criado uma vez por teste). */
+async function estagioCrm(prisma: PrismaService) {
+  const existente = await prisma.estagioPipeline.findFirst();
+  if (existente) return existente;
+  const pipeline = await prisma.pipeline.create({ data: { nome: 'Funil', ordem: 1 } });
+  return prisma.estagioPipeline.create({
+    data: { pipelineId: pipeline.id, nome: 'Contato', cor: '#3b82f6', ordem: 1 },
+  });
+}
+
 /** Como criar um registro de cada entidade com só o necessário. */
 function configs(prisma: PrismaService, empresaId: string): Record<LookupEntidade, Config> {
   return {
@@ -98,6 +108,21 @@ function configs(prisma: PrismaService, empresaId: string): Record<LookupEntidad
             email: `${nome.toLowerCase().replaceAll(' ', '.')}@example.com`,
           },
         }),
+    },
+    // Só negócio aberto é selecionável; ganho/perdido faz o papel de "inativo".
+    negocios: {
+      criar: async ({ nome, ativo, deletedAt }) => {
+        const estagio = await estagioCrm(prisma);
+        return prisma.negocio.create({
+          data: {
+            titulo: nome,
+            pipelineId: estagio.pipelineId,
+            estagioId: estagio.id,
+            deletedAt,
+            ...(ativo === false && { status: 'GANHO' as const }),
+          },
+        });
+      },
     },
   };
 }

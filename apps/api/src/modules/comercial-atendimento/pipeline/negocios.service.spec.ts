@@ -51,10 +51,12 @@ function atividade(dataHora: string) {
     negocioId: ID,
     tipo: 'FOLLOW_UP' as const,
     titulo: 'Retornar',
+    descricao: null,
     dataHora: new Date(dataHora),
     responsavelId: USUARIO,
     status: 'PENDENTE' as const,
     concluidaEm: null,
+    canceladaEm: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
@@ -105,6 +107,17 @@ describe('toNegocio', () => {
     expect(toNegocio(emDia, SEM_NOMES, agora).situacaoAcao).toBe('EM_DIA');
   });
 
+  it('próxima ação é a última pendente só quando não há outra (negócio aberto)', () => {
+    const unica = negocio({ atividades: [atividade('2026-11-15T12:00:00Z')] });
+    const duas = negocio({
+      atividades: [atividade('2026-11-15T12:00:00Z'), atividade('2026-11-16T12:00:00Z')],
+    });
+    expect(toNegocio(unica, SEM_NOMES, agora).proximaAtividade?.exigeProximaAcao).toBe(true);
+    expect(toNegocio(duas, SEM_NOMES, agora).proximaAtividade?.exigeProximaAcao).toBe(false);
+    const ganho = negocio({ status: 'GANHO', atividades: [atividade('2026-11-15T12:00:00Z')] });
+    expect(toNegocio(ganho, SEM_NOMES, agora).proximaAtividade?.exigeProximaAcao).toBe(false);
+  });
+
   it('ganho e perdido não têm situação de próxima ação', () => {
     expect(toNegocio(negocio({ status: 'GANHO' }), SEM_NOMES, agora).situacaoAcao).toBeNull();
   });
@@ -135,9 +148,6 @@ describe('NegociosService (regras)', () => {
     }));
     const tx = {
       negocio: { findFirst: jest.fn(async () => atual), update },
-      atividadeNegocio: {
-        create: jest.fn(async ({ data }) => ({ ...atividade('2026-11-20T12:00:00Z'), ...data })),
-      },
     };
     const config = {
       buscarEstagio: jest.fn(async (id: string) => {
@@ -217,22 +227,6 @@ describe('NegociosService (regras)', () => {
     const jaPerdido = criar(negocio({ status: 'PERDIDO' }));
     await expect(jaPerdido.service.ganhar(ID)).rejects.toMatchObject({
       response: { code: 'NEGOCIO_FECHADO', message: 'O negócio já foi marcado como perdido.' },
-    });
-  });
-
-  it('follow-up sem responsável herda o responsável do negócio', async () => {
-    const { service, tx } = criar(negocio({ responsavelId: USUARIO }));
-    await service.agendarAtividade(ID, {
-      tipo: 'FOLLOW_UP',
-      titulo: 'Ligar',
-      data: '2026-11-20',
-      hora: '09:00',
-      responsavelId: null,
-    });
-    expect(tx.atividadeNegocio.create.mock.calls[0]?.[0].data).toMatchObject({
-      negocioId: ID,
-      responsavelId: USUARIO,
-      dataHora: new Date('2026-11-20T12:00:00Z'),
     });
   });
 });

@@ -30,7 +30,8 @@ export interface AcoesCartao {
   onEditar: (negocio: Negocio) => void;
   onMover: (negocio: Negocio, estagioId: string) => void;
   onFollowUp: (negocio: Negocio) => void;
-  onConcluirAcao: (atividadeId: string) => void;
+  /** A última pendente pede a próxima antes (`exigeProximaAcao`). */
+  onConcluirAcao: (negocio: Negocio) => void;
   onGanho: (negocio: Negocio) => void;
   onPerdido: (negocio: Negocio) => void;
   onExcluir: (negocio: Negocio) => void;
@@ -128,7 +129,7 @@ export function CartaoNegocio({ negocio, estagios, ...acoes }: Readonly<CartaoNe
               </DropdownMenuItem>
             )}
             {podeEditar && proxima && (
-              <DropdownMenuItem onSelect={() => acoes.onConcluirAcao(proxima.id)}>
+              <DropdownMenuItem onSelect={() => acoes.onConcluirAcao(negocio)}>
                 <CheckIcon /> Concluir próxima ação
               </DropdownMenuItem>
             )}

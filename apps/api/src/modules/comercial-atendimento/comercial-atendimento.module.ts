@@ -5,6 +5,8 @@ import { ConfiguracoesGestaoModule } from '../configuracoes-gestao/configuracoes
 import { FinanceiroModule } from '../financeiro/financeiro.module';
 import { GestaoProfissionaisModule } from '../gestao-profissionais/gestao-profissionais.module';
 import { AgendaController } from './agenda/agenda.controller';
+import { AtividadesController } from './atividades/atividades.controller';
+import { AtividadesService } from './atividades/atividades.service';
 import { AgendaService } from './agenda/agenda.service';
 import { OrcamentosController } from './orcamentos/orcamentos.controller';
 import { OrcamentosService } from './orcamentos/orcamentos.service';
@@ -21,6 +23,7 @@ import { CrmConfigService } from './pipeline/crm-config.service';
 import { NegociosController } from './pipeline/negocios.controller';
 import { NegociosListaController } from './pipeline/negocios-lista.controller';
 import { NegociosListaService } from './pipeline/negocios-lista.service';
+import { NegociosLookupService } from './pipeline/negocios-lookup.service';
 import { NegociosService } from './pipeline/negocios.service';
 import { PacientesController } from './pacientes/pacientes.controller';
 import { PacientesService } from './pacientes/pacientes.service';
@@ -42,11 +45,13 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
   ],
   controllers: [
     AgendaController,
+    AtividadesController,
     ConsultasRealizadasController,
     ConversasWhatsappController,
     CrmConfigController,
     criarLookupController('pacientes', PacientesService),
     criarLookupController('origens-cliente', OrigensClienteService),
+    criarLookupController('negocios', NegociosLookupService),
     OrcamentosController,
     OrigensClienteController,
     PacientesController,
@@ -72,6 +77,8 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     CrmConfigService,
     NegociosService,
     NegociosListaService,
+    NegociosLookupService,
+    AtividadesService,
   ],
   exports: [PacientesService, OrigensClienteService],
 })
