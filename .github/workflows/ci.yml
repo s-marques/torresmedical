@@ -13,13 +13,57 @@ permissions:
   contents: read
 
 jobs:
-  ci:
-    name: Lint, typecheck, testes e build
+  verificacao:
+    name: Lint, typecheck, testes do shared e build
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Testes do shared (com cobertura)
+        run: pnpm --filter @torres/shared test:cov
+
+      - name: Publicar cobertura para o Sonar
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-shared
+          path: packages/shared/coverage/lcov.info
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Build
+        run: pnpm build
+
+  # Os testes da api e do web rodam em partes paralelas (--shard), cada uma num runner próprio.
+  # Ao mudar o número de partes, atualize sonar.javascript.lcov.reportPaths no sonar-project.properties.
+  testes-api:
+    name: Testes da api (parte ${{ matrix.parte }}/3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        parte: [1, 2, 3]
+
     services:
-      # Banco de teste para os e2e (as migrations rodam antes dos testes).
+      # Banco de teste para os e2e (as migrations rodam antes dos testes). Cada parte tem o seu.
       postgres:
         image: postgres:17-alpine
         env:
@@ -79,35 +123,62 @@ jobs:
       - name: Instalar dependências
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm lint
-
-      - name: Typecheck
-        run: pnpm typecheck
+      - name: Build do shared e client do Prisma
+        run: pnpm --filter @torres/shared build && pnpm --filter @torres/api db:generate
 
       - name: Migrations no banco de teste
         run: pnpm --filter @torres/api db:deploy
 
       - name: Testes (com cobertura)
-        run: pnpm test:cov
+        run: pnpm --filter @torres/api exec jest --coverage --shard=${{ matrix.parte }}/3
 
       - name: Publicar cobertura para o Sonar
         uses: actions/upload-artifact@v4
         with:
-          name: coverage
-          path: |
-            apps/api/coverage/lcov.info
-            apps/web/coverage/lcov.info
-            packages/shared/coverage/lcov.info
+          name: cobertura-api-${{ matrix.parte }}
+          path: apps/api/coverage/lcov.info
           if-no-files-found: error
           retention-days: 7
 
-      - name: Build
-        run: pnpm build
+  testes-web:
+    name: Testes do web (parte ${{ matrix.parte }}/3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        parte: [1, 2, 3]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Build do shared
+        run: pnpm --filter @torres/shared build
+
+      - name: Testes (com cobertura)
+        run: pnpm --filter @torres/web exec vitest run --coverage --shard=${{ matrix.parte }}/3
+
+      - name: Publicar cobertura para o Sonar
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-web-${{ matrix.parte }}
+          path: apps/web/coverage/lcov.info
+          if-no-files-found: error
+          retention-days: 7
 
   sonar:
     name: SonarQube Cloud
-    needs: ci
+    needs: [verificacao, testes-api, testes-web]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     # PRs de forks não recebem o SONAR_TOKEN.
@@ -119,10 +190,12 @@ jobs:
           # Histórico completo para o Sonar identificar o código novo.
           fetch-depth: 0
 
+      # Um lcov por job em cobertura/<artifact>/lcov.info (caminhos no sonar-project.properties).
       - name: Baixar cobertura
         uses: actions/download-artifact@v4
         with:
-          name: coverage
+          pattern: cobertura-*
+          path: cobertura
 
       - name: Análise e Quality Gate
         uses: SonarSource/sonarqube-scan-action@v8
