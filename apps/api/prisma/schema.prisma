@@ -807,12 +807,13 @@ model FormaPagamento {
   updatedAt              DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt              DateTime?           @map("deleted_at") @db.Timestamptz(3)
 
-  orcamentos       Orcamento[]
-  agendamentos     Agendamento[]
-  vendas           Venda[]
-  contasPagar      ContaPagar[]
-  baixasContaPagar ContaPagarBaixa[]
-  contasReceber    ContaReceber[]
+  orcamentos              Orcamento[]
+  agendamentos            Agendamento[]
+  vendas                  Venda[]
+  contasPagar             ContaPagar[]
+  baixasContaPagar        ContaPagarBaixa[]
+  contasReceber           ContaReceber[]
+  recebimentosAgendamento AgendamentoRecebimento[]
 
   @@map("formas_pagamento")
 }
@@ -1128,16 +1129,36 @@ model Agendamento {
   updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt         DateTime?         @map("deleted_at") @db.Timestamptz(3)
 
-  paciente        Paciente         @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
-  profissional    Profissional     @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
-  tipoAgendamento TipoAgendamento? @relation(fields: [tipoAgendamentoId], references: [id], onDelete: Restrict)
-  formaPagamento  FormaPagamento?  @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
+  paciente        Paciente                 @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
+  profissional    Profissional             @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+  tipoAgendamento TipoAgendamento?         @relation(fields: [tipoAgendamentoId], references: [id], onDelete: Restrict)
+  formaPagamento  FormaPagamento?          @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
+  recebimentos    AgendamentoRecebimento[]
 
   @@index([profissionalId, inicio])
   @@index([inicio])
   @@index([pacienteId])
   @@index([formaPagamentoId])
   @@map("agendamentos")
+}
+
+/// Dono: comercial-atendimento. Recebimento (parcial ou total) da consulta, registrado na aba
+/// "Pagamento" da tela Atendimento Médico (#38). Quando a soma cobre o valor, o agendamento
+/// ganha `pagoEm` e a forma do último recebimento.
+model AgendamentoRecebimento {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agendamentoId    String   @map("agendamento_id") @db.Uuid
+  valor            Decimal  @db.Decimal(12, 2)
+  formaPagamentoId String   @map("forma_pagamento_id") @db.Uuid
+  recebidoEm       DateTime @default(now()) @map("recebido_em") @db.Timestamptz(3)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  agendamento    Agendamento    @relation(fields: [agendamentoId], references: [id], onDelete: Restrict)
+  formaPagamento FormaPagamento @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
+
+  @@index([agendamentoId])
+  @@index([formaPagamentoId])
+  @@map("agendamento_recebimentos")
 }
 
 /// Dono: gestao-profissionais. Serviço/procedimento que um profissional realiza (tela Serviços
@@ -1952,6 +1973,7 @@ model Atendimento {
   deletedAt       DateTime?         @map("deleted_at") @db.Timestamptz(3)
 
   evolucoes AtendimentoEvolucao[]
+  receitas  AtendimentoReceita[]
 
   @@index([pacienteId])
   @@index([profissionalId])
@@ -1983,6 +2005,27 @@ model AtendimentoEvolucao {
 
   @@index([atendimentoId])
   @@map("atendimento_evolucoes")
+}
+
+/// Dono: consultorio-assistencial. Receita manual do atendimento (aba "Receita" da tela
+/// Atendimento Médico, #38). A receita digital é da Memed, fora deste model.
+model AtendimentoReceita {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  atendimentoId String       @map("atendimento_id") @db.Uuid
+  tipo          EvolucaoTipo @default(EVOLUCAO)
+  /// "Receita Amarela (Controlada)".
+  controlada    Boolean      @default(false)
+  validadeDias  Int          @default(30) @map("validade_dias")
+  texto         String
+  observacoes   String?
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt     DateTime?    @map("deleted_at") @db.Timestamptz(3)
+
+  atendimento Atendimento @relation(fields: [atendimentoId], references: [id], onDelete: Restrict)
+
+  @@index([atendimentoId])
+  @@map("atendimento_receitas")
 }
 
 /// Dono: consultorio-assistencial. Anamnese clínica (aba "Anamneses" da tela Prontuários).

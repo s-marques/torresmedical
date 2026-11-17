@@ -3,7 +3,10 @@ import {
   type AtendimentoEmCurso,
   type AtendimentoMedicoItem,
   type Evolucao,
+  type HistoricoAtendimento,
   type PacienteDadosAtendimento,
+  type PagamentoAtendimento,
+  type Receita,
 } from '@torres/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -90,6 +93,63 @@ const DADOS: PacienteDadosAtendimento = {
   observacoes: 'Observação fictícia',
 };
 
+const ID_PIX = '00000000-0000-4000-8000-0000000000f1';
+
+const PAGAMENTO: PagamentoAtendimento = {
+  valorConsulta: 250,
+  recebido: 0,
+  saldo: 250,
+  pago: false,
+  recebimentos: [],
+  formasPagamento: [{ id: ID_PIX, label: 'PIX', descricao: 'Receber' }],
+};
+
+const HISTORICO: HistoricoAtendimento = {
+  id: ID_ATENDIMENTO,
+  agendamentoId: ID_CONFIRMADO,
+  status: 'FINALIZADO',
+  iniciadoEm: `${DIA}T11:05:00.000Z`,
+  finalizadoEm: `${DIA}T11:40:00.000Z`,
+  profissionalNome: 'Dra. Fictícia',
+  evolucoes: [
+    {
+      id: '00000000-0000-4000-8000-0000000000e3',
+      tipo: 'EVOLUCAO',
+      texto: 'Evolução antiga fictícia',
+      createdAt: `${DIA}T11:10:00.000Z`,
+    },
+  ],
+  totalReceitas: 1,
+};
+
+const ORCAMENTO = {
+  id: '00000000-0000-4000-8000-0000000000f2',
+  numero: 42,
+  data: `${DIA}T10:00:00.000Z`,
+  pacienteId: ID_PACIENTE,
+  cliente: 'Ana Fictícia',
+  formaPagamentoId: null,
+  formaPagamento: null,
+  observacoes: null,
+  descontoTipo: 'valor',
+  descontoValor: '0',
+  subtotal: '300',
+  total: '300',
+  status: 'PENDENTE',
+  itens: [
+    {
+      id: '00000000-0000-4000-8000-0000000000f3',
+      origem: 'servico',
+      origemId: '00000000-0000-4000-8000-0000000000f4',
+      descricao: 'Consulta fictícia',
+      quantidade: 1,
+      valorUnitario: '300',
+      desconto: '0',
+      total: '300',
+    },
+  ],
+};
+
 function pagina<T>(data: T[], pageSize = 100) {
   return json({ data, meta: { page: 1, pageSize, total: data.length, totalPages: 1 } });
 }
@@ -106,6 +166,7 @@ function queryDe(fetchMock: ReturnType<typeof apiFalsa>, caminho = API) {
 function api({ evolucoes = [] as Evolucao[], permissoes = [...PERMISSOES] as string[] } = {}) {
   let atendimento: AtendimentoEmCurso | null = null;
   const historico = [...evolucoes];
+  const receitas: Receita[] = [];
   return apiFalsa({
     usuario: { ...USUARIO_TESTE, permissoes: permissoes as typeof USUARIO_TESTE.permissoes },
     rotas: {
@@ -132,6 +193,54 @@ function api({ evolucoes = [] as Evolucao[], permissoes = [...PERMISSOES] as str
         return pagina(historico);
       },
       [`${API}/${ID_CONFIRMADO}/paciente`]: () => json(DADOS),
+      [`${API}/${ID_CONFIRMADO}/receitas`]: (init) => {
+        if (ehPost(init)) {
+          const nova = {
+            id: '00000000-0000-4000-8000-0000000000e9',
+            atendimentoId: ID_ATENDIMENTO,
+            profissionalNome: 'Dra. Fictícia',
+            createdAt: `${DIA}T11:20:00.000Z`,
+            observacoes: null,
+            ...corpoDe(init),
+          } as Receita;
+          receitas.unshift(nova);
+          return json(nova, 201);
+        }
+        return pagina(receitas);
+      },
+      [`${API}/protocolos`]: () =>
+        pagina([
+          {
+            id: '00000000-0000-4000-8000-0000000000e7',
+            nome: 'Limpeza de pele',
+            categoria: 'Estética',
+            texto: 'Aplicar 2x ao dia',
+          },
+        ]),
+      [`${API}/protocolos/categorias`]: () => json({ data: ['Estética'] }),
+      [`${API}/${ID_CONFIRMADO}/pagamento`]: () => json(PAGAMENTO),
+      [`${API}/${ID_CONFIRMADO}/recebimentos`]: (init) =>
+        json(
+          {
+            id: '00000000-0000-4000-8000-0000000000e8',
+            agendamentoId: ID_CONFIRMADO,
+            formaPagamentoNome: 'PIX',
+            recebidoEm: `${DIA}T11:30:00.000Z`,
+            ...corpoDe(init),
+          },
+          201,
+        ),
+      [`${API}/${ID_CONFIRMADO}/historico`]: () => pagina([HISTORICO]),
+      [`${API}/${ID_CONFIRMADO}/finalizar`]: () => {
+        atendimento = {
+          ...ATENDIMENTO,
+          status: 'FINALIZADO',
+          finalizadoEm: `${DIA}T11:45:00.000Z`,
+        };
+        return json(atendimento, 201);
+      },
+      '/api/comercial-atendimento/orcamentos': () => pagina([ORCAMENTO]),
+      '/api/comercial-atendimento/orcamentos/catalogo': () => pagina([]),
       '/api/lookups/profissionais': () =>
         json({
           data: [{ id: ID_PROFISSIONAL, label: 'Dra. Fictícia', descricao: null }],
@@ -330,5 +439,114 @@ describe('Atendimento Médico (/atendimento-medico)', () => {
     await userEvent.setup().click(screen.getByText('Ana Fictícia'));
     expect(await screen.findByText('Inicie o atendimento primeiro')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Iniciar Atendimento' })).not.toBeInTheDocument();
+  });
+  it('aba Receita: Memed desabilitado, protocolo entra no texto e a receita é salva', async () => {
+    const { user, fetchMock } = renderTela(`/atendimento-medico?agendamento=${ID_CONFIRMADO}`);
+    await user.click(await screen.findByRole('tab', { name: 'Receita' }));
+    expect(await screen.findByText('Inicie o atendimento primeiro')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Abrir Receita Memed' })).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: 'Iniciar Atendimento' }));
+    expect(await screen.findByText('Nenhuma receita anterior')).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Salvar Receita' }));
+    expect(await screen.findByText('Receita é obrigatória.')).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Protocolos' }));
+    expect(await screen.findByText('Selecionar Protocolo/Receita')).toBeVisible();
+    await user.click(await screen.findByRole('button', { name: /Limpeza de pele/ }));
+    expect(screen.getByRole('textbox', { name: /Receita/ })).toHaveValue(
+      'Limpeza de pele\nAplicar 2x ao dia',
+    );
+
+    await user.click(screen.getByRole('checkbox', { name: 'Receita Amarela (Controlada)' }));
+    await user.click(screen.getByRole('combobox', { name: 'Validade' }));
+    await user.click(await screen.findByRole('option', { name: '90 dias' }));
+    await user.click(screen.getByRole('button', { name: 'Salvar Receita' }));
+
+    await waitFor(() => {
+      const post = chamadasPara(fetchMock, `${API}/${ID_CONFIRMADO}/receitas`).find(([, init]) =>
+        ehPost(init),
+      );
+      expect(corpoDe(post?.[1])).toEqual({
+        tipo: 'EVOLUCAO',
+        controlada: true,
+        validadeDias: 90,
+        texto: 'Limpeza de pele\nAplicar 2x ao dia',
+        observacoes: null,
+      });
+    });
+    const lista = await screen.findByRole('list', { name: 'Receitas' });
+    expect(within(lista).getByText('Controlada')).toBeVisible();
+    expect(within(lista).getByText('Validade: 90 dias')).toBeVisible();
+  });
+
+  it('aba Pagamento: "!" pendente, resumo e registro do recebimento', async () => {
+    const { user, fetchMock } = renderTela(`/atendimento-medico?agendamento=${ID_CONFIRMADO}`);
+    const aba = await screen.findByRole('tab', { name: /^Pagamento/ });
+    expect(within(aba).getByRole('img', { name: 'Pagamento pendente' })).toBeVisible();
+
+    await user.click(aba);
+    expect(await screen.findByText('Registrar Recebimento')).toBeVisible();
+    expect(screen.getByText('Não Pago')).toBeVisible();
+    expect(screen.getByText('Valor da consulta')).toBeVisible();
+    expect(screen.getByText(/Cartão se lança pela/)).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Registrar Pagamento' }));
+    expect(await screen.findByText('Forma de pagamento é obrigatória.')).toBeVisible();
+
+    await user.click(screen.getByRole('combobox', { name: /Forma de Pagamento/ }));
+    await user.click(await screen.findByRole('option', { name: 'PIX' }));
+    await user.click(screen.getByRole('button', { name: 'Registrar Pagamento' }));
+
+    await waitFor(() => {
+      const [, init] = chamadasPara(fetchMock, `${API}/${ID_CONFIRMADO}/recebimentos`)[0] ?? [];
+      expect(corpoDe(init)).toEqual({ valor: 250, formaPagamentoId: ID_PIX });
+    });
+  });
+
+  it('"Finalizar" pede confirmação e encerra o atendimento', async () => {
+    const { user, fetchMock } = renderTela(`/atendimento-medico?agendamento=${ID_CONFIRMADO}`);
+    await user.click(await screen.findByRole('button', { name: 'Iniciar Atendimento' }));
+
+    await user.click(await screen.findByRole('button', { name: 'Finalizar' }));
+    const dialogo = await screen.findByRole('alertdialog', { name: 'Finalizar atendimento?' });
+    expect(chamadasPara(fetchMock, `${API}/${ID_CONFIRMADO}/finalizar`)).toHaveLength(0);
+    await user.click(within(dialogo).getByRole('button', { name: 'Finalizar' }));
+
+    await waitFor(() =>
+      expect(chamadasPara(fetchMock, `${API}/${ID_CONFIRMADO}/finalizar`)).toHaveLength(1),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Finalizar' })).not.toBeInTheDocument(),
+    );
+  });
+
+  it('aba Histórico lista os atendimentos com evoluções e receitas', async () => {
+    const { user } = renderTela(`/atendimento-medico?agendamento=${ID_CONFIRMADO}`);
+    await user.click(await screen.findByRole('tab', { name: 'Histórico' }));
+
+    const lista = await screen.findByRole('list', { name: 'Atendimentos do paciente' });
+    expect(within(lista).getByText(/Dr\(a\)\. Dra\. Fictícia/)).toBeVisible();
+    expect(within(lista).getByText('Evolução antiga fictícia')).toBeVisible();
+    expect(within(lista).getByText('1 receita')).toBeVisible();
+    expect(within(lista).getByText('Finalizado')).toBeVisible();
+  });
+
+  it('aba Orçamento lista os do paciente e abre o "Novo Orçamento" sem o campo Cliente', async () => {
+    const { user, fetchMock } = renderTela(`/atendimento-medico?agendamento=${ID_CONFIRMADO}`);
+    await user.click(await screen.findByRole('tab', { name: 'Orçamento' }));
+
+    const tabela = await screen.findByRole('table', { name: 'Orçamentos do paciente' });
+    expect(within(tabela).getByText('42')).toBeVisible();
+    expect(within(tabela).getByText('Consulta fictícia')).toBeVisible();
+    expect(within(tabela).getByText('Pendente')).toBeVisible();
+    expect(queryDe(fetchMock, '/api/comercial-atendimento/orcamentos')).toMatchObject({
+      pacienteId: ID_PACIENTE,
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Novo Orçamento' }));
+    expect(await screen.findByRole('dialog', { name: 'Novo Orçamento' })).toBeVisible();
+    expect(screen.queryByText('Cliente')).not.toBeInTheDocument();
   });
 });

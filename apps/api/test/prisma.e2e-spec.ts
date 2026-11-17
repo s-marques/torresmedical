@@ -41,10 +41,12 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       WHERE table_schema = 'public' AND table_name <> '_prisma_migrations'
       ORDER BY table_name`;
     expect(tabelas.map((t) => t.table_name)).toEqual([
+      'agendamento_recebimentos',
       'agendamentos',
       'anamneses',
       'arquivos',
       'atendimento_evolucoes',
+      'atendimento_receitas',
       'atendimentos',
       'atividades_negocio',
       'audit_log',
