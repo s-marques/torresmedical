@@ -44,6 +44,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'agendamentos',
       'anamneses',
       'arquivos',
+      'atendimento_evolucoes',
       'atendimentos',
       'atividades_negocio',
       'audit_log',

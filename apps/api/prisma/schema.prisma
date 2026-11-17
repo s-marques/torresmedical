@@ -1098,6 +1098,10 @@ enum AgendamentoStatus {
   REAGENDAR
   ATENDIDO
   FALTOU
+  /// Tela Atendimento Médico (#38): filtro "Aguardando".
+  AGUARDANDO
+  /// Tela Atendimento Médico (#38): gravado pelo "Atender".
+  EM_ATENDIMENTO
 }
 
 /// Dono: comercial-atendimento. Consulta/procedimento marcado na tela Agenda (`/agenda`).
@@ -1936,13 +1940,49 @@ model Atendimento {
   procedimentoId  String?           @map("procedimento_id") @db.Uuid
   /// Reservado para #38: situação do pagamento do atendimento.
   pagamentoStatus String?           @map("pagamento_status")
+  /// Agendamento (comercial-atendimento) que originou o atendimento na tela Atendimento Médico
+  /// (#38), sem FK. Um atendimento por agendamento.
+  agendamentoId   String?           @unique @map("agendamento_id") @db.Uuid
+  /// Entrada no consultório ("Atender"/"Iniciar Atendimento").
+  iniciadoEm      DateTime?         @map("iniciado_em") @db.Timestamptz(3)
+  /// Fim do atendimento ("Finalizar").
+  finalizadoEm    DateTime?         @map("finalizado_em") @db.Timestamptz(3)
   createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt       DateTime?         @map("deleted_at") @db.Timestamptz(3)
 
+  evolucoes AtendimentoEvolucao[]
+
   @@index([pacienteId])
   @@index([profissionalId])
   @@map("atendimentos")
+}
+
+enum EvolucaoTipo {
+  EVOLUCAO
+  DIAGNOSTICO
+  PRESCRICAO
+  OBSERVACAO
+  ENCAMINHAMENTO
+
+  @@map("evolucao_tipo")
+}
+
+/// Dono: consultorio-assistencial. Evolução registrada no atendimento (aba "Evolução" da tela
+/// Atendimento Médico, #38). Várias por atendimento.
+model AtendimentoEvolucao {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  atendimentoId String       @map("atendimento_id") @db.Uuid
+  tipo          EvolucaoTipo @default(EVOLUCAO)
+  texto         String
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt     DateTime?    @map("deleted_at") @db.Timestamptz(3)
+
+  atendimento Atendimento @relation(fields: [atendimentoId], references: [id], onDelete: Restrict)
+
+  @@index([atendimentoId])
+  @@map("atendimento_evolucoes")
 }
 
 /// Dono: consultorio-assistencial. Anamnese clínica (aba "Anamneses" da tela Prontuários).
