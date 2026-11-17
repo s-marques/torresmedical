@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import {
   situacaoProximaAcao,
   type AtividadeNegocio,
-  type AtividadeNegocioInput,
   type ColunaQuadro,
   type MarcoEstagio,
   type MoverNegocioInput,
@@ -38,7 +37,8 @@ export const INCLUDE = {
   atividades: {
     where: { status: 'PENDENTE', deletedAt: null },
     orderBy: [{ dataHora: 'asc' }, { id: 'asc' }],
-    take: 1,
+    // A segunda só indica se a primeira é a última pendente (exigeProximaAcao).
+    take: 2,
   },
 } satisfies Prisma.NegocioInclude;
 export type NegocioCompleto = Prisma.NegocioGetPayload<{ include: typeof INCLUDE }>;
@@ -69,16 +69,23 @@ const deData = (valor: Date | null): string | null => valor?.toISOString().slice
 const paraData = (valor: string | null): Date | null =>
   valor ? new Date(`${valor}T00:00:00Z`) : null;
 
-function toAtividade(a: AtividadeRow, nomes: Nomes): AtividadeNegocio {
+/** Atividade no contrato da API; o nome do responsável vem do mapa de usuários. */
+export function toAtividadeNegocio(
+  a: AtividadeRow,
+  usuarios: ReadonlyMap<string, string>,
+  exigeProximaAcao: boolean,
+): AtividadeNegocio {
   return {
     id: a.id,
     negocioId: a.negocioId,
     tipo: a.tipo,
     titulo: a.titulo,
+    descricao: a.descricao,
     dataHora: a.dataHora.toISOString(),
     responsavelId: a.responsavelId,
-    responsavel: a.responsavelId ? (nomes.usuarios.get(a.responsavelId) ?? null) : null,
+    responsavel: a.responsavelId ? (usuarios.get(a.responsavelId) ?? null) : null,
     status: a.status,
+    exigeProximaAcao,
   };
 }
 
@@ -92,7 +99,10 @@ function marcosDe(n: NegocioCompleto): Negocio['marcos'] {
 }
 
 export function toNegocio(n: NegocioCompleto, nomes: Nomes, agora = new Date()): Negocio {
-  const proxima = n.atividades[0] ? toAtividade(n.atividades[0], nomes) : null;
+  const aberto = n.status === 'ABERTO';
+  const proxima = n.atividades[0]
+    ? toAtividadeNegocio(n.atividades[0], nomes.usuarios, aberto && n.atividades.length === 1)
+    : null;
   let contato: string | null = null;
   if (n.contatoId && n.contatoTipo === 'PACIENTE')
     contato = nomes.pacientes.get(n.contatoId) ?? null;
@@ -121,7 +131,7 @@ export function toNegocio(n: NegocioCompleto, nomes: Nomes, agora = new Date()):
     fechadoEm: n.fechadoEm?.toISOString() ?? null,
     marcos: marcosDe(n),
     proximaAtividade: proxima,
-    situacaoAcao: n.status === 'ABERTO' ? situacaoProximaAcao(proxima, agora) : null,
+    situacaoAcao: aberto ? situacaoProximaAcao(proxima, agora) : null,
     createdAt: n.createdAt.toISOString(),
   };
 }
@@ -353,43 +363,6 @@ export class NegociosService {
     return this.toDto(excluido);
   }
 
-  /** "Agendar Follow-up": nova próxima ação. Sem responsável, herda o do negócio. */
-  async agendarAtividade(
-    negocioId: string,
-    input: AtividadeNegocioInput,
-  ): Promise<AtividadeNegocio> {
-    const negocio = await this.buscarAberto(negocioId);
-    if (input.responsavelId) await this.usuarios.garantirAtivo(input.responsavelId, 'Responsável');
-    const criada = await this.txHost.tx.atividadeNegocio.create({
-      data: {
-        negocioId,
-        tipo: input.tipo,
-        titulo: input.titulo,
-        dataHora: instanteDaAtividade(input.data, input.hora),
-        responsavelId: input.responsavelId ?? negocio.responsavelId,
-      },
-    });
-    return this.toAtividadeDto(criada);
-  }
-
-  /** Conclui a próxima ação (o cartão deixa de aparecer atrasado). */
-  async concluirAtividade(id: string): Promise<AtividadeNegocio> {
-    const atividade = isUuid(id)
-      ? await this.txHost.tx.atividadeNegocio.findFirst({ where: { id, ...NAO_EXCLUIDOS } })
-      : null;
-    if (!atividade) {
-      throw new BusinessException(ErrorCode.NOT_FOUND, 'Atividade não encontrada', { status: 404 });
-    }
-    if (atividade.status === 'CONCLUIDA') {
-      throw new BusinessException('ATIVIDADE_JA_CONCLUIDA', 'A atividade já foi concluída.');
-    }
-    const concluida = await this.txHost.tx.atividadeNegocio.update({
-      where: { id },
-      data: { status: 'CONCLUIDA', concluidaEm: new Date() },
-    });
-    return this.toAtividadeDto(concluida);
-  }
-
   /** Combobox "Responsavel": usuários ativos. */
   responsaveis(): Promise<Responsavel[]> {
     return this.usuarios.responsaveis();
@@ -410,7 +383,8 @@ export class NegociosService {
     return negocio;
   }
 
-  private async buscarAberto(id: string): Promise<NegocioCompleto> {
+  /** Negócio não excluído e aberto (404 / 422 `NEGOCIO_FECHADO`). */
+  async buscarAberto(id: string): Promise<NegocioCompleto> {
     const negocio = await this.buscar(id);
     if (negocio.status !== 'ABERTO') {
       throw new BusinessException(
@@ -504,12 +478,5 @@ export class NegociosService {
 
   private async toDto(negocio: NegocioCompleto): Promise<Negocio> {
     return toNegocio(negocio, await this.nomes([negocio]));
-  }
-
-  private async toAtividadeDto(atividade: AtividadeRow): Promise<AtividadeNegocio> {
-    const usuarios = await this.usuarios.nomesPorIds(
-      atividade.responsavelId ? [atividade.responsavelId] : [],
-    );
-    return toAtividade(atividade, { pacientes: new Map(), profissionais: new Map(), usuarios });
   }
 }

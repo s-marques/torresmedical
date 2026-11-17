@@ -209,6 +209,7 @@ describe('buildSeedData: CRM', () => {
       new Set(['ABERTO', 'GANHO', 'PERDIDO']),
     );
     const negocios = new Set(crm.negocios.map((n) => n.id));
-    expect(crm.atividades.every((a) => negocios.has(a.negocioId))).toBe(true);
+    expect(crm.atividades.every((a) => !a.negocioId || negocios.has(a.negocioId))).toBe(true);
+    expect(crm.atividades.some((a) => a.negocioId === null)).toBe(true);
   });
 });

@@ -74,10 +74,12 @@ function negocio(parcial: Partial<Negocio> = {}): Negocio {
       negocioId: N1,
       tipo: 'FOLLOW_UP',
       titulo: 'Ligar',
+      descricao: null,
       dataHora: '2099-01-10T12:00:00.000Z',
       responsavelId: USUARIO,
       responsavel: 'Bia Responsável',
       status: 'PENDENTE',
+      exigeProximaAcao: false,
     },
     situacaoAcao: 'EM_DIA',
     createdAt: '2026-11-01T12:00:00.000Z',
@@ -112,6 +114,7 @@ const QUADRO: Quadro = {
             ...negocio().proximaAtividade!,
             negocioId: N3,
             dataHora: '2020-01-10T12:00:00.000Z',
+            exigeProximaAcao: true,
           },
         }),
       ],
@@ -169,6 +172,10 @@ function api({ usuario = USUARIO_TESTE } = {}) {
       [`${API}/negocios/${N1}/perdido`]: escrever(`${API}/negocios/${N1}/perdido`, negocio()),
       [`${API}/negocios/${N1}/atividades`]: escrever(
         `${API}/negocios/${N1}/atividades`,
+        negocio().proximaAtividade,
+      ),
+      [`${API}/negocios/${N3}/atividades`]: escrever(
+        `${API}/negocios/${N3}/atividades`,
         negocio().proximaAtividade,
       ),
       [`${API}/atividades/${ATIVIDADE}/concluir`]: escrever(
@@ -325,6 +332,36 @@ describe('Pipeline (/crm)', () => {
     await waitFor(() =>
       expect(escritas.at(-1)).toMatchObject({ caminho: `${API}/atividades/${ATIVIDADE}/concluir` }),
     );
+  });
+
+  it('concluir a última ação pede a próxima: agenda e depois conclui', async () => {
+    const { user, escritas } = renderTela();
+    await abrirMenu(user, 'Loja 04');
+    await user.click(await screen.findByRole('menuitem', { name: 'Concluir próxima ação' }));
+    const modal = await screen.findByRole('dialog', { name: 'Agendar próxima ação' });
+    expect(modal).toHaveTextContent('"Loja 04" ficaria sem próxima ação.');
+    expect(escritas).toEqual([]);
+
+    await user.click(within(modal).getByRole('button', { name: 'Agendar e concluir' }));
+    expect(await within(modal).findByText('Título é obrigatório.')).toBeInTheDocument();
+    expect(escritas).toEqual([]);
+
+    await user.type(within(modal).getByRole('textbox', { name: /Título/ }), 'Enviar proposta');
+    await user.type(within(modal).getByLabelText(/Data/), '2026-12-01');
+    await user.type(within(modal).getByLabelText(/Hora/), '0930');
+    await user.click(within(modal).getByRole('button', { name: 'Agendar e concluir' }));
+    await waitFor(() =>
+      expect(escritas.map((e) => [e.metodo, e.caminho])).toEqual([
+        ['POST', `${API}/negocios/${N3}/atividades`],
+        ['PATCH', `${API}/atividades/${ATIVIDADE}/concluir`],
+      ]),
+    );
+    expect(escritas[0]?.corpo).toMatchObject({
+      titulo: 'Enviar proposta',
+      data: '2026-12-01',
+      hora: '09:30',
+    });
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
   it('Perdido exige o motivo antes de enviar', async () => {

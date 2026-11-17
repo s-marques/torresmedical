@@ -10,7 +10,7 @@ import { FormField } from '@/components/shared/form/FormField';
 import { FormLayout } from '@/components/shared/form/FormLayout';
 import { useFormulario } from '@/components/shared/form/use-formulario';
 import { Modal } from '@/components/shared/Modal';
-import { useAgendarFollowUp, useResponsaveis } from './use-pipeline';
+import { useAgendarFollowUp, useConcluirAtividade, useResponsaveis } from './use-pipeline';
 
 const ID_FORMULARIO = 'form-follow-up';
 
@@ -21,12 +21,22 @@ const OPCOES_TIPO = ATIVIDADE_TIPOS.map((tipo) => ({
 
 export interface ModalFollowUpProps {
   negocio: Negocio;
+  /**
+   * Concluir a última ação pendente do negócio: agenda a próxima e então conclui esta
+   * (requisito do cliente, seção 23).
+   */
+  concluirAtividadeId?: string;
   onFechar: () => void;
 }
 
 /** "Agendar Follow-up": próxima ação do negócio (tipo, título, data, hora e responsável). */
-export function ModalFollowUp({ negocio, onFechar }: Readonly<ModalFollowUpProps>) {
+export function ModalFollowUp({
+  negocio,
+  concluirAtividadeId,
+  onFechar,
+}: Readonly<ModalFollowUpProps>) {
   const agendar = useAgendarFollowUp(negocio.id);
+  const concluir = useConcluirAtividade();
   const responsaveis = useResponsaveis();
   const form = useFormulario(atividadeNegocioInputSchema, {
     defaultValues: {
@@ -42,13 +52,17 @@ export function ModalFollowUp({ negocio, onFechar }: Readonly<ModalFollowUpProps
     <Modal
       aberto
       onAbertoChange={(aberto) => aberto || onFechar()}
-      titulo="Agendar Follow-up"
-      descricao={negocio.titulo}
+      titulo={concluirAtividadeId ? 'Agendar próxima ação' : 'Agendar Follow-up'}
+      descricao={
+        concluirAtividadeId
+          ? `"${negocio.titulo}" ficaria sem próxima ação. Agende a próxima para concluir a atual, ou marque o negócio como ganho ou perdido.`
+          : negocio.titulo
+      }
       rodape={
         <FormAcoes
           form={form}
           formId={ID_FORMULARIO}
-          rotuloEnviar="Agendar"
+          rotuloEnviar={concluirAtividadeId ? 'Agendar e concluir' : 'Agendar'}
           onCancelar={onFechar}
         />
       }
@@ -59,6 +73,7 @@ export function ModalFollowUp({ negocio, onFechar }: Readonly<ModalFollowUpProps
         acoes={null}
         onSubmit={async (valores) => {
           await agendar.mutateAsync(valores);
+          if (concluirAtividadeId) await concluir.mutateAsync(concluirAtividadeId);
           onFechar();
         }}
       >

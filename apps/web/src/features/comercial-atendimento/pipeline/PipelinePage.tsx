@@ -43,7 +43,7 @@ const BUSCA_DEBOUNCE_MS = 300;
 /** O que está aberto por cima do quadro. */
 type Dialogo =
   | { tipo: 'novo'; estagioId: string }
-  | { tipo: 'editar' | 'follow-up' | 'perdido' | 'excluir'; negocio: Negocio }
+  | { tipo: 'editar' | 'follow-up' | 'concluir-acao' | 'perdido' | 'excluir'; negocio: Negocio }
   | { tipo: 'configurar' };
 
 const moeda = (valor: string) => formatarMoeda(Number(valor));
@@ -196,7 +196,12 @@ export default function PipelinePage() {
               onEditar={(negocio) => setDialogo({ tipo: 'editar', negocio })}
               onMover={(negocio, estagioId) => mover.mutate({ id: negocio.id, estagioId })}
               onFollowUp={(negocio) => setDialogo({ tipo: 'follow-up', negocio })}
-              onConcluirAcao={(atividadeId) => concluir.mutate(atividadeId)}
+              onConcluirAcao={(negocio) => {
+                const proxima = negocio.proximaAtividade;
+                if (!proxima) return;
+                if (proxima.exigeProximaAcao) setDialogo({ tipo: 'concluir-acao', negocio });
+                else concluir.mutate(proxima.id);
+              }}
               onGanho={(negocio) => ganhar.mutate(negocio.id)}
               onPerdido={(negocio) => setDialogo({ tipo: 'perdido', negocio })}
               onExcluir={(negocio) => setDialogo({ tipo: 'excluir', negocio })}
@@ -243,6 +248,13 @@ export default function PipelinePage() {
       )}
       {dialogo?.tipo === 'follow-up' && (
         <ModalFollowUp negocio={dialogo.negocio} onFechar={fechar} />
+      )}
+      {dialogo?.tipo === 'concluir-acao' && dialogo.negocio.proximaAtividade && (
+        <ModalFollowUp
+          negocio={dialogo.negocio}
+          concluirAtividadeId={dialogo.negocio.proximaAtividade.id}
+          onFechar={fechar}
+        />
       )}
       {dialogo?.tipo === 'perdido' && <ModalPerdido negocio={dialogo.negocio} onFechar={fechar} />}
       {dialogo?.tipo === 'configurar' && (

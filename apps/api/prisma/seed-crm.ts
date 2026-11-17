@@ -164,6 +164,30 @@ export function buildSeedCrm(
     }
   }
 
+  // Tela Atividades: avulsas (sem negócio), dos tipos do inventário, em todos os status.
+  const TIPOS_AVULSAS = ['LIGACAO', 'EMAIL', 'REUNIAO', 'TAREFA', 'WHATSAPP', 'NOTA'] as const;
+  TIPOS_AVULSAS.forEach((tipo, i) => {
+    const status = (['PENDENTE', 'PENDENTE', 'CONCLUIDA', 'CANCELADA'] as const)[i % 4];
+    atividades.push({
+      id: faker.string.uuid(),
+      negocioId: null,
+      tipo,
+      titulo: faker.helpers.arrayElement([
+        'Confirmar horário da sala',
+        'Enviar tabela de valores',
+        'Reunião de alinhamento',
+        'Atualizar cadastro',
+      ]),
+      descricao: i % 2 === 0 ? faker.lorem.sentence() : null,
+      dataHora: new Date(agora.getTime() + (i - 2) * 86_400_000),
+      responsavelId:
+        contatos.responsaveis[i % Math.max(contatos.responsaveis.length, 1)]?.id ?? null,
+      status,
+      concluidaEm: status === 'CONCLUIDA' ? agora : null,
+      canceladaEm: status === 'CANCELADA' ? agora : null,
+    });
+  });
+
   return { pipelines, estagios, motivosPerda, negocios, atividades };
 }
 

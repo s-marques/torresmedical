@@ -33,18 +33,43 @@ export const NEGOCIO_CONTATO_ROTULO: Readonly<Record<NegocioContatoTipo, string>
   PROFISSIONAL: 'Profissional',
 };
 
-export const ATIVIDADE_TIPOS = ['FOLLOW_UP', 'TAREFA', 'VISITA', 'ENVIO_PROPOSTA'] as const;
+/**
+ * Tipos da atividade: os do inventário da tela Atividades (Ligação, E-mail, Reunião, Tarefa,
+ * WhatsApp, Nota) mais os dos requisitos do cliente (Follow-up, Visita, Envio de proposta).
+ */
+export const ATIVIDADE_TIPOS = [
+  'LIGACAO',
+  'EMAIL',
+  'REUNIAO',
+  'TAREFA',
+  'WHATSAPP',
+  'NOTA',
+  'FOLLOW_UP',
+  'VISITA',
+  'ENVIO_PROPOSTA',
+] as const;
 export type AtividadeTipo = (typeof ATIVIDADE_TIPOS)[number];
 
 export const ATIVIDADE_TIPO_ROTULO: Readonly<Record<AtividadeTipo, string>> = {
-  FOLLOW_UP: 'Follow-up',
+  LIGACAO: 'Ligação',
+  EMAIL: 'E-mail',
+  REUNIAO: 'Reunião',
   TAREFA: 'Tarefa',
+  WHATSAPP: 'WhatsApp',
+  NOTA: 'Nota',
+  FOLLOW_UP: 'Follow-up',
   VISITA: 'Visita',
   ENVIO_PROPOSTA: 'Envio de proposta',
 };
 
-export const ATIVIDADE_STATUS = ['PENDENTE', 'CONCLUIDA'] as const;
+export const ATIVIDADE_STATUS = ['PENDENTE', 'CONCLUIDA', 'CANCELADA'] as const;
 export type AtividadeStatus = (typeof ATIVIDADE_STATUS)[number];
+
+export const ATIVIDADE_STATUS_ROTULO: Readonly<Record<AtividadeStatus, string>> = {
+  PENDENTE: 'Pendente',
+  CONCLUIDA: 'Concluída',
+  CANCELADA: 'Cancelada',
+};
 
 /**
  * Situação da próxima ação de um negócio aberto (requisito do cliente, seção 23): sem atividade
@@ -63,7 +88,7 @@ export function situacaoProximaAcao(
 
 const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-const uuidOpcional = (mensagem: string) =>
+export const uuidOpcional = (mensagem: string) =>
   z
     .union([z.literal(''), z.uuid({ error: mensagem })])
     .nullish()
@@ -195,9 +220,8 @@ export const perderNegocioSchema = z.strictObject({
 export type PerderNegocioInput = z.output<typeof perderNegocioSchema>;
 export type PerderNegocioFormulario = z.input<typeof perderNegocioSchema>;
 
-/** `POST /negocios/:id/atividades`: "Agendar Follow-up". */
-export const atividadeNegocioInputSchema = z.strictObject({
-  tipo: z.enum(ATIVIDADE_TIPOS, { error: mensagemObrigatoria('Tipo') }).default('FOLLOW_UP'),
+/** Campos comuns do agendamento de atividade (Pipeline e tela Atividades). */
+export const camposAgendamentoAtividade = {
   titulo: textoObrigatorio('Título', { max: ATIVIDADE_TITULO_MAX }),
   data: z.iso.date({ error: mensagemObrigatoria('Data', 'f') }),
   hora: z
@@ -205,6 +229,12 @@ export const atividadeNegocioInputSchema = z.strictObject({
     .min(1, { error: mensagemObrigatoria('Hora', 'f'), abort: true })
     .regex(HORA, { error: 'Hora inválida (HH:MM)' }),
   responsavelId: uuidOpcional('Responsável inválido'),
+};
+
+/** `POST /negocios/:id/atividades`: "Agendar Follow-up". */
+export const atividadeNegocioInputSchema = z.strictObject({
+  tipo: z.enum(ATIVIDADE_TIPOS, { error: mensagemObrigatoria('Tipo') }).default('FOLLOW_UP'),
+  ...camposAgendamentoAtividade,
 });
 export type AtividadeNegocioInput = z.output<typeof atividadeNegocioInputSchema>;
 export type AtividadeNegocioFormulario = z.input<typeof atividadeNegocioInputSchema>;
@@ -221,13 +251,20 @@ const decimal = z.string();
 
 export const atividadeNegocioSchema = z.object({
   id: z.uuid(),
-  negocioId: z.uuid(),
+  /** Atividade avulsa (tela Atividades) não tem negócio. */
+  negocioId: z.uuid().nullable(),
   tipo: z.enum(ATIVIDADE_TIPOS),
   titulo: z.string(),
+  descricao: z.string().nullable(),
   dataHora: z.iso.datetime(),
   responsavelId: z.uuid().nullable(),
   responsavel: z.string().nullable(),
   status: z.enum(ATIVIDADE_STATUS),
+  /**
+   * Última atividade pendente de um negócio aberto: para concluir ou cancelar, é preciso agendar
+   * a próxima antes (ou marcar o negócio como ganho/perdido). Requisito do cliente, seção 23.
+   */
+  exigeProximaAcao: z.boolean(),
 });
 export type AtividadeNegocio = z.infer<typeof atividadeNegocioSchema>;
 

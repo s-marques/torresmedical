@@ -348,8 +348,19 @@ describe('Pipeline / CRM (e2e)', () => {
       const detalhe = await http().get(`${BASE}/negocios/${id}`).expect(200);
       expect(detalhe.body).toMatchObject({
         situacaoAcao: 'ATRASADA',
-        proximaAtividade: { id: atividade.id },
+        proximaAtividade: { id: atividade.id, exigeProximaAcao: true },
       });
+
+      // Última pendente de negócio aberto: só conclui com a próxima agendada.
+      const bloqueio = await http()
+        .patch(`${BASE}/atividades/${atividade.id}/concluir`)
+        .expect(422);
+      expect(bloqueio.body.code).toBe('PROXIMA_ACAO_OBRIGATORIA');
+      await expectNoAudit(prisma, { entity: 'AtividadeNegocio', action: 'UPDATE' });
+      await http()
+        .post(`${BASE}/negocios/${id}/atividades`)
+        .send({ titulo: 'Enviar proposta', data: '2099-01-10', hora: '09:00' })
+        .expect(201);
 
       await http().patch(`${BASE}/atividades/${atividade.id}/concluir`).expect(200);
       await expectAudit(prisma, {
@@ -360,7 +371,10 @@ describe('Pipeline / CRM (e2e)', () => {
         after: { status: 'CONCLUIDA' },
       });
       const depois = await http().get(`${BASE}/negocios/${id}`).expect(200);
-      expect(depois.body.situacaoAcao).toBe('SEM_ACAO');
+      expect(depois.body).toMatchObject({
+        situacaoAcao: 'EM_DIA',
+        proximaAtividade: { titulo: 'Enviar proposta', exigeProximaAcao: true },
+      });
       await http().patch(`${BASE}/atividades/${atividade.id}/concluir`).expect(422);
     });
 

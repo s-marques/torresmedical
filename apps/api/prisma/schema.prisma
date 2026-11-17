@@ -1966,6 +1966,11 @@ enum AtividadeNegocioTipo {
   TAREFA
   VISITA
   ENVIO_PROPOSTA
+  LIGACAO
+  EMAIL
+  REUNIAO
+  WHATSAPP
+  NOTA
 
   @@map("atividade_negocio_tipo")
 }
@@ -1973,6 +1978,7 @@ enum AtividadeNegocioTipo {
 enum AtividadeNegocioStatus {
   PENDENTE
   CONCLUIDA
+  CANCELADA
 
   @@map("atividade_negocio_status")
 }
@@ -2072,25 +2078,29 @@ model Negocio {
   @@map("negocios")
 }
 
-/// Dono: comercial-atendimento. Próxima ação do negócio ("Agendar Follow-up"); a tela Atividades
-/// (#2) completa o cadastro.
+/// Dono: comercial-atendimento. Atividade do CRM (tela Atividades, `/atividades`): a próxima ação
+/// de um negócio ("Agendar Follow-up" do Pipeline) ou uma atividade avulsa, sem negócio.
+/// Exclusão lógica: histórico comercial.
 model AtividadeNegocio {
   id            String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  negocioId     String                 @map("negocio_id") @db.Uuid
+  negocioId     String?                @map("negocio_id") @db.Uuid
   tipo          AtividadeNegocioTipo
   titulo        String
+  descricao     String?
   dataHora      DateTime               @map("data_hora") @db.Timestamptz(3)
   /// Usuário (configuracoes-gestao), sem FK.
   responsavelId String?                @map("responsavel_id") @db.Uuid
   status        AtividadeNegocioStatus @default(PENDENTE)
   concluidaEm   DateTime?              @map("concluida_em") @db.Timestamptz(3)
+  canceladaEm   DateTime?              @map("cancelada_em") @db.Timestamptz(3)
   createdAt     DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt     DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt     DateTime?              @map("deleted_at") @db.Timestamptz(3)
 
-  negocio Negocio @relation(fields: [negocioId], references: [id], onDelete: Restrict)
+  negocio Negocio? @relation(fields: [negocioId], references: [id], onDelete: Restrict)
 
   @@index([negocioId, status, dataHora])
+  @@index([status, dataHora])
   @@index([responsavelId])
   @@map("atividades_negocio")
 }

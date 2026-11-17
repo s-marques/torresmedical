@@ -30,6 +30,7 @@ import {
 } from '../../../common/swagger/zod-openapi';
 import { IdParam } from '../../../common/validation/id-param.decorator';
 import { ZodValidationPipe } from '../../../common/validation/zod-validation.pipe';
+import { AtividadesService } from '../atividades/atividades.service';
 import { NegociosService } from './negocios.service';
 
 const ENTITY = 'Negocio';
@@ -38,7 +39,10 @@ const ENTITY = 'Negocio';
 @ApiTags('Comercial/Atendimento: Pipeline')
 @Controller('comercial-atendimento/pipeline')
 export class NegociosController {
-  constructor(private readonly negocios: NegociosService) {}
+  constructor(
+    private readonly negocios: NegociosService,
+    private readonly atividades: AtividadesService,
+  ) {}
 
   @Get('quadro')
   @RequirePermission('comercial-atendimento.pipeline.ver')
@@ -156,16 +160,19 @@ export class NegociosController {
     @IdParam() id: string,
     @Body(new ZodValidationPipe(atividadeNegocioInputSchema)) body: AtividadeNegocioInput,
   ): Promise<AtividadeNegocio> {
-    return this.negocios.agendarAtividade(id, body);
+    return this.atividades.agendarDoNegocio(id, body);
   }
 
   @Patch('atividades/:id/concluir')
   @RequirePermission('comercial-atendimento.pipeline.editar')
   @Audit({ entity: 'AtividadeNegocio' })
-  @ApiOperation({ summary: 'Conclui a próxima ação do negócio' })
+  @ApiOperation({
+    summary:
+      'Conclui a próxima ação do negócio. A última pendente exige a próxima agendada (422 PROXIMA_ACAO_OBRIGATORIA)',
+  })
   @ApiZodResponse(200, atividadeNegocioSchema)
   @ApiErrorResponses(400, 401, 403, 404, 422)
   concluirAtividade(@IdParam() id: string): Promise<AtividadeNegocio> {
-    return this.negocios.concluirAtividade(id);
+    return this.atividades.concluir(id);
   }
 }
