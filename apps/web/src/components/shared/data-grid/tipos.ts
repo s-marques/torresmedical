@@ -1,7 +1,8 @@
-import type { PaginationMeta, Permissao } from '@torres/shared';
+import type { LookupEntidade, PaginationMeta, Permissao } from '@torres/shared';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { ValidadorResposta } from '@/lib/api/client';
+import type { FiltrosLookup } from '@/lib/api/lookups';
 
 /** Coluna do `DataGrid`. Defina o array fora do componente (ou com `useMemo`). */
 export interface ColunaGrid<T> {
@@ -36,10 +37,31 @@ export interface FiltroStatus {
   opcoes: readonly OpcaoFiltro[];
 }
 
-/** Filtros extras: select (com "Todos") e período De/Até (date inputs). */
+/**
+ * Filtros extras: select (com "Todos"), período De/Até (date inputs), entidade (combobox com busca
+ * na API, para listas grandes como produtos) e checkbox (envia `parametro=true` quando marcado).
+ */
 export type FiltroGrid =
-  | { tipo: 'select'; parametro: string; rotulo: string; opcoes: readonly OpcaoFiltro[] }
-  | { tipo: 'periodo'; rotulo: string; parametroDe: string; parametroAte: string };
+  | {
+      tipo: 'select';
+      parametro: string;
+      rotulo: string;
+      opcoes: readonly OpcaoFiltro[];
+      /** Texto da opção sem filtro. Padrão: "Todos". */
+      rotuloTodos?: string;
+    }
+  | { tipo: 'periodo'; rotulo: string; parametroDe: string; parametroAte: string }
+  | {
+      tipo: 'entidade';
+      parametro: string;
+      /** Rótulo para leitores de tela. */
+      rotulo: string;
+      entidade: LookupEntidade;
+      filtros?: FiltrosLookup;
+      /** Texto exibido sem seleção, ex.: "Todos os produtos". */
+      rotuloTodos: string;
+    }
+  | { tipo: 'checkbox'; parametro: string; rotulo: string };
 
 /** Ação do menu "⋯" de cada linha. Ações destrutivas devem abrir um `ConfirmDialog`. */
 export interface AcaoLinha {

@@ -257,6 +257,73 @@ describe('DataGrid', () => {
     await waitFor(() => expect(ultimo()).toEqual({ page: '1', pageSize: '10' }));
   });
 
+  it('filtra por entidade (combobox com busca), checkbox e select com rótulo próprio', async () => {
+    const PRODUTO = '9b2d3c52-8d0f-4b8e-9f4c-2b2f3c4d5e6f';
+    servidorMsw.use(
+      http.get('/api/lookups/produtos', () =>
+        HttpResponse.json({
+          data: [{ id: PRODUTO, label: 'Luva', descricao: null }],
+          meta: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
+        }),
+      ),
+      http.get('/api/lookups/produtos/:id', () =>
+        HttpResponse.json({ id: PRODUTO, label: 'Luva', descricao: null }),
+      ),
+    );
+    const { user, router } = renderizar({
+      filtros: [
+        {
+          tipo: 'entidade',
+          parametro: 'produtoId',
+          rotulo: 'Produto',
+          entidade: 'produtos',
+          rotuloTodos: 'Todos os produtos',
+        },
+        { tipo: 'checkbox', parametro: 'comSaldo', rotulo: 'Apenas com saldo' },
+        {
+          tipo: 'select',
+          parametro: 'empresaId',
+          rotulo: 'Empresa',
+          rotuloTodos: 'Todas as empresas',
+          opcoes: [{ valor: EMPRESA, rotulo: 'Matriz' }],
+        },
+      ],
+      querySchema: undefined,
+    });
+    await screen.findByText('Unidade 1');
+    const produto = screen.getByRole('combobox', { name: 'Produto' });
+    expect(produto).toHaveTextContent('Todos os produtos');
+    expect(screen.getByRole('combobox', { name: 'Empresa' })).toHaveTextContent(
+      'Todas as empresas',
+    );
+
+    await user.click(produto);
+    await user.click(await screen.findByRole('option', { name: /Luva/ }));
+    await waitFor(() => expect(ultimo().produtoId).toBe(PRODUTO));
+
+    await user.click(screen.getByRole('checkbox', { name: 'Apenas com saldo' }));
+    await waitFor(() => expect(ultimo()).toMatchObject({ produtoId: PRODUTO, comSaldo: 'true' }));
+    expect(router.state.location.search).toContain('comSaldo=true');
+
+    await user.click(screen.getByRole('checkbox', { name: 'Apenas com saldo' }));
+    await user.click(screen.getByRole('combobox', { name: 'Produto' }));
+    await user.click(await screen.findByRole('option', { name: 'Limpar seleção' }));
+    await waitFor(() => expect(ultimo()).toEqual({ page: '1', pageSize: '10' }));
+  });
+
+  it('restaura o checkbox marcado a partir da URL', async () => {
+    renderizar(
+      {
+        filtros: [{ tipo: 'checkbox', parametro: 'comSaldo', rotulo: 'Apenas com saldo' }],
+        querySchema: undefined,
+      },
+      '/lista?comSaldo=true',
+    );
+    await screen.findByText('Unidade 1');
+    expect(screen.getByRole('checkbox', { name: 'Apenas com saldo' })).toBeChecked();
+    expect(ultimo().comSaldo).toBe('true');
+  });
+
   it('restaura o estado da URL e descarta parâmetros fora do schema', async () => {
     renderizar({}, '/lista?page=2&pageSize=20&sort=ativo:desc&status=ativo&search=x&pageSize=abc');
     await screen.findByText('Unidade 21');

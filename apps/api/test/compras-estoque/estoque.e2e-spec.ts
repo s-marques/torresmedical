@@ -5,11 +5,13 @@ import {
   movimentacaoEstoqueSchema,
   posicaoEstoquePageSchema,
   resumoEstoqueSchema,
+  somarDias,
   sugestaoCompraPageSchema,
 } from '@torres/shared';
 import { Workbook } from 'exceljs';
 import request from 'supertest';
 import { PrismaService } from '../../src/common/prisma/prisma.service';
+import { hojeNaClinica } from '../../src/modules/compras-estoque/estoque/estoque-filtros';
 import { comUsuario, criarUsuarioTeste, type UsuarioTeste } from '../utils/auth';
 import { createE2eApp } from '../utils/create-e2e-app';
 import { truncateAll } from '../utils/database';
@@ -392,6 +394,24 @@ describe('Estoque (e2e)', () => {
         .post(`${BASE}/saidas`)
         .send({ produtoId: luva.id, quantidade: 1, motivo: 'USO_INTERNO' })
         .expect(201);
+      // Lotes (tela Lotes / Validade): vencido, vencendo em 10 e 45 dias, válido e excluído.
+      const hoje = hojeNaClinica();
+      const lote = (numero: string, dias: number, deletedAt?: Date) =>
+        prisma.lote.create({
+          data: {
+            produtoId: luva.id,
+            numero,
+            dataVencimento: new Date(`${somarDias(hoje, dias)}T00:00:00Z`),
+            quantidade: 1,
+            deletedAt,
+          },
+        });
+      await lote('L-VENCIDO', -1);
+      await lote('L-45', 45);
+      await lote('L-10', 10);
+      await lote('L-HOJE', 0);
+      await lote('L-VALIDO', 61);
+      await lote('L-EXCLUIDO', 5, new Date());
 
       const resumo = resumoEstoqueSchema.parse(
         (await http().get(`${BASE}/resumo`).expect(200)).body,
@@ -402,8 +422,8 @@ describe('Estoque (e2e)', () => {
         abaixoMinimo: 2,
         zerados: 1,
         valorEstoque: '19.5',
-        vencendo30d: null,
-        vencidos: null,
+        vencendo30d: 2,
+        vencidos: 1,
         movimentacoes24h: 1,
       });
 
@@ -411,6 +431,11 @@ describe('Estoque (e2e)', () => {
         (await http().get(`${BASE}/alertas`).expect(200)).body,
       );
       expect(alertas.abaixoMinimo.map((p) => p.nome)).toEqual(['Esponja', 'Gaze']);
+      expect(alertas.lotesVencendo.map((l) => [l.numero, l.status])).toEqual([
+        ['L-HOJE', 'VENCENDO'],
+        ['L-10', 'VENCENDO'],
+        ['L-45', 'VENCENDO'],
+      ]);
     });
 
     it('403 sem a permissão de ver', async () => {

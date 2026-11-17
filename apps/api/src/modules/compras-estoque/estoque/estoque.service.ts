@@ -2,6 +2,8 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { Injectable } from '@nestjs/common';
 import {
   calcularSugestao,
+  ESTOQUE_DIAS_VENCENDO_CARD,
+  LOTE_DIAS_VENCENDO,
   ROTULO_MOTIVO_ENTRADA,
   ROTULO_MOTIVO_SAIDA,
   ROTULO_PRIORIDADE_SUGESTAO,
@@ -32,11 +34,10 @@ import { paginate, searchWhere, type Page } from '../../../common/pagination/pag
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { intervaloDoPeriodo } from '../../../common/relatorios/periodo';
 import { FornecedoresService } from '../fornecedores/fornecedores.service';
+import { LotesService } from '../lotes/lotes.service';
+import { filtroAbaixoMinimo, PRODUTOS_ESTOQUE as PRODUTOS } from './estoque-filtros';
 
 const DIA_MS = 24 * 60 * 60 * 1000;
-
-/** Só produtos (não serviços) e não excluídos entram no estoque. */
-const PRODUTOS = { deletedAt: null, tipo: 'PRODUTO' } as const satisfies Prisma.ProdutoWhereInput;
 
 const INCLUDE_POSICAO = {
   categoria: { select: { nome: true } },
@@ -118,6 +119,7 @@ export class EstoqueService {
     private readonly exportService: ExportService,
     private readonly fornecedores: FornecedoresService,
     private readonly contexto: RequestContextService,
+    private readonly lotes: LotesService,
   ) {}
 
   // --- Leitura ---
@@ -125,20 +127,28 @@ export class EstoqueService {
   async resumo(agora = new Date()): Promise<ResumoEstoque> {
     const produto = this.txHost.tx.produto;
     const controlados = { ...PRODUTOS, controlaEstoque: true } as const;
-    const [totalProdutos, qtdControlados, abaixoMinimo, zerados, comSaldo, movimentacoes24h] =
-      await Promise.all([
-        produto.count({ where: PRODUTOS }),
-        produto.count({ where: controlados }),
-        produto.count({ where: { ...controlados, ...this.filtroAbaixoMinimo() } }),
-        produto.count({ where: { ...controlados, estoqueAtual: { lte: 0 } } }),
-        produto.findMany({
-          where: { ...controlados, estoqueAtual: { gt: 0 }, precoCusto: { not: null } },
-          select: { estoqueAtual: true, precoCusto: true },
-        }),
-        this.txHost.tx.movimentacaoEstoque.count({
-          where: { createdAt: { gte: new Date(agora.getTime() - DIA_MS) } },
-        }),
-      ]);
+    const [
+      totalProdutos,
+      qtdControlados,
+      abaixoMinimo,
+      zerados,
+      comSaldo,
+      movimentacoes24h,
+      { vencidos, vencendo },
+    ] = await Promise.all([
+      produto.count({ where: PRODUTOS }),
+      produto.count({ where: controlados }),
+      produto.count({ where: this.filtroAbaixoMinimo() }),
+      produto.count({ where: { ...controlados, estoqueAtual: { lte: 0 } } }),
+      produto.findMany({
+        where: { ...controlados, estoqueAtual: { gt: 0 }, precoCusto: { not: null } },
+        select: { estoqueAtual: true, precoCusto: true },
+      }),
+      this.txHost.tx.movimentacaoEstoque.count({
+        where: { createdAt: { gte: new Date(agora.getTime() - DIA_MS) } },
+      }),
+      this.lotes.contarVencimentos(ESTOQUE_DIAS_VENCENDO_CARD, agora),
+    ]);
     const valorEstoque = comSaldo.reduce(
       (total, p) => total.add(p.estoqueAtual.mul(p.precoCusto ?? 0)),
       new Prisma.Decimal(0),
@@ -149,9 +159,9 @@ export class EstoqueService {
       abaixoMinimo,
       zerados,
       valorEstoque: valorEstoque.toDecimalPlaces(2).toString(),
-      // Lotes e validades ficam com a tela Lotes / Validade (#22), confirmado pelo dev.
-      vencendo30d: null,
-      vencidos: null,
+      // Lotes da tela Lotes / Validade (#22).
+      vencendo30d: vencendo,
+      vencidos,
       movimentacoes24h,
     };
   }
@@ -167,13 +177,16 @@ export class EstoqueService {
     return { ...page, data: await this.toPosicoes(page.data) };
   }
 
-  async alertas(): Promise<AlertasEstoque> {
-    const produtos = await this.txHost.tx.produto.findMany({
-      where: { ...PRODUTOS, controlaEstoque: true, ...this.filtroAbaixoMinimo() },
-      orderBy: [{ nome: 'asc' }, { id: 'asc' }],
-      include: INCLUDE_POSICAO,
-    });
-    return { abaixoMinimo: await this.toPosicoes(produtos) };
+  async alertas(agora = new Date()): Promise<AlertasEstoque> {
+    const [produtos, lotesVencendo] = await Promise.all([
+      this.txHost.tx.produto.findMany({
+        where: this.filtroAbaixoMinimo(),
+        orderBy: [{ nome: 'asc' }, { id: 'asc' }],
+        include: INCLUDE_POSICAO,
+      }),
+      this.lotes.vencendo(LOTE_DIAS_VENCENDO, agora),
+    ]);
+    return { abaixoMinimo: await this.toPosicoes(produtos), lotesVencendo };
   }
 
   async movimentacoes(query: ListMovimentacoesQuery): Promise<Page<MovimentacaoEstoque>> {
@@ -388,12 +401,9 @@ export class EstoqueService {
     return this.toMovimentacao(movimentacao);
   }
 
-  /** Mínimo definido e saldo ≤ mínimo (o mesmo de `abaixoDoMinimo`, no banco). */
+  /** Produto controlado, com mínimo definido e saldo ≤ mínimo. */
   private filtroAbaixoMinimo(): Prisma.ProdutoWhereInput {
-    return {
-      estoqueMinimo: { gt: 0 },
-      estoqueAtual: { lte: this.txHost.tx.produto.fields.estoqueMinimo },
-    };
+    return filtroAbaixoMinimo(this.txHost.tx.produto.fields.estoqueMinimo);
   }
 
   private wherePosicao(

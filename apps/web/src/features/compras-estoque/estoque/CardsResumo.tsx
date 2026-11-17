@@ -12,7 +12,7 @@ interface CardInfo {
   dica?: string;
 }
 
-const inteiro = (n: number | null) => (n === null ? '—' : String(n));
+const inteiro = (n: number) => String(n);
 
 const CARDS: readonly CardInfo[] = [
   { rotulo: 'Total Produtos', valor: (r) => inteiro(r.totalProdutos) },
@@ -27,13 +27,9 @@ const CARDS: readonly CardInfo[] = [
   {
     rotulo: 'Vencendo 30d',
     valor: (r) => inteiro(r.vencendo30d),
-    dica: 'Disponível com o controle de lotes.',
+    dica: 'Lotes que vencem em até 30 dias.',
   },
-  {
-    rotulo: 'Vencidos',
-    valor: (r) => inteiro(r.vencidos),
-    dica: 'Disponível com o controle de lotes.',
-  },
+  { rotulo: 'Vencidos', valor: (r) => inteiro(r.vencidos), dica: 'Lotes com a validade vencida.' },
   { rotulo: 'Mov. 24h', valor: (r) => inteiro(r.movimentacoes24h) },
 ];
 

@@ -4,6 +4,7 @@ import { hashSenha } from '../src/common/auth/senhas';
 import type { PrismaClient } from '../src/generated/prisma/client';
 import { applySeedEntidades, buildSeedEntidades, type SeedEntidades } from './seed-entidades';
 import { applySeedCrm, buildSeedCrm, type SeedCrm } from './seed-crm';
+import { applySeedLotes, buildSeedLotes, type SeedLote } from './seed-lotes';
 import { applySeedWhatsapp, buildSeedWhatsapp, type SeedWhatsapp } from './seed-whatsapp';
 
 /**
@@ -36,6 +37,8 @@ export interface SeedData {
   whatsapp: SeedWhatsapp;
   /** CRM: pipelines padrão, motivos de perda, negócios e próximas ações. */
   crm: SeedCrm;
+  /** Lotes e validades dos produtos (tela Lotes / Validade). */
+  lotes: SeedLote[];
 }
 
 /** Gera um CNPJ fictício com dígitos verificadores válidos (somente dígitos). */
@@ -126,8 +129,13 @@ export function buildSeedData(agora: Date = new Date()): SeedData {
     },
     agora,
   );
+  // Por último, para não mudar os ids gerados acima.
+  const lotes = buildSeedLotes(
+    entidades.produtos.filter((p) => p.tipo === 'PRODUTO').map((p) => p.id),
+    agora,
+  );
 
-  return { empresa, unidades, usuarios, perfilAdmin, admin, entidades, whatsapp, crm };
+  return { empresa, unidades, usuarios, perfilAdmin, admin, entidades, whatsapp, crm, lotes };
 }
 
 /**
@@ -136,7 +144,7 @@ export function buildSeedData(agora: Date = new Date()): SeedData {
  */
 export async function applySeed(prisma: PrismaClient, senhaAdmin: string): Promise<SeedData> {
   const data = buildSeedData();
-  const { empresa, unidades, usuarios, perfilAdmin, admin, entidades, whatsapp, crm } = data;
+  const { empresa, unidades, usuarios, perfilAdmin, admin, entidades, whatsapp, crm, lotes } = data;
   const senhaHash = await hashSenha(senhaAdmin);
 
   await prisma.$transaction(
@@ -166,6 +174,7 @@ export async function applySeed(prisma: PrismaClient, senhaAdmin: string): Promi
       await applySeedEntidades(tx, entidades);
       await applySeedWhatsapp(tx, whatsapp);
       await applySeedCrm(tx, crm);
+      await applySeedLotes(tx, lotes);
     },
     { timeout: 60_000 },
   );

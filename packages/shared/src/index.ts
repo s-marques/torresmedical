@@ -27,6 +27,7 @@ export * from './schemas/compras-estoque/categoria';
 export * from './schemas/compras-estoque/compra';
 export * from './schemas/compras-estoque/estoque';
 export * from './schemas/compras-estoque/fornecedor';
+export * from './schemas/compras-estoque/lote';
 export * from './schemas/compras-estoque/produto';
 export * from './schemas/compras-estoque/unidade-medida';
 export * from './schemas/configuracoes-gestao/empresa';

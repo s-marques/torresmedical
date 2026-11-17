@@ -213,3 +213,31 @@ describe('buildSeedData: CRM', () => {
     expect(crm.atividades.some((a) => a.negocioId === null)).toBe(true);
   });
 });
+
+describe('buildSeedData: lotes', () => {
+  const data = buildSeedData(new Date('2026-11-17T12:00:00Z'));
+  const produtos = new Set(
+    data.entidades.produtos.filter((p) => p.tipo === 'PRODUTO').map((p) => p.id),
+  );
+
+  it('gera lotes de produtos (não serviços), com ids únicos e não sobrepostos', () => {
+    const outros = new Set(
+      Object.values(data.entidades)
+        .flat()
+        .map((r) => r.id),
+    );
+    expect(data.lotes.length).toBeGreaterThan(0);
+    expect(data.lotes.every((l) => produtos.has(l.produtoId))).toBe(true);
+    expect(new Set(data.lotes.map((l) => l.id)).size).toBe(data.lotes.length);
+    expect(data.lotes.some((l) => outros.has(l.id))).toBe(false);
+  });
+
+  it('tem lotes vencidos, vencendo em até 60 dias e válidos', () => {
+    const dias = data.lotes.map(
+      (l) => (new Date(l.dataVencimento).getTime() - Date.UTC(2026, 10, 17)) / 86_400_000,
+    );
+    expect(dias.some((d) => d < 0)).toBe(true);
+    expect(dias.some((d) => d >= 0 && d <= 60)).toBe(true);
+    expect(dias.some((d) => d > 60)).toBe(true);
+  });
+});

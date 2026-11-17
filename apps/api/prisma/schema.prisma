@@ -545,6 +545,7 @@ model Produto {
   protocoloItens       ProtocoloItem[]
   compraItens          CompraItem[]
   movimentacoesEstoque MovimentacaoEstoque[]
+  lotes                Lote[]
 
   @@index([categoriaId])
   @@index([unidadeMedidaId])
@@ -636,6 +637,26 @@ model MovimentacaoEstoque {
   @@index([tipo])
   @@index([compraId])
   @@map("movimentacoes_estoque")
+}
+
+/// Dono: compras-estoque. Lote de um produto (tela Lotes / Validade, `/lotes`, issue #22): número,
+/// validade e quantidade, para rastreio. Não movimenta `Produto.estoqueAtual` (decisão do dev na
+/// issue #22). O status (Vencido/Vencendo/Válido) é calculado pela data. Exclusão lógica.
+model Lote {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  produtoId      String    @map("produto_id") @db.Uuid
+  numero         String
+  dataVencimento DateTime  @map("data_vencimento") @db.Date
+  quantidade     Decimal   @db.Decimal(12, 3)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+
+  @@index([produtoId])
+  @@index([dataVencimento])
+  @@map("lotes")
 }
 
 /// Dono: compras-estoque. Item da compra. `planoContaId` é a "Conta contábil (opcional)" (Plano
