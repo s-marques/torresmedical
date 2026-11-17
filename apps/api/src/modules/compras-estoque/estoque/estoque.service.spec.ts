@@ -4,6 +4,7 @@ import type { RequestContextService } from '../../../common/context/request-cont
 import type { ExportService } from '../../../common/export/export.service';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import type { FornecedoresService } from '../fornecedores/fornecedores.service';
+import type { LotesService } from '../lotes/lotes.service';
 import { EstoqueService, SUGESTAO_EXPORT_DEFINITIONS } from './estoque.service';
 
 const PRODUTO_ID = '2d9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
@@ -72,13 +73,18 @@ function setup() {
   };
   const fornecedores = { findById: jest.fn().mockResolvedValue({ id: 'f1' }) };
   const contexto = { getUserId: jest.fn().mockReturnValue(USUARIO_ID) };
+  const lotes = {
+    contarVencimentos: jest.fn().mockResolvedValue({ vencidos: 2, vencendo: 3 }),
+    vencendo: jest.fn().mockResolvedValue([{ id: 'l1' }]),
+  };
   const service = new EstoqueService(
     { tx } as unknown as TransactionHost<PrismaAdapter>,
     exportService as unknown as ExportService,
     fornecedores as unknown as FornecedoresService,
     contexto as unknown as RequestContextService,
+    lotes as unknown as LotesService,
   );
-  return { service, tx, exportService, fornecedores };
+  return { service, tx, exportService, fornecedores, lotes };
 }
 
 const SUGESTAO_QUERY = {
@@ -91,6 +97,20 @@ const SUGESTAO_QUERY = {
 };
 
 describe('EstoqueService', () => {
+  it('resumo: cards "Vencendo 30d" e "Vencidos" vêm dos lotes (30 dias)', async () => {
+    const { service, lotes } = setup();
+    const resumo = await service.resumo(AGORA);
+    expect(lotes.contarVencimentos).toHaveBeenCalledWith(30, AGORA);
+    expect(resumo).toMatchObject({ vencendo30d: 3, vencidos: 2 });
+  });
+
+  it('alertas: lotes vencendo nos próximos 60 dias', async () => {
+    const { service, lotes } = setup();
+    const alertas = await service.alertas(AGORA);
+    expect(lotes.vencendo).toHaveBeenCalledWith(60, AGORA);
+    expect(alertas).toEqual({ abaixoMinimo: [], lotesVencendo: [{ id: 'l1' }] });
+  });
+
   it('entrada soma no saldo, valida o fornecedor e grava o responsável', async () => {
     const { service, tx, fornecedores } = setup();
     const res = await service.entrada({

@@ -25,8 +25,8 @@ export function parametrosDosFiltros(
 ): string[] {
   const parametros = status ? [status.parametro ?? PARAMETRO_STATUS] : [];
   for (const filtro of filtros) {
-    if (filtro.tipo === 'select') parametros.push(filtro.parametro);
-    else parametros.push(filtro.parametroDe, filtro.parametroAte);
+    if (filtro.tipo === 'periodo') parametros.push(filtro.parametroDe, filtro.parametroAte);
+    else parametros.push(filtro.parametro);
   }
   return parametros;
 }

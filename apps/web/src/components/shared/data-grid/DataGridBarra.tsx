@@ -1,6 +1,8 @@
 import { DownloadIcon, SearchIcon, Settings2Icon } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
+import { EntitySelect } from '@/components/shared/EntitySelect';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -64,7 +66,10 @@ export function ChipsStatus({
   );
 }
 
-/** Filtros extras: selects ("Todos" + opções) e períodos "<rótulo> de: … até: … Limpar". */
+/**
+ * Filtros extras: selects ("Todos" + opções), períodos "<rótulo> de: … até: … Limpar", combobox
+ * de entidade (com busca na API) e checkbox.
+ */
 export function FiltrosExtras({
   filtros,
   valores,
@@ -76,23 +81,74 @@ export function FiltrosExtras({
 }>) {
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-      {filtros.map((filtro) =>
-        filtro.tipo === 'select' ? (
-          <FiltroSelect
-            key={filtro.parametro}
-            filtro={filtro}
-            valor={valores[filtro.parametro]}
-            onChange={onChange}
-          />
-        ) : (
-          <FiltroPeriodo
-            key={filtro.parametroDe}
-            filtro={filtro}
-            valores={valores}
-            onChange={onChange}
-          />
-        ),
-      )}
+      {filtros.map((filtro) => {
+        switch (filtro.tipo) {
+          case 'select':
+            return (
+              <FiltroSelect
+                key={filtro.parametro}
+                filtro={filtro}
+                valor={valores[filtro.parametro]}
+                onChange={onChange}
+              />
+            );
+          case 'periodo':
+            return (
+              <FiltroPeriodo
+                key={filtro.parametroDe}
+                filtro={filtro}
+                valores={valores}
+                onChange={onChange}
+              />
+            );
+          case 'entidade':
+            return (
+              <EntitySelect
+                key={filtro.parametro}
+                entidade={filtro.entidade}
+                filtros={filtro.filtros}
+                value={valores[filtro.parametro] ?? null}
+                onChange={(id) => onChange({ [filtro.parametro]: id ?? undefined })}
+                placeholder={filtro.rotuloTodos}
+                aria-label={filtro.rotulo}
+                className="h-8 w-full sm:w-64"
+              />
+            );
+          case 'checkbox':
+            return (
+              <FiltroCheckbox
+                key={filtro.parametro}
+                filtro={filtro}
+                marcado={valores[filtro.parametro] === 'true'}
+                onChange={onChange}
+              />
+            );
+        }
+      })}
+    </div>
+  );
+}
+
+function FiltroCheckbox({
+  filtro,
+  marcado,
+  onChange,
+}: Readonly<{
+  filtro: Extract<FiltroGrid, { tipo: 'checkbox' }>;
+  marcado: boolean;
+  onChange: Alterar;
+}>) {
+  const id = useId();
+  return (
+    <div className="flex items-center gap-2">
+      <Checkbox
+        id={id}
+        checked={marcado}
+        onCheckedChange={(novo) =>
+          onChange({ [filtro.parametro]: novo === true ? 'true' : undefined })
+        }
+      />
+      <Label htmlFor={id}>{filtro.rotulo}</Label>
     </div>
   );
 }
@@ -123,7 +179,7 @@ function FiltroSelect({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={TODOS}>Todos</SelectItem>
+          <SelectItem value={TODOS}>{filtro.rotuloTodos ?? 'Todos'}</SelectItem>
           {filtro.opcoes.map((opcao) => (
             <SelectItem key={opcao.valor} value={opcao.valor}>
               {opcao.rotulo}

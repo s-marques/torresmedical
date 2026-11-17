@@ -11,17 +11,20 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { formatarData } from '@/lib/formatar';
+import { StatusLote } from '../lotes-validade/StatusLote';
 import { formatarQuantidade } from './formatar';
 import { TOM_STATUS_ESTOQUE } from './opcoes';
 import { useAlertasEstoque } from './use-estoque';
 
 /**
  * Aba Alertas (print `compras-estoque-estoque--alertas.jpg`): "Produtos Abaixo do Mínimo" e
- * "Lotes Vencendo". Os lotes dependem da tela Lotes / Validade (#22), decisão do dev na issue #20.
+ * "Lotes Vencendo" (lotes da tela Lotes / Validade que vencem nos próximos 60 dias).
  */
 export function AbaAlertas() {
   const alertas = useAlertasEstoque();
   const produtos = alertas.data?.abaixoMinimo ?? [];
+  const lotes = alertas.data?.lotesVencendo ?? [];
 
   return (
     <div className="grid gap-6">
@@ -87,11 +90,41 @@ export function AbaAlertas() {
           Lotes Vencendo
         </h2>
         <Card className="py-0">
-          <CardContent>
-            <EmptyState
-              titulo="Controle de lotes ainda não disponível."
-              descricao="Os lotes vencendo nos próximos 60 dias aparecem aqui quando a tela Lotes / Validade estiver pronta."
-            />
+          <CardContent className="px-0">
+            {alertas.isSuccess && lotes.length === 0 && (
+              <EmptyState
+                icone={CircleCheckIcon}
+                titulo="Nenhum lote vencendo nos próximos 60 dias."
+              />
+            )}
+            {lotes.length > 0 && (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Produto</TableHead>
+                    <TableHead>Lote</TableHead>
+                    <TableHead className="text-right">Quantidade</TableHead>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {lotes.map((l) => (
+                    <TableRow key={l.id}>
+                      <TableCell className="font-medium">{l.produtoNome}</TableCell>
+                      <TableCell>{l.numero}</TableCell>
+                      <TableCell className="text-right">
+                        {formatarQuantidade(l.quantidade)}
+                      </TableCell>
+                      <TableCell>{formatarData(l.dataVencimento)}</TableCell>
+                      <TableCell>
+                        <StatusLote status={l.status} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </section>

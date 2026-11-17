@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { exportQuerySchema, listQuerySchema } from '../common/list-query';
 import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
+import { loteSchema } from './lote';
 
 /** Cabe em DECIMAL(12,3). */
 export const ESTOQUE_QUANTIDADE_MAX = 999_999_999;
@@ -382,16 +383,21 @@ export const resumoEstoqueSchema = z.object({
   abaixoMinimo: z.number().int(),
   zerados: z.number().int(),
   valorEstoque: decimal,
-  /** Dependem do controle de lotes (tela Lotes / Validade, #22): `null` até lá. */
-  vencendo30d: z.number().int().nullable(),
-  vencidos: z.number().int().nullable(),
+  /** Lotes (tela Lotes / Validade, #22) que vencem de hoje a 30 dias. */
+  vencendo30d: z.number().int(),
+  /** Lotes com vencimento antes de hoje. */
+  vencidos: z.number().int(),
   movimentacoes24h: z.number().int(),
 });
 export type ResumoEstoque = z.infer<typeof resumoEstoqueSchema>;
 
-/** Aba Alertas. "Lotes Vencendo" depende do controle de lotes (#22). */
+/** Janela do card "Vencendo 30d" da tela Estoque. */
+export const ESTOQUE_DIAS_VENCENDO_CARD = 30;
+
+/** Aba Alertas: produtos abaixo do mínimo e lotes que vencem em até 60 dias (`LOTE_DIAS_VENCENDO`). */
 export const alertasEstoqueSchema = z.object({
   abaixoMinimo: z.array(posicaoEstoqueSchema),
+  lotesVencendo: z.array(loteSchema),
 });
 export type AlertasEstoque = z.infer<typeof alertasEstoqueSchema>;
 

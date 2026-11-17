@@ -28,9 +28,21 @@ const RESUMO = {
   abaixoMinimo: 3,
   zerados: 36,
   valorEstoque: '100756.90',
-  vencendo30d: null,
-  vencidos: null,
+  vencendo30d: 4,
+  vencidos: 7,
   movimentacoes24h: 5,
+};
+
+const LOTE_VENCENDO = {
+  id: '00000000-0000-4000-8000-0000000000b1',
+  produtoId: PRODUTO,
+  produtoNome: 'Gaze Estéril',
+  produtoSku: null,
+  numero: 'LOT-2026-001',
+  dataVencimento: '2026-12-10',
+  quantidade: '15',
+  status: 'VENCENDO',
+  createdAt: '2026-11-01T12:00:00.000Z',
 };
 
 function posicao(parcial: Partial<PosicaoEstoque>): PosicaoEstoque {
@@ -129,7 +141,8 @@ function api(rotas: Record<string, (init?: RequestInit) => Response> = {}, permi
       : USUARIO_TESTE,
     rotas: {
       [`${BASE}/resumo`]: () => json(RESUMO),
-      [`${BASE}/alertas`]: () => json({ abaixoMinimo: [posicao({ status: 'BAIXO' })] }),
+      [`${BASE}/alertas`]: () =>
+        json({ abaixoMinimo: [posicao({ status: 'BAIXO' })], lotesVencendo: [LOTE_VENCENDO] }),
       [POSICAO]: () => json({ data: POSICOES, meta: META }),
       [MOVIMENTACOES]: () => json({ data: MOVS, meta: META }),
       [SUGESTAO]: () => json({ data: SUGESTOES, meta: { ...META, total: 1 } }),
@@ -172,7 +185,12 @@ describe('Estoque (/estoque)', () => {
     expect(await within(cards).findByText('220')).toBeVisible();
     expect(within(cards).getByText('36')).toHaveClass('text-destructive');
     expect(within(cards).getByText('R$ 100.756,90')).toBeVisible();
-    expect(within(cards).getAllByText('—')).toHaveLength(2);
+    // "Vencendo 30d" e "Vencidos" vêm dos lotes (tela Lotes / Validade).
+    expect(within(cards).getByText('4')).toHaveAttribute(
+      'title',
+      'Lotes que vencem em até 30 dias.',
+    );
+    expect(within(cards).getByText('7')).toHaveAttribute('title', 'Lotes com a validade vencida.');
 
     for (const aba of ['Posição', 'Movimentações', 'Ajustes', 'Alertas', 'Sugestão']) {
       expect(screen.getByRole('tab', { name: aba })).toBeVisible();
@@ -349,21 +367,27 @@ describe('Estoque (/estoque)', () => {
     );
   });
 
-  it('aba Alertas: produtos abaixo do mínimo e o aviso de lotes', async () => {
+  it('aba Alertas: produtos abaixo do mínimo e lotes vencendo em 60 dias', async () => {
     const { user } = renderTela();
     await screen.findByText('Luva Nitrílica');
     await user.click(screen.getByRole('tab', { name: 'Alertas' }));
     expect(await screen.findByText('Produtos Abaixo do Mínimo')).toBeVisible();
     expect(await screen.findByText('Baixo')).toBeVisible();
     expect(screen.getByText('Lotes Vencendo')).toBeVisible();
-    expect(screen.getByText('Controle de lotes ainda não disponível.')).toBeVisible();
+    const lote = screen.getByRole('row', { name: /LOT-2026-001/ });
+    for (const texto of ['Gaze Estéril', '15', '10/12/2026', 'Vencendo']) {
+      expect(within(lote).getByText(texto)).toBeVisible();
+    }
   });
 
-  it('aba Alertas vazia mostra a mensagem do inventário', async () => {
-    const { user } = renderTela(api({ [`${BASE}/alertas`]: () => json({ abaixoMinimo: [] }) }));
+  it('aba Alertas vazia mostra as mensagens do inventário', async () => {
+    const { user } = renderTela(
+      api({ [`${BASE}/alertas`]: () => json({ abaixoMinimo: [], lotesVencendo: [] }) }),
+    );
     await screen.findByText('Luva Nitrílica');
     await user.click(screen.getByRole('tab', { name: 'Alertas' }));
     expect(await screen.findByText('Nenhum produto abaixo do mínimo.')).toBeVisible();
+    expect(screen.getByText('Nenhum lote vencendo nos próximos 60 dias.')).toBeVisible();
   });
 
   it('aba Sugestão: colunas com o produto, exportação e filtro por prioridade', async () => {
