@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { searchSchema } from '../common/list-query';
+import { exportQuerySchema, listQuerySchema, searchSchema } from '../common/list-query';
+import { paginatedResponseSchema } from '../common/pagination';
 import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
 import { MARCOS_ESTAGIO } from './crm-config';
 
@@ -12,6 +13,7 @@ export const NEGOCIO_TITULO_MAX = 200;
 /** Cabe em DECIMAL(12,2). */
 export const NEGOCIO_VALOR_MAX = 999_999_999;
 export const ATIVIDADE_TITULO_MAX = 200;
+export const NEGOCIO_OBSERVACOES_MAX = 2000;
 
 export const NEGOCIO_STATUS = ['ABERTO', 'GANHO', 'PERDIDO'] as const;
 export type NegocioStatus = (typeof NEGOCIO_STATUS)[number];
@@ -92,9 +94,93 @@ export const negocioInputSchema = z.strictObject({
   responsavelId: uuidOpcional('Responsável inválido'),
   previsaoFechamento: dataOpcional,
   origemClienteId: uuidOpcional('Origem inválida'),
+  /** Ausente no modal do Pipeline: nesse caso a observação gravada não muda. */
+  observacoes: z
+    .string()
+    .trim()
+    .max(NEGOCIO_OBSERVACOES_MAX, {
+      error: `As observações devem ter no máximo ${NEGOCIO_OBSERVACOES_MAX} caracteres`,
+    })
+    .nullish()
+    .transform((valor) => (valor === undefined ? undefined : valor || null)),
 });
 export type NegocioInput = z.output<typeof negocioInputSchema>;
 export type NegocioFormulario = z.input<typeof negocioInputSchema>;
+
+/**
+ * `POST /negocios` e `PATCH /negocios/:id` da tela Negócios (`/negocios`): o modal traz também
+ * Pipeline e Status, e só o Título é obrigatório. Sem pipeline e estágio, o negócio entra no
+ * primeiro estágio do primeiro pipeline (na edição, mantém o atual). Negócio perdido exige o
+ * motivo da perda (lista padronizada).
+ */
+export const negocioTelaInputSchema = negocioInputSchema
+  .extend({
+    pipelineId: uuidOpcional('Pipeline inválido'),
+    estagioId: uuidOpcional('Estágio inválido'),
+    status: z.enum(NEGOCIO_STATUS, { error: 'Status inválido' }).default('ABERTO'),
+    motivoPerdaId: uuidOpcional('Motivo da perda inválido'),
+  })
+  .superRefine((valor, ctx) => {
+    if (valor.status === 'PERDIDO' && !valor.motivoPerdaId) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['motivoPerdaId'],
+        message: mensagemObrigatoria('Motivo da perda'),
+      });
+    }
+  });
+export type NegocioTelaInput = z.output<typeof negocioTelaInputSchema>;
+export type NegocioTelaFormulario = z.input<typeof negocioTelaInputSchema>;
+
+export const NEGOCIO_SORT_FIELDS = [
+  'titulo',
+  'cliente',
+  'estagio',
+  'valor',
+  'previsaoFechamento',
+  'status',
+  'origem',
+  'motivoPerda',
+  'responsavel',
+] as const;
+
+/** `GET /negocios`: filtros do grid (busca, pipeline e chips Todos/Aberto/Ganho/Perdido). */
+export const listNegociosQuerySchema = listQuerySchema({
+  sortFields: NEGOCIO_SORT_FIELDS,
+  defaultSort: 'titulo:asc',
+  filters: {
+    status: z.enum(NEGOCIO_STATUS).optional(),
+    pipelineId: z.uuid({ error: 'Pipeline inválido' }).optional(),
+  },
+});
+export type ListNegociosQuery = z.infer<typeof listNegociosQuerySchema>;
+
+/** Cartões do cabeçalho: respeitam a busca e o pipeline, mas não o chip de status. */
+export const resumoNegociosQuerySchema = z.object({
+  search: searchSchema,
+  pipelineId: z.uuid({ error: 'Pipeline inválido' }).optional(),
+});
+export type ResumoNegociosQuery = z.infer<typeof resumoNegociosQuerySchema>;
+
+export const NEGOCIO_EXPORT_COLUMNS = [
+  'titulo',
+  'cliente',
+  'estagio',
+  'valor',
+  'previsaoFechamento',
+  'status',
+  'origem',
+  'motivoPerda',
+  'responsavel',
+] as const;
+export type NegocioExportColumn = (typeof NEGOCIO_EXPORT_COLUMNS)[number];
+
+/** `GET /negocios/export`. */
+export const exportNegociosQuerySchema = exportQuerySchema(
+  listNegociosQuerySchema,
+  NEGOCIO_EXPORT_COLUMNS,
+);
+export type ExportNegociosQuery = z.infer<typeof exportNegociosQuerySchema>;
 
 /** `PATCH /negocios/:id/mover`: "Mover → <estágio>" e arrastar o cartão. */
 export const moverNegocioSchema = z.strictObject({
@@ -150,6 +236,8 @@ export const negocioSchema = z.object({
   pipelineId: z.uuid(),
   estagioId: z.uuid(),
   titulo: z.string(),
+  /** Nome do estágio. */
+  estagio: z.string(),
   valor: decimal.nullable(),
   contatoTipo: z.enum(NEGOCIO_CONTATO_TIPOS).nullable(),
   contatoId: z.uuid().nullable(),
@@ -164,6 +252,7 @@ export const negocioSchema = z.object({
   status: z.enum(NEGOCIO_STATUS),
   motivoPerdaId: z.uuid().nullable(),
   motivoPerda: z.string().nullable(),
+  observacoes: z.string().nullable(),
   fechadoEm: z.iso.datetime().nullable(),
   /** Datas dos marcos do dashboard (primeira entrada num estágio com marco). */
   marcos: z.partialRecord(z.enum(MARCOS_ESTAGIO), z.iso.datetime()),
@@ -207,3 +296,6 @@ export type Quadro = z.infer<typeof quadroSchema>;
 export const responsavelSchema = z.object({ id: z.uuid(), nome: z.string() });
 export type Responsavel = z.infer<typeof responsavelSchema>;
 export const responsavelListaSchema = z.array(responsavelSchema);
+
+export const negocioPageSchema = paginatedResponseSchema(negocioSchema);
+export type NegocioPage = z.infer<typeof negocioPageSchema>;

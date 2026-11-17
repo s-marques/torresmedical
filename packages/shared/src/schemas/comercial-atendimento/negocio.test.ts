@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   atividadeNegocioInputSchema,
+  exportNegociosQuerySchema,
+  listNegociosQuerySchema,
+  negocioTelaInputSchema,
   moverNegocioSchema,
   negocioInputSchema,
   perderNegocioSchema,
@@ -146,5 +149,70 @@ describe('atividadeNegocioInputSchema: hora vazia', () => {
       hora: '',
     }).error?.issues;
     expect(issues?.map((i) => i.message)).toEqual(['Hora é obrigatória.']);
+  });
+});
+
+describe('negocioTelaInputSchema (tela Negócios)', () => {
+  it('só o título é obrigatório; o status padrão é Aberto', () => {
+    expect(negocioTelaInputSchema.parse({ titulo: 'Sala 10' })).toMatchObject({
+      titulo: 'Sala 10',
+      status: 'ABERTO',
+      pipelineId: null,
+      estagioId: null,
+      motivoPerdaId: null,
+    });
+    expect(mensagens(negocioTelaInputSchema, { titulo: '' })).toEqual({
+      titulo: 'Título é obrigatório.',
+    });
+  });
+
+  it('negócio perdido exige o motivo da perda', () => {
+    expect(mensagens(negocioTelaInputSchema, { titulo: 'A', status: 'PERDIDO' })).toEqual({
+      motivoPerdaId: 'Motivo da perda é obrigatório.',
+    });
+    expect(
+      negocioTelaInputSchema.safeParse({ titulo: 'A', status: 'PERDIDO', motivoPerdaId: ID })
+        .success,
+    ).toBe(true);
+  });
+
+  it('limita as observações e aceita vazio como nulo', () => {
+    expect(negocioTelaInputSchema.parse({ titulo: 'A', observacoes: '  ' }).observacoes).toBeNull();
+    expect(negocioTelaInputSchema.parse({ titulo: 'A' }).observacoes).toBeUndefined();
+    expect(
+      negocioTelaInputSchema.safeParse({ titulo: 'A', observacoes: 'x'.repeat(2001) }).success,
+    ).toBe(false);
+  });
+});
+
+describe('listNegociosQuerySchema', () => {
+  it('padrão: página 1, 10 por página, ordenado por título', () => {
+    expect(listNegociosQuerySchema.parse({})).toMatchObject({
+      page: 1,
+      pageSize: 10,
+      sort: { field: 'titulo', direction: 'asc' },
+    });
+  });
+
+  it('aceita as colunas do grid, o status e o pipeline; recusa o resto', () => {
+    expect(
+      listNegociosQuerySchema.safeParse({
+        sort: 'motivoPerda:desc',
+        status: 'GANHO',
+        pipelineId: ID,
+      }).success,
+    ).toBe(true);
+    expect(listNegociosQuerySchema.safeParse({ sort: 'senha:asc' }).success).toBe(false);
+    expect(listNegociosQuerySchema.safeParse({ status: 'OUTRO' }).success).toBe(false);
+    expect(listNegociosQuerySchema.safeParse({ pipelineId: 'x' }).success).toBe(false);
+  });
+
+  it('exportação aceita só as colunas do grid', () => {
+    expect(
+      exportNegociosQuerySchema.safeParse({ format: 'xlsx', columns: 'titulo,status' }).success,
+    ).toBe(true);
+    expect(exportNegociosQuerySchema.safeParse({ format: 'xlsx', columns: 'senha' }).success).toBe(
+      false,
+    );
   });
 });

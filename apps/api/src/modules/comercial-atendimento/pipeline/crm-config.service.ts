@@ -150,6 +150,29 @@ export class CrmConfigService {
   }
 
   /** Estágio não excluído (para o negócio). */
+  /** Primeiro estágio do pipeline informado ou, sem ele, do primeiro pipeline da lista. */
+  async primeiroEstagio(pipelineId?: string): Promise<EstagioPipeline> {
+    const pipeline = pipelineId
+      ? await this.buscarPipeline(pipelineId)
+      : await this.txHost.tx.pipeline.findFirst({
+          where: NAO_EXCLUIDOS,
+          orderBy: [...POR_ORDEM],
+        });
+    const estagio = pipeline
+      ? await this.txHost.tx.estagioPipeline.findFirst({
+          where: { pipelineId: pipeline.id, ...NAO_EXCLUIDOS },
+          orderBy: [...POR_ORDEM],
+        })
+      : null;
+    if (!estagio) {
+      throw new BusinessException(
+        'PIPELINE_SEM_ESTAGIO',
+        'Cadastre um pipeline com ao menos um estágio antes de criar negócios.',
+      );
+    }
+    return estagio;
+  }
+
   async buscarEstagio(id: string): Promise<EstagioPipeline> {
     const estagio = isUuid(id)
       ? await this.txHost.tx.estagioPipeline.findFirst({ where: { id, ...NAO_EXCLUIDOS } })
