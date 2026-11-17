@@ -3,6 +3,7 @@ import type { RequestContextService } from '../../../common/context/request-cont
 import { BusinessException } from '../../../common/errors/api.exception';
 import type { EventPublisher } from '../../../common/messaging/event-publisher';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
+import type { CanaisWhatsappService } from '../../configuracoes-gestao/canais-whatsapp/canais-whatsapp.service';
 import type { UsuariosLookupService } from '../../configuracoes-gestao/usuarios/usuarios.service';
 import type { PacientesService } from '../pacientes/pacientes.service';
 import {
@@ -17,6 +18,7 @@ const OUTRO_USUARIO_ID = 'a0000000-0000-4000-8000-000000000002';
 const TAG_ID = 'f0000000-0000-4000-8000-000000000001';
 const PACIENTE_ID = 'b0000000-0000-4000-8000-000000000001';
 const DATA = new Date('2026-10-14T12:00:00.000Z');
+const FILTRO_ACESSO = { OR: [{ usuarios: { none: {} } }] };
 
 function conversa(parcial: Record<string, unknown> = {}) {
   return {
@@ -63,6 +65,7 @@ function setup(conversaAtual: ReturnType<typeof conversa> | null = conversa()) {
   const tags = { findById: jest.fn().mockResolvedValue({ id: TAG_ID }) };
   const events = { publish: jest.fn().mockResolvedValue(undefined) };
   const contexto = { getUserId: jest.fn().mockReturnValue(USUARIO_ID) };
+  const canais = { filtroAcesso: jest.fn().mockReturnValue(FILTRO_ACESSO) };
   const service = new AtendimentoWhatsappService(
     txHost,
     pacientes as unknown as PacientesService,
@@ -70,6 +73,7 @@ function setup(conversaAtual: ReturnType<typeof conversa> | null = conversa()) {
     tags as unknown as TagsAtendimentoService,
     events as unknown as EventPublisher,
     contexto as unknown as RequestContextService,
+    canais as unknown as CanaisWhatsappService,
   );
   return {
     service,

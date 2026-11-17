@@ -10,6 +10,7 @@ const PACIENTE_ID = '0b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 const CANAL_ID = '7a1d3c52-8d0f-4b8e-9f4c-2b2f3c4d5e6f';
 const CONTATO_ID = '3c2b1a00-1111-4222-8333-444455556666';
 const DATA = new Date('2026-10-14T12:00:00.000Z');
+const FILTRO_ACESSO = { OR: [{ usuarios: { none: {} } }] };
 
 const CONTATO = {
   id: CONTATO_ID,
@@ -56,7 +57,10 @@ function setup(paciente: { celular?: string | null; telefone?: string | null } =
       ...paciente,
     }),
   };
-  const canais = { findById: jest.fn().mockResolvedValue({ id: CANAL_ID, nome: 'Recepção' }) };
+  const canais = {
+    findById: jest.fn().mockResolvedValue({ id: CANAL_ID, nome: 'Recepção' }),
+    filtroAcesso: jest.fn().mockReturnValue(FILTRO_ACESSO),
+  };
   const audit = { record: jest.fn().mockResolvedValue(undefined) };
   const service = new ConversasWhatsappService(
     txHost,
@@ -83,7 +87,12 @@ describe('ConversasWhatsappService', () => {
 
       expect(conversaWhatsapp.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { canalId: CANAL_ID, status: 'EM_ATENDIMENTO', OR: undefined },
+          where: {
+            canalId: CANAL_ID,
+            canal: FILTRO_ACESSO,
+            status: 'EM_ATENDIMENTO',
+            OR: undefined,
+          },
           orderBy: [
             { ultimaMensagemEm: { sort: 'desc', nulls: 'first' } },
             { createdAt: 'desc' },
@@ -134,7 +143,7 @@ describe('ConversasWhatsappService', () => {
       FINALIZADA: 9,
     });
     expect(conversaWhatsapp.groupBy).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { canalId: CANAL_ID } }),
+      expect.objectContaining({ where: { canalId: CANAL_ID, canal: FILTRO_ACESSO } }),
     );
   });
 

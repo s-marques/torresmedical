@@ -200,6 +200,64 @@ describe('WhatsApp (e2e)', () => {
     });
   });
 
+  describe('Acesso por canal (Agentes IA, #26)', () => {
+    let recepcao: { id: string };
+    let gerencia: { id: string };
+    let conversaRecepcao: { id: string };
+    let conversaGerencia: { id: string };
+
+    beforeEach(async () => {
+      recepcao = await criarCanal('Recepção');
+      gerencia = await criarCanal('Gerência');
+      conversaRecepcao = await criarConversa(
+        recepcao.id,
+        { nome: 'Ana Souza', telefone: '5565911110000' },
+        'AGUARDANDO',
+      );
+      conversaGerencia = await criarConversa(
+        gerencia.id,
+        { nome: 'Bruno Lima', telefone: '5565922220000' },
+        'AGUARDANDO',
+      );
+      // Só este usuário tem acesso à Gerência; a Recepção continua aberta a todos.
+      await prisma.canalWhatsappUsuario.create({
+        data: { canalId: gerencia.id, usuarioId: usuario.id },
+      });
+    });
+
+    it('usuário vinculado vê as conversas do canal restrito e as dos canais sem vínculo', async () => {
+      const lista = await http().get(CONVERSAS).expect(200);
+      expect(lista.body.data.map((c: { id: string }) => c.id).sort()).toEqual(
+        [conversaRecepcao.id, conversaGerencia.id].sort(),
+      );
+    });
+
+    it('usuário sem acesso não vê conversas, contadores, detalhe, mensagens nem o canal no lookup', async () => {
+      const outro = await criarUsuarioTeste(app, { permissoes: PERMISSOES });
+      const comoOutro = () => comUsuario(app, outro);
+
+      const lista = await comoOutro().get(CONVERSAS).expect(200);
+      expect(lista.body.data.map((c: { id: string }) => c.id)).toEqual([conversaRecepcao.id]);
+
+      const contadores = await comoOutro().get(`${CONVERSAS}/contadores`).expect(200);
+      expect(contadores.body.AGUARDANDO).toBe(1);
+      const doCanal = await comoOutro()
+        .get(`${CONVERSAS}/contadores`)
+        .query({ canalId: gerencia.id })
+        .expect(200);
+      expect(doCanal.body.AGUARDANDO).toBe(0);
+
+      await comoOutro().get(`${CONVERSAS}/${conversaRecepcao.id}`).expect(200);
+      await comoOutro().get(`${CONVERSAS}/${conversaGerencia.id}`).expect(404);
+      await comoOutro().get(`${CONVERSAS}/${conversaGerencia.id}/mensagens`).expect(404);
+      await comoOutro().post(`${CONVERSAS}/${conversaGerencia.id}/assumir`).expect(404);
+
+      const lookup = await comoOutro().get('/api/lookups/canais-whatsapp').expect(200);
+      expect(lookup.body.data.map((c: { id: string }) => c.id)).toEqual([recepcao.id]);
+      await comoOutro().get(`/api/lookups/canais-whatsapp/${gerencia.id}`).expect(404);
+    });
+  });
+
   describe('POST /conversas-whatsapp (Nova conversa)', () => {
     let canal: { id: string };
 

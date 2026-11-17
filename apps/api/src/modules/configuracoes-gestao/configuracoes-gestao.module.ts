@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { criarRelatoriosController } from '../../common/relatorios/relatorios.controller';
+import { CanaisWhatsappController } from './canais-whatsapp/canais-whatsapp.controller';
 import { CanaisWhatsappService } from './canais-whatsapp/canais-whatsapp.service';
 import { EmpresasService } from './empresas/empresas.service';
 import { MinhaEmpresaController } from './minha-empresa/minha-empresa.controller';
@@ -44,6 +45,7 @@ const SERVICES = [
     UnidadesController,
     TiposAgendamentoController,
     RespostasRapidasController,
+    CanaisWhatsappController,
     PerfisAcessoController,
     UsuariosController,
     criarLookupController('empresas', EmpresasService),

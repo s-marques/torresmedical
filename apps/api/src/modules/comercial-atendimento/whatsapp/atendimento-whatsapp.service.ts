@@ -19,6 +19,7 @@ import { ErrorCode } from '../../../common/errors/error-codes';
 import { EventPublisher } from '../../../common/messaging/event-publisher';
 import { paginate, toOrderBy, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
+import { CanaisWhatsappService } from '../../configuracoes-gestao/canais-whatsapp/canais-whatsapp.service';
 import { UsuariosLookupService } from '../../configuracoes-gestao/usuarios/usuarios.service';
 import { PacientesService } from '../pacientes/pacientes.service';
 import { TagsAtendimentoService } from './tags-atendimento.service';
@@ -88,6 +89,7 @@ export class AtendimentoWhatsappService {
     private readonly tags: TagsAtendimentoService,
     private readonly events: EventPublisher,
     private readonly contexto: RequestContextService,
+    private readonly canais: CanaisWhatsappService,
   ) {}
 
   async detalhe(id: string): Promise<ConversaWhatsappDetalheDto> {
@@ -226,8 +228,9 @@ export class AtendimentoWhatsappService {
   }
 
   private async carregar(id: string): Promise<ConversaCompleta> {
+    // Conversa de canal sem acesso para o usuário responde 404, como se não existisse.
     const conversa = await this.txHost.tx.conversaWhatsapp.findFirst({
-      where: { id },
+      where: { id, canal: this.canais.filtroAcesso() },
       include: COM_RELACOES,
     });
     if (!conversa) {
