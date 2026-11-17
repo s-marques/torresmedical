@@ -27,5 +27,5 @@ export function descreverFiltro(item: {
 
 /** `[0, 1, 2]` → "Dom, Seg, Ter". */
 export function descreverDias(dias: readonly number[]): string {
-  return dias.map(abreviarDiaSemana).join(', ');
+  return dias.map((dia) => abreviarDiaSemana(dia)).join(', ');
 }
