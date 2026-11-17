@@ -128,6 +128,7 @@ export const MENSAGEM_WHATSAPP_AUTOR = [
   'ATENDENTE',
   'ASSISTENTE_VIRTUAL',
   'CELULAR',
+  'CAMPANHA',
 ] as const;
 export type MensagemWhatsappAutor = (typeof MENSAGEM_WHATSAPP_AUTOR)[number];
 
@@ -137,6 +138,7 @@ export const MENSAGEM_WHATSAPP_ROTULO_AUTOR: Readonly<
 > = {
   ASSISTENTE_VIRTUAL: 'Assistente Virtual',
   CELULAR: 'Enviado pelo celular',
+  CAMPANHA: 'Campanha',
 };
 
 /** Pendente (na fila), enviada (✓), entregue (✓✓), lida (✓✓ azul) ou "Não enviada". */

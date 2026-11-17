@@ -25,6 +25,7 @@ const ESTILO_BALAO: Readonly<Record<MensagemWhatsappAutor, string>> = {
   ATENDENTE: 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950',
   ASSISTENTE_VIRTUAL: 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950',
   CELULAR: 'border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950',
+  CAMPANHA: 'border-violet-200 bg-violet-50 dark:border-violet-800 dark:bg-violet-950',
 };
 
 const ESTILO_LEGENDA: Readonly<Record<MensagemWhatsappAutor, string>> = {
@@ -32,6 +33,7 @@ const ESTILO_LEGENDA: Readonly<Record<MensagemWhatsappAutor, string>> = {
   ATENDENTE: 'text-emerald-700 dark:text-emerald-300',
   ASSISTENTE_VIRTUAL: 'text-blue-700 dark:text-blue-300',
   CELULAR: 'text-orange-700 dark:text-orange-300',
+  CAMPANHA: 'text-violet-700 dark:text-violet-300',
 };
 
 const ICONE_TIPO: Readonly<Record<Exclude<MensagemWhatsappTipo, 'TEXTO'>, LucideIcon>> = {
