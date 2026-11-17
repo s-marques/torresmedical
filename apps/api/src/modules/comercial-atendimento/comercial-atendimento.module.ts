@@ -19,6 +19,8 @@ import { PacotesService } from './pacotes/pacotes.service';
 import { CrmConfigController } from './pipeline/crm-config.controller';
 import { CrmConfigService } from './pipeline/crm-config.service';
 import { NegociosController } from './pipeline/negocios.controller';
+import { NegociosListaController } from './pipeline/negocios-lista.controller';
+import { NegociosListaService } from './pipeline/negocios-lista.service';
 import { NegociosService } from './pipeline/negocios.service';
 import { PacientesController } from './pacientes/pacientes.controller';
 import { PacientesService } from './pacientes/pacientes.service';
@@ -50,6 +52,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     PacientesController,
     PacotesController,
     NegociosController,
+    NegociosListaController,
     TagsAtendimentoController,
     VendasController,
     // Depois de ConversasWhatsappController: "contadores" não pode ser lido como `:id`.
@@ -68,6 +71,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     TagsAtendimentoService,
     CrmConfigService,
     NegociosService,
+    NegociosListaService,
   ],
   exports: [PacientesService, OrigensClienteService],
 })

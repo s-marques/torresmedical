@@ -53,6 +53,7 @@ function negocio(parcial: Partial<Negocio> = {}): Negocio {
     pipelineId: P1,
     estagioId: E1,
     titulo: 'Sala 10 - Clínica geral',
+    estagio: 'Contato inicial',
     valor: '1160',
     contatoTipo: 'PACIENTE',
     contatoId: '00000000-0000-4000-8000-000000000099',
@@ -65,6 +66,7 @@ function negocio(parcial: Partial<Negocio> = {}): Negocio {
     status: 'ABERTO',
     motivoPerdaId: null,
     motivoPerda: null,
+    observacoes: null,
     fechadoEm: null,
     marcos: {},
     proximaAtividade: {

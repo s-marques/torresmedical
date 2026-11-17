@@ -2047,6 +2047,7 @@ model Negocio {
   origemClienteId        String?             @map("origem_cliente_id") @db.Uuid
   status                 NegocioStatus       @default(ABERTO)
   motivoPerdaId          String?             @map("motivo_perda_id") @db.Uuid
+  observacoes            String?
   /// Quando foi marcado como ganho ou perdido.
   fechadoEm              DateTime?           @map("fechado_em") @db.Timestamptz(3)
   /// Datas dos marcos do dashboard: primeira entrada num estágio com o marco.

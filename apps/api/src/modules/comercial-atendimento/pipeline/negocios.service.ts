@@ -9,6 +9,7 @@ import {
   type MoverNegocioInput,
   type Negocio,
   type NegocioInput,
+  type NegocioTelaInput,
   type PerderNegocioInput,
   type Quadro,
   type QuadroQuery,
@@ -27,10 +28,11 @@ import { OrigensClienteService } from '../origens-cliente/origens-cliente.servic
 import { PacientesService } from '../pacientes/pacientes.service';
 import { CrmConfigService } from './crm-config.service';
 
-const NAO_EXCLUIDOS = { deletedAt: null } as const;
+export const NAO_EXCLUIDOS = { deletedAt: null } as const;
 const MINUTO_MS = 60_000;
 
-const INCLUDE = {
+export const INCLUDE = {
+  estagio: { select: { nome: true } },
   origemCliente: { select: { nome: true } },
   motivoPerda: { select: { nome: true } },
   atividades: {
@@ -39,7 +41,7 @@ const INCLUDE = {
     take: 1,
   },
 } satisfies Prisma.NegocioInclude;
-type NegocioCompleto = Prisma.NegocioGetPayload<{ include: typeof INCLUDE }>;
+export type NegocioCompleto = Prisma.NegocioGetPayload<{ include: typeof INCLUDE }>;
 type AtividadeRow = Prisma.AtividadeNegocioGetPayload<object>;
 
 /** Coluna do negócio onde fica a data de cada marco do dashboard. */
@@ -51,7 +53,7 @@ const COLUNA_MARCO = {
 } as const satisfies Record<MarcoEstagio, keyof Prisma.NegocioUncheckedCreateInput>;
 
 /** Nomes resolvidos fora do model (contatos e responsáveis são de outros módulos, sem FK). */
-interface Nomes {
+export interface Nomes {
   pacientes: ReadonlyMap<string, string>;
   profissionais: ReadonlyMap<string, string>;
   usuarios: ReadonlyMap<string, string>;
@@ -102,6 +104,7 @@ export function toNegocio(n: NegocioCompleto, nomes: Nomes, agora = new Date()):
     pipelineId: n.pipelineId,
     estagioId: n.estagioId,
     titulo: n.titulo,
+    estagio: n.estagio.nome,
     valor: n.valor?.toString() ?? null,
     contatoTipo: n.contatoTipo,
     contatoId: n.contatoId,
@@ -114,6 +117,7 @@ export function toNegocio(n: NegocioCompleto, nomes: Nomes, agora = new Date()):
     status: n.status,
     motivoPerdaId: n.motivoPerdaId,
     motivoPerda: n.motivoPerda?.nome ?? null,
+    observacoes: n.observacoes,
     fechadoEm: n.fechadoEm?.toISOString() ?? null,
     marcos: marcosDe(n),
     proximaAtividade: proxima,
@@ -122,7 +126,7 @@ export function toNegocio(n: NegocioCompleto, nomes: Nomes, agora = new Date()):
   };
 }
 
-const somar = (valores: readonly (Prisma.Decimal | null)[]): string =>
+export const somar = (valores: readonly (Prisma.Decimal | null)[]): string =>
   valores
     .reduce<Prisma.Decimal>((total, v) => (v ? total.plus(v) : total), new Prisma.Decimal(0))
     .toFixed(2);
@@ -207,6 +211,83 @@ export class NegociosService {
       include: INCLUDE,
     });
     return this.toDto(criado);
+  }
+
+  /** Modal "Novo Negócio" da tela Negócios: pipeline e status escolhidos no formulário. */
+  async createDaTela(input: NegocioTelaInput): Promise<Negocio> {
+    const estagio = await this.estagioDaTela(input, null);
+    await this.validarReferencias(input);
+    const agora = new Date();
+    const criado = await this.txHost.tx.negocio.create({
+      data: {
+        ...this.dados(input),
+        pipelineId: estagio.pipelineId,
+        estagioId: estagio.id,
+        ...(await this.dadosStatus(input, null, agora)),
+        ...this.marcoAoEntrar(estagio, null, agora),
+      },
+      include: INCLUDE,
+    });
+    return this.toDto(criado);
+  }
+
+  /** "Editar Negócio" da tela Negócios: pode trocar de pipeline, estágio e status. */
+  async updateDaTela(id: string, input: NegocioTelaInput): Promise<Negocio> {
+    const atual = await this.buscar(id);
+    const estagio = await this.estagioDaTela(input, atual);
+    await this.validarReferencias(input);
+    const agora = new Date();
+    const alterado = await this.txHost.tx.negocio.update({
+      where: { id },
+      data: {
+        ...this.dados(input),
+        pipelineId: estagio.pipelineId,
+        estagioId: estagio.id,
+        ...(await this.dadosStatus(input, atual, agora)),
+        ...this.marcoAoEntrar(estagio, atual, agora),
+      },
+      include: INCLUDE,
+    });
+    return this.toDto(alterado);
+  }
+
+  /**
+   * Estágio escolhido no modal. Sem estágio, vale o primeiro do pipeline escolhido; sem pipeline,
+   * o atual (edição) ou o primeiro do primeiro pipeline (criação).
+   */
+  private async estagioDaTela(
+    input: NegocioTelaInput,
+    atual: NegocioCompleto | null,
+  ): Promise<EstagioPipeline> {
+    if (input.estagioId) {
+      const estagio = await this.config.buscarEstagio(input.estagioId);
+      const pipelineId = input.pipelineId ?? atual?.pipelineId;
+      if (pipelineId && estagio.pipelineId !== pipelineId) {
+        throw new BusinessException(
+          'ESTAGIO_DE_OUTRO_PIPELINE',
+          'O estágio escolhido é de outro pipeline.',
+        );
+      }
+      return estagio;
+    }
+    if (atual && (!input.pipelineId || input.pipelineId === atual.pipelineId)) {
+      return this.config.buscarEstagio(atual.estagioId);
+    }
+    return this.config.primeiroEstagio(input.pipelineId ?? undefined);
+  }
+
+  /** Status, data de fechamento e motivo de perda coerentes com o status escolhido. */
+  private async dadosStatus(input: NegocioTelaInput, atual: NegocioCompleto | null, agora: Date) {
+    if (input.status === 'ABERTO')
+      return { status: input.status, fechadoEm: null, motivoPerdaId: null };
+    if (input.status === 'PERDIDO' && input.motivoPerdaId) {
+      await this.config.buscarMotivoPerda(input.motivoPerdaId);
+    }
+    return {
+      status: input.status,
+      fechadoEm: atual?.status === input.status ? atual.fechadoEm : agora,
+      motivoPerdaId: input.status === 'PERDIDO' ? input.motivoPerdaId : null,
+    };
   }
 
   /** "Editar": o estágio pode mudar, mas só para outro do mesmo pipeline. */
@@ -362,7 +443,7 @@ export class NegociosService {
     return atual?.[coluna] ? {} : { [coluna]: agora };
   }
 
-  private dados(input: NegocioInput) {
+  private dados(input: Omit<NegocioInput, 'estagioId'>) {
     return {
       titulo: input.titulo,
       valor: input.valor,
@@ -371,10 +452,11 @@ export class NegociosService {
       responsavelId: input.responsavelId,
       previsaoFechamento: paraData(input.previsaoFechamento),
       origemClienteId: input.origemClienteId,
+      ...(input.observacoes === undefined ? {} : { observacoes: input.observacoes }),
     };
   }
 
-  private async validarReferencias(input: NegocioInput): Promise<void> {
+  private async validarReferencias(input: Omit<NegocioInput, 'estagioId'>): Promise<void> {
     if (input.contatoId && input.contatoTipo === 'PACIENTE') {
       await this.pacientes.findById(input.contatoId);
     }
@@ -386,7 +468,7 @@ export class NegociosService {
   }
 
   /** "Buscar cliente (nome, tel, CPF, CNPJ)": título do negócio ou contato (paciente/profissional). */
-  private async whereBusca(search: string | undefined): Promise<Prisma.NegocioWhereInput> {
+  async whereBusca(search: string | undefined): Promise<Prisma.NegocioWhereInput> {
     if (!search) return {};
     const [pacientes, profissionais] = await Promise.all([
       this.pacientes.idsPorBusca(search),
@@ -405,7 +487,7 @@ export class NegociosService {
     };
   }
 
-  private async nomes(negocios: readonly NegocioCompleto[]): Promise<Nomes> {
+  async nomes(negocios: readonly NegocioCompleto[]): Promise<Nomes> {
     const ids = (tipo: 'PACIENTE' | 'PROFISSIONAL') =>
       negocios.flatMap((n) => (n.contatoTipo === tipo && n.contatoId ? [n.contatoId] : []));
     const usuarios = negocios.flatMap((n) => [
