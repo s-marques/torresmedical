@@ -135,4 +135,9 @@ export interface DataGridProps<T> {
   mensagemVazio?: string;
   /** Opções de "Linhas por página". A primeira é o padrão. */
   tamanhosPagina?: readonly number[];
+  /**
+   * Resumo à direita da barra, com o `meta` da última consulta, ex.:
+   * `(meta) => \`${meta.total} atendimento(s)\``.
+   */
+  resumo?: (meta: PaginationMeta) => ReactNode;
 }

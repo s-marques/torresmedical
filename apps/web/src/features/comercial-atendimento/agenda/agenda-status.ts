@@ -16,4 +16,11 @@ export const COR_STATUS: Record<
   REAGENDAR: { fundo: 'bg-orange-500', ponto: 'bg-orange-500', pilula: 'bg-orange-500 text-white' },
   ATENDIDO: { fundo: 'bg-slate-500', ponto: 'bg-slate-500', pilula: 'bg-slate-500 text-white' },
   FALTOU: { fundo: 'bg-amber-500', ponto: 'bg-amber-500', pilula: 'bg-amber-500 text-white' },
+  // Status da tela Atendimento Médico (#38).
+  AGUARDANDO: { fundo: 'bg-cyan-600', ponto: 'bg-cyan-500', pilula: 'bg-cyan-500 text-white' },
+  EM_ATENDIMENTO: {
+    fundo: 'bg-indigo-600',
+    ponto: 'bg-indigo-500',
+    pilula: 'bg-indigo-500 text-white',
+  },
 };

@@ -18,6 +18,7 @@ import { EnviosCampanhaService } from './campanhas/envios-campanha.service';
 import { MensagensAutomaticasService } from './campanhas/mensagens-automaticas.service';
 import { PrepararEnviosConsumer } from './campanhas/preparar-envios.consumer';
 import { AgendaService } from './agenda/agenda.service';
+import { AgendamentosAtendimentoService } from './agenda/agendamentos-atendimento.service';
 import { OrcamentosController } from './orcamentos/orcamentos.controller';
 import { OrcamentosService } from './orcamentos/orcamentos.service';
 import { OrigensClienteController } from './origens-cliente/origens-cliente.controller';
@@ -80,6 +81,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     PacientesService,
     OrigensClienteService,
     AgendaService,
+    AgendamentosAtendimentoService,
     OrcamentosService,
     ConsultasRealizadasService,
     PacotesService,
@@ -100,6 +102,6 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     PrepararEnviosConsumer,
     CampanhasAgendador,
   ],
-  exports: [PacientesService, OrigensClienteService],
+  exports: [PacientesService, OrigensClienteService, AgendamentosAtendimentoService],
 })
 export class ComercialAtendimentoModule {}
