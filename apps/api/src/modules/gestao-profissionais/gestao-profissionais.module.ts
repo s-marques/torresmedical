@@ -32,7 +32,11 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
 
 /** Módulo GESTÃO PROFISSIONAIS do inventário. Dono das entidades Profissional e Especialidade. */
 @Module({
-  imports: [forwardRef(() => ComercialAtendimentoModule), FinanceiroModule, ComprasEstoqueModule],
+  imports: [
+    forwardRef(() => ComercialAtendimentoModule),
+    FinanceiroModule,
+    forwardRef(() => ComprasEstoqueModule),
+  ],
   controllers: [
     criarLookupController('profissionais', ProfissionaisService),
     criarLookupController('especialidades', EspecialidadesService),
