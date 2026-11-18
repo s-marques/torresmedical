@@ -83,3 +83,29 @@ describe('statusExibicaoContaReceber', () => {
     );
   });
 });
+
+describe('createContaReceberSchema: recebimento (#46)', () => {
+  const base = { descricao: 'Mensalidade', valor: 150, dataVencimento: '2026-12-10' };
+
+  it('conta bancária e data de recebimento são opcionais e vazias viram null', () => {
+    expect(
+      createContaReceberSchema.parse({ ...base, contaBancariaId: '', dataRecebimento: '' }),
+    ).toMatchObject({ contaBancariaId: null, dataRecebimento: null });
+    expect(createContaReceberSchema.parse(base)).toMatchObject({
+      contaBancariaId: null,
+      dataRecebimento: null,
+    });
+  });
+
+  it('recusa conta e data inválidas', () => {
+    const r = createContaReceberSchema.safeParse({
+      ...base,
+      contaBancariaId: 'x',
+      dataRecebimento: '2026-02-30',
+    });
+    expect(r.error?.issues.map((i) => i.message)).toEqual([
+      'Conta bancária inválida',
+      'Data de recebimento inválida',
+    ]);
+  });
+});

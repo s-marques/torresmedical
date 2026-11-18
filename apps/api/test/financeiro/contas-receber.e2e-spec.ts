@@ -182,6 +182,65 @@ describe('Contas a Receber (e2e)', () => {
       });
     });
 
+    it('200: ao receber grava conta bancária e data (Conciliação, #46); auditado', async () => {
+      const banco = await prisma.contaBancaria.create({ data: { nome: 'Banco Teste' } });
+      const conta = await criarNoBanco('Mensalidade');
+      const res = await http()
+        .patch(`${BASE}/${conta.id}`)
+        .send({
+          descricao: 'Mensalidade',
+          valor: 100,
+          dataVencimento: '2026-12-10',
+          status: 'RECEBIDO',
+          contaBancariaId: banco.id,
+          dataRecebimento: '2026-12-08',
+        })
+        .expect(200);
+      expect(contaReceberSchema.parse(res.body)).toMatchObject({
+        contaBancariaId: banco.id,
+        contaBancariaNome: 'Banco Teste',
+        dataRecebimento: '2026-12-08',
+      });
+      await expectAudit(prisma, {
+        action: 'UPDATE',
+        entity: ENTITY,
+        entityId: conta.id,
+        before: { status: 'PENDENTE', contaBancariaId: null },
+        after: { status: 'RECEBIDO', contaBancariaId: banco.id, dataRecebimento: '2026-12-08' },
+        userId: usuario.id,
+      });
+
+      // Voltar para Pendente limpa conta e data.
+      const pendente = await http()
+        .patch(`${BASE}/${conta.id}`)
+        .send({
+          descricao: 'Mensalidade',
+          valor: 100,
+          dataVencimento: '2026-12-10',
+          status: 'PENDENTE',
+          contaBancariaId: banco.id,
+        })
+        .expect(200);
+      expect(pendente.body).toMatchObject({ contaBancariaId: null, dataRecebimento: null });
+    });
+
+    it('404 ao receber em conta bancária inexistente', async () => {
+      const conta = await criarNoBanco('Mensalidade');
+      const res = await http()
+        .patch(`${BASE}/${conta.id}`)
+        .send({
+          descricao: 'Mensalidade',
+          valor: 100,
+          dataVencimento: '2026-12-10',
+          status: 'RECEBIDO',
+          contaBancariaId: INEXISTENTE,
+        })
+        .expect(404);
+      expect(res.body.details).toEqual([
+        { field: 'contaBancariaId', message: 'Conta bancária não encontrada' },
+      ]);
+    });
+
     it('400 com campo obrigatório vazio, 404 para inexistente', async () => {
       const conta = await criarNoBanco('Mensalidade');
       await http()

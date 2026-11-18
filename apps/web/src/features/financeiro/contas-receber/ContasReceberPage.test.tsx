@@ -8,6 +8,9 @@ const API = '/api/financeiro/contas-receber';
 const PLANO_CONTAS_API = '/api/financeiro/plano-contas';
 const ID_1 = '00000000-0000-4000-8000-0000000000c1';
 const ID_2 = '00000000-0000-4000-8000-0000000000c2';
+const CONTAS_BANCARIAS_API = '/api/financeiro/contas-bancarias';
+const CONTA_BANCARIA_ID = '00000000-0000-4000-8000-0000000000b1';
+const CONTA_BANCARIA_2_ID = '00000000-0000-4000-8000-0000000000b2';
 
 function conta(parcial: Partial<ContaReceber>): ContaReceber {
   return {
@@ -25,6 +28,9 @@ function conta(parcial: Partial<ContaReceber>): ContaReceber {
     documento: null,
     totalParcelas: 1,
     status: 'PENDENTE',
+    contaBancariaId: null,
+    contaBancariaNome: null,
+    dataRecebimento: null,
     observacoes: null,
     createdAt: '2026-10-14T12:00:00.000Z',
     updatedAt: '2026-10-14T12:00:00.000Z',
@@ -40,8 +46,41 @@ const CONTAS = [
     descricao: 'Procedimento Estético',
     pacienteNome: 'Maria Teste',
     status: 'RECEBIDO',
+    contaBancariaId: CONTA_BANCARIA_ID,
+    contaBancariaNome: 'Banco Teste',
+    dataRecebimento: '2026-12-08',
   }),
 ];
+
+const CONTAS_BANCARIAS = {
+  data: [
+    {
+      id: CONTA_BANCARIA_ID,
+      nome: 'Banco Teste',
+      tipo: 'CORRENTE',
+      banco: null,
+      agencia: null,
+      conta: null,
+      saldoInicial: '0',
+      dataSaldoInicial: null,
+      saldo: '0',
+      ativo: true,
+    },
+    {
+      id: CONTA_BANCARIA_2_ID,
+      nome: 'Caixa Teste',
+      tipo: 'CAIXA',
+      banco: null,
+      agencia: null,
+      conta: null,
+      saldoInicial: '0',
+      dataSaldoInicial: null,
+      saldo: '0',
+      ativo: true,
+    },
+  ],
+  total: 2,
+};
 
 function pagina(data: ContaReceber[]) {
   return json({ data, meta: { page: 1, pageSize: 10, total: data.length, totalPages: 1 } });
@@ -68,6 +107,7 @@ function api(rotas: Parameters<typeof apiFalsa>[0] = {}) {
     rotas: {
       [API]: () => pagina(CONTAS),
       [PLANO_CONTAS_API]: () => planoContasVazio(),
+      [CONTAS_BANCARIAS_API]: () => json(CONTAS_BANCARIAS),
       ...rotas.rotas,
     },
   });
@@ -276,6 +316,59 @@ describe('Contas a Receber (/receber)', () => {
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(corpo).toMatchObject({ descricao: 'Mensalidade Novembro', valor: 150.5 });
+  });
+
+  it('Conta Bancária e Data de Recebimento só aparecem com status Recebido (#46)', async () => {
+    const { user } = renderTela();
+    await screen.findByText('Mensalidade Outubro');
+
+    await user.click(screen.getByRole('button', { name: 'Nova Conta' }));
+    const modal = await screen.findByRole('dialog', { name: 'Nova Conta a Receber' });
+    expect(within(modal).queryByLabelText('Data de Recebimento')).not.toBeInTheDocument();
+
+    await user.click(within(modal).getByRole('combobox', { name: 'Status' }));
+    await user.click(await screen.findByRole('option', { name: 'Recebido' }));
+    expect(await within(modal).findByLabelText('Data de Recebimento')).toBeVisible();
+    expect(within(modal).getByRole('combobox', { name: 'Conta Bancária' })).toBeVisible();
+  });
+
+  it('Editar conta recebida: traz conta e data, troca a conta e envia no PATCH', async () => {
+    let corpo: Corpo = {};
+    const { user } = renderTela(
+      api({
+        rotas: {
+          [`${API}/${ID_2}`]: (init) => {
+            corpo = corpoDe(init);
+            return json(CONTAS[1]);
+          },
+        },
+      }),
+    );
+
+    await abrirMenu(user, 'Procedimento Estético', 'Editar');
+    const modal = await screen.findByRole('dialog', { name: 'Editar Conta a Receber' });
+    expect(within(modal).getByLabelText('Data de Recebimento')).toHaveValue('2026-12-08');
+    const conta = within(modal).getByRole('combobox', { name: 'Conta Bancária' });
+    await waitFor(() => expect(conta).toHaveTextContent('Banco Teste'));
+    await user.click(conta);
+    await user.click(await screen.findByRole('option', { name: 'Caixa Teste' }));
+    await user.click(within(modal).getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(corpo).toMatchObject({
+      status: 'RECEBIDO',
+      contaBancariaId: CONTA_BANCARIA_2_ID,
+      dataRecebimento: '2026-12-08',
+    });
+  });
+
+  it('detalhe de conta recebida mostra a conta bancária e a data do recebimento', async () => {
+    const { user } = renderTela();
+    await abrirMenu(user, 'Procedimento Estético', 'Detalhar');
+
+    const modal = await screen.findByRole('dialog', { name: 'Procedimento Estético' });
+    expect(within(modal).getByText('Banco Teste')).toBeVisible();
+    expect(within(modal).getByText('08/12/2026')).toBeVisible();
   });
 
   it('Excluir: confirma antes e envia DELETE; Cancelar não exclui', async () => {

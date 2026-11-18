@@ -42,6 +42,7 @@ export * from './schemas/configuracoes-gestao/unidade';
 export * from './schemas/configuracoes-gestao/usuario';
 export * from './schemas/financeiro/bandeira';
 export * from './schemas/financeiro/caixa';
+export * from './schemas/financeiro/conciliacao';
 export * from './schemas/financeiro/conta-bancaria';
 export * from './schemas/financeiro/conta-pagar';
 export * from './schemas/financeiro/conta-receber';
