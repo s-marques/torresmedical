@@ -23,6 +23,8 @@ export function escopoDoUsuario(
   if (escopoPerfil !== 'PROFISSIONAIS_VINCULADOS') return ESCOPO_TODOS;
   return Object.freeze({
     tipo: 'PROFISSIONAIS',
-    profissionalIds: Object.freeze([...new Set(profissionalIds)].sort()),
+    profissionalIds: Object.freeze(
+      [...new Set(profissionalIds)].sort((a, b) => a.localeCompare(b)),
+    ),
   });
 }

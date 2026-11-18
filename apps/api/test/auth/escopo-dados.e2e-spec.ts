@@ -271,7 +271,9 @@ describe('Escopo de dados por profissional (e2e)', () => {
       expect(ocupacao.body.salas).toHaveLength(1);
       expect(ocupacao.body.salas[0].salaId).toBe(sala1.id);
       expect(
-        ocupacao.body.salas[0].blocos.map((b: { locatarioNome: string }) => b.locatarioNome).sort(),
+        ocupacao.body.salas[0].blocos
+          .map((b: { locatarioNome: string }) => b.locatarioNome)
+          .sort((a: string, b: string) => a.localeCompare(b)),
       ).toEqual(['Dra. Fictícia', 'Ocupado']);
 
       await http().get(DASHBOARD).expect(403);
