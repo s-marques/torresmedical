@@ -26,6 +26,10 @@ import { GruposWhatsappController } from './grupos-whatsapp/grupos-whatsapp.cont
 import { GruposWhatsappService } from './grupos-whatsapp/grupos-whatsapp.service';
 import { ProvedorGruposVazio } from './grupos-whatsapp/provedor-grupos-vazio';
 import { ProvedorGruposWhatsapp } from './grupos-whatsapp/provedor-grupos-whatsapp';
+import { EnviarPesquisaNpsConsumer } from './pesquisa-nps/enviar-pesquisa-nps.consumer';
+import { EnvioPesquisaNpsService } from './pesquisa-nps/envio-pesquisa-nps.service';
+import { PesquisaNpsController } from './pesquisa-nps/pesquisa-nps.controller';
+import { PesquisaNpsService } from './pesquisa-nps/pesquisa-nps.service';
 import { PrepararEnviosConsumer } from './campanhas/preparar-envios.consumer';
 import { AgendaService } from './agenda/agenda.service';
 import { AgendamentosAtendimentoService } from './agenda/agendamentos-atendimento.service';
@@ -76,6 +80,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     CampanhasController,
     ConfirmacoesController,
     GruposWhatsappController,
+    PesquisaNpsController,
     ConsultasRealizadasController,
     ConversasWhatsappController,
     CrmConfigController,
@@ -127,7 +132,15 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     GruposWhatsappService,
     { provide: ProvedorGruposWhatsapp, useClass: ProvedorGruposVazio },
     ConfirmacoesAgendador,
+    PesquisaNpsService,
+    EnvioPesquisaNpsService,
+    EnviarPesquisaNpsConsumer,
   ],
-  exports: [PacientesService, OrigensClienteService, AgendamentosAtendimentoService],
+  exports: [
+    PacientesService,
+    OrigensClienteService,
+    AgendamentosAtendimentoService,
+    PesquisaNpsService,
+  ],
 })
 export class ComercialAtendimentoModule {}

@@ -517,6 +517,13 @@ describe('Atendimento Médico (e2e)', () => {
         where: { id: confirmado.id },
       });
       expect(agendamento.status).toBe('ATENDIDO');
+      const eventos = await prisma.outboxEvent.findMany({
+        where: { type: 'consultorio.atendimento.finalizado' },
+      });
+      expect(eventos).toHaveLength(1);
+      expect(eventos[0]?.envelope).toMatchObject({
+        payload: { atendimentoId: finalizado.id },
+      });
       await expectAudit(prisma, {
         action: 'UPDATE',
         entity: 'Atendimento',
