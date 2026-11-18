@@ -37,6 +37,9 @@ import { ConsultasRealizadasController } from './vendas/consultas-realizadas.con
 import { ConsultasRealizadasService } from './vendas/consultas-realizadas.service';
 import { VendasController } from './vendas/vendas.controller';
 import { VendasService } from './vendas/vendas.service';
+import { MensalidadesController } from './mensalidades/mensalidades.controller';
+import { MensalidadesTitulosService } from './mensalidades/mensalidades-titulos.service';
+import { MensalidadesService } from './mensalidades/mensalidades.service';
 import { PacotesController } from './pacotes/pacotes.controller';
 import { PacotesService } from './pacotes/pacotes.service';
 import { CrmConfigController } from './pipeline/crm-config.controller';
@@ -84,6 +87,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     OrigensClienteController,
     PacientesController,
     PacotesController,
+    MensalidadesController,
     NegociosController,
     NegociosListaController,
     TagsAtendimentoController,
@@ -99,6 +103,8 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     OrcamentosService,
     ConsultasRealizadasService,
     PacotesService,
+    MensalidadesService,
+    MensalidadesTitulosService,
     VendasService,
     ConversasWhatsappService,
     AtendimentoWhatsappService,
