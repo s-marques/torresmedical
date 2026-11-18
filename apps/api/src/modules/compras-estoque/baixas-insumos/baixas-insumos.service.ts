@@ -2,6 +2,7 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import type { BaixaInsumo, BaixaInsumoInput, ListBaixasInsumosQuery } from '@torres/shared';
 import type { Prisma } from '../../../generated/prisma/client';
+import { EscopoDadosService } from '../../../common/auth/escopo-dados.service';
 import { RequestContextService } from '../../../common/context/request-context.service';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
@@ -39,6 +40,7 @@ export class BaixasInsumosService {
   constructor(
     private readonly txHost: TransactionHost<PrismaAdapter>,
     private readonly contexto: RequestContextService,
+    private readonly escopo: EscopoDadosService,
     private readonly estoque: EstoqueService,
     @Inject(forwardRef(() => PacientesService)) private readonly pacientes: PacientesService,
     @Inject(forwardRef(() => ProfissionaisService))
@@ -60,6 +62,7 @@ export class BaixasInsumosService {
 
   /** "Registrar Baixa": valida os vínculos, grava a baixa e subtrai o saldo de cada insumo. */
   async create(input: BaixaInsumoInput): Promise<BaixaInsumo> {
+    this.escopo.garantirProfissional(input.profissionalId);
     await this.garantirVinculos(input);
     // Antes de gravar: insumo inexistente (404) ou sem saldo (400) falha com a mensagem do estoque.
     for (const item of input.itens) {
@@ -105,12 +108,17 @@ export class BaixasInsumosService {
   }
 
   private where(query: ListBaixasInsumosQuery): Prisma.BaixaInsumoWhereInput {
-    if (!query.dataInicio && !query.dataFim) return {};
+    // Perfil restrito vê só as baixas dos profissionais vinculados (issue #153).
+    const profissionalId = this.escopo.filtroProfissional();
+    if (!query.dataInicio && !query.dataFim) return { profissionalId };
     const { gte, lt } = intervaloDoPeriodo(
       query.dataInicio ?? '1900-01-01',
       query.dataFim ?? '9999-12-30',
     );
-    return { createdAt: { ...(query.dataInicio && { gte }), ...(query.dataFim && { lt }) } };
+    return {
+      profissionalId,
+      createdAt: { ...(query.dataInicio && { gte }), ...(query.dataFim && { lt }) },
+    };
   }
 
   private orderBy(

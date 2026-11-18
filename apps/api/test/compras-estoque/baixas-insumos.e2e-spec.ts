@@ -229,4 +229,34 @@ describe('Baixa de Insumos (e2e)', () => {
       },
     );
   });
+
+  describe('escopo de dados (issue #153)', () => {
+    it('perfil restrito vê só as baixas dos profissionais vinculados e só baixa para eles (403 fora)', async () => {
+      const meu = await prisma.profissional.create({ data: { nome: faker.person.fullName() } });
+      const outro = await prisma.profissional.create({ data: { nome: faker.person.fullName() } });
+      const luva = await criarProduto('Luva', 10);
+      const itens = { create: [{ produtoId: luva.id, quantidade: 1 }] };
+      const minha = await prisma.baixaInsumo.create({ data: { profissionalId: meu.id, itens } });
+      await prisma.baixaInsumo.create({ data: { profissionalId: outro.id, itens } });
+      await prisma.baixaInsumo.create({ data: { itens } });
+      const restrito = await criarUsuarioTeste(app, {
+        permissoes: PERMISSOES,
+        escopoDados: 'PROFISSIONAIS_VINCULADOS',
+        profissionalIds: [meu.id],
+      });
+
+      const lista = await comUsuario(app, restrito).get(BASE).expect(200);
+      expect(lista.body.data.map((b: { id: string }) => b.id)).toEqual([minha.id]);
+
+      const corpo = (profissionalId?: string) => ({
+        profissionalId,
+        itens: [{ produtoId: luva.id, quantidade: 1 }],
+      });
+      await comUsuario(app, restrito).post(BASE).send(corpo(outro.id)).expect(403);
+      await comUsuario(app, restrito).post(BASE).send(corpo()).expect(403);
+      expect(await saldo(luva.id)).toBe(10);
+      await comUsuario(app, restrito).post(BASE).send(corpo(meu.id)).expect(201);
+      expect(await saldo(luva.id)).toBe(9);
+    });
+  });
 });

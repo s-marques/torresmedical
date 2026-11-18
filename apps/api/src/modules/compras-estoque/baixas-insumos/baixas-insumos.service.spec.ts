@@ -8,6 +8,7 @@ import type { PacientesService } from '../../comercial-atendimento/pacientes/pac
 import type { UnidadesService } from '../../configuracoes-gestao/unidades/unidades.service';
 import type { UsuariosLookupService } from '../../configuracoes-gestao/usuarios/usuarios.service';
 import type { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
+import { escopoFalso } from '../../../../test/utils/escopo-falso';
 import type { EstoqueService } from '../estoque/estoque.service';
 import { BaixasInsumosService } from './baixas-insumos.service';
 
@@ -15,6 +16,8 @@ const USUARIO_ID = '7b1d9c2e-3f4a-4b5c-8d6e-1a2b3c4d5e6f';
 const PRODUTO_A = '2d9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 const PRODUTO_B = '3e0d2a8f-2b3c-4d4e-9fa0-1b2c3d4e5f60';
 const PACIENTE_ID = '4f1e3b90-3c4d-4e5f-a0b1-2c3d4e5f6071';
+const PROFISSIONAL_ID = '5a2f4c01-4d5e-4f60-b1c2-3d4e5f607182';
+const OUTRO_PROFISSIONAL_ID = '6b3a5d12-5e6f-4071-82d3-4e5f60718293';
 const AGORA = new Date('2026-11-17T12:00:00.000Z');
 
 function input(extra: Partial<BaixaInsumoInput> = {}): BaixaInsumoInput {
@@ -52,7 +55,7 @@ function baixa(data: Record<string, unknown>) {
   };
 }
 
-function setup() {
+function setup(profissionalIds?: readonly string[]) {
   const tx = {
     baixaInsumo: {
       create: jest
@@ -75,6 +78,7 @@ function setup() {
   const service = new BaixasInsumosService(
     { tx } as unknown as TransactionHost<PrismaAdapter>,
     contexto as unknown as RequestContextService,
+    escopoFalso(profissionalIds),
     estoque as unknown as EstoqueService,
     pacientes as unknown as PacientesService,
     profissionais as unknown as ProfissionaisService,
@@ -149,7 +153,7 @@ describe('BaixasInsumosService', () => {
     it('sem período, não filtra pela data', async () => {
       const { service, tx } = setup();
       await service.list(QUERY());
-      expect(tx.baixaInsumo.findMany.mock.calls[0][0].where).toEqual({});
+      expect(tx.baixaInsumo.findMany.mock.calls[0][0].where).toEqual({ profissionalId: undefined });
     });
 
     it('filtra Data Início e Data Fim como dias inteiros (fuso da clínica)', async () => {
@@ -176,6 +180,33 @@ describe('BaixasInsumosService', () => {
         { createdAt: 'desc' },
         { id: 'asc' },
       ]);
+    });
+  });
+
+  describe('escopo de dados (issue #153)', () => {
+    it('perfil restrito lista só as baixas dos profissionais vinculados', async () => {
+      const { service, tx } = setup([PROFISSIONAL_ID]);
+      await service.list(QUERY());
+      expect(tx.baixaInsumo.findMany.mock.calls[0][0].where).toEqual({
+        profissionalId: { in: [PROFISSIONAL_ID] },
+      });
+    });
+
+    it('perfil restrito: 403 ao baixar para profissional fora do escopo ou sem profissional', async () => {
+      const { service, estoque } = setup([PROFISSIONAL_ID]);
+      await expect(
+        service.create(input({ profissionalId: OUTRO_PROFISSIONAL_ID })),
+      ).rejects.toMatchObject({ status: 403 });
+      await expect(service.create(input())).rejects.toMatchObject({ status: 403 });
+      expect(estoque.saidaComMotivo).not.toHaveBeenCalled();
+    });
+
+    it('perfil restrito baixa normalmente para o profissional vinculado', async () => {
+      const { service, profissionais } = setup([PROFISSIONAL_ID]);
+      profissionais.nomesPorIds.mockResolvedValue(new Map([[PROFISSIONAL_ID, 'Dra.']]));
+      await expect(
+        service.create(input({ profissionalId: PROFISSIONAL_ID })),
+      ).resolves.toBeDefined();
     });
   });
 });
