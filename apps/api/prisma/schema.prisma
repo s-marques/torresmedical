@@ -287,6 +287,7 @@ model Paciente {
   contasReceber    ContaReceber[]
   contatosWhatsapp ContatoWhatsapp[]
   enviosCampanha   EnvioCampanha[]
+  pesquisasNps     PesquisaNps[]
 
   baixasInsumos BaixaInsumo[]
   @@index([documento])
@@ -424,6 +425,7 @@ model Profissional {
   usosPacote     PacoteUso[]
   canaisWhatsapp CanalWhatsapp[]
   usuarios       UsuarioProfissional[]
+  pesquisasNps PesquisaNps[]
 
   baixasInsumos BaixaInsumo[]
   @@index([especialidadeId])
@@ -1112,6 +1114,7 @@ model MensagemWhatsapp {
   respostas        MensagemWhatsapp[] @relation("MensagemResposta")
   envioCampanha    EnvioCampanha?
   envioConfirmacao EnvioConfirmacao?
+  pesquisaNps      PesquisaNps?
 
   @@index([conversaId, enviadaEm])
   @@index([autorUsuarioId])
@@ -2594,4 +2597,41 @@ model BaixaInsumoItem {
   @@index([baixaId])
   @@index([produtoId])
   @@map("baixas_insumos_itens")
+
+enum PesquisaNpsStatus {
+  ENVIADA
+  RESPONDIDA
+  FALHA
+
+  @@map("pesquisa_nps_status")
+}
+
+/// Dono: comercial-atendimento. Pesquisa NPS (tela `/pesquisa-satisfacao`): enviada pelo WhatsApp
+/// quando o atendimento é finalizado (evento `consultorio.atendimento.finalizado`) e respondida
+/// com uma nota de 0 a 10. Uma por atendimento (garante que o envio não se repete).
+model PesquisaNps {
+  id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Atendimento (consultorio-assistencial) que originou a pesquisa, sem FK.
+  atendimentoId      String            @unique @map("atendimento_id") @db.Uuid
+  pacienteId         String            @map("paciente_id") @db.Uuid
+  profissionalId     String            @map("profissional_id") @db.Uuid
+  status             PesquisaNpsStatus
+  /// Motivo da falha (sem dados pessoais), ex.: SEM_CANAL, SEM_CELULAR.
+  erro               String?
+  /// 0 a 10; vazio até o paciente responder.
+  nota               Int?
+  comentario         String?
+  mensagemWhatsappId String?           @unique @map("mensagem_whatsapp_id") @db.Uuid
+  enviadaEm          DateTime          @default(now()) @map("enviada_em") @db.Timestamptz(3)
+  respondidaEm       DateTime?         @map("respondida_em") @db.Timestamptz(3)
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  paciente         Paciente          @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
+  profissional     Profissional      @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+  mensagemWhatsapp MensagemWhatsapp? @relation(fields: [mensagemWhatsappId], references: [id], onDelete: SetNull)
+
+  @@index([enviadaEm])
+  @@index([pacienteId, status])
+  @@map("pesquisas_nps")
 }
