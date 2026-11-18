@@ -30,6 +30,7 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   ),
   'comercial-atendimento.grupos-whatsapp': lazy(
     () => import('@/features/comercial-atendimento/grupos-whatsapp/GruposWhatsappPage'),
+  ),
   'comercial-atendimento.pesquisa-nps': lazy(
     () => import('@/features/comercial-atendimento/pesquisa-nps/PesquisaNpsPage'),
   ),
