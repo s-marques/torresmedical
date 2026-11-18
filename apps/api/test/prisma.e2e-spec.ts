@@ -87,6 +87,8 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'lotes',
       'mensagens_automaticas',
       'mensagens_whatsapp',
+      'mensalidade_titulos',
+      'mensalidades',
       'modelos_confirmacao',
       'motivos_perda',
       'movimentacoes_estoque',

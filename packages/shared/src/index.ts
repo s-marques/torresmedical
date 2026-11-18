@@ -12,6 +12,7 @@ export * from './schemas/common/pagination';
 export * from './schemas/comercial-atendimento/agendamento';
 export * from './schemas/comercial-atendimento/orcamento';
 export * from './schemas/comercial-atendimento/pacote';
+export * from './schemas/comercial-atendimento/mensalidade';
 export * from './schemas/comercial-atendimento/periodo-vendas';
 export * from './schemas/comercial-atendimento/consulta-realizada';
 export * from './schemas/comercial-atendimento/venda';

@@ -282,6 +282,7 @@ model Paciente {
   orcamentos       Orcamento[]
   vendas           Venda[]
   pacotes          Pacote[]
+  mensalidades     Mensalidade[]
   contasReceber    ContaReceber[]
   contatosWhatsapp ContatoWhatsapp[]
   enviosCampanha   EnvioCampanha[]
@@ -842,6 +843,7 @@ model FormaPagamento {
   baixasContaPagar        ContaPagarBaixa[]
   contasReceber           ContaReceber[]
   recebimentosAgendamento AgendamentoRecebimento[]
+  mensalidades            Mensalidade[]
 
   @@map("formas_pagamento")
 }
@@ -1785,6 +1787,61 @@ model PacoteUso {
   @@index([pacoteId])
   @@index([profissionalId])
   @@map("pacote_usos")
+}
+
+enum MensalidadeStatus {
+  ATIVO
+  PAUSADO
+  CANCELADO
+
+  @@map("mensalidade_status")
+}
+
+/// Dono: comercial-atendimento. Cobrança recorrente mensal de um paciente (tela Mensalidades,
+/// `/mensalidades`, issue #6). "Gerar Titulos do Mes" cria uma conta a receber por mensalidade
+/// ativa e mês (`MensalidadeTitulo`). Exclusão lógica: histórico financeiro.
+model Mensalidade {
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pacienteId       String            @map("paciente_id") @db.Uuid
+  descricao        String
+  valor            Decimal           @db.Decimal(12, 2)
+  /// 1 a 28.
+  diaVencimento    Int               @map("dia_vencimento")
+  formaPagamentoId String?           @map("forma_pagamento_id") @db.Uuid
+  dataInicio       DateTime          @map("data_inicio") @db.Date
+  dataFim          DateTime?         @map("data_fim") @db.Date
+  observacoes      String?
+  status           MensalidadeStatus @default(ATIVO)
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt        DateTime?         @map("deleted_at") @db.Timestamptz(3)
+
+  paciente       Paciente            @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
+  formaPagamento FormaPagamento?     @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
+  titulos        MensalidadeTitulo[]
+
+  @@index([pacienteId])
+  @@index([formaPagamentoId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("mensalidades")
+}
+
+/// Título (conta a receber) gerado para a mensalidade no mês `AAAA-MM`. A chave única impede
+/// gerar duas vezes o mesmo mês. A conta a receber pertence ao financeiro: guardamos só o id.
+model MensalidadeTitulo {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  mensalidadeId  String   @map("mensalidade_id") @db.Uuid
+  /// `AAAA-MM`.
+  competencia    String   @db.VarChar(7)
+  contaReceberId String   @map("conta_receber_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  mensalidade Mensalidade @relation(fields: [mensalidadeId], references: [id])
+
+  @@unique([mensalidadeId, competencia])
+  @@index([mensalidadeId])
+  @@map("mensalidade_titulos")
 }
 
 enum PlanoContaTipo {
