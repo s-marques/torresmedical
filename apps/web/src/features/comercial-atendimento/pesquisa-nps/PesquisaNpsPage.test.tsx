@@ -62,7 +62,7 @@ function renderTela(opcoes: { resumo?: ResumoNps; pesquisas?: PesquisaNps[] } = 
       [`${API}/resumo`]: () => json(opcoes.resumo ?? RESUMO),
     },
   });
-  return { user: userEvent.setup(), fetchMock, ...renderApp('/pesquisa-satisfacao', fetchMock) };
+  return { user: userEvent.setup(), ...renderApp('/pesquisa-satisfacao', fetchMock) };
 }
 
 describe('Pesquisa NPS (/pesquisa-satisfacao)', () => {

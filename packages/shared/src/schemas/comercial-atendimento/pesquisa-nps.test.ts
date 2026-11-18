@@ -59,7 +59,8 @@ describe('percentual e faixaDoScore', () => {
 });
 
 describe('respostaNpsInputSchema', () => {
-  const mensagem = (r: { error?: { issues: { message: string }[] } }) => r.error?.issues[0]?.message;
+  const mensagem = (r: { error?: { issues: { message: string }[] } }) =>
+    r.error?.issues[0]?.message;
 
   it('aceita de 0 a 10', () => {
     expect(respostaNpsInputSchema.safeParse({ nota: 0 }).success).toBe(true);
@@ -98,8 +99,8 @@ describe('listPesquisasNpsQuerySchema', () => {
 
 describe('aplicarVariaveisNps', () => {
   it('troca nome e profissional', () => {
-    expect(aplicarVariaveisNps('{nome} / {profissional}', { nome: 'Ana', profissional: 'Dr. B' })).toBe(
-      'Ana / Dr. B',
-    );
+    expect(
+      aplicarVariaveisNps('{nome} / {profissional}', { nome: 'Ana', profissional: 'Dr. B' }),
+    ).toBe('Ana / Dr. B');
   });
 });

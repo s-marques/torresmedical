@@ -143,7 +143,9 @@ export const respostaNpsInputSchema = z.strictObject({
   comentario: z
     .string()
     .trim()
-    .max(NPS_COMENTARIO_MAX, { error: `O comentário deve ter até ${NPS_COMENTARIO_MAX} caracteres` })
+    .max(NPS_COMENTARIO_MAX, {
+      error: `O comentário deve ter até ${NPS_COMENTARIO_MAX} caracteres`,
+    })
     .optional()
     .transform((v) => v || undefined),
 });
