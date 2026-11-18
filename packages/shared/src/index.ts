@@ -23,6 +23,7 @@ export * from './schemas/comercial-atendimento/crm-config';
 export * from './schemas/comercial-atendimento/negocio';
 export * from './schemas/comercial-atendimento/atividade';
 export * from './schemas/comercial-atendimento/campanha';
+export * from './schemas/comercial-atendimento/confirmacao';
 export * from './schemas/comercial-atendimento/tag-atendimento';
 export * from './schemas/consultorio-assistencial/atendimento-medico';
 export * from './schemas/consultorio-assistencial/prontuario';

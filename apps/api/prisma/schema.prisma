@@ -108,8 +108,8 @@ model Usuario {
   updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(3)
 
-  empresa           Empresa            @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  perfil            Perfil?            @relation(fields: [perfilId], references: [id], onDelete: Restrict)
+  empresa           Empresa                @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  perfil            Perfil?                @relation(fields: [perfilId], references: [id], onDelete: Restrict)
   sessoes           Sessao[]
   redefinicoes      RedefinicaoSenha[]
   caixas            Caixa[]
@@ -385,15 +385,15 @@ model Profissional {
   updatedAt            DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt            DateTime?     @map("deleted_at") @db.Timestamptz(3)
 
-  especialidade Especialidade?        @relation(fields: [especialidadeId], references: [id], onDelete: Restrict)
-  horarios      HorarioAtendimento[]
-  bloqueios     BloqueioAgenda[]
-  servicos      ServicoProfissional[]
-  contratosSala ContratoSala[]
-  agendamentos  Agendamento[]
-  protocolos    Protocolo[]
-  pacotes       Pacote[]
-  usosPacote    PacoteUso[]
+  especialidade  Especialidade?        @relation(fields: [especialidadeId], references: [id], onDelete: Restrict)
+  horarios       HorarioAtendimento[]
+  bloqueios      BloqueioAgenda[]
+  servicos       ServicoProfissional[]
+  contratosSala  ContratoSala[]
+  agendamentos   Agendamento[]
+  protocolos     Protocolo[]
+  pacotes        Pacote[]
+  usosPacote     PacoteUso[]
   canaisWhatsapp CanalWhatsapp[]
 
   @@index([especialidadeId])
@@ -881,7 +881,8 @@ model TipoAgendamento {
   updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(3)
 
-  agendamentos Agendamento[]
+  agendamentos      Agendamento[]
+  modeloConfirmacao ModeloConfirmacao?
 
   @@map("tipos_agendamento")
 }
@@ -920,17 +921,17 @@ enum CanalWhatsappStatus {
 /// Dono: configuracoes-gestao. Número de WhatsApp conectado a um provedor (tela Agentes IA,
 /// "Canais WhatsApp", #26). Usado nos chips "Canal" da tela WhatsApp.
 model CanalWhatsapp {
-  id        String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  nome      String
+  id             String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome           String
   /// Somente dígitos, com DDI (ex.: 5565999990000).
-  numero    String
-  tipo      CanalWhatsappTipo   @default(DINASTI_API)
-  status    CanalWhatsappStatus @default(DESCONECTADO)
-  createdAt DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt DateTime?           @map("deleted_at") @db.Timestamptz(3)
+  numero         String
+  tipo           CanalWhatsappTipo   @default(DINASTI_API)
+  status         CanalWhatsappStatus @default(DESCONECTADO)
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime?           @map("deleted_at") @db.Timestamptz(3)
   /// Profissional dono da linha; vazio = linha da clínica (requisito do cliente, #26).
-  profissionalId String?            @map("profissional_id") @db.Uuid
+  profissionalId String?             @map("profissional_id") @db.Uuid
 
   profissional         Profissional?          @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
   conversas            ConversaWhatsapp[]
@@ -1073,11 +1074,12 @@ model MensagemWhatsapp {
   enviadaEm       DateTime                @map("enviada_em") @db.Timestamptz(3)
   createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  conversa      ConversaWhatsapp   @relation(fields: [conversaId], references: [id], onDelete: Cascade)
-  autorUsuario  Usuario?           @relation(fields: [autorUsuarioId], references: [id], onDelete: SetNull)
-  respondeA     MensagemWhatsapp?  @relation("MensagemResposta", fields: [respondeAId], references: [id], onDelete: SetNull)
-  respostas     MensagemWhatsapp[] @relation("MensagemResposta")
-  envioCampanha EnvioCampanha?
+  conversa         ConversaWhatsapp   @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+  autorUsuario     Usuario?           @relation(fields: [autorUsuarioId], references: [id], onDelete: SetNull)
+  respondeA        MensagemWhatsapp?  @relation("MensagemResposta", fields: [respondeAId], references: [id], onDelete: SetNull)
+  respostas        MensagemWhatsapp[] @relation("MensagemResposta")
+  envioCampanha    EnvioCampanha?
+  envioConfirmacao EnvioConfirmacao?
 
   @@index([conversaId, enviadaEm])
   @@index([autorUsuarioId])
@@ -1151,11 +1153,12 @@ model Agendamento {
   updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt         DateTime?         @map("deleted_at") @db.Timestamptz(3)
 
-  paciente        Paciente                 @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
-  profissional    Profissional             @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
-  tipoAgendamento TipoAgendamento?         @relation(fields: [tipoAgendamentoId], references: [id], onDelete: Restrict)
-  formaPagamento  FormaPagamento?          @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
-  recebimentos    AgendamentoRecebimento[]
+  paciente          Paciente                 @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
+  profissional      Profissional             @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+  tipoAgendamento   TipoAgendamento?         @relation(fields: [tipoAgendamentoId], references: [id], onDelete: Restrict)
+  formaPagamento    FormaPagamento?          @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
+  recebimentos      AgendamentoRecebimento[]
+  enviosConfirmacao EnvioConfirmacao[]
 
   @@index([profissionalId, inicio])
   @@index([inicio])
@@ -2363,4 +2366,84 @@ model EnvioCampanha {
   @@index([status, programadoPara])
   @@index([pacienteId])
   @@map("envios_campanha")
+}
+
+enum ConfirmacaoEtapa {
+  MSG1
+  MSG2
+  MSG3
+  LEMBRETE
+
+  @@map("confirmacao_etapa")
+}
+
+enum ConfirmacaoEnvioStatus {
+  ENVIADO
+  FALHA
+
+  @@map("confirmacao_envio_status")
+}
+
+/// Dono: comercial-atendimento. "Configuração Geral" da tela Confirmações (`/confirmacoes`):
+/// uma única linha (`id = 1`), criada com os padrões na primeira leitura.
+model ConfiguracaoConfirmacao {
+  id                   Int      @id @default(1)
+  ativo                Boolean  @default(true)
+  /// Dias entre o envio da MSG1/2/3 e a consulta (1 = véspera, 2 = dois dias antes).
+  antecedenciaDias     Int      @default(1) @map("antecedencia_dias")
+  /// "HH:MM" no fuso da clínica.
+  horarioLembrete      String   @map("horario_lembrete")
+  horarioMsg1          String   @map("horario_msg1")
+  horarioMsg2          String   @map("horario_msg2")
+  horarioMsg3          String   @map("horario_msg3")
+  /// Horário da varredura "Não confirmou" (alimenta a central de pendências, #160).
+  horarioNaoConfirmou  String   @map("horario_nao_confirmou")
+  mensagemCriacao      String   @map("mensagem_criacao")
+  mensagemConfirmada   String   @map("mensagem_confirmada")
+  mensagemJaConfirmado String   @map("mensagem_ja_confirmado")
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("configuracao_confirmacao")
+}
+
+/// Dono: comercial-atendimento. Textos de confirmação de um tipo de agendamento ("Modelos de
+/// Mensagem por Tipo"). Um modelo por tipo; exclusão lógica. Tipo sem modelo usa o padrão.
+model ModeloConfirmacao {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipoAgendamentoId     String    @unique @map("tipo_agendamento_id") @db.Uuid
+  msg1                  String
+  msg2                  String
+  msg3                  String
+  lembreteConfirmado    String    @map("lembrete_confirmado")
+  lembreteNaoConfirmado String    @map("lembrete_nao_confirmado")
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt             DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  tipoAgendamento TipoAgendamento @relation(fields: [tipoAgendamentoId], references: [id], onDelete: Restrict)
+
+  @@map("modelos_confirmacao")
+}
+
+/// Dono: comercial-atendimento. Uma mensagem de confirmação (MSG1/2/3 ou lembrete) de um
+/// agendamento. Único por agendamento e etapa: garante que o envio não se repete. Também é o
+/// "Histórico" da tela.
+model EnvioConfirmacao {
+  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agendamentoId      String                 @map("agendamento_id") @db.Uuid
+  etapa              ConfirmacaoEtapa
+  status             ConfirmacaoEnvioStatus
+  /// Motivo da falha (sem dados pessoais), ex.: SEM_CANAL, SEM_CELULAR.
+  erro               String?
+  /// Quando a recepção disparou o envio pela linha; vazio = agendador.
+  manual             Boolean                @default(false)
+  mensagemWhatsappId String?                @unique @map("mensagem_whatsapp_id") @db.Uuid
+  createdAt          DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  agendamento      Agendamento       @relation(fields: [agendamentoId], references: [id], onDelete: Restrict)
+  mensagemWhatsapp MensagemWhatsapp? @relation(fields: [mensagemWhatsappId], references: [id], onDelete: SetNull)
+
+  @@unique([agendamentoId, etapa])
+  @@index([createdAt])
+  @@map("envios_confirmacao")
 }
