@@ -204,7 +204,6 @@ export function AbaPendentes({ dataEnvio }: Readonly<{ dataEnvio: string }>) {
         busca="Buscar paciente..."
         exportacao={EXPORTACAO}
         mensagemVazio="Nenhum agendamento para esta data."
-        resumo={(meta) => `${meta.total} linha(s) no total.`}
       />
       <ConfirmDialog
         aberto={alvo !== null}
