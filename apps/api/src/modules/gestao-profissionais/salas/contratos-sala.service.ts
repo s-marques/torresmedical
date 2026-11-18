@@ -14,6 +14,7 @@ import {
   type ListContratosSalaQuery,
   type UpdateContratoSalaInput,
 } from '@torres/shared';
+import { EscopoDadosService } from '../../../common/auth/escopo-dados.service';
 import { isUuid } from '../../../common/auth/tokens';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
@@ -92,6 +93,7 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
     private readonly arquivos: ArquivosService,
     private readonly exportService: ExportService,
     private readonly contasReceber: ContasReceberService,
+    private readonly escopo: EscopoDadosService,
   ) {}
 
   async emUso(ids: readonly string[]): Promise<ReadonlySet<string>> {
@@ -302,6 +304,8 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       sala: { deletedAt: null },
       status: query.status,
       salaId: query.salaId,
+      // Usuário restrito vê só os contratos dos seus profissionais (issue #153).
+      profissionalId: this.escopo.filtroProfissional(),
     } satisfies Prisma.ContratoSalaWhereInput;
   }
 
@@ -315,11 +319,16 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
     if (!contrato) {
       throw new BusinessException(ErrorCode.NOT_FOUND, 'Contrato não encontrado', { status: 404 });
     }
+    this.escopo.garantirProfissional(contrato.profissionalId);
     return contrato;
   }
 
   /** Sala, locatário e forma de pagamento precisam existir (os dois últimos são de outros módulos). */
   private async validar(input: CreateContratoSalaInput): Promise<void> {
+    // Usuário restrito só contrata para um profissional seu (issue #153).
+    this.escopo.garantirProfissional(
+      input.locatarioTipo === 'PROFISSIONAL' ? input.locatarioId : null,
+    );
     const sala = await this.txHost.tx.sala.count({ where: { id: input.salaId, ...NAO_EXCLUIDOS } });
     if (sala === 0) this.invalido('salaId', 'Sala inválida');
     try {

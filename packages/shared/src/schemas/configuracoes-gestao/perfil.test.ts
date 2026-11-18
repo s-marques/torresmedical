@@ -13,7 +13,22 @@ describe('createPerfilSchema', () => {
         descricao: '  ',
         paginasPermitidas: ['painel.painel', 'painel.painel'],
       }),
-    ).toEqual({ nome: 'Recepção', descricao: null, paginasPermitidas: ['painel.painel'] });
+    ).toEqual({
+      nome: 'Recepção',
+      descricao: null,
+      paginasPermitidas: ['painel.painel'],
+      escopoDados: 'TODOS',
+    });
+  });
+
+  it('aceita o escopo de dados restrito aos profissionais vinculados (issue #153)', () => {
+    const base = { nome: 'Médico', paginasPermitidas: ['painel.painel'] };
+    expect(
+      createPerfilSchema.parse({ ...base, escopoDados: 'PROFISSIONAIS_VINCULADOS' }).escopoDados,
+    ).toBe('PROFISSIONAIS_VINCULADOS');
+    expect(mensagens(createPerfilSchema.safeParse({ ...base, escopoDados: 'X' }))).toEqual([
+      'Escopo de dados inválido',
+    ]);
   });
 
   it('exige Nome e ao menos uma página', () => {

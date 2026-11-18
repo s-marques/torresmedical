@@ -14,6 +14,7 @@ function perfil(parcial: Partial<Perfil>): Perfil {
     nome: 'Recepção',
     descricao: 'Acesso para recepcionistas',
     paginasPermitidas: ['painel.painel'],
+    escopoDados: 'TODOS',
     ativo: true,
     createdAt: '2026-10-14T12:00:00.000Z',
     updatedAt: '2026-10-14T12:00:00.000Z',
@@ -125,6 +126,13 @@ describe('Perfis de Acesso (/perfis)', () => {
     await user.type(within(modal).getByLabelText('Descrição'), 'Acesso de marketing');
     await user.click(within(modal).getByRole('button', { name: 'Expandir PAINEL' }));
     await user.click(within(modal).getByRole('checkbox', { name: 'Painel' }));
+    expect(within(modal).getByRole('combobox', { name: 'Dados visíveis' })).toHaveTextContent(
+      'Todos os profissionais',
+    );
+    await user.click(within(modal).getByRole('combobox', { name: 'Dados visíveis' }));
+    await user.click(
+      await screen.findByRole('option', { name: 'Somente os profissionais vinculados ao usuário' }),
+    );
     await user.click(within(modal).getByRole('button', { name: 'Cadastrar' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -132,6 +140,7 @@ describe('Perfis de Acesso (/perfis)', () => {
       nome: 'Marketing',
       descricao: 'Acesso de marketing',
       paginasPermitidas: ['painel.painel'],
+      escopoDados: 'PROFISSIONAIS_VINCULADOS',
     });
   });
 
@@ -162,6 +171,7 @@ describe('Perfis de Acesso (/perfis)', () => {
       nome: 'Recepção Geral',
       descricao: 'Acesso para recepcionistas',
       paginasPermitidas: ['painel.painel'],
+      escopoDados: 'TODOS',
     });
   });
 

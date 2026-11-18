@@ -69,6 +69,7 @@ function paraEntrada(u: Usuario): UpdateUsuarioInput {
     cargo: u.cargo,
     perfilId: u.perfilId,
     verDadosSensiveis: u.verDadosSensiveis,
+    profissionalIds: u.profissionais.map((p) => p.id),
     status: u.ativo ? 'ativo' : 'inativo',
   };
 }

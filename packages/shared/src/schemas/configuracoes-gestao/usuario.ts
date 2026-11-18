@@ -31,6 +31,22 @@ const email = z
   .min(1, { error: 'Email é obrigatório.' })
   .pipe(z.email({ error: 'Email inválido' }));
 
+/** Limite de profissionais vinculados a um usuário (secretária de vários médicos). */
+export const USUARIO_PROFISSIONAIS_MAX = 50;
+
+/**
+ * "Profissionais vinculados" (issue #153): de quem são os dados que o usuário vê quando o
+ * perfil tem o escopo `PROFISSIONAIS_VINCULADOS`. Um para o médico; um ou mais para a
+ * secretária particular (confirmado pelo dev). Ids repetidos são descartados.
+ */
+const profissionalIds = z
+  .array(z.uuid({ error: 'Profissional inválido' }), { error: 'Profissional inválido' })
+  .max(USUARIO_PROFISSIONAIS_MAX, {
+    error: `Vincule no máximo ${USUARIO_PROFISSIONAIS_MAX} profissionais`,
+  })
+  .default([])
+  .transform((ids) => [...new Set(ids)]);
+
 /**
  * `POST /api/configuracoes-gestao/usuarios` (modal "Novo Usuario"). Nome, Email e Senha são
  * obrigatórios (confirmado pelo dev, issue #37); os demais campos, não.
@@ -44,6 +60,7 @@ export const createUsuarioSchema = z.strictObject({
   /** "Perfil de Acesso (Páginas)": vazio = "Sem perfil (usa padrão da role)". */
   perfilId: z.uuid({ error: 'Perfil inválido' }).nullish().default(null),
   verDadosSensiveis: z.boolean({ error: 'Valor inválido' }).default(false),
+  profissionalIds,
 });
 
 export type CreateUsuarioInput = z.output<typeof createUsuarioSchema>;
@@ -60,6 +77,7 @@ export const updateUsuarioSchema = z.strictObject({
   cargo: cargoOpcional,
   perfilId: z.uuid({ error: 'Perfil inválido' }).nullish().default(null),
   verDadosSensiveis: z.boolean({ error: 'Valor inválido' }).default(false),
+  profissionalIds,
   status: ativoStatusSchema.default('ativo'),
 });
 
@@ -116,6 +134,8 @@ export const usuarioSchema = z.object({
   /** Nome do perfil, para as colunas "Role" e "Perfil" do grid. `null` = "Sem perfil (usa padrão da role)". */
   perfilNome: z.string().nullable(),
   verDadosSensiveis: z.boolean(),
+  /** Profissionais vinculados (issue #153), por nome. */
+  profissionais: z.array(z.object({ id: z.uuid(), nome: z.string() })),
   ativo: z.boolean(),
   ultimoLoginEm: z.iso.datetime().nullable(),
   createdAt: z.iso.datetime(),

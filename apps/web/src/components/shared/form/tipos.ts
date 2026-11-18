@@ -15,7 +15,8 @@ export interface OpcaoCampo {
  * - numero e moeda: `number` (`null` quando vazio);
  * - cor: `string` hexadecimal `#RRGGBB`, com seletor de cor e campo de texto;
  * - checkbox e switch: `boolean`;
- * - entidade: id (`null` quando vazio).
+ * - entidade: id (`null` quando vazio);
+ * - entidades: lista de ids (`[]` quando vazio).
  */
 export type TipoCampoSimples =
   | 'texto'
@@ -49,6 +50,15 @@ export type FormFieldProps = CampoBase &
     | { tipo?: TipoCampoSimples }
     | { tipo: 'select'; opcoes: readonly OpcaoCampo[] }
     | { tipo: 'entidade'; entidade: LookupEntidade; filtros?: FiltrosLookup }
+    /** Várias entidades: o valor é `string[]` (ids); `iniciais` traz os rótulos da edição. */
+    | {
+        tipo: 'entidades';
+        entidade: LookupEntidade;
+        filtros?: FiltrosLookup;
+        iniciais?: readonly { id: string; nome: string }[];
+        /** Texto quando nada foi selecionado. */
+        vazio?: string;
+      }
     /** Período De/Até: `name` é o início e `nameAte` o fim (cada um `AAAA-MM-DD`). */
     | { tipo: 'periodo'; nameAte: string }
   );

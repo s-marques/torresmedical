@@ -1,5 +1,6 @@
 import type { Permissao, UsuarioSessao } from '@torres/shared';
 import type { Request } from 'express';
+import type { EscopoDados } from './escopo-dados';
 
 /** Usuário da requisição, carregado pelo guard global a cada chamada. */
 export interface UsuarioAutenticado {
@@ -10,6 +11,8 @@ export interface UsuarioAutenticado {
   email: string;
   perfil: { id: string; nome: string } | null;
   permissoes: ReadonlySet<Permissao>;
+  /** De quem são os dados que o usuário vê (issue #153). */
+  escopo: EscopoDados;
 }
 
 /** Payload do access token: só os ids. Permissões e status são lidos do banco a cada requisição. */

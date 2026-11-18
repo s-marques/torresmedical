@@ -116,21 +116,46 @@ model Usuario {
   conversasWhatsapp ConversaWhatsapp[]
   mensagensWhatsapp MensagemWhatsapp[]
   canaisWhatsapp    CanalWhatsappUsuario[]
+  profissionais     UsuarioProfissional[]
 
   @@index([empresaId])
   @@index([perfilId])
   @@map("usuarios")
 }
 
+/// Profissional vinculado ao usuário (issue #153): define de quem são os dados que ele vê quando
+/// o perfil tem o escopo `PROFISSIONAIS_VINCULADOS`. Médico: um; secretária: um ou mais.
+model UsuarioProfissional {
+  usuarioId      String @map("usuario_id") @db.Uuid
+  profissionalId String @map("profissional_id") @db.Uuid
+
+  usuario      Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+
+  @@id([usuarioId, profissionalId])
+  @@index([profissionalId])
+  @@map("usuarios_profissionais")
+}
+
+/// Escopo de dados do perfil (issue #153): `TODOS` ou só os profissionais vinculados ao usuário.
+enum EscopoDados {
+  TODOS
+  PROFISSIONAIS_VINCULADOS
+
+  @@map("escopo_dados")
+}
+
 /// Perfil de acesso: o conjunto de permissões (`<modulo>.<recurso>.<acao>`) dos seus usuários.
 model Perfil {
-  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  nome      String    @unique
-  descricao String?
-  ativo     Boolean   @default(true)
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome        String      @unique
+  descricao   String?
+  /// Restringe agenda, pacientes, prontuário e salas aos profissionais vinculados ao usuário.
+  escopoDados EscopoDados @default(TODOS) @map("escopo_dados")
+  ativo       Boolean     @default(true)
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt   DateTime?   @map("deleted_at") @db.Timestamptz(3)
 
   permissoes PerfilPermissao[]
   usuarios   Usuario[]
@@ -395,6 +420,7 @@ model Profissional {
   pacotes        Pacote[]
   usosPacote     PacoteUso[]
   canaisWhatsapp CanalWhatsapp[]
+  usuarios       UsuarioProfissional[]
 
   @@index([especialidadeId])
   @@map("profissionais")

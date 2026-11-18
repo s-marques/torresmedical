@@ -183,6 +183,101 @@ describe('Usuários (e2e)', () => {
     });
   });
 
+  describe('profissionais vinculados (issue #153)', () => {
+    const criarProfissional = (nome: string) => prisma.profissional.create({ data: { nome } });
+
+    it('POST vincula um ou mais profissionais e audita CREATE com os vínculos', async () => {
+      const a = await criarProfissional('Ana Fictícia');
+      const b = await criarProfissional('Bruno Fictício');
+
+      const res = await http()
+        .post(BASE)
+        .send({
+          nome: 'Secretária',
+          email: 'secretaria@example.com',
+          senha: 'senha-123456',
+          profissionalIds: [b.id, a.id, b.id],
+        })
+        .expect(201);
+
+      const criado = usuarioSchema.parse(res.body);
+      expect(criado.profissionais).toEqual([
+        { id: a.id, nome: 'Ana Fictícia' },
+        { id: b.id, nome: 'Bruno Fictício' },
+      ]);
+      await expectAudit(prisma, {
+        action: 'CREATE',
+        entity: 'Usuario',
+        entityId: criado.id,
+        before: null,
+        after: { profissionais: [{ id: a.id }, { id: b.id }] },
+        userId: usuario.id,
+      });
+    });
+
+    it('PATCH substitui os vínculos e audita UPDATE', async () => {
+      const a = await criarProfissional('Ana Fictícia');
+      const b = await criarProfissional('Bruno Fictício');
+      const u = await criarNoBanco('Medico', {
+        profissionais: { create: [{ profissionalId: a.id }] },
+      });
+
+      const res = await http()
+        .patch(`${BASE}/${u.id}`)
+        .send({ nome: 'Medico', email: u.email, profissionalIds: [b.id] })
+        .expect(200);
+
+      expect(usuarioSchema.parse(res.body).profissionais).toEqual([
+        { id: b.id, nome: 'Bruno Fictício' },
+      ]);
+      expect(await prisma.usuarioProfissional.findMany({ where: { usuarioId: u.id } })).toEqual([
+        { usuarioId: u.id, profissionalId: b.id },
+      ]);
+      await expectAudit(prisma, {
+        action: 'UPDATE',
+        entity: 'Usuario',
+        entityId: u.id,
+        after: { profissionais: [{ id: b.id }] },
+        userId: usuario.id,
+      });
+
+      await http()
+        .patch(`${BASE}/${u.id}`)
+        .send({ nome: 'Medico', email: u.email, profissionalIds: [] })
+        .expect(200);
+      expect(await prisma.usuarioProfissional.count({ where: { usuarioId: u.id } })).toBe(0);
+    });
+
+    it('400 no campo profissionalIds com profissional inexistente, sem auditar nem gravar', async () => {
+      const res = await http()
+        .post(BASE)
+        .send({
+          nome: 'Medico',
+          email: 'medico@example.com',
+          senha: 'senha-123456',
+          profissionalIds: [INEXISTENTE],
+        })
+        .expect(400);
+
+      expect(res.body).toMatchObject({
+        code: 'PROFISSIONAL_INVALIDO',
+        details: [{ field: 'profissionalIds', message: 'Profissional não encontrado' }],
+      });
+      expect(await prisma.usuario.count({ where: { email: 'medico@example.com' } })).toBe(0);
+      await expectNoAudit(prisma, { entity: 'Usuario' });
+    });
+
+    it('400 com id que não é uuid', async () => {
+      const res = await http()
+        .post(BASE)
+        .send({ nome: 'X', email: 'x@example.com', senha: 'senha-123456', profissionalIds: ['x'] })
+        .expect(400);
+      expect(res.body.details).toEqual([
+        expect.objectContaining({ message: 'Profissional inválido' }),
+      ]);
+    });
+  });
+
   describe('PATCH /:id/resetar-senha', () => {
     it('200, troca o hash e audita UPDATE sem a senha em texto puro', async () => {
       const u = await criarNoBanco('Carlos');

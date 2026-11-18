@@ -10,6 +10,7 @@ import type {
 } from '@torres/shared';
 import type { Prisma } from '../../../generated/prisma/client';
 import { AuditService } from '../../../common/audit/audit.service';
+import { EscopoDadosService } from '../../../common/auth/escopo-dados.service';
 import { isUuid } from '../../../common/auth/tokens';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
@@ -88,6 +89,7 @@ export class AgendamentosAtendimentoService {
     private readonly txHost: TransactionHost<PrismaAdapter>,
     private readonly audit: AuditService,
     private readonly formasPagamento: FormasPagamentoService,
+    private readonly escopo: EscopoDadosService,
   ) {}
 
   /** Card "Registrar Recebimento": valor da consulta, já recebido, saldo e formas aceitas. */
@@ -167,7 +169,7 @@ export class AgendamentosAtendimentoService {
     const where: Prisma.AgendamentoWhereInput = {
       deletedAt: null,
       inicio: { gte, lt },
-      ...(query.profissionalId && { profissionalId: query.profissionalId }),
+      profissionalId: this.escopo.filtroProfissional(query.profissionalId),
       ...(query.status && { status: query.status }),
     };
     const orderBy = this.orderBy(query.sort);
@@ -203,6 +205,7 @@ export class AgendamentosAtendimentoService {
     return toAtendimentoMedicoItem(depois);
   }
 
+  /** 404 se não existe; 403 se é de um profissional fora do escopo do usuário (issue #153). */
   private async buscar(id: string): Promise<AgendamentoCompleto> {
     const agendamento = isUuid(id)
       ? await this.txHost.tx.agendamento.findFirst({
@@ -215,6 +218,7 @@ export class AgendamentosAtendimentoService {
         status: 404,
       });
     }
+    this.escopo.garantirProfissional(agendamento.profissionalId);
     return agendamento;
   }
 

@@ -14,6 +14,7 @@ import {
   type PacienteComRegistros,
   type PacienteResumoProntuario,
   type Prontuario as ProntuarioDto,
+  mensagemObrigatoria,
   type UpsertProntuarioInput,
 } from '@torres/shared';
 import type {
@@ -21,9 +22,12 @@ import type {
   Atendimento as AtendimentoModel,
   Prontuario as ProntuarioModel,
 } from '../../../generated/prisma/client';
+import { EscopoDadosService } from '../../../common/auth/escopo-dados.service';
+import { ValidationException } from '../../../common/errors/api.exception';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { PacientesService } from '../../comercial-atendimento/pacientes/pacientes.service';
 import { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
+import { PacientesVinculadosService } from '../pacientes-vinculados/pacientes-vinculados.service';
 
 const NAO_EXCLUIDOS = { deletedAt: null } as const;
 
@@ -137,11 +141,13 @@ export class ProntuariosService {
     private readonly txHost: TransactionHost<PrismaAdapter>,
     private readonly pacientes: PacientesService,
     private readonly profissionais: ProfissionaisService,
+    private readonly vinculados: PacientesVinculadosService,
+    private readonly escopo: EscopoDadosService,
   ) {}
 
   /** Cabeçalho do paciente (nome, contato, nascimento, sexo), ao abrir a tela de detalhe. */
   async paciente(pacienteId: string): Promise<PacienteResumoProntuario> {
-    return toResumo(await this.pacientes.detalhe(pacienteId));
+    return toResumo(await this.pacienteNoEscopo(pacienteId));
   }
 
   /** Card "Pacientes com Prontuário": só quem tem ao menos 1 atendimento ou anamnese. */
@@ -152,13 +158,13 @@ export class ProntuariosService {
     const [porAtendimento, porAnamnese] = await Promise.all([
       this.txHost.tx.atendimento.groupBy({
         by: ['pacienteId'],
-        where: NAO_EXCLUIDOS,
+        where: { ...NAO_EXCLUIDOS, profissionalId: this.escopo.filtroProfissional() },
         _count: { _all: true },
         _max: { createdAt: true },
       }),
       this.txHost.tx.anamnese.groupBy({
         by: ['pacienteId'],
-        where: NAO_EXCLUIDOS,
+        where: { ...NAO_EXCLUIDOS, profissionalId: this.escopo.filtroProfissional() },
         _count: { _all: true },
         _max: { createdAt: true },
       }),
@@ -215,14 +221,14 @@ export class ProntuariosService {
   }
 
   async detalheProntuario(pacienteId: string): Promise<ProntuarioDto> {
-    await this.pacientes.detalhe(pacienteId);
+    await this.pacienteNoEscopo(pacienteId);
     const registro = await this.txHost.tx.prontuario.findUnique({ where: { id: pacienteId } });
     return toProntuarioDto(pacienteId, registro);
   }
 
   /** "Salvar" do Prontuário Médico: cria se ainda não existir, senão substitui os campos. */
   async salvarProntuario(pacienteId: string, input: UpsertProntuarioInput): Promise<ProntuarioDto> {
-    await this.pacientes.detalhe(pacienteId);
+    await this.pacienteNoEscopo(pacienteId);
     const salvo = await this.txHost.tx.prontuario.upsert({
       where: { id: pacienteId },
       create: { id: pacienteId, ...input },
@@ -238,8 +244,12 @@ export class ProntuariosService {
     data: AtendimentoDto[];
     meta: PageRequest & { total: number; totalPages: number };
   }> {
-    await this.pacientes.detalhe(pacienteId);
-    const where = { pacienteId, ...NAO_EXCLUIDOS };
+    await this.pacienteNoEscopo(pacienteId);
+    const where = {
+      pacienteId,
+      ...NAO_EXCLUIDOS,
+      profissionalId: this.escopo.filtroProfissional(),
+    };
     const [registros, total] = await Promise.all([
       this.txHost.tx.atendimento.findMany({
         where,
@@ -265,6 +275,9 @@ export class ProntuariosService {
     pacienteId: string,
     input: CreateAtendimentoInput,
   ): Promise<AtendimentoDto> {
+    // O atendimento cria o vínculo do paciente: o usuário restrito pode registrá-lo para um
+    // profissional seu mesmo sem atendimento anterior (issue #153).
+    this.escopo.garantirProfissional(input.profissionalId);
     await this.pacientes.detalhe(pacienteId);
     const profissional = await this.profissionais.detalhe(input.profissionalId);
     const criado = await this.txHost.tx.atendimento.create({ data: { pacienteId, ...input } });
@@ -275,8 +288,12 @@ export class ProntuariosService {
     pacienteId: string,
     query: ListRegistrosQuery,
   ): Promise<{ data: Anamnese[]; meta: PageRequest & { total: number; totalPages: number } }> {
-    await this.pacientes.detalhe(pacienteId);
-    const where = { pacienteId, ...NAO_EXCLUIDOS };
+    await this.pacienteNoEscopo(pacienteId);
+    const where = {
+      pacienteId,
+      ...NAO_EXCLUIDOS,
+      profissionalId: this.escopo.filtroProfissional(),
+    };
     const [registros, total] = await Promise.all([
       this.txHost.tx.anamnese.findMany({
         where,
@@ -302,8 +319,20 @@ export class ProntuariosService {
     };
   }
 
+  /**
+   * Usuário restrito precisa informar um profissional seu: sem ele, a anamnese ficaria fora do
+   * escopo e sumiria da própria lista (issue #153).
+   */
   async criarAnamnese(pacienteId: string, input: CreateAnamneseInput): Promise<Anamnese> {
-    await this.pacientes.detalhe(pacienteId);
+    await this.pacienteNoEscopo(pacienteId);
+    if (this.escopo.restrito()) {
+      if (!input.profissionalId) {
+        throw new ValidationException([
+          { field: 'profissionalId', message: mensagemObrigatoria('Profissional') },
+        ]);
+      }
+      this.escopo.garantirProfissional(input.profissionalId);
+    }
     const profissional = input.profissionalId
       ? await this.profissionais.detalhe(input.profissionalId)
       : null;
@@ -323,8 +352,12 @@ export class ProntuariosService {
     data: HistoricoClinicoItem[];
     meta: PageRequest & { total: number; totalPages: number };
   }> {
-    await this.pacientes.detalhe(pacienteId);
-    const where = { pacienteId, ...NAO_EXCLUIDOS };
+    await this.pacienteNoEscopo(pacienteId);
+    const where = {
+      pacienteId,
+      ...NAO_EXCLUIDOS,
+      profissionalId: this.escopo.filtroProfissional(),
+    };
     const [atendimentos, anamneses] = await Promise.all([
       this.txHost.tx.atendimento.findMany({ where, orderBy: { createdAt: 'desc' } }),
       this.txHost.tx.anamnese.findMany({ where, orderBy: { createdAt: 'desc' } }),
@@ -354,6 +387,13 @@ export class ProntuariosService {
     ].sort((x, y) => y.data.localeCompare(x.data));
 
     return paginarEmMemoria(itens, query);
+  }
+
+  /** Paciente existente (404) e vinculado ao usuário restrito (403, issue #153). */
+  private async pacienteNoEscopo(pacienteId: string): Promise<PacienteApiDto> {
+    const paciente = await this.pacientes.detalhe(pacienteId);
+    await this.vinculados.garantir(pacienteId);
+    return paciente;
   }
 
   /** Nome de cada profissional (sem FK), 1 consulta por id distinto. */

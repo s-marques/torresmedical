@@ -26,6 +26,10 @@ export interface OpcoesUsuarioTeste {
   permissoes?: readonly Permissao[];
   ativo?: boolean;
   empresaId?: string;
+  /** Issue #153: perfil restrito aos profissionais vinculados. */
+  escopoDados?: 'TODOS' | 'PROFISSIONAIS_VINCULADOS';
+  /** Issue #153: profissionais vinculados ao usuário. */
+  profissionalIds?: readonly string[];
 }
 
 /**
@@ -34,7 +38,13 @@ export interface OpcoesUsuarioTeste {
  */
 export async function criarUsuarioTeste(
   app: INestApplication,
-  { permissoes = [], ativo = true, empresaId }: OpcoesUsuarioTeste = {},
+  {
+    permissoes = [],
+    ativo = true,
+    empresaId,
+    escopoDados = 'TODOS',
+    profissionalIds = [],
+  }: OpcoesUsuarioTeste = {},
 ): Promise<UsuarioTeste> {
   const prisma = app.get(PrismaService);
   const empresa =
@@ -47,6 +57,7 @@ export async function criarUsuarioTeste(
   const perfil = await prisma.perfil.create({
     data: {
       nome: `Perfil ${faker.string.uuid()}`,
+      escopoDados,
       permissoes: { create: permissoes.map((permissao) => ({ permissao })) },
     },
   });
@@ -58,6 +69,7 @@ export async function criarUsuarioTeste(
       email: `teste.${faker.string.uuid()}@example.com`,
       senhaHash: await hashSenha(SENHA_TESTE),
       ativo,
+      profissionais: { create: profissionalIds.map((profissionalId) => ({ profissionalId })) },
     },
     include: USUARIO_COM_PERMISSOES,
   });

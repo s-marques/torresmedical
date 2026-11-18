@@ -1,3 +1,4 @@
+import { escopoFalso } from '../../../../test/utils/escopo-falso';
 import type { TransactionHost } from '@nestjs-cls/transactional';
 import type { AuditService } from '../../../common/audit/audit.service';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
@@ -29,7 +30,7 @@ const AGENDAMENTO = {
 const ID_FORMA = '2b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 const FORMAS = [{ id: ID_FORMA, label: 'PIX', descricao: 'Receber' }];
 
-function setup(registro = AGENDAMENTO, recebidos: number[] = []) {
+function setup(registro = AGENDAMENTO, recebidos: number[] = [], escopo?: string[]) {
   const agendamento = {
     findMany: jest.fn().mockResolvedValue([registro]),
     count: jest.fn().mockResolvedValue(1),
@@ -74,6 +75,7 @@ function setup(registro = AGENDAMENTO, recebidos: number[] = []) {
     txHost,
     audit as unknown as AuditService,
     formas as unknown as FormasPagamentoService,
+    escopoFalso(escopo),
   );
   return { service, agendamento, agendamentoRecebimento, audit, formas };
 }
@@ -228,6 +230,28 @@ describe('AgendamentosAtendimentoService', () => {
       await expect(
         setup(AGENDAMENTO, [200]).service.registrarRecebimento(ID, { ...entrada, valor: 60 }),
       ).rejects.toMatchObject({ code: 'VALOR_ACIMA_DO_SALDO' });
+    });
+  });
+
+  describe('escopo de dados (issue #153)', () => {
+    const OUTRO = '9b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
+
+    it('listarDoDia: restrito lista só os profissionais vinculados', async () => {
+      const { service, agendamento } = setup(AGENDAMENTO, [], [ID_PROF]);
+      await service.listarDoDia(QUERY);
+      expect(agendamento.findMany.mock.calls[0][0].where.profissionalId).toEqual({
+        in: [ID_PROF],
+      });
+    });
+
+    it('resumo, pagamento e alterarStatus: agendamento de outro profissional dá 403', async () => {
+      const { service, agendamento } = setup(AGENDAMENTO, [], [OUTRO]);
+      await expect(service.resumo(AGENDAMENTO.id)).rejects.toMatchObject({ status: 403 });
+      await expect(service.pagamento(AGENDAMENTO.id)).rejects.toMatchObject({ status: 403 });
+      await expect(service.alterarStatus(AGENDAMENTO.id, 'ATENDIDO')).rejects.toMatchObject({
+        status: 403,
+      });
+      expect(agendamento.update).not.toHaveBeenCalled();
     });
   });
 });

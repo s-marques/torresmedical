@@ -1,3 +1,4 @@
+import { escopoFalso } from '../../../../test/utils/escopo-falso';
 import { txHostFalso } from '../../../../test/utils/tx-host-falso';
 import type { TiposAgendamentoService } from '../../configuracoes-gestao/tipos-agendamento/tipos-agendamento.service';
 import type { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
@@ -25,7 +26,7 @@ const REGISTRO = {
   tipoAgendamento: null,
 };
 
-function criar() {
+function criar(profissionaisDoEscopo?: string[]) {
   const { txHost, delegate } = txHostFalso('agendamento', [REGISTRO]);
   const pacientes = { findById: jest.fn().mockResolvedValue({}) };
   const profissionais = {
@@ -38,6 +39,7 @@ function criar() {
     pacientes as unknown as PacientesService,
     profissionais as unknown as ProfissionaisService,
     tipos as unknown as TiposAgendamentoService,
+    escopoFalso(profissionaisDoEscopo),
   );
   return { service, delegate, pacientes, profissionais, tipos };
 }
@@ -129,5 +131,61 @@ describe('AgendaService', () => {
   it('listarProfissionais delega ao módulo dono', async () => {
     const { service } = criar();
     await expect(service.listarProfissionais()).resolves.toEqual([{ id: ID_PROF }]);
+  });
+
+  describe('escopo de dados (issue #153)', () => {
+    const OUTRO = '3b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
+
+    async function status(promessa: Promise<unknown>): Promise<number | undefined> {
+      try {
+        await promessa;
+        return 200;
+      } catch (erro) {
+        return (erro as { getStatus?: () => number }).getStatus?.();
+      }
+    }
+
+    it('list: restrito sem filtro lista só os vinculados', async () => {
+      const { service, delegate } = criar([ID_PROF]);
+      await service.list({ inicio: '2026-10-19', fim: '2026-10-25' });
+      expect(delegate.findMany.mock.calls[0][0].where.profissionalId).toEqual({ in: [ID_PROF] });
+    });
+
+    it('list: filtro de outro profissional dá 403 sem consultar o banco', async () => {
+      const { service, delegate } = criar([ID_PROF]);
+      expect(
+        await status(
+          service.list({ inicio: '2026-10-19', fim: '2026-10-25', profissionalId: OUTRO }),
+        ),
+      ).toBe(403);
+      expect(delegate.findMany).not.toHaveBeenCalled();
+    });
+
+    it('findById: agendamento de outro profissional dá 403', async () => {
+      const { service } = criar([OUTRO]);
+      expect(await status(service.findById(ID))).toBe(403);
+    });
+
+    it('create: restrito só agenda para os vinculados', async () => {
+      const { service, delegate } = criar([OUTRO]);
+      const entrada = {
+        pacienteId: ID,
+        profissionalId: ID_PROF,
+        tipoAgendamentoId: null,
+        data: '2026-10-22',
+        hora: '16:00',
+        duracaoMinutos: 30,
+        valor: null,
+        convenio: false,
+        observacoes: null,
+      };
+      expect(await status(service.create(entrada))).toBe(403);
+      expect(delegate.create).not.toHaveBeenCalled();
+    });
+
+    it('listarProfissionais: só os do escopo', async () => {
+      const { service } = criar([OUTRO]);
+      await expect(service.listarProfissionais()).resolves.toEqual([]);
+    });
   });
 });
