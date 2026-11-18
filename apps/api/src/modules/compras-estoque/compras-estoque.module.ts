@@ -1,6 +1,11 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
+import { ComercialAtendimentoModule } from '../comercial-atendimento/comercial-atendimento.module';
+import { ConfiguracoesGestaoModule } from '../configuracoes-gestao/configuracoes-gestao.module';
 import { FinanceiroModule } from '../financeiro/financeiro.module';
+import { GestaoProfissionaisModule } from '../gestao-profissionais/gestao-profissionais.module';
+import { BaixasInsumosController } from './baixas-insumos/baixas-insumos.controller';
+import { BaixasInsumosService } from './baixas-insumos/baixas-insumos.service';
 import { CategoriasController } from './categorias/categorias.controller';
 import { CategoriasService } from './categorias/categorias.service';
 import { ComprasController } from './compras/compras.controller';
@@ -27,6 +32,7 @@ const SERVICES = [
   LotesService,
   EstoqueService,
   PedidosCompraService,
+  BaixasInsumosService,
 ];
 
 /**
@@ -35,7 +41,12 @@ const SERVICES = [
  * Lotes / Validade e dos Pedidos de Compra (Pedidos em Trânsito).
  */
 @Module({
-  imports: [forwardRef(() => FinanceiroModule)],
+  imports: [
+    forwardRef(() => FinanceiroModule),
+    forwardRef(() => ComercialAtendimentoModule),
+    forwardRef(() => GestaoProfissionaisModule),
+    ConfiguracoesGestaoModule,
+  ],
   controllers: [
     criarLookupController('fornecedores', FornecedoresService),
     FornecedoresController,
@@ -49,6 +60,7 @@ const SERVICES = [
     EstoqueController,
     LotesController,
     PedidosCompraController,
+    BaixasInsumosController,
   ],
   providers: SERVICES,
   exports: SERVICES,

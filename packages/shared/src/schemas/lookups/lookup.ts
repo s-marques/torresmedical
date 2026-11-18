@@ -118,6 +118,7 @@ const PACIENTE = telas(
   'gestao-profissionais.salas',
   'comercial-atendimento.whatsapp',
   'comercial-atendimento.pipeline',
+  'compras-estoque.baixa-insumos',
 );
 
 const PROFISSIONAL = telas(
@@ -130,11 +131,13 @@ const PROFISSIONAL = telas(
   'gestao-profissionais.receita-profissionais',
   'configuracoes-gestao.base-conhecimento',
   'comercial-atendimento.pipeline',
+  'compras-estoque.baixa-insumos',
 );
 
 const EMPRESA = telas(
   'configuracoes-gestao.minha-empresa',
   'regulatorio-qualidade.alvaras-licencas',
+  'compras-estoque.baixa-insumos',
 );
 
 const FORNECEDOR = telas(
