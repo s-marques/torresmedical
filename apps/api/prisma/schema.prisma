@@ -115,6 +115,7 @@ model Usuario {
   caixas            Caixa[]
   conversasWhatsapp ConversaWhatsapp[]
   mensagensWhatsapp MensagemWhatsapp[]
+  canaisWhatsapp    CanalWhatsappUsuario[]
 
   @@index([empresaId])
   @@index([perfilId])
@@ -393,6 +394,7 @@ model Profissional {
   protocolos    Protocolo[]
   pacotes       Pacote[]
   usosPacote    PacoteUso[]
+  canaisWhatsapp CanalWhatsapp[]
 
   @@index([especialidadeId])
   @@map("profissionais")
@@ -910,6 +912,7 @@ enum CanalWhatsappTipo {
 enum CanalWhatsappStatus {
   CONECTADO
   DESCONECTADO
+  AGUARDANDO_QR
 
   @@map("canal_whatsapp_status")
 }
@@ -926,12 +929,31 @@ model CanalWhatsapp {
   createdAt DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt DateTime?           @map("deleted_at") @db.Timestamptz(3)
+  /// Profissional dono da linha; vazio = linha da clínica (requisito do cliente, #26).
+  profissionalId String?            @map("profissional_id") @db.Uuid
 
+  profissional         Profissional?          @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
   conversas            ConversaWhatsapp[]
+  usuarios             CanalWhatsappUsuario[]
   campanhas            Campanha[]
   mensagensAutomaticas MensagemAutomatica[]
 
+  @@index([profissionalId])
   @@map("canais_whatsapp")
+}
+
+/// Dono: configuracoes-gestao. Usuários com acesso ao canal (modal "Usuários"). Canal sem
+/// nenhum vínculo é visível a todos os usuários.
+model CanalWhatsappUsuario {
+  canalId   String @map("canal_id") @db.Uuid
+  usuarioId String @map("usuario_id") @db.Uuid
+
+  canal   CanalWhatsapp @relation(fields: [canalId], references: [id], onDelete: Cascade)
+  usuario Usuario       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@id([canalId, usuarioId])
+  @@index([usuarioId])
+  @@map("canais_whatsapp_usuarios")
 }
 
 /// Dono: comercial-atendimento. Pessoa que conversa pelo WhatsApp; pode ser ou não um paciente.

@@ -85,7 +85,7 @@ export class ConversasWhatsappService {
   async contadores(query: ContadoresConversasWhatsappQuery): Promise<ContadoresConversasWhatsapp> {
     const grupos = await this.txHost.tx.conversaWhatsapp.groupBy({
       by: ['status'],
-      where: { canalId: query.canalId },
+      where: { canalId: query.canalId, canal: this.canais.filtroAcesso() },
       _count: { _all: true },
     });
     const contadores = Object.fromEntries(
@@ -173,6 +173,8 @@ export class ConversasWhatsappService {
   >): Prisma.ConversaWhatsappWhereInput {
     return {
       canalId,
+      // Só as conversas dos canais a que o usuário tem acesso (aceite de segurança do #26).
+      canal: this.canais.filtroAcesso(),
       status: status && CONVERSA_WHATSAPP_STATUS_DO_FILTRO[status],
       OR: search ? busca(search) : undefined,
     };
