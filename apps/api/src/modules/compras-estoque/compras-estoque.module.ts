@@ -11,6 +11,8 @@ import { FornecedoresController } from './fornecedores/fornecedores.controller';
 import { FornecedoresService } from './fornecedores/fornecedores.service';
 import { LotesController } from './lotes/lotes.controller';
 import { LotesService } from './lotes/lotes.service';
+import { PedidosCompraController } from './pedidos-compra/pedidos-compra.controller';
+import { PedidosCompraService } from './pedidos-compra/pedidos-compra.service';
 import { ProdutosController } from './produtos/produtos.controller';
 import { ProdutosService } from './produtos/produtos.service';
 import { UnidadesMedidaController } from './unidades-medida/unidades-medida.controller';
@@ -24,12 +26,13 @@ const SERVICES = [
   ComprasService,
   LotesService,
   EstoqueService,
+  PedidosCompraService,
 ];
 
 /**
  * Módulo COMPRAS / ESTOQUE do inventário. Dono das entidades Fornecedor, Produto/Serviço,
- * Categoria e Unidade de medida, da Entrada de Compras, do Estoque (saldo e movimentações) e dos
- * Lotes / Validade.
+ * Categoria e Unidade de medida, da Entrada de Compras, do Estoque (saldo e movimentações), dos
+ * Lotes / Validade e dos Pedidos de Compra (Pedidos em Trânsito).
  */
 @Module({
   imports: [forwardRef(() => FinanceiroModule)],
@@ -45,6 +48,7 @@ const SERVICES = [
     ComprasController,
     EstoqueController,
     LotesController,
+    PedidosCompraController,
   ],
   providers: SERVICES,
   exports: SERVICES,
