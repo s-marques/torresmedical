@@ -21,6 +21,10 @@ import { ConfirmacoesConfigService } from './confirmacoes/confirmacoes-config.se
 import { ConfirmacoesController } from './confirmacoes/confirmacoes.controller';
 import { ConfirmacoesService } from './confirmacoes/confirmacoes.service';
 import { EnvioConfirmacaoService } from './confirmacoes/envio-confirmacao.service';
+import { GruposWhatsappController } from './grupos-whatsapp/grupos-whatsapp.controller';
+import { GruposWhatsappService } from './grupos-whatsapp/grupos-whatsapp.service';
+import { ProvedorGruposVazio } from './grupos-whatsapp/provedor-grupos-vazio';
+import { ProvedorGruposWhatsapp } from './grupos-whatsapp/provedor-grupos-whatsapp';
 import { PrepararEnviosConsumer } from './campanhas/preparar-envios.consumer';
 import { AgendaService } from './agenda/agenda.service';
 import { AgendamentosAtendimentoService } from './agenda/agendamentos-atendimento.service';
@@ -65,6 +69,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     AtividadesController,
     CampanhasController,
     ConfirmacoesController,
+    GruposWhatsappController,
     ConsultasRealizadasController,
     ConversasWhatsappController,
     CrmConfigController,
@@ -110,6 +115,8 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     ConfirmacoesConfigService,
     EnvioConfirmacaoService,
     ConfirmacoesService,
+    GruposWhatsappService,
+    { provide: ProvedorGruposWhatsapp, useClass: ProvedorGruposVazio },
     ConfirmacoesAgendador,
   ],
   exports: [PacientesService, OrigensClienteService, AgendamentosAtendimentoService],
