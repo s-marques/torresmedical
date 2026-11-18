@@ -48,6 +48,8 @@ const TIPO: Readonly<Record<FormaPagamentoTipo, TipoFormaPagamento>> = {
 
 const NAO_EXCLUIDAS = { deletedAt: null } as const;
 
+const TIPOS_CARTAO: readonly TipoFormaPagamento[] = ['CARTAO_CREDITO', 'CARTAO_DEBITO'];
+
 /** Colunas exportáveis, iguais às do grid. */
 export const FORMA_PAGAMENTO_EXPORT_DEFINITIONS: readonly ExportColumn<
   FormaPagamento,
@@ -156,6 +158,23 @@ export class FormasPagamentoService extends EntidadeLookupService<
       finalidade: finalidade ? FINALIDADE[finalidade] : undefined,
       tipo: tipo ? TIPO[tipo] : undefined,
     };
+  }
+
+  /**
+   * Formas de recebimento sem cartão, em ordem alfabética (aba Pagamento do Atendimento Médico,
+   * #38): o cartão se lança pela Agenda, que tem bandeira, NSU e parcelas.
+   */
+  async paraRecebimentoSemCartao(): Promise<LookupItem[]> {
+    const formas = await this.txHost.tx.formaPagamento.findMany({
+      where: { ...SELECIONAVEIS, finalidade: 'RECEBER', tipo: { notIn: [...TIPOS_CARTAO] } },
+      orderBy: [{ nome: 'asc' }, { id: 'asc' }],
+    });
+    return formas.map((forma) => this.toItem(forma));
+  }
+
+  /** A forma é de cartão (crédito ou débito)? 404 se não existir. */
+  async ehCartao(id: string): Promise<boolean> {
+    return TIPOS_CARTAO.includes((await this.findById(id)).tipo);
   }
 
   protected filtro(query: LookupQuery<'formas-pagamento'>): Prisma.FormaPagamentoWhereInput {

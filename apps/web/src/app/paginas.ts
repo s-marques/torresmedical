@@ -22,6 +22,9 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   'comercial-atendimento.negocios': lazy(
     () => import('@/features/comercial-atendimento/negocios/NegociosPage'),
   ),
+  'comercial-atendimento.campanhas': lazy(
+    () => import('@/features/comercial-atendimento/campanhas/CampanhasPage'),
+  ),
   'comercial-atendimento.atividades': lazy(
     () => import('@/features/comercial-atendimento/atividades/AtividadesPage'),
   ),
@@ -36,6 +39,9 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   ),
   'comercial-atendimento.whatsapp': lazy(
     () => import('@/features/comercial-atendimento/whatsapp/WhatsappPage'),
+  ),
+  'consultorio-assistencial.atendimento-medico': lazy(
+    () => import('@/features/consultorio-assistencial/atendimento-medico/AtendimentoMedicoPage'),
   ),
   'consultorio-assistencial.prontuarios': lazy(
     () => import('@/features/consultorio-assistencial/prontuarios/ProntuariosPage'),

@@ -91,28 +91,28 @@ model HorarioIntervalo {
 
 /// Usuário do sistema. Sem `senhaHash` não há login (até definir a senha pela redefinição).
 model Usuario {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  empresaId     String    @map("empresa_id") @db.Uuid
-  perfilId      String?   @map("perfil_id") @db.Uuid
-  nome          String
-  email         String    @unique
-  telefone      String?
-  cargo         String?
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId         String    @map("empresa_id") @db.Uuid
+  perfilId          String?   @map("perfil_id") @db.Uuid
+  nome              String
+  email             String    @unique
+  telefone          String?
+  cargo             String?
   /// Hash argon2id. Nunca sai em resposta, log ou audit_log.
-  senhaHash     String?   @map("senha_hash")
+  senhaHash         String?   @map("senha_hash")
   /// Libera ver CPF, RG, endereço e e-mail dos pacientes (tela Usuários).
-  verDadosSensiveis Boolean @default(false) @map("ver_dados_sensiveis")
-  ativo         Boolean   @default(true)
-  ultimoLoginEm DateTime? @map("ultimo_login_em") @db.Timestamptz(3)
-  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(3)
+  verDadosSensiveis Boolean   @default(false) @map("ver_dados_sensiveis")
+  ativo             Boolean   @default(true)
+  ultimoLoginEm     DateTime? @map("ultimo_login_em") @db.Timestamptz(3)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(3)
 
-  empresa      Empresa            @relation(fields: [empresaId], references: [id], onDelete: Restrict)
-  perfil       Perfil?            @relation(fields: [perfilId], references: [id], onDelete: Restrict)
-  sessoes      Sessao[]
-  redefinicoes RedefinicaoSenha[]
-  caixas       Caixa[]
+  empresa           Empresa            @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  perfil            Perfil?            @relation(fields: [perfilId], references: [id], onDelete: Restrict)
+  sessoes           Sessao[]
+  redefinicoes      RedefinicaoSenha[]
+  caixas            Caixa[]
   conversasWhatsapp ConversaWhatsapp[]
   mensagensWhatsapp MensagemWhatsapp[]
   canaisWhatsapp    CanalWhatsappUsuario[]
@@ -252,13 +252,14 @@ model Paciente {
   updatedAt               DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt               DateTime?      @map("deleted_at") @db.Timestamptz(3)
 
-  origemCliente OrigemCliente? @relation(fields: [origemClienteId], references: [id], onDelete: Restrict)
-  agendamentos  Agendamento[]
-  orcamentos    Orcamento[]
-  vendas        Venda[]
-  pacotes       Pacote[]
-  contasReceber ContaReceber[]
+  origemCliente    OrigemCliente?    @relation(fields: [origemClienteId], references: [id], onDelete: Restrict)
+  agendamentos     Agendamento[]
+  orcamentos       Orcamento[]
+  vendas           Venda[]
+  pacotes          Pacote[]
+  contasReceber    ContaReceber[]
   contatosWhatsapp ContatoWhatsapp[]
+  enviosCampanha   EnvioCampanha[]
 
   @@index([documento])
   @@index([origemClienteId])
@@ -278,8 +279,10 @@ model OrigemCliente {
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
 
-  pacientes Paciente[]
-  negocios  Negocio[]
+  pacientes            Paciente[]
+  negocios             Negocio[]
+  campanhas            Campanha[]
+  mensagensAutomaticas MensagemAutomatica[]
 
   @@index([ordem])
   @@map("origens_cliente")
@@ -806,12 +809,13 @@ model FormaPagamento {
   updatedAt              DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt              DateTime?           @map("deleted_at") @db.Timestamptz(3)
 
-  orcamentos       Orcamento[]
-  agendamentos     Agendamento[]
-  vendas           Venda[]
-  contasPagar      ContaPagar[]
-  baixasContaPagar ContaPagarBaixa[]
-  contasReceber    ContaReceber[]
+  orcamentos              Orcamento[]
+  agendamentos            Agendamento[]
+  vendas                  Venda[]
+  contasPagar             ContaPagar[]
+  baixasContaPagar        ContaPagarBaixa[]
+  contasReceber           ContaReceber[]
+  recebimentosAgendamento AgendamentoRecebimento[]
 
   @@map("formas_pagamento")
 }
@@ -928,9 +932,11 @@ model CanalWhatsapp {
   /// Profissional dono da linha; vazio = linha da clínica (requisito do cliente, #26).
   profissionalId String?            @map("profissional_id") @db.Uuid
 
-  profissional Profissional?          @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
-  conversas    ConversaWhatsapp[]
-  usuarios     CanalWhatsappUsuario[]
+  profissional         Profissional?          @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+  conversas            ConversaWhatsapp[]
+  usuarios             CanalWhatsappUsuario[]
+  campanhas            Campanha[]
+  mensagensAutomaticas MensagemAutomatica[]
 
   @@index([profissionalId])
   @@map("canais_whatsapp")
@@ -1021,6 +1027,8 @@ enum MensagemWhatsappAutor {
   ASSISTENTE_VIRTUAL
   /// Enviada direto do celular da clínica, fora do sistema.
   CELULAR
+  /// Campanha ou mensagem automática (tela Campanhas).
+  CAMPANHA
 
   @@map("mensagem_whatsapp_autor")
 }
@@ -1065,10 +1073,11 @@ model MensagemWhatsapp {
   enviadaEm       DateTime                @map("enviada_em") @db.Timestamptz(3)
   createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  conversa    ConversaWhatsapp   @relation(fields: [conversaId], references: [id], onDelete: Cascade)
-  autorUsuario Usuario?          @relation(fields: [autorUsuarioId], references: [id], onDelete: SetNull)
-  respondeA   MensagemWhatsapp?  @relation("MensagemResposta", fields: [respondeAId], references: [id], onDelete: SetNull)
-  respostas   MensagemWhatsapp[] @relation("MensagemResposta")
+  conversa      ConversaWhatsapp   @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+  autorUsuario  Usuario?           @relation(fields: [autorUsuarioId], references: [id], onDelete: SetNull)
+  respondeA     MensagemWhatsapp?  @relation("MensagemResposta", fields: [respondeAId], references: [id], onDelete: SetNull)
+  respostas     MensagemWhatsapp[] @relation("MensagemResposta")
+  envioCampanha EnvioCampanha?
 
   @@index([conversaId, enviadaEm])
   @@index([autorUsuarioId])
@@ -1112,6 +1121,10 @@ enum AgendamentoStatus {
   REAGENDAR
   ATENDIDO
   FALTOU
+  /// Tela Atendimento Médico (#38): filtro "Aguardando".
+  AGUARDANDO
+  /// Tela Atendimento Médico (#38): gravado pelo "Atender".
+  EM_ATENDIMENTO
 }
 
 /// Dono: comercial-atendimento. Consulta/procedimento marcado na tela Agenda (`/agenda`).
@@ -1138,16 +1151,36 @@ model Agendamento {
   updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt         DateTime?         @map("deleted_at") @db.Timestamptz(3)
 
-  paciente        Paciente         @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
-  profissional    Profissional     @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
-  tipoAgendamento TipoAgendamento? @relation(fields: [tipoAgendamentoId], references: [id], onDelete: Restrict)
-  formaPagamento  FormaPagamento?  @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
+  paciente        Paciente                 @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
+  profissional    Profissional             @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+  tipoAgendamento TipoAgendamento?         @relation(fields: [tipoAgendamentoId], references: [id], onDelete: Restrict)
+  formaPagamento  FormaPagamento?          @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
+  recebimentos    AgendamentoRecebimento[]
 
   @@index([profissionalId, inicio])
   @@index([inicio])
   @@index([pacienteId])
   @@index([formaPagamentoId])
   @@map("agendamentos")
+}
+
+/// Dono: comercial-atendimento. Recebimento (parcial ou total) da consulta, registrado na aba
+/// "Pagamento" da tela Atendimento Médico (#38). Quando a soma cobre o valor, o agendamento
+/// ganha `pagoEm` e a forma do último recebimento.
+model AgendamentoRecebimento {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agendamentoId    String   @map("agendamento_id") @db.Uuid
+  valor            Decimal  @db.Decimal(12, 2)
+  formaPagamentoId String   @map("forma_pagamento_id") @db.Uuid
+  recebidoEm       DateTime @default(now()) @map("recebido_em") @db.Timestamptz(3)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  agendamento    Agendamento    @relation(fields: [agendamentoId], references: [id], onDelete: Restrict)
+  formaPagamento FormaPagamento @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
+
+  @@index([agendamentoId])
+  @@index([formaPagamentoId])
+  @@map("agendamento_recebimentos")
 }
 
 /// Dono: gestao-profissionais. Serviço/procedimento que um profissional realiza (tela Serviços
@@ -1932,31 +1965,89 @@ model Prontuario {
 /// `horario`/`procedimentoId`/`pagamentoStatus` ficam reservados para a tela Atendimento Médico
 /// (#38, agenda do dia), que deve reaproveitar esta mesma entidade.
 model Atendimento {
-  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   /// Paciente (comercial-atendimento), sem FK: acesso pelo service exportado.
-  pacienteId     String            @map("paciente_id") @db.Uuid
+  pacienteId      String            @map("paciente_id") @db.Uuid
   /// Profissional (gestao-profissionais), sem FK: acesso pelo service exportado.
-  profissionalId String            @map("profissional_id") @db.Uuid
-  tipo           AtendimentoTipo?
-  queixa         String?
-  evolucao       String?
-  diagnostico    String?
-  conduta        String?
-  observacoes    String?
-  status         AtendimentoStatus @default(EM_ANDAMENTO)
+  profissionalId  String            @map("profissional_id") @db.Uuid
+  tipo            AtendimentoTipo?
+  queixa          String?
+  evolucao        String?
+  diagnostico     String?
+  conduta         String?
+  observacoes     String?
+  status          AtendimentoStatus @default(EM_ANDAMENTO)
   /// Reservado para #38 (agenda do dia): data/hora do agendamento.
-  horario         DateTime? @db.Timestamptz(3)
+  horario         DateTime?         @db.Timestamptz(3)
   /// Reservado para #38: procedimento da agenda, sem FK.
-  procedimentoId  String?   @map("procedimento_id") @db.Uuid
+  procedimentoId  String?           @map("procedimento_id") @db.Uuid
   /// Reservado para #38: situação do pagamento do atendimento.
-  pagamentoStatus String?   @map("pagamento_status")
-  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt      DateTime?         @map("deleted_at") @db.Timestamptz(3)
+  pagamentoStatus String?           @map("pagamento_status")
+  /// Agendamento (comercial-atendimento) que originou o atendimento na tela Atendimento Médico
+  /// (#38), sem FK. Um atendimento por agendamento.
+  agendamentoId   String?           @unique @map("agendamento_id") @db.Uuid
+  /// Entrada no consultório ("Atender"/"Iniciar Atendimento").
+  iniciadoEm      DateTime?         @map("iniciado_em") @db.Timestamptz(3)
+  /// Fim do atendimento ("Finalizar").
+  finalizadoEm    DateTime?         @map("finalizado_em") @db.Timestamptz(3)
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt       DateTime?         @map("deleted_at") @db.Timestamptz(3)
+
+  evolucoes AtendimentoEvolucao[]
+  receitas  AtendimentoReceita[]
 
   @@index([pacienteId])
   @@index([profissionalId])
   @@map("atendimentos")
+}
+
+enum EvolucaoTipo {
+  EVOLUCAO
+  DIAGNOSTICO
+  PRESCRICAO
+  OBSERVACAO
+  ENCAMINHAMENTO
+
+  @@map("evolucao_tipo")
+}
+
+/// Dono: consultorio-assistencial. Evolução registrada no atendimento (aba "Evolução" da tela
+/// Atendimento Médico, #38). Várias por atendimento.
+model AtendimentoEvolucao {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  atendimentoId String       @map("atendimento_id") @db.Uuid
+  tipo          EvolucaoTipo @default(EVOLUCAO)
+  texto         String
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt     DateTime?    @map("deleted_at") @db.Timestamptz(3)
+
+  atendimento Atendimento @relation(fields: [atendimentoId], references: [id], onDelete: Restrict)
+
+  @@index([atendimentoId])
+  @@map("atendimento_evolucoes")
+}
+
+/// Dono: consultorio-assistencial. Receita manual do atendimento (aba "Receita" da tela
+/// Atendimento Médico, #38). A receita digital é da Memed, fora deste model.
+model AtendimentoReceita {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  atendimentoId String       @map("atendimento_id") @db.Uuid
+  tipo          EvolucaoTipo @default(EVOLUCAO)
+  /// "Receita Amarela (Controlada)".
+  controlada    Boolean      @default(false)
+  validadeDias  Int          @default(30) @map("validade_dias")
+  texto         String
+  observacoes   String?
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt     DateTime?    @map("deleted_at") @db.Timestamptz(3)
+
+  atendimento Atendimento @relation(fields: [atendimentoId], references: [id], onDelete: Restrict)
+
+  @@index([atendimentoId])
+  @@map("atendimento_receitas")
 }
 
 /// Dono: consultorio-assistencial. Anamnese clínica (aba "Anamneses" da tela Prontuários).
@@ -2146,4 +2237,130 @@ model AtividadeNegocio {
   @@index([status, dataHora])
   @@index([responsavelId])
   @@map("atividades_negocio")
+}
+
+enum CampanhaTipoEnvio {
+  TEXTO
+
+  @@map("campanha_tipo_envio")
+}
+
+enum CampanhaFiltro {
+  TODOS
+  ANIVERSARIANTES_DIA
+  ORIGEM
+  COMPRA_RECENTE
+
+  @@map("campanha_filtro")
+}
+
+enum CampanhaStatus {
+  AGENDADA
+  ENVIANDO
+  CONCLUIDA
+  CANCELADA
+
+  @@map("campanha_status")
+}
+
+enum EnvioCampanhaStatus {
+  /// Destinatário definido, aguardando a hora (intervalo entre envios).
+  PROGRAMADO
+  /// Mensagem gravada no WhatsApp e comando publicado para o provedor.
+  ENFILEIRADO
+  FALHA
+  CANCELADO
+
+  @@map("envio_campanha_status")
+}
+
+/// Dono: comercial-atendimento. Envio em massa agendado pelo WhatsApp (tela Campanhas, aba
+/// Envios Agendados). Exclusão lógica: histórico de comunicação.
+model Campanha {
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome              String
+  tipoEnvio         CampanhaTipoEnvio @default(TEXTO) @map("tipo_envio")
+  canalId           String            @map("canal_id") @db.Uuid
+  filtro            CampanhaFiltro    @default(TODOS)
+  origemClienteId   String?           @map("origem_cliente_id") @db.Uuid
+  diasCompra        Int?              @map("dias_compra")
+  /// Vazio = todos os destinatários do filtro.
+  quantidade        Int?
+  intervaloSegundos Int               @default(5) @map("intervalo_segundos")
+  agendadaPara      DateTime          @map("agendada_para") @db.Timestamptz(3)
+  mensagem          String
+  status            CampanhaStatus    @default(AGENDADA)
+  iniciadaEm        DateTime?         @map("iniciada_em") @db.Timestamptz(3)
+  concluidaEm       DateTime?         @map("concluida_em") @db.Timestamptz(3)
+  canceladaEm       DateTime?         @map("cancelada_em") @db.Timestamptz(3)
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt         DateTime?         @map("deleted_at") @db.Timestamptz(3)
+
+  canal         CanalWhatsapp   @relation(fields: [canalId], references: [id], onDelete: Restrict)
+  origemCliente OrigemCliente?  @relation(fields: [origemClienteId], references: [id], onDelete: Restrict)
+  envios        EnvioCampanha[]
+
+  @@index([status, agendadaPara])
+  @@map("campanhas")
+}
+
+/// Dono: comercial-atendimento. Mensagem recorrente (tela Campanhas, aba Mensagens Automáticas),
+/// enviada nos dias e no horário escolhidos. Exclusão lógica.
+model MensagemAutomatica {
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome              String
+  tipoEnvio         CampanhaTipoEnvio @default(TEXTO) @map("tipo_envio")
+  canalId           String            @map("canal_id") @db.Uuid
+  filtro            CampanhaFiltro    @default(TODOS)
+  origemClienteId   String?           @map("origem_cliente_id") @db.Uuid
+  diasCompra        Int?              @map("dias_compra")
+  /// "HH:MM" no fuso da clínica.
+  horario           String
+  /// 0 = domingo … 6 = sábado.
+  diasSemana        Int[]             @map("dias_semana")
+  mensagem          String
+  ativa             Boolean           @default(true)
+  /// Último dia (fuso da clínica) em que a automação foi disparada: evita disparo duplo.
+  ultimaExecucaoDia DateTime?         @map("ultima_execucao_dia") @db.Date
+  ultimoEnvioEm     DateTime?         @map("ultimo_envio_em") @db.Timestamptz(3)
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt         DateTime?         @map("deleted_at") @db.Timestamptz(3)
+
+  canal         CanalWhatsapp   @relation(fields: [canalId], references: [id], onDelete: Restrict)
+  origemCliente OrigemCliente?  @relation(fields: [origemClienteId], references: [id], onDelete: Restrict)
+  envios        EnvioCampanha[]
+
+  @@index([ativa])
+  @@map("mensagens_automaticas")
+}
+
+/// Dono: comercial-atendimento. Um destinatário de uma campanha ou de um disparo diário de
+/// mensagem automática. Vira uma mensagem "Pendente" no WhatsApp na hora programada.
+model EnvioCampanha {
+  id                   String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  campanhaId           String?             @map("campanha_id") @db.Uuid
+  mensagemAutomaticaId String?             @map("mensagem_automatica_id") @db.Uuid
+  /// Dia do disparo da mensagem automática (fuso da clínica).
+  dia                  DateTime?           @db.Date
+  pacienteId           String              @map("paciente_id") @db.Uuid
+  programadoPara       DateTime            @map("programado_para") @db.Timestamptz(3)
+  status               EnvioCampanhaStatus @default(PROGRAMADO)
+  mensagemWhatsappId   String?             @unique @map("mensagem_whatsapp_id") @db.Uuid
+  /// Motivo da falha (sem dados pessoais).
+  erro                 String?
+  enfileiradoEm        DateTime?           @map("enfileirado_em") @db.Timestamptz(3)
+  createdAt            DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  campanha           Campanha?           @relation(fields: [campanhaId], references: [id], onDelete: Restrict)
+  mensagemAutomatica MensagemAutomatica? @relation(fields: [mensagemAutomaticaId], references: [id], onDelete: Restrict)
+  paciente           Paciente            @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
+  mensagemWhatsapp   MensagemWhatsapp?   @relation(fields: [mensagemWhatsappId], references: [id], onDelete: SetNull)
+
+  @@unique([campanhaId, pacienteId])
+  @@unique([mensagemAutomaticaId, pacienteId, dia])
+  @@index([status, programadoPara])
+  @@index([pacienteId])
+  @@map("envios_campanha")
 }

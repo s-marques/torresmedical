@@ -12,7 +12,8 @@ export const AGENDA_PERIODO_MAX_DIAS = 31;
 /**
  * Status do agendamento. Agendado, Confirmado, Check-in, Cancelado e Reagendar vêm da legenda
  * da tela; Atendido e Faltou aparecem no modal de detalhe e nos botões do inventário.
- * A criação sempre grava `AGENDADO`.
+ * Aguardando e Em Atendimento vêm do filtro da tela Atendimento Médico (#38), onde "Atender"
+ * grava `EM_ATENDIMENTO`. A criação sempre grava `AGENDADO`.
  */
 export const AGENDAMENTO_STATUS = [
   'AGENDADO',
@@ -22,6 +23,8 @@ export const AGENDAMENTO_STATUS = [
   'REAGENDAR',
   'ATENDIDO',
   'FALTOU',
+  'AGUARDANDO',
+  'EM_ATENDIMENTO',
 ] as const;
 export const agendamentoStatusSchema = z.enum(AGENDAMENTO_STATUS, { error: 'Status inválido' });
 export type AgendamentoStatus = z.infer<typeof agendamentoStatusSchema>;
@@ -34,6 +37,8 @@ export const AGENDAMENTO_STATUS_ROTULOS: Record<AgendamentoStatus, string> = {
   REAGENDAR: 'Reagendar',
   ATENDIDO: 'Atendido',
   FALTOU: 'Faltou',
+  AGUARDANDO: 'Aguardando',
+  EM_ATENDIMENTO: 'Em Atendimento',
 };
 
 /** Ordem da legenda no rodapé da tela. */

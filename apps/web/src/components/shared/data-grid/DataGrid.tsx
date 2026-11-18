@@ -85,6 +85,7 @@ export function DataGrid<T extends RowData>({
   aoClicarLinha,
   mensagemVazio = 'Nenhum resultado.',
   tamanhosPagina = TAMANHOS_PAGINA,
+  resumo,
 }: Readonly<DataGridProps<T>>) {
   const { estado, alterar } = useEstadoGrid({
     parametros: parametrosDosFiltros(status, filtros),
@@ -153,6 +154,11 @@ export function DataGrid<T extends RowData>({
           />
         )}
         <div className="flex items-center gap-2">
+          {resumo && consulta.data && (
+            <span className="text-sm text-muted-foreground" aria-live="polite">
+              {resumo(consulta.data.meta)}
+            </span>
+          )}
           {exportacao && exportar.permitido && (
             <MenuExportar
               exportando={exportar.exportando}

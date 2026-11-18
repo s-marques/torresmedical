@@ -196,9 +196,14 @@ export const LOOKUP_PERMISSOES: Readonly<Record<LookupEntidade, PermissoesLookup
     'comercial-atendimento.origens-cliente',
     'comercial-atendimento.pacientes',
     'comercial-atendimento.pipeline',
+    'comercial-atendimento.campanhas',
   ),
   perfis: telas('configuracoes-gestao.usuarios', 'configuracoes-gestao.perfis-acesso'),
-  'canais-whatsapp': telas('comercial-atendimento.whatsapp', 'configuracoes-gestao.agentes-ia'),
+  'canais-whatsapp': telas(
+    'comercial-atendimento.whatsapp',
+    'configuracoes-gestao.agentes-ia',
+    'comercial-atendimento.campanhas',
+  ),
   usuarios: telas('comercial-atendimento.whatsapp', 'configuracoes-gestao.usuarios'),
   /** Negócios abertos do CRM: campo "Negócio" da Nova Atividade. */
   negocios: telas('comercial-atendimento.atividades'),

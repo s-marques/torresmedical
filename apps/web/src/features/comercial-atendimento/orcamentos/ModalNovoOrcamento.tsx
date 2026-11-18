@@ -228,10 +228,21 @@ function ItensEscolhidos() {
   );
 }
 
+export interface ModalNovoOrcamentoProps {
+  onFechar: () => void;
+  /**
+   * Paciente já definido (aba Orçamento do Atendimento Médico, #38): o campo "Cliente" some e o
+   * orçamento é criado para ele.
+   */
+  pacienteId?: string;
+}
+
 /** "Novo Orçamento" (docs/inventario/telas/comercial-atendimento-orcamentos.md). */
-export function ModalNovoOrcamento({ onFechar }: Readonly<{ onFechar: () => void }>) {
+export function ModalNovoOrcamento({ onFechar, pacienteId }: Readonly<ModalNovoOrcamentoProps>) {
   const criar = useCriarOrcamento();
-  const form = useFormulario(criarOrcamentoSchema, { defaultValues: VALORES_INICIAIS });
+  const form = useFormulario(criarOrcamentoSchema, {
+    defaultValues: { ...VALORES_INICIAIS, pacienteId: pacienteId ?? null },
+  });
   const { submitCount, isSubmitting } = form.formState;
 
   // Mesma mensagem do legado, em toast, ao tentar criar sem itens.
@@ -298,13 +309,15 @@ export function ModalNovoOrcamento({ onFechar }: Readonly<{ onFechar: () => void
           onFechar();
         }}
       >
-        <FormField
-          name="pacienteId"
-          label="Cliente"
-          tipo="entidade"
-          entidade="pacientes"
-          placeholder="Buscar paciente…"
-        />
+        {!pacienteId && (
+          <FormField
+            name="pacienteId"
+            label="Cliente"
+            tipo="entidade"
+            entidade="pacientes"
+            placeholder="Buscar paciente…"
+          />
+        )}
         <section aria-labelledby="titulo-itens" className="grid gap-2">
           <h3 id="titulo-itens" className="text-sm font-medium">
             Adicionar itens

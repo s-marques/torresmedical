@@ -11,6 +11,9 @@ Object.assign(process.env, resolveTestStorageEnv(process.env));
 // RabbitMQ dos testes: RABBITMQ_URL_TEST (opcional, ex.: outro vhost) ou RABBITMQ_URL.
 if (process.env.RABBITMQ_URL_TEST) process.env.RABBITMQ_URL = process.env.RABBITMQ_URL_TEST;
 
+// O agendador de campanhas não roda nos testes: eles chamam cada passo quando precisam.
+process.env.CAMPANHAS_AGENDADOR = 'off';
+
 // Logs HTTP só atrapalham a saída dos testes. Para depurar, defina TEST_LOG_LEVEL.
 process.env.LOG_LEVEL = process.env.TEST_LOG_LEVEL ?? 'silent';
 

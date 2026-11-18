@@ -101,11 +101,14 @@ describe('Orçamentos (e2e)', () => {
       expect(await totais({ search: 'bruno' })).toEqual(['100']);
       expect(await totais({ sort: 'total:asc' })).toEqual(['100', '200', '300']);
       expect(await totais({ sort: 'cliente:asc', pageSize: 1, page: 2 })).toHaveLength(1);
+      // Aba Orçamento do Atendimento Médico (#38): só os do paciente.
+      expect(await totais({ pacienteId: ana })).toEqual(['300']);
     });
 
     it('400 para sort e status inválidos', async () => {
       await http().get(BASE).query({ sort: 'x:asc' }).expect(400);
       await http().get(BASE).query({ status: 'x' }).expect(400);
+      await http().get(BASE).query({ pacienteId: 'abc' }).expect(400);
     });
 
     it('403 sem permissão e 401 sem login', async () => {

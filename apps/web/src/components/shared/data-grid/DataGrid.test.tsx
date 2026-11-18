@@ -137,6 +137,12 @@ describe('DataGrid', () => {
     expect(ultimo()).toEqual({ page: '1', pageSize: '10' });
   });
 
+  it('mostra o `resumo` com o meta da consulta', async () => {
+    renderizar({ resumo: (meta) => `${meta.total} unidade(s)` });
+
+    expect(await screen.findByText('25 unidade(s)')).toBeInTheDocument();
+  });
+
   it('envia a `consultaFixa` em toda consulta e aceita id pelo índice da linha', async () => {
     const idLinha = vi.fn((_linha: Unidade, indice: number) => `linha-${indice}`);
     renderizar({ consultaFixa: { de: '2026-10-01', ate: '2026-10-31' }, idLinha });

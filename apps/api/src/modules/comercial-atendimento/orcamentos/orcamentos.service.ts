@@ -221,10 +221,13 @@ export class OrcamentosService {
     else await this.protocolosMae.findById(id);
   }
 
-  private where(query: Pick<ListOrcamentosQuery, 'search' | 'status'>): Prisma.OrcamentoWhereInput {
+  private where(
+    query: Pick<ListOrcamentosQuery, 'search' | 'status'> & { pacienteId?: string },
+  ): Prisma.OrcamentoWhereInput {
     return {
       ...NAO_EXCLUIDOS,
       status: query.status && STATUS_FILTRO[query.status],
+      pacienteId: query.pacienteId,
       ...(query.search && {
         paciente: { nome: { contains: query.search, mode: 'insensitive' } },
       }),
