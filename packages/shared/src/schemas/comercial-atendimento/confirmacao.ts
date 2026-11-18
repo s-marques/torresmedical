@@ -178,9 +178,10 @@ export const CONFIRMACAO_CONFIG_PADRAO = {
 /** `PUT /confirmacoes/configuracao`: "Configuração Geral". */
 export const confirmacaoConfigInputSchema = z.strictObject({
   ativo: z.boolean({ error: mensagemObrigatoria('Ativo') }),
-  antecedenciaDias: z.union([z.literal(1), z.literal(2)], {
-    error: 'Antecedência deve ser de 1 ou 2 dias',
-  }),
+  // `coerce`: o select do formulário entrega texto ("1" ou "2").
+  antecedenciaDias: z.coerce
+    .number({ error: 'Antecedência deve ser de 1 ou 2 dias' })
+    .pipe(z.union([z.literal(1), z.literal(2)], { error: 'Antecedência deve ser de 1 ou 2 dias' })),
   horarioLembrete: horario('Lembrete (dia)'),
   horarioMsg1: horario('MSG 1'),
   horarioMsg2: horario('MSG 2'),
