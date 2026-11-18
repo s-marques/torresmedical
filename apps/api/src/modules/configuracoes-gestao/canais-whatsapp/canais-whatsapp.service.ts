@@ -81,6 +81,23 @@ export class CanaisWhatsappService extends EntidadeLookupService<
     return { id: canal.id, label: canal.nome, descricao: canal.numero };
   }
 
+  /**
+   * Canal conectado para mensagens de um profissional: a linha dele, ou a da clínica (sem
+   * profissional) quando ele não tem uma conectada. `null` = nenhum canal disponível.
+   */
+  async canalParaProfissional(profissionalId: string): Promise<string | null> {
+    const conectados = await this.txHost.tx.canalWhatsapp.findMany({
+      where: {
+        deletedAt: null,
+        status: 'CONECTADO',
+        OR: [{ profissionalId }, { profissionalId: null }],
+      },
+      select: { id: true, profissionalId: true },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+    return (conectados.find((c) => c.profissionalId !== null) ?? conectados[0])?.id ?? null;
+  }
+
   // --- Tela Agentes IA (gestão dos canais, sem o filtro de acesso) ---
 
   list(query: ListCanaisWhatsappQuery): Promise<Page<CanalWhatsappDto>> {
