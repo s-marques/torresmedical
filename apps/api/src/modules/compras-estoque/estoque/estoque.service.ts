@@ -259,28 +259,46 @@ export class EstoqueService {
 
   /** "Saída Manual": não deixa o saldo ficar negativo (confirmado pelo dev na issue #20). */
   async saida(input: SaidaEstoqueInput): Promise<MovimentacaoEstoque> {
-    const produto = await this.buscarControlado(input.produtoId);
+    return this.saidaComMotivo(
+      input.produtoId,
+      input.quantidade,
+      ROTULO_MOTIVO_SAIDA[input.motivo],
+      input.documento,
+    );
+  }
+
+  /**
+   * Saída com motivo em texto livre, para quem baixa o saldo por outra tela (ex.: Baixa de
+   * Insumos). Mesma regra da "Saída Manual": o saldo não fica negativo.
+   */
+  async saidaComMotivo(
+    produtoId: string,
+    quantidade: number,
+    motivo: string,
+    documento?: string | null,
+  ): Promise<MovimentacaoEstoque> {
+    const produto = await this.buscarControlado(produtoId);
     const { count } = await this.txHost.tx.produto.updateMany({
-      where: { id: produto.id, estoqueAtual: { gte: input.quantidade } },
-      data: { estoqueAtual: { decrement: input.quantidade } },
+      where: { id: produto.id, estoqueAtual: { gte: quantidade } },
+      data: { estoqueAtual: { decrement: quantidade } },
     });
     if (count === 0) {
-      const atual = await this.buscarControlado(input.produtoId);
+      const atual = await this.buscarControlado(produtoId);
       const mensagem = `Estoque insuficiente. Saldo atual: ${atual.estoqueAtual.toString()}.`;
       throw new BusinessException('ESTOQUE_INSUFICIENTE', mensagem, {
         status: 400,
         details: [{ field: 'quantidade', message: mensagem }],
       });
     }
-    const posterior = (await this.buscarControlado(input.produtoId)).estoqueAtual;
+    const posterior = (await this.buscarControlado(produtoId)).estoqueAtual;
     return this.registrar({
-      produtoId: input.produtoId,
+      produtoId,
       tipo: 'SAIDA',
-      quantidade: input.quantidade,
-      saldoAnterior: posterior.add(input.quantidade),
+      quantidade,
+      saldoAnterior: posterior.add(quantidade),
       saldoPosterior: posterior,
-      motivo: ROTULO_MOTIVO_SAIDA[input.motivo],
-      documento: input.documento,
+      motivo,
+      documento,
     });
   }
 

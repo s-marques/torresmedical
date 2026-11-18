@@ -50,6 +50,7 @@ model Unidade {
 
   empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Restrict)
 
+  baixasInsumos BaixaInsumo[]
   @@index([empresaId])
   @@map("unidades")
 }
@@ -286,6 +287,7 @@ model Paciente {
   contatosWhatsapp ContatoWhatsapp[]
   enviosCampanha   EnvioCampanha[]
 
+  baixasInsumos BaixaInsumo[]
   @@index([documento])
   @@index([origemClienteId])
   @@index([status])
@@ -422,6 +424,7 @@ model Profissional {
   canaisWhatsapp CanalWhatsapp[]
   usuarios       UsuarioProfissional[]
 
+  baixasInsumos BaixaInsumo[]
   @@index([especialidadeId])
   @@map("profissionais")
 }
@@ -578,6 +581,7 @@ model Produto {
   movimentacoesEstoque MovimentacaoEstoque[]
   lotes                Lote[]
 
+  baixaInsumoItens BaixaInsumoItem[]
   @@index([categoriaId])
   @@index([unidadeMedidaId])
   @@index([sku])
@@ -2495,4 +2499,42 @@ model EnvioConfirmacao {
   @@unique([agendamentoId, etapa])
   @@index([createdAt])
   @@map("envios_confirmacao")
+}
+
+/// Dono: compras-estoque. Baixa de insumos (tela `/baixa-insumos`, issue #17). Imutável: sem
+/// `updatedAt` nem exclusão. A baixa de saldo é uma `MovimentacaoEstoque` de saída por item.
+/// `usuarioId` é o responsável (Usuário é de configuracoes-gestao: sem FK).
+model BaixaInsumo {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pacienteId      String?  @map("paciente_id") @db.Uuid
+  profissionalId  String?  @map("profissional_id") @db.Uuid
+  unidadeId       String?  @map("unidade_id") @db.Uuid
+  pressaoArterial String?  @map("pressao_arterial")
+  dextro          String?
+  observacao      String?
+  usuarioId       String?  @map("usuario_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  paciente     Paciente?          @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
+  profissional Profissional?      @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+  unidade      Unidade?           @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+  itens        BaixaInsumoItem[]
+
+  @@index([createdAt])
+  @@index([pacienteId])
+  @@map("baixas_insumos")
+}
+
+model BaixaInsumoItem {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  baixaId    String  @map("baixa_id") @db.Uuid
+  produtoId  String  @map("produto_id") @db.Uuid
+  quantidade Decimal @db.Decimal(12, 3)
+
+  baixa   BaixaInsumo @relation(fields: [baixaId], references: [id], onDelete: Cascade)
+  produto Produto     @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+
+  @@index([baixaId])
+  @@index([produtoId])
+  @@map("baixas_insumos_itens")
 }

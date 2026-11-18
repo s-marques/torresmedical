@@ -63,7 +63,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
   imports: [
     forwardRef(() => GestaoProfissionaisModule),
     forwardRef(() => ConsultorioAssistencialModule),
-    ComprasEstoqueModule,
+    forwardRef(() => ComprasEstoqueModule),
     ConfiguracoesGestaoModule,
     FinanceiroModule,
   ],
