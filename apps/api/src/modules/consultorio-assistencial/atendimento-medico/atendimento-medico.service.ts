@@ -30,6 +30,7 @@ import type {
 import { AuditService } from '../../../common/audit/audit.service';
 import { EscopoDadosService } from '../../../common/auth/escopo-dados.service';
 import { BusinessException } from '../../../common/errors/api.exception';
+import { EventPublisher } from '../../../common/messaging/event-publisher';
 import { paginate, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { AgendamentosAtendimentoService } from '../../comercial-atendimento/agenda/agendamentos-atendimento.service';
@@ -105,6 +106,9 @@ const NAO_EXCLUIDO = { deletedAt: null } as const;
  * comercial-atendimento e Profissional de gestao-profissionais: o acesso é pelos services
  * exportados (CLAUDE.md, seção 3). Atendimento e Evolução são deste módulo.
  */
+/** Fato publicado ao finalizar o atendimento (payload: só ids). */
+export const EVENTO_ATENDIMENTO_FINALIZADO = 'consultorio.atendimento.finalizado';
+
 @Injectable()
 export class AtendimentoMedicoService {
   constructor(
@@ -114,7 +118,11 @@ export class AtendimentoMedicoService {
     private readonly profissionais: ProfissionaisService,
     private readonly protocolos: ProtocolosService,
     private readonly audit: AuditService,
+<<<<<<< HEAD
     private readonly escopo: EscopoDadosService,
+=======
+    private readonly events: EventPublisher,
+>>>>>>> ab9c0a3 (feat(comercial-atendimento): API da Pesquisa NPS e envio ao finalizar o atendimento (#12))
   ) {}
 
   listar(query: ListAtendimentoMedicoQuery): Promise<Page<AtendimentoMedicoItem>> {
@@ -328,6 +336,12 @@ export class AtendimentoMedicoService {
         after: depois,
       });
       await this.agendamentos.alterarStatus(agendamentoId, 'ATENDIDO');
+      // Só ids. Sai depois do commit (outbox); a Pesquisa NPS reage a este fato.
+      await this.events.publish(EVENTO_ATENDIMENTO_FINALIZADO, {
+        atendimentoId: depois.id,
+        pacienteId: depois.pacienteId,
+        profissionalId: depois.profissionalId,
+      });
       return toAtendimentoEmCurso(depois);
     });
   }

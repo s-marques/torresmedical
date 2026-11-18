@@ -5,6 +5,7 @@ import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import type { AgendamentosAtendimentoService } from '../../comercial-atendimento/agenda/agendamentos-atendimento.service';
 import type { PacientesService } from '../../comercial-atendimento/pacientes/pacientes.service';
 import type { AuditService } from '../../../common/audit/audit.service';
+import type { EventPublisher } from '../../../common/messaging/event-publisher';
 import type { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
 import type { ProtocolosService } from '../../gestao-profissionais/protocolos/protocolos.service';
 import {
@@ -134,6 +135,7 @@ function setup({
     categorias: jest.fn().mockResolvedValue({ data: ['Estética'] }),
   };
   const audit = { record: jest.fn().mockResolvedValue(undefined) };
+  const events = { publish: jest.fn().mockResolvedValue(undefined) };
   const pacientes = { detalhe: jest.fn() };
   const profissionais = {
     detalhe: jest.fn().mockResolvedValue({ id: ID_PROF, nome: 'Profissional Fictício' }),
@@ -145,9 +147,13 @@ function setup({
     profissionais as unknown as ProfissionaisService,
     protocolos as unknown as ProtocolosService,
     audit as unknown as AuditService,
+<<<<<<< HEAD
     escopoFalso(escopo),
+=======
+    events as unknown as EventPublisher,
+>>>>>>> ab9c0a3 (feat(comercial-atendimento): API da Pesquisa NPS e envio ao finalizar o atendimento (#12))
   );
-  return { service, tx, agendamentos, pacientes, profissionais, protocolos, audit };
+  return { service, tx, agendamentos, pacientes, profissionais, protocolos, audit, events };
 }
 
 describe('AtendimentoMedicoService', () => {
@@ -404,7 +410,7 @@ describe('funções de mapeamento', () => {
 
   describe('finalizar', () => {
     it('grava o fim, audita o atendimento e muda o agendamento para Atendido', async () => {
-      const { service, tx, audit, agendamentos } = setup({ atendimento: ATENDIMENTO });
+      const { service, tx, audit, agendamentos, events } = setup({ atendimento: ATENDIMENTO });
       const r = await service.finalizar(ID_AG);
       expect(r.status).toBe('FINALIZADO');
       expect(r.finalizadoEm).not.toBeNull();
@@ -416,6 +422,12 @@ describe('funções de mapeamento', () => {
         expect.objectContaining({ action: 'UPDATE', entity: 'Atendimento', entityId: ID_AT }),
       );
       expect(agendamentos.alterarStatus).toHaveBeenCalledWith(ID_AG, 'ATENDIDO');
+      // Só ids: a Pesquisa NPS reage a este fato.
+      expect(events.publish).toHaveBeenCalledWith('consultorio.atendimento.finalizado', {
+        atendimentoId: ID_AT,
+        pacienteId: ATENDIMENTO.pacienteId,
+        profissionalId: ATENDIMENTO.profissionalId,
+      });
     });
 
     it('recusa atendimento não iniciado', async () => {
