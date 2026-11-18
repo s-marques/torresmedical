@@ -16,6 +16,11 @@ import { CampanhasService } from './campanhas/campanhas.service';
 import { DestinatariosService } from './campanhas/destinatarios.service';
 import { EnviosCampanhaService } from './campanhas/envios-campanha.service';
 import { MensagensAutomaticasService } from './campanhas/mensagens-automaticas.service';
+import { ConfirmacoesAgendador } from './confirmacoes/confirmacoes.agendador';
+import { ConfirmacoesConfigService } from './confirmacoes/confirmacoes-config.service';
+import { ConfirmacoesController } from './confirmacoes/confirmacoes.controller';
+import { ConfirmacoesService } from './confirmacoes/confirmacoes.service';
+import { EnvioConfirmacaoService } from './confirmacoes/envio-confirmacao.service';
 import { PrepararEnviosConsumer } from './campanhas/preparar-envios.consumer';
 import { AgendaService } from './agenda/agenda.service';
 import { AgendamentosAtendimentoService } from './agenda/agendamentos-atendimento.service';
@@ -59,6 +64,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     AgendaController,
     AtividadesController,
     CampanhasController,
+    ConfirmacoesController,
     ConsultasRealizadasController,
     ConversasWhatsappController,
     CrmConfigController,
@@ -101,6 +107,10 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     EnviosCampanhaService,
     PrepararEnviosConsumer,
     CampanhasAgendador,
+    ConfirmacoesConfigService,
+    EnvioConfirmacaoService,
+    ConfirmacoesService,
+    ConfirmacoesAgendador,
   ],
   exports: [PacientesService, OrigensClienteService, AgendamentosAtendimentoService],
 })
