@@ -85,7 +85,12 @@ export type Confirmacao = z.infer<typeof confirmacaoSchema>;
 export const confirmacaoPageSchema = paginatedResponseSchema(confirmacaoSchema);
 export type ConfirmacaoPage = z.infer<typeof confirmacaoPageSchema>;
 
-export const CONFIRMACAO_SORT_FIELDS = ['agendamento', 'paciente', 'profissional', 'status'] as const;
+export const CONFIRMACAO_SORT_FIELDS = [
+  'agendamento',
+  'paciente',
+  'profissional',
+  'status',
+] as const;
 
 /** `GET /confirmacoes`: dia do envio (padrão: hoje) e busca por paciente. */
 export const listConfirmacoesQuerySchema = listQuerySchema({

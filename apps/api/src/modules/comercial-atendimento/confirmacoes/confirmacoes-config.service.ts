@@ -63,7 +63,9 @@ export class ConfirmacoesConfigService {
 
   /** Sem nada salvo, devolve os padrões do legado. */
   async configuracao(): Promise<ConfirmacaoConfig> {
-    return toConfigDto(await this.txHost.tx.configuracaoConfirmacao.findUnique({ where: { id: 1 } }));
+    return toConfigDto(
+      await this.txHost.tx.configuracaoConfirmacao.findUnique({ where: { id: 1 } }),
+    );
   }
 
   @Transactional()

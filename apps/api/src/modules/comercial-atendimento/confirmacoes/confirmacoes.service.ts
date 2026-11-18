@@ -255,4 +255,3 @@ export class ConfirmacoesService {
     return new BusinessException(code, message, { status: 422 });
   }
 }
-

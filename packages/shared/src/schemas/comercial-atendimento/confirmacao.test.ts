@@ -30,7 +30,9 @@ describe('confirmacaoConfigInputSchema', () => {
     );
     const r = confirmacaoConfigInputSchema.safeParse({ ...valida, antecedenciaDias: 3 });
     expect(mensagem(r)).toBe('Antecedência deve ser de 1 ou 2 dias');
-    expect(confirmacaoConfigInputSchema.parse({ ...valida, antecedenciaDias: '2' }).antecedenciaDias).toBe(2);
+    expect(
+      confirmacaoConfigInputSchema.parse({ ...valida, antecedenciaDias: '2' }).antecedenciaDias,
+    ).toBe(2);
   });
 
   it('exige os textos', () => {

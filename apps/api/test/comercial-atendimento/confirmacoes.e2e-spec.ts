@@ -49,8 +49,9 @@ describe('Confirmações (e2e)', () => {
     profissionalId = (
       await prisma.profissional.create({ data: { nome: 'Dr. Fictício', corCalendario: 'verde' } })
     ).id;
-    tipoId = (await prisma.tipoAgendamento.create({ data: { nome: 'Consulta', duracaoMinutos: 30 } }))
-      .id;
+    tipoId = (
+      await prisma.tipoAgendamento.create({ data: { nome: 'Consulta', duracaoMinutos: 30 } })
+    ).id;
   });
 
   afterAll(async () => {
@@ -79,7 +80,12 @@ describe('Confirmações (e2e)', () => {
   const rodar = () => app.get(ConfirmacoesAgendador).rodar(AGORA);
   const lista = async (query: Record<string, string> = {}) =>
     confirmacaoPageSchema.parse(
-      (await http().get(BASE).query({ dataEnvio: DIA_ENVIO, ...query }).expect(200)).body,
+      (
+        await http()
+          .get(BASE)
+          .query({ dataEnvio: DIA_ENVIO, ...query })
+          .expect(200)
+      ).body,
     );
 
   describe('Aba Pendentes', () => {
@@ -106,7 +112,9 @@ describe('Confirmações (e2e)', () => {
     it('busca por paciente, ordena e pagina', async () => {
       await agendar('Ana Fictícia');
       await agendar('Bia Fictícia');
-      expect((await lista({ search: 'bia' })).data.map((c) => c.paciente)).toEqual(['Bia Fictícia']);
+      expect((await lista({ search: 'bia' })).data.map((c) => c.paciente)).toEqual([
+        'Bia Fictícia',
+      ]);
       expect((await lista({ sort: 'paciente:desc' })).data.map((c) => c.paciente)).toEqual([
         'Bia Fictícia',
         'Ana Fictícia',
@@ -136,7 +144,9 @@ describe('Confirmações (e2e)', () => {
         entityId: '*',
         userId: usuario.id,
       });
-      const sem = await criarUsuarioTeste(app, { permissoes: ['comercial-atendimento.confirmacoes.ver'] });
+      const sem = await criarUsuarioTeste(app, {
+        permissoes: ['comercial-atendimento.confirmacoes.ver'],
+      });
       await comUsuario(app, sem).get(`${BASE}/export`).query({ format: 'xlsx' }).expect(403);
     });
   });
@@ -191,7 +201,9 @@ describe('Confirmações (e2e)', () => {
       const reenvio = confirmacaoSchema.parse(
         (await http().post(`${BASE}/${a.id}/enviar`).expect(200)).body,
       );
-      expect(reenvio.envios).toEqual([expect.objectContaining({ etapa: 'MSG1', status: 'ENVIADO' })]);
+      expect(reenvio.envios).toEqual([
+        expect.objectContaining({ etapa: 'MSG1', status: 'ENVIADO' }),
+      ]);
     });
 
     it('paciente sem celular: FALHA SEM_CELULAR', async () => {
@@ -251,7 +263,9 @@ describe('Confirmações (e2e)', () => {
       await http().post(`${BASE}/${atendido.id}/enviar`).expect(422);
       await http().post(`${BASE}/${INEXISTENTE}/confirmar`).expect(404);
       await http().post(`${BASE}/nao-e-uuid/cancelar`).expect(400);
-      const sem = await criarUsuarioTeste(app, { permissoes: ['comercial-atendimento.confirmacoes.ver'] });
+      const sem = await criarUsuarioTeste(app, {
+        permissoes: ['comercial-atendimento.confirmacoes.ver'],
+      });
       await comUsuario(app, sem).post(`${BASE}/${atendido.id}/confirmar`).expect(403);
       await expectNoAudit(prisma, { entity: 'Agendamento', action: 'UPDATE' });
     });
@@ -305,7 +319,9 @@ describe('Confirmações (e2e)', () => {
         horarioMsg1: 'MSG 1 inválido (HH:MM)',
         mensagemConfirmada: 'A resposta a quem confirma é obrigatório.',
       });
-      const sem = await criarUsuarioTeste(app, { permissoes: ['comercial-atendimento.confirmacoes.ver'] });
+      const sem = await criarUsuarioTeste(app, {
+        permissoes: ['comercial-atendimento.confirmacoes.ver'],
+      });
       await comUsuario(app, sem).put(`${BASE}/configuracao`).send(configuracao).expect(403);
     });
 
@@ -348,7 +364,9 @@ describe('Confirmações (e2e)', () => {
       expect(
         confirmacaoModeloListaSchema.parse((await http().get(`${BASE}/modelos`).expect(200)).body),
       ).toHaveLength(1);
-      expect((await http().get(`${BASE}/modelos/${criado.id}`).expect(200)).body.msg1).toBe('Editada');
+      expect((await http().get(`${BASE}/modelos/${criado.id}`).expect(200)).body.msg1).toBe(
+        'Editada',
+      );
 
       await http().delete(`${BASE}/modelos/${criado.id}`).expect(200);
       await expectAudit(prisma, {
@@ -359,7 +377,12 @@ describe('Confirmações (e2e)', () => {
       await http().get(`${BASE}/modelos/${criado.id}`).expect(404);
       // O tipo volta a aceitar modelo novo (reaproveita o registro excluído).
       const recriado = confirmacaoModeloSchema.parse(
-        (await http().post(`${BASE}/modelos`).send(modelo({ msg1: 'Nova' })).expect(201)).body,
+        (
+          await http()
+            .post(`${BASE}/modelos`)
+            .send(modelo({ msg1: 'Nova' }))
+            .expect(201)
+        ).body,
       );
       expect(recriado.id).toBe(criado.id);
     });
@@ -433,9 +456,13 @@ describe('Confirmações (e2e)', () => {
       await prisma.configuracaoConfirmacao.update({ where: { id: 1 }, data: { ativo: true } });
       // 07:00: antes da MSG1 (08:00).
       expect(
-        await app.get(ConfirmacoesAgendador).rodar(agoraNaClinica(new Date('2026-11-17T10:00:00Z'))),
+        await app
+          .get(ConfirmacoesAgendador)
+          .rodar(agoraNaClinica(new Date('2026-11-17T10:00:00Z'))),
       ).toBe(0);
-      expect(await prisma.envioConfirmacao.count({ where: { agendamentoId: pendente.id } })).toBe(0);
+      expect(await prisma.envioConfirmacao.count({ where: { agendamentoId: pendente.id } })).toBe(
+        0,
+      );
     });
 
     it('respeita a antecedência de 2 dias e a janela da MSG2', async () => {
