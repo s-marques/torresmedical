@@ -287,9 +287,10 @@ model Paciente {
   contasReceber    ContaReceber[]
   contatosWhatsapp ContatoWhatsapp[]
   enviosCampanha   EnvioCampanha[]
-  pesquisasNps     PesquisaNps[]
 
   baixasInsumos BaixaInsumo[]
+  pesquisasNps  PesquisaNps[]
+
   @@index([documento])
   @@index([origemClienteId])
   @@index([status])
@@ -2597,6 +2598,7 @@ model BaixaInsumoItem {
   @@index([baixaId])
   @@index([produtoId])
   @@map("baixas_insumos_itens")
+}
 
 enum PesquisaNpsStatus {
   ENVIADA
