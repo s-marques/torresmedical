@@ -1,3 +1,4 @@
+import { escopoFalso } from '../../../../test/utils/escopo-falso';
 import type { TransactionHost } from '@nestjs-cls/transactional';
 import type { AtendimentoMedicoItem, Paciente } from '@torres/shared';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
@@ -67,7 +68,12 @@ const RECEITA = {
 function setup({
   item = ITEM,
   atendimento = null as typeof ATENDIMENTO | null,
-}: { item?: AtendimentoMedicoItem; atendimento?: typeof ATENDIMENTO | null } = {}) {
+  escopo,
+}: {
+  item?: AtendimentoMedicoItem;
+  atendimento?: typeof ATENDIMENTO | null;
+  escopo?: string[];
+} = {}) {
   const tx = {
     atendimento: {
       findFirst: jest.fn().mockResolvedValue(atendimento),
@@ -139,6 +145,7 @@ function setup({
     profissionais as unknown as ProfissionaisService,
     protocolos as unknown as ProtocolosService,
     audit as unknown as AuditService,
+    escopoFalso(escopo),
   );
   return { service, tx, agendamentos, pacientes, profissionais, protocolos, audit };
 }
@@ -415,6 +422,20 @@ describe('funções de mapeamento', () => {
       await expect(setup().service.finalizar(ID_AG)).rejects.toMatchObject({
         code: 'ATENDIMENTO_NAO_INICIADO',
       });
+    });
+  });
+
+  describe('escopo de dados (issue #153)', () => {
+    it('restrito: evoluções, receitas e histórico só dos profissionais vinculados', async () => {
+      const { service, tx } = setup({ escopo: [ID_PROF] });
+      await service.listarEvolucoes(ID_AG, { page: 1, pageSize: 50 });
+      await service.listarReceitas(ID_AG, { page: 1, pageSize: 20 } as never);
+      await service.historico(ID_AG, { page: 1, pageSize: 20 } as never);
+
+      const filtro = { pacienteId: ID_PAC, deletedAt: null, profissionalId: { in: [ID_PROF] } };
+      expect(tx.atendimentoEvolucao.findMany.mock.calls[0][0].where.atendimento).toEqual(filtro);
+      expect(tx.atendimentoReceita.findMany.mock.calls[0][0].where.atendimento).toEqual(filtro);
+      expect(tx.atendimento.findMany.mock.calls[0][0].where).toEqual(filtro);
     });
   });
 });

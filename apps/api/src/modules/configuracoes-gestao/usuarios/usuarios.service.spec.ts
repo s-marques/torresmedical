@@ -1,5 +1,6 @@
 import type { TransactionHost } from '@nestjs-cls/transactional';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
+import { Prisma } from '../../../generated/prisma/client';
 import { UsuariosService } from './usuarios.service';
 
 const CRIADOR_ID = '11111111-1111-4111-8111-111111111111';
@@ -28,6 +29,7 @@ const USUARIO: UsuarioFake = {
   updatedAt: new Date('2026-01-01T00:00:00Z'),
   deletedAt: null,
   perfil: null,
+  profissionais: [],
 };
 
 interface WhereFake {
@@ -96,6 +98,7 @@ describe('UsuariosService', () => {
       cargo: null,
       perfilId: null,
       verDadosSensiveis: false,
+      profissionalIds: [] as string[],
     } as const;
 
     it('herda a empresa do criador e grava o hash da senha, sem a senha em texto puro', async () => {
@@ -152,13 +155,14 @@ describe('UsuariosService', () => {
         cargo: null,
         perfilId: null,
         verDadosSensiveis: false,
+        profissionalIds: [] as string[],
         status: 'inativo',
       });
 
       expect(usuarioDelegate.update).toHaveBeenCalledWith({
         where: { id: USUARIO.id },
         data: expect.objectContaining({ ativo: false, nome: 'Ana Luiza Cardoso' }),
-        include: { perfil: { select: { nome: true } } },
+        include: expect.objectContaining({ perfil: { select: { nome: true } } }),
       });
       expect(usuarioDelegate.update.mock.calls[0][0].data).not.toHaveProperty('status');
       expect(usuarioDelegate.update.mock.calls[0][0].data).not.toHaveProperty('senha');
@@ -175,9 +179,110 @@ describe('UsuariosService', () => {
           cargo: null,
           perfilId: null,
           verDadosSensiveis: false,
+          profissionalIds: [],
           status: 'ativo',
         }),
       ).rejects.toMatchObject({ message: 'Usuário não encontrado' });
+    });
+  });
+
+  describe('profissionais vinculados (issue #153)', () => {
+    const PROF_A = '44444444-4444-4444-8444-444444444444';
+    const PROF_B = '55555555-5555-4555-8555-555555555555';
+    const EDICAO = {
+      nome: 'Ana Luiza',
+      email: USUARIO.email,
+      telefone: null,
+      cargo: null,
+      perfilId: null,
+      verDadosSensiveis: false,
+      status: 'ativo' as const,
+    };
+
+    it('create conecta cada profissional informado', async () => {
+      const { txHost, usuarioDelegate } = montarTxHost();
+
+      await new UsuariosService(txHost, exportServiceFalso).create(
+        {
+          nome: 'Carlos',
+          email: 'carlos@example.com',
+          senha: 'senha-123456',
+          telefone: null,
+          cargo: null,
+          perfilId: null,
+          verDadosSensiveis: false,
+          profissionalIds: [PROF_A, PROF_B],
+        },
+        CRIADOR_ID,
+      );
+
+      expect(usuarioDelegate.create.mock.calls[0][0].data.profissionais).toEqual({
+        create: [
+          { profissional: { connect: { id: PROF_A } } },
+          { profissional: { connect: { id: PROF_B } } },
+        ],
+      });
+    });
+
+    it('update substitui todos os vínculos (lista vazia remove)', async () => {
+      const { txHost, usuarioDelegate } = montarTxHost();
+      const service = new UsuariosService(txHost, exportServiceFalso);
+
+      await service.update(USUARIO.id, { ...EDICAO, profissionalIds: [PROF_A] });
+      await service.update(USUARIO.id, { ...EDICAO, profissionalIds: [] });
+
+      expect(usuarioDelegate.update.mock.calls[0][0].data.profissionais).toEqual({
+        deleteMany: {},
+        create: [{ profissional: { connect: { id: PROF_A } } }],
+      });
+      expect(usuarioDelegate.update.mock.calls[1][0].data.profissionais).toEqual({
+        deleteMany: {},
+        create: [],
+      });
+    });
+
+    it('profissional inexistente vira 400 no campo profissionalIds', async () => {
+      const { txHost, usuarioDelegate } = montarTxHost();
+      usuarioDelegate.update.mockRejectedValueOnce(
+        new Prisma.PrismaClientKnownRequestError('não encontrado', {
+          code: 'P2025',
+          clientVersion: 'teste',
+        }),
+      );
+
+      await expect(
+        new UsuariosService(txHost, exportServiceFalso).update(USUARIO.id, {
+          ...EDICAO,
+          profissionalIds: [PROF_A],
+        }),
+      ).rejects.toMatchObject({
+        code: 'PROFISSIONAL_INVALIDO',
+        details: [{ field: 'profissionalIds', message: 'Profissional não encontrado' }],
+      });
+    });
+
+    it('outros erros do banco seguem sem tradução', async () => {
+      const { txHost, usuarioDelegate } = montarTxHost();
+      usuarioDelegate.update.mockRejectedValueOnce(new Error('falha'));
+
+      await expect(
+        new UsuariosService(txHost, exportServiceFalso).update(USUARIO.id, {
+          ...EDICAO,
+          profissionalIds: [],
+        }),
+      ).rejects.toThrow('falha');
+    });
+
+    it('devolve os profissionais vinculados por nome', async () => {
+      const comVinculo = {
+        ...USUARIO,
+        profissionais: [{ profissional: { id: PROF_A, nome: 'Dra. Teste' } }],
+      };
+      const { txHost } = montarTxHost({ usuarios: [comVinculo] });
+
+      const dto = await new UsuariosService(txHost, exportServiceFalso).findByIdDto(USUARIO.id);
+
+      expect(dto.profissionais).toEqual([{ id: PROF_A, nome: 'Dra. Teste' }]);
     });
   });
 

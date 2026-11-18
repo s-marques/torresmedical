@@ -71,6 +71,7 @@ export class PerfisAcessoService {
       data: {
         nome: input.nome,
         descricao: input.descricao,
+        escopoDados: input.escopoDados,
         permissoes: { create: this.permissoes(input.paginasPermitidas) },
       },
       include: INCLUDE,
@@ -85,6 +86,7 @@ export class PerfisAcessoService {
       data: {
         nome: input.nome,
         descricao: input.descricao,
+        escopoDados: input.escopoDados,
         permissoes: { deleteMany: {}, create: this.permissoes(input.paginasPermitidas) },
       },
       include: INCLUDE,
@@ -132,6 +134,7 @@ export class PerfisAcessoService {
       nome: perfil.nome,
       descricao: perfil.descricao,
       paginasPermitidas: perfil.permissoes.map((item) => item.permissao.replace(/\.ver$/, '')),
+      escopoDados: perfil.escopoDados,
       ativo: perfil.ativo,
       createdAt: perfil.createdAt.toISOString(),
       updatedAt: perfil.updatedAt.toISOString(),

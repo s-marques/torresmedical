@@ -11,7 +11,7 @@ import type {
   UsuarioExportColumn,
   UpdateUsuarioInput,
 } from '@torres/shared';
-import type { Prisma } from '../../../generated/prisma/client';
+import { Prisma } from '../../../generated/prisma/client';
 import { hashSenha } from '../../../common/auth/senhas';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
@@ -25,12 +25,47 @@ import {
 import { paginate, searchWhere, toOrderBy, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 
-const COM_PERFIL = { perfil: { select: { nome: true } } } as const;
+const COM_PERFIL = {
+  perfil: { select: { nome: true } },
+  profissionais: {
+    select: { profissional: { select: { id: true, nome: true } } },
+    orderBy: { profissional: { nome: 'asc' } },
+  },
+} as const;
 
 /** Usuário com o nome do perfil (colunas "Role" e "Perfil" do grid). */
 export type UsuarioComPerfil = Prisma.UsuarioGetPayload<{ include: typeof COM_PERFIL }>;
 
 const NAO_EXCLUIDOS = { deletedAt: null } as const;
+
+export const PROFISSIONAL_INVALIDO = 'Profissional não encontrado';
+
+function vinculos(
+  profissionalIds: readonly string[],
+): Prisma.UsuarioProfissionalCreateWithoutUsuarioInput[] {
+  return profissionalIds.map((id) => ({ profissional: { connect: { id } } }));
+}
+
+/**
+ * O profissional é de outro módulo: em vez de consultar a tabela dele, a FK valida os ids e a
+ * violação vira um erro no campo "Profissionais vinculados" (mesmo padrão de Canais WhatsApp).
+ */
+async function gravarComProfissionais<T>(gravar: () => Promise<T>): Promise<T> {
+  try {
+    return await gravar();
+  } catch (erro) {
+    if (
+      erro instanceof Prisma.PrismaClientKnownRequestError &&
+      (erro.code === 'P2003' || erro.code === 'P2025')
+    ) {
+      throw new BusinessException('PROFISSIONAL_INVALIDO', PROFISSIONAL_INVALIDO, {
+        status: 400,
+        details: [{ field: 'profissionalIds', message: PROFISSIONAL_INVALIDO }],
+      });
+    }
+    throw erro;
+  }
+}
 
 export const USUARIO_EXPORT_DEFINITIONS: readonly ExportColumn<
   UsuarioComPerfil,
@@ -163,11 +198,19 @@ export class UsuariosService {
     await this.ensureEmailDisponivel(input.email);
     if (input.perfilId) await this.ensurePerfilExists(input.perfilId);
 
-    const { senha, ...resto } = input;
-    const criado = await this.txHost.tx.usuario.create({
-      data: { ...resto, empresaId: criador.empresaId, senhaHash: await hashSenha(senha) },
-      include: COM_PERFIL,
-    });
+    const { senha, profissionalIds, ...resto } = input;
+    const senhaHash = await hashSenha(senha);
+    const criado = await gravarComProfissionais(() =>
+      this.txHost.tx.usuario.create({
+        data: {
+          ...resto,
+          empresaId: criador.empresaId,
+          senhaHash,
+          profissionais: { create: vinculos(profissionalIds) },
+        },
+        include: COM_PERFIL,
+      }),
+    );
     return this.toDto(criado);
   }
 
@@ -176,12 +219,18 @@ export class UsuariosService {
     await this.ensureEmailDisponivel(input.email, id);
     if (input.perfilId) await this.ensurePerfilExists(input.perfilId);
 
-    const { status, ...resto } = input;
-    const atualizado = await this.txHost.tx.usuario.update({
-      where: { id },
-      data: { ...resto, ativo: status === 'ativo' },
-      include: COM_PERFIL,
-    });
+    const { status, profissionalIds, ...resto } = input;
+    const atualizado = await gravarComProfissionais(() =>
+      this.txHost.tx.usuario.update({
+        where: { id },
+        data: {
+          ...resto,
+          ativo: status === 'ativo',
+          profissionais: { deleteMany: {}, create: vinculos(profissionalIds) },
+        },
+        include: COM_PERFIL,
+      }),
+    );
     return this.toDto(atualizado);
   }
 
@@ -311,6 +360,7 @@ export class UsuariosService {
       perfilId: usuario.perfilId,
       perfilNome: usuario.perfil?.nome ?? null,
       verDadosSensiveis: usuario.verDadosSensiveis,
+      profissionais: usuario.profissionais.map((v) => v.profissional),
       ativo: usuario.ativo,
       ultimoLoginEm: usuario.ultimoLoginEm ? usuario.ultimoLoginEm.toISOString() : null,
       createdAt: usuario.createdAt.toISOString(),

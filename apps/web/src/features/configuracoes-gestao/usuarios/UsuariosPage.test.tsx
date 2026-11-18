@@ -11,6 +11,7 @@ const API = '/api/configuracoes-gestao/usuarios';
 const ID_1 = '00000000-0000-4000-8000-0000000000c1';
 const ID_2 = '00000000-0000-4000-8000-0000000000c2';
 const PERFIL_ID = '00000000-0000-4000-8000-0000000000f1';
+const PROF_ID = '00000000-0000-4000-8000-0000000000a1';
 const META = { page: 1, pageSize: 10, total: 2, totalPages: 1 };
 
 function usuario(parcial: Partial<Usuario>): Usuario {
@@ -23,6 +24,7 @@ function usuario(parcial: Partial<Usuario>): Usuario {
     perfilId: null,
     perfilNome: null,
     verDadosSensiveis: false,
+    profissionais: [],
     ativo: true,
     ultimoLoginEm: '2026-08-27T15:57:00.000Z',
     createdAt: '2026-01-01T12:00:00.000Z',
@@ -61,12 +63,19 @@ const lookupPerfis = () =>
     meta: META,
   });
 
+const lookupProfissionais = () =>
+  json({
+    data: [{ id: PROF_ID, label: 'Profissional Fictício', descricao: null }],
+    meta: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
+  });
+
 function api(rotas: Parameters<typeof apiFalsa>[0] = {}) {
   return apiFalsa({
     ...rotas,
     rotas: {
       [API]: () => pagina(USUARIOS),
       '/api/lookups/perfis': lookupPerfis,
+      '/api/lookups/profissionais': lookupProfissionais,
       ...rotas.rotas,
     },
   });
@@ -283,5 +292,91 @@ describe('Usuários (/usuarios)', () => {
     expect(screen.queryByRole('menuitem', { name: 'Editar' })).not.toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: 'Resetar Senha' })).not.toBeInTheDocument();
     expect(await screen.findByRole('menuitem', { name: 'Visualizar' })).toBeVisible();
+  });
+
+  describe('profissionais vinculados (issue #153)', () => {
+    const VINCULADO = { id: PROF_ID, nome: 'Profissional Fictício' };
+
+    it('Novo Usuario: adiciona um profissional e envia profissionalIds', async () => {
+      let corpo: Corpo = {};
+      const fetchMock = api({
+        rotas: {
+          [API]: (init) => {
+            if (init?.method !== 'POST') return pagina(USUARIOS);
+            corpo = corpoDe(init);
+            return json(usuario({ id: '00000000-0000-4000-8000-0000000000c3' }), 201);
+          },
+        },
+      });
+      const { user } = renderTela(fetchMock);
+      await screen.findByText('Ana Luiza Cardoso Silva');
+
+      await user.click(screen.getByRole('button', { name: 'Novo Usuario' }));
+      const modal = within(await screen.findByRole('dialog', { name: 'Novo Usuario' }));
+      expect(modal.getByText('Nenhum profissional vinculado.')).toBeVisible();
+      await user.type(modal.getByLabelText('Nome'), 'Carlos');
+      await user.type(modal.getByLabelText('Email'), 'carlos@example.com');
+      await user.type(modal.getByLabelText('Senha'), 'senha-123456');
+      await user.click(modal.getByRole('combobox', { name: /Profissionais vinculados/ }));
+      await user.click(await screen.findByRole('option', { name: /Profissional Fictício/ }));
+      expect(modal.getByRole('button', { name: 'Remover Profissional Fictício' })).toBeVisible();
+      await user.click(modal.getByRole('button', { name: 'Cadastrar' }));
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(corpo).toMatchObject({ profissionalIds: [PROF_ID] });
+    });
+
+    it('Editar: mostra o vínculo atual e remove pelo chip', async () => {
+      let corpo: Corpo = {};
+      const { user } = renderTela(
+        api({
+          rotas: {
+            [API]: () => pagina([usuario({ profissionais: [VINCULADO] })]),
+            [`${API}/${ID_1}`]: (init) => {
+              corpo = corpoDe(init);
+              return json(usuario({}));
+            },
+          },
+        }),
+      );
+      await abrirMenu(user, 'Ana Luiza Cardoso Silva', 'Editar');
+
+      const modal = within(await screen.findByRole('dialog', { name: 'Editar Usuario' }));
+      await user.click(modal.getByRole('button', { name: 'Remover Profissional Fictício' }));
+      expect(modal.getByText('Nenhum profissional vinculado.')).toBeVisible();
+      await user.click(modal.getByRole('button', { name: 'Salvar' }));
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(corpo).toMatchObject({ profissionalIds: [] });
+    });
+
+    it('Visualizar mostra os vinculados e Desativar preserva os vínculos', async () => {
+      let corpo: Corpo = {};
+      const { user } = renderTela(
+        api({
+          rotas: {
+            [API]: () => pagina([usuario({ profissionais: [VINCULADO] })]),
+            [`${API}/${ID_1}`]: (init) => {
+              corpo = corpoDe(init);
+              return json(usuario({ ativo: false, profissionais: [VINCULADO] }));
+            },
+          },
+        }),
+      );
+
+      await abrirMenu(user, 'Ana Luiza Cardoso Silva', 'Visualizar');
+      const visualizar = within(await screen.findByRole('dialog', { name: 'Visualizar Usuario' }));
+      expect(visualizar.getByText('Profissional Fictício')).toBeVisible();
+      await user.click(visualizar.getAllByRole('button', { name: 'Fechar' })[0] as HTMLElement);
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+      await abrirMenu(user, 'Ana Luiza Cardoso Silva', 'Desativar');
+      await user.click(
+        within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Desativar' }),
+      );
+      await waitFor(() =>
+        expect(corpo).toMatchObject({ status: 'inativo', profissionalIds: [PROF_ID] }),
+      );
+    });
   });
 });

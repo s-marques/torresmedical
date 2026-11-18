@@ -33,6 +33,7 @@ const USUARIO: UsuarioAutenticado = {
   email: 'pessoa@example.com',
   perfil: null,
   permissoes: new Set(['financeiro.caixas.ver']),
+  escopo: { tipo: 'PROFISSIONAIS', profissionalIds: [] },
 };
 
 function contexto(handler: keyof Rotas, authorization?: string, tipo = 'http') {
@@ -58,7 +59,10 @@ function criarGuard(usuario: UsuarioAutenticado | null = USUARIO) {
     }),
   } as unknown as JwtService;
   const sessoes = { carregarUsuario: jest.fn(async () => usuario) } as unknown as SessoesService;
-  const requestContext = { setUserId: jest.fn() } as unknown as RequestContextService;
+  const requestContext = {
+    setUserId: jest.fn(),
+    setEscopoDados: jest.fn(),
+  } as unknown as RequestContextService;
   return { guard: new AuthGuard(new Reflector(), jwt, sessoes, requestContext), requestContext };
 }
 
@@ -96,6 +100,7 @@ describe('AuthGuard', () => {
     expect(await guard.canActivate(context)).toBe(true);
     expect((request as { usuario?: UsuarioAutenticado }).usuario).toBe(USUARIO);
     expect(requestContext.setUserId).toHaveBeenCalledWith(USUARIO.id);
+    expect(requestContext.setEscopoDados).toHaveBeenCalledWith(USUARIO.escopo);
   });
 
   it('confere a permissão: libera com ela e responde 403 sem ela', async () => {

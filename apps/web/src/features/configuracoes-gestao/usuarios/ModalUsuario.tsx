@@ -15,6 +15,9 @@ import { useCriarUsuario, useEditarUsuario } from './use-usuarios';
 
 const ID_FORMULARIO = 'form-usuario';
 
+const DESCRICAO_PROFISSIONAIS =
+  'Médico: o próprio profissional. Secretária: um ou mais profissionais. Só restringe os dados quando o perfil de acesso é "Somente os profissionais vinculados ao usuário".';
+
 const OPCOES_STATUS: readonly OpcaoCampo[] = [
   { valor: 'ativo', rotulo: 'Ativo' },
   { valor: 'inativo', rotulo: 'Inativo' },
@@ -45,6 +48,7 @@ function ModalCriarUsuario({ onFechar }: Readonly<{ onFechar: () => void }>) {
       cargo: '',
       perfilId: null,
       verDadosSensiveis: false,
+      profissionalIds: [],
     } satisfies UsuarioFormulario,
   });
 
@@ -98,6 +102,7 @@ function ModalCriarUsuario({ onFechar }: Readonly<{ onFechar: () => void }>) {
           descricao="Define quais páginas o usuário pode acessar. Cadastre perfis em Configurações → Perfis de Acesso."
           className="sm:col-span-2"
         />
+        <CampoProfissionais />
         <FormField
           name="verDadosSensiveis"
           label="Ver dados sensíveis (LGPD) — CPF, RG, endereço, e-mail dos pacientes"
@@ -106,6 +111,26 @@ function ModalCriarUsuario({ onFechar }: Readonly<{ onFechar: () => void }>) {
         />
       </FormLayout>
     </Modal>
+  );
+}
+
+/**
+ * "Profissionais vinculados" (issue #153): de quem são a agenda, os pacientes e o prontuário que
+ * o usuário vê quando o perfil é restrito aos profissionais vinculados.
+ */
+function CampoProfissionais({ iniciais }: Readonly<{ iniciais?: Usuario['profissionais'] }>) {
+  return (
+    <FormField
+      name="profissionalIds"
+      label="Profissionais vinculados"
+      tipo="entidades"
+      entidade="profissionais"
+      iniciais={iniciais}
+      placeholder="Adicionar profissional"
+      vazio="Nenhum profissional vinculado."
+      descricao={DESCRICAO_PROFISSIONAIS}
+      className="sm:col-span-2"
+    />
   );
 }
 
@@ -122,6 +147,7 @@ function ModalEditarUsuario({
       cargo: usuario.cargo ?? '',
       perfilId: usuario.perfilId,
       verDadosSensiveis: usuario.verDadosSensiveis,
+      profissionalIds: usuario.profissionais.map((p) => p.id),
       status: usuario.ativo ? 'ativo' : 'inativo',
     } satisfies UsuarioEdicaoFormulario,
   });
@@ -164,6 +190,7 @@ function ModalEditarUsuario({
           descricao="Define quais páginas o usuário pode acessar. Cadastre perfis em Configurações → Perfis de Acesso."
           className="sm:col-span-2"
         />
+        <CampoProfissionais iniciais={usuario.profissionais} />
         <FormField name="status" label="Status" tipo="select" opcoes={OPCOES_STATUS} />
         <FormField
           name="verDadosSensiveis"

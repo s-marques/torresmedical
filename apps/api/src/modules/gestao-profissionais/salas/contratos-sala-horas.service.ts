@@ -10,6 +10,7 @@ import {
   type CreateContratoHoraInput,
   type ListContratoHorasQuery,
 } from '@torres/shared';
+import { EscopoDadosService } from '../../../common/auth/escopo-dados.service';
 import { isUuid } from '../../../common/auth/tokens';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
@@ -51,6 +52,7 @@ export class ContratosSalaHorasService {
     private readonly txHost: TransactionHost<PrismaAdapter>,
     private readonly contratos: ContratosSalaService,
     private readonly contasReceber: ContasReceberService,
+    private readonly escopo: EscopoDadosService,
   ) {}
 
   async list(contratoId: string, query: ListContratoHorasQuery): Promise<ContratoHorasResponse> {
@@ -155,6 +157,7 @@ export class ContratosSalaHorasService {
     if (!contrato) {
       throw new BusinessException(ErrorCode.NOT_FOUND, 'Contrato não encontrado', { status: 404 });
     }
+    this.escopo.garantirProfissional(contrato.profissionalId);
     if (contrato.modalidade !== 'HORA') {
       throw new BusinessException(
         'CONTRATO_NAO_HORA_AVULSA',

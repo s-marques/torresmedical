@@ -282,6 +282,29 @@ O sistema trata **dados de saúde**, que são dados pessoais sensíveis pela LGP
   - Todo endpoint é protegido por padrão (guard global). Rotas públicas exigem `@Public()` explícito.
   - Toda ação exige `@RequirePermission('<modulo>.<recurso>.<acao>')`.
   - O front esconde menus e botões sem permissão, mas **quem garante é o back**.
+- **Escopo de dados por profissional** (issue #153; requisitos R §14 e §37). A permissão diz *o que*
+  o usuário faz. O escopo diz *de quem* são os dados que ele vê.
+  - O perfil tem `escopoDados`: `TODOS` ou `PROFISSIONAIS_VINCULADOS`. O usuário tem os
+    "Profissionais vinculados" (`usuarios_profissionais`): um para o médico, um ou mais para a
+    secretária. Perfil restrito **sem vínculo não vê nenhum dado** de profissional.
+  - Use sempre o helper único `EscopoDadosService` (`common/auth/escopo-dados.service.ts`). Ele é
+    global e lê o escopo que o guard grava no contexto da requisição. Fora de uma requisição
+    (filas, rotinas) vale `TODOS`.
+    - Listagem: `profissionalId: this.escopo.filtroProfissional(query.profissionalId)`.
+    - Registro por id: `this.escopo.garantirProfissional(registro.profissionalId)`.
+    - Criação: `garantirProfissional(input.profissionalId)` antes de gravar.
+    - Visão geral só da administração (ex.: dashboard de salas, cobrança em lote):
+      `if (this.escopo.restrito()) throw semPermissao()`.
+  - **Pacientes vinculados** são os que têm atendimento com um profissional do escopo. Use o
+    `PacientesVinculadosService` exportado por `consultorio-assistencial` (`idsNoEscopo()`,
+    `garantir(pacienteId)`).
+  - Fora do escopo a resposta é **403 "Sem permissão"** (confirmado pelo dev).
+  - Toda tela nova com dados de agenda, pacientes, prontuário, receita ou salas aplica o escopo no
+    service e tem e2e com um usuário restrito: `criarUsuarioTeste(app, { escopoDados:
+    'PROFISSIONAIS_VINCULADOS', profissionalIds })`. Nos testes unitários, use `escopoFalso(ids)`
+    (`apps/api/test/utils/escopo-falso.ts`).
+  - Métodos exportados para outros módulos (ex.: `PacientesService.detalhe`) **não** aplicam o
+    escopo: quem chama já aplicou o seu. O escopo fica no método usado pelo controller da tela.
 - **Segredos:** nunca commitar `.env`, tokens, `auth.json`, chaves, certificados (A1 de NF) ou
   dumps de banco. Use `.env.example` sem valores reais. O `.gitignore` já deve cobrir isso.
   Se um segredo for commitado, avise o dev imediatamente: ele precisa ser revogado.

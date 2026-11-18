@@ -25,8 +25,10 @@ import type {
   Atendimento as AtendimentoModel,
   AtendimentoEvolucao,
   AtendimentoReceita,
+  Prisma,
 } from '../../../generated/prisma/client';
 import { AuditService } from '../../../common/audit/audit.service';
+import { EscopoDadosService } from '../../../common/auth/escopo-dados.service';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { paginate, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
@@ -112,6 +114,7 @@ export class AtendimentoMedicoService {
     private readonly profissionais: ProfissionaisService,
     private readonly protocolos: ProtocolosService,
     private readonly audit: AuditService,
+    private readonly escopo: EscopoDadosService,
   ) {}
 
   listar(query: ListAtendimentoMedicoQuery): Promise<Page<AtendimentoMedicoItem>> {
@@ -160,7 +163,7 @@ export class AtendimentoMedicoService {
   /** "Histórico de Evoluções": evoluções do paciente em todos os atendimentos. */
   async listarEvolucoes(agendamentoId: string, query: ListRegistrosQuery): Promise<Page<Evolucao>> {
     const { pacienteId } = await this.agendamentos.resumo(agendamentoId);
-    const where = { ...NAO_EXCLUIDO, atendimento: { pacienteId, ...NAO_EXCLUIDO } };
+    const where = { ...NAO_EXCLUIDO, atendimento: this.atendimentosDoPaciente(pacienteId) };
     const pagina = await paginate(query, {
       findMany: (p) =>
         this.txHost.tx.atendimentoEvolucao.findMany({
@@ -195,7 +198,7 @@ export class AtendimentoMedicoService {
   /** "Receitas Anteriores": receitas do paciente em todos os atendimentos. */
   async listarReceitas(agendamentoId: string, query: ListRegistrosQuery): Promise<Page<Receita>> {
     const { pacienteId } = await this.agendamentos.resumo(agendamentoId);
-    const where = { ...NAO_EXCLUIDO, atendimento: { pacienteId, ...NAO_EXCLUIDO } };
+    const where = { ...NAO_EXCLUIDO, atendimento: this.atendimentosDoPaciente(pacienteId) };
     const pagina = await paginate(query, {
       findMany: (p) =>
         this.txHost.tx.atendimentoReceita.findMany({
@@ -269,7 +272,7 @@ export class AtendimentoMedicoService {
     query: ListRegistrosQuery,
   ): Promise<Page<HistoricoAtendimento>> {
     const { pacienteId } = await this.agendamentos.resumo(agendamentoId);
-    const where = { pacienteId, ...NAO_EXCLUIDO };
+    const where = this.atendimentosDoPaciente(pacienteId);
     const pagina = await paginate(query, {
       findMany: (p) =>
         this.txHost.tx.atendimento.findMany({
@@ -350,6 +353,14 @@ export class AtendimentoMedicoService {
 
   private atendimentoDo(agendamentoId: string): Promise<AtendimentoModel | null> {
     return this.txHost.tx.atendimento.findFirst({ where: { agendamentoId, ...NAO_EXCLUIDO } });
+  }
+
+  /**
+   * Atendimentos do paciente visíveis ao usuário: o prontuário é individual por profissional
+   * (R §13), então o usuário restrito vê só os dos seus profissionais (issue #153).
+   */
+  private atendimentosDoPaciente(pacienteId: string): Prisma.AtendimentoWhereInput {
+    return { pacienteId, ...NAO_EXCLUIDO, profissionalId: this.escopo.filtroProfissional() };
   }
 
   /** Nome de cada profissional (sem FK), 1 consulta por id distinto. */

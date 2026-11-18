@@ -2,6 +2,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { ComprasEstoqueModule } from '../compras-estoque/compras-estoque.module';
 import { ConfiguracoesGestaoModule } from '../configuracoes-gestao/configuracoes-gestao.module';
+import { ConsultorioAssistencialModule } from '../consultorio-assistencial/consultorio-assistencial.module';
 import { FinanceiroModule } from '../financeiro/financeiro.module';
 import { GestaoProfissionaisModule } from '../gestao-profissionais/gestao-profissionais.module';
 import { AgendaController } from './agenda/agenda.controller';
@@ -58,8 +59,10 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
 /** Módulo COMERCIAL / ATENDIMENTO do inventário. Dono das entidades Paciente/Cliente, Origem de Cliente, Agendamento, Orçamento, Venda (Vendas/PDV), Conversa WhatsApp e Negócio (CRM). */
 @Module({
   // Profissional pertence a gestao-profissionais, que por sua vez usa Paciente daqui.
+  // Consultório: pacientes vinculados ao profissional do usuário (tela Pacientes, issue #153).
   imports: [
     forwardRef(() => GestaoProfissionaisModule),
+    forwardRef(() => ConsultorioAssistencialModule),
     ComprasEstoqueModule,
     ConfiguracoesGestaoModule,
     FinanceiroModule,

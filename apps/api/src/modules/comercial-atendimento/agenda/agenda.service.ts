@@ -8,6 +8,7 @@ import type {
   ProfissionalCor,
 } from '@torres/shared';
 import type { Agendamento, Prisma } from '../../../generated/prisma/client';
+import { EscopoDadosService } from '../../../common/auth/escopo-dados.service';
 import { isUuid } from '../../../common/auth/tokens';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
@@ -62,6 +63,7 @@ export class AgendaService {
     private readonly pacientes: PacientesService,
     private readonly profissionais: ProfissionaisService,
     private readonly tipos: TiposAgendamentoService,
+    private readonly escopo: EscopoDadosService,
   ) {}
 
   /** Agendamentos do período (dias inteiros, inclusive), por data e hora. Cancelados continuam (legenda). */
@@ -70,7 +72,7 @@ export class AgendaService {
     const where: Prisma.AgendamentoWhereInput = {
       deletedAt: null,
       inicio: { gte, lt },
-      profissionalId: query.profissionalId,
+      profissionalId: this.escopo.filtroProfissional(query.profissionalId),
     };
     const lista = await this.txHost.tx.agendamento.findMany({
       where,
@@ -80,8 +82,10 @@ export class AgendaService {
     return lista.map(toAgendamentoDto);
   }
 
-  listarProfissionais(): Promise<AgendaProfissional[]> {
-    return this.profissionais.listarParaAgenda();
+  /** Colunas e filtro do calendário: só os profissionais no escopo do usuário (issue #153). */
+  async listarProfissionais(): Promise<AgendaProfissional[]> {
+    const profissionais = await this.profissionais.listarParaAgenda();
+    return profissionais.filter((p) => this.escopo.permite(p.id));
   }
 
   async findById(id: string): Promise<AgendamentoDto> {
@@ -96,11 +100,16 @@ export class AgendaService {
         status: 404,
       });
     }
+    this.escopo.garantirProfissional(agendamento.profissionalId);
     return toAgendamentoDto(agendamento);
   }
 
-  /** Cria como `AGENDADO`. Paciente, profissional e tipo precisam existir (404 caso contrário). */
+  /**
+   * Cria como `AGENDADO`. Paciente, profissional e tipo precisam existir (404 caso contrário).
+   * Usuário restrito só agenda para os profissionais vinculados (403).
+   */
   async create(input: CreateAgendamentoInput): Promise<AgendamentoDto> {
+    this.escopo.garantirProfissional(input.profissionalId);
     await this.pacientes.findById(input.pacienteId);
     await this.profissionais.garantirExiste(input.profissionalId);
     if (input.tipoAgendamentoId) await this.tipos.findById(input.tipoAgendamentoId);

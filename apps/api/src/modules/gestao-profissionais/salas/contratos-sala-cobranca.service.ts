@@ -8,6 +8,7 @@ import {
   type GerarParcelaContratoInput,
 } from '@torres/shared';
 import { AuditService } from '../../../common/audit/audit.service';
+import { EscopoDadosService, semPermissao } from '../../../common/auth/escopo-dados.service';
 import { BusinessException } from '../../../common/errors/api.exception';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { ContasReceberService } from '../../financeiro/contas-receber/contas-receber.service';
@@ -26,6 +27,7 @@ export class ContratosSalaCobrancaService {
     private readonly contratos: ContratosSalaService,
     private readonly contasReceber: ContasReceberService,
     private readonly audit: AuditService,
+    private readonly escopo: EscopoDadosService,
   ) {}
 
   /**
@@ -35,6 +37,8 @@ export class ContratosSalaCobrancaService {
    */
   @Transactional()
   async gerarCobrancasDoMes(): Promise<GerarCobrancasMesResumo> {
+    // Rotina de todos os contratos: não é para usuário restrito a profissionais (issue #153).
+    if (this.escopo.restrito()) throw semPermissao();
     const competencia = competenciaAtual();
     const { de, ate } = limitesCompetencia(competencia);
     const contratos = (await this.contratos.ativosNoPeriodo(de, ate)).filter((c) => !c.permuta);

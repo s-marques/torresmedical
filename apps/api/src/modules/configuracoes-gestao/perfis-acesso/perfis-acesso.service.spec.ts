@@ -8,6 +8,7 @@ const PERFIL = {
   id: '0b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f',
   nome: 'Recepção',
   descricao: 'Acesso para recepcionistas',
+  escopoDados: 'TODOS',
   ativo: true,
   createdAt: AGORA,
   updatedAt: AGORA,
@@ -72,12 +73,14 @@ describe('PerfisAcessoService', () => {
       nome: 'Recepção',
       descricao: 'Acesso para recepcionistas',
       paginasPermitidas: ['painel.painel', 'comercial-atendimento.agenda'],
+      escopoDados: 'PROFISSIONAIS_VINCULADOS',
     });
 
     expect(delegate.create).toHaveBeenCalledWith({
       data: {
         nome: 'Recepção',
         descricao: 'Acesso para recepcionistas',
+        escopoDados: 'PROFISSIONAIS_VINCULADOS',
         permissoes: {
           create: [
             { permissao: 'painel.painel.ver' },
@@ -97,6 +100,7 @@ describe('PerfisAcessoService', () => {
       nome: 'Recepção',
       descricao: null,
       paginasPermitidas: ['painel.painel'],
+      escopoDados: 'TODOS',
     });
 
     expect(delegate.update).toHaveBeenCalledWith({
@@ -104,6 +108,7 @@ describe('PerfisAcessoService', () => {
       data: {
         nome: 'Recepção',
         descricao: null,
+        escopoDados: 'TODOS',
         permissoes: { deleteMany: {}, create: [{ permissao: 'painel.painel.ver' }] },
       },
       include: { permissoes: true },
@@ -115,6 +120,7 @@ describe('PerfisAcessoService', () => {
         nome: 'Recepção',
         descricao: null,
         paginasPermitidas: ['painel.painel'],
+        escopoDados: 'TODOS',
       }),
     ).rejects.toMatchObject({ message: 'Perfil não encontrado' });
     expect(vazio.delegate.update).not.toHaveBeenCalled();

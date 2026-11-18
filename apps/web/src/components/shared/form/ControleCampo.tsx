@@ -19,6 +19,7 @@ import {
   moedaDoTexto,
   type TipoMascara,
 } from '@/lib/forms/mascaras';
+import { EntityMultiSelect } from '../EntityMultiSelect';
 import { EntitySelect } from '../EntitySelect';
 import type { AriaCampo, FormFieldProps } from './tipos';
 
@@ -184,6 +185,25 @@ const RENDERIZADORES: Record<
         value={campo.value}
         onChange={(id) => {
           campo.onChange(id);
+          campo.onBlur();
+        }}
+        placeholder={props.placeholder}
+        disabled={props.disabled}
+      />
+    ),
+  entidades: ({ campo, aria, props }) =>
+    props.tipo === 'entidades' && (
+      <EntityMultiSelect
+        id={aria.id}
+        aria-invalid={aria['aria-invalid']}
+        aria-describedby={aria['aria-describedby']}
+        entidade={props.entidade}
+        filtros={props.filtros}
+        iniciais={props.iniciais}
+        vazio={props.vazio}
+        value={(campo.value as string[] | undefined) ?? []}
+        onChange={(ids) => {
+          campo.onChange(ids);
           campo.onBlur();
         }}
         placeholder={props.placeholder}

@@ -82,7 +82,7 @@ export class PacientesController {
   @ApiZodResponse(200, pacienteSchema)
   @ApiErrorResponses(400, 401, 403, 404)
   findById(@IdParam() id: string): Promise<Paciente> {
-    return this.pacientes.detalhe(id);
+    return this.pacientes.detalheNoEscopo(id);
   }
 
   @Post()

@@ -1,5 +1,6 @@
 import { CONSULTA_LOOKUP, txHostFalso } from '../../../../test/utils/tx-host-falso';
 import type { ExportService } from '../../../common/export/export.service';
+import type { PacientesVinculadosService } from '../../consultorio-assistencial/pacientes-vinculados/pacientes-vinculados.service';
 import {
   formatarDocumento,
   mascararCpf,
@@ -14,9 +15,22 @@ const PACIENTE = {
   status: 'ATIVO',
 };
 
-function setup(registros = [PACIENTE]) {
+function setup(registros = [PACIENTE], idsNoEscopo: string[] | null = null) {
   const { txHost, delegate } = txHostFalso('paciente', registros);
-  return { service: new PacientesService(txHost, {} as ExportService), delegate };
+  const vinculados = {
+    idsNoEscopo: jest.fn().mockResolvedValue(idsNoEscopo),
+    garantir: jest.fn(async (id: string) => {
+      if (idsNoEscopo !== null && !idsNoEscopo.includes(id)) {
+        throw Object.assign(new Error('Sem permissão'), { status: 403 });
+      }
+    }),
+  };
+  const service = new PacientesService(
+    txHost,
+    {} as ExportService,
+    vinculados as unknown as PacientesVinculadosService,
+  );
+  return { service, delegate, vinculados };
 }
 
 describe('PacientesService', () => {
@@ -120,5 +134,59 @@ describe('PacientesService', () => {
       { id: 'desc' },
     ]);
     expect(delegate.findMany.mock.calls[1][0].orderBy).toEqual([{ celular: 'asc' }, { id: 'asc' }]);
+  });
+
+  describe('escopo de dados (issue #153)', () => {
+    const consulta = {
+      page: 1,
+      pageSize: 10,
+      search: undefined,
+      status: undefined,
+      sort: { field: 'nome' as const, direction: 'asc' as const },
+    };
+    const OUTRO = '9b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
+    const agora = new Date();
+    const COMPLETO = {
+      ...PACIENTE,
+      createdAt: agora,
+      updatedAt: agora,
+      origemCliente: null,
+    } as never;
+
+    it('list: sem restrição não filtra por id', async () => {
+      const { service, delegate } = setup([COMPLETO]);
+      await service.list(consulta);
+      expect(delegate.findMany.mock.calls[0][0].where).not.toHaveProperty('AND');
+    });
+
+    it('list: restrito lista só os pacientes vinculados', async () => {
+      const { service, delegate } = setup([COMPLETO], [PACIENTE.id]);
+      await service.list(consulta);
+      expect(delegate.findMany.mock.calls[0][0].where.AND[1]).toEqual({
+        id: { in: [PACIENTE.id] },
+      });
+      expect(delegate.count.mock.calls[0][0].where.AND[1]).toEqual({ id: { in: [PACIENTE.id] } });
+    });
+
+    it('detalheNoEscopo, update e remove: paciente não vinculado dá 403', async () => {
+      const { service, delegate } = setup([PACIENTE], [OUTRO]);
+      await expect(service.detalheNoEscopo(PACIENTE.id)).rejects.toMatchObject({ status: 403 });
+      await expect(service.remove(PACIENTE.id)).rejects.toMatchObject({ status: 403 });
+      await expect(service.update(PACIENTE.id, { nome: 'X' } as never)).rejects.toMatchObject({
+        status: 403,
+      });
+      expect(delegate.update).not.toHaveBeenCalled();
+    });
+
+    it('detalheNoEscopo: paciente vinculado é devolvido', async () => {
+      const agora = new Date();
+      const { service } = setup(
+        [{ ...PACIENTE, createdAt: agora, updatedAt: agora, origemCliente: null } as never],
+        [PACIENTE.id],
+      );
+      await expect(service.detalheNoEscopo(PACIENTE.id)).resolves.toMatchObject({
+        id: PACIENTE.id,
+      });
+    });
   });
 });

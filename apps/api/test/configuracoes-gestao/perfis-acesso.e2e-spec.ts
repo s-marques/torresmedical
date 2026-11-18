@@ -134,6 +134,49 @@ describe('Perfis de Acesso (e2e)', () => {
       });
     });
 
+    it('escopo de dados: padrão TODOS; restrito aos vinculados é gravado e auditado (issue #153)', async () => {
+      const padrao = await http()
+        .post(BASE)
+        .send({ nome: 'Recepção', paginasPermitidas: ['painel.painel'] })
+        .expect(201);
+      expect(perfilSchema.parse(padrao.body).escopoDados).toBe('TODOS');
+
+      const res = await http()
+        .post(BASE)
+        .send({
+          nome: 'Médico',
+          paginasPermitidas: ['comercial-atendimento.agenda'],
+          escopoDados: 'PROFISSIONAIS_VINCULADOS',
+        })
+        .expect(201);
+      expect(perfilSchema.parse(res.body).escopoDados).toBe('PROFISSIONAIS_VINCULADOS');
+      await expectAudit(prisma, {
+        action: 'CREATE',
+        entity: 'Perfil',
+        entityId: res.body.id,
+        after: { escopoDados: 'PROFISSIONAIS_VINCULADOS' },
+        userId: usuario.id,
+      });
+
+      await http()
+        .patch(`${BASE}/${res.body.id}`)
+        .send({ nome: 'Médico', paginasPermitidas: ['comercial-atendimento.agenda'] })
+        .expect(200);
+      await expectAudit(prisma, {
+        action: 'UPDATE',
+        entity: 'Perfil',
+        entityId: res.body.id,
+        before: { escopoDados: 'PROFISSIONAIS_VINCULADOS' },
+        after: { escopoDados: 'TODOS' },
+        userId: usuario.id,
+      });
+
+      await http()
+        .post(BASE)
+        .send({ nome: 'X', paginasPermitidas: ['painel.painel'], escopoDados: 'OUTRO' })
+        .expect(400);
+    });
+
     it('400 "Nome é obrigatório." e página inválida, sem auditar', async () => {
       const res = await http()
         .post(BASE)

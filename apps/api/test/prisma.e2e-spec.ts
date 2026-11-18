@@ -121,6 +121,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'unidades',
       'unidades_medida',
       'usuarios',
+      'usuarios_profissionais',
       'venda_itens',
       'vendas',
     ]);

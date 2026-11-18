@@ -12,11 +12,15 @@ import {
   type SalaOcupacaoBloco,
   type SalaOcupacaoQuery,
 } from '@torres/shared';
+import { EscopoDadosService, semPermissao } from '../../../common/auth/escopo-dados.service';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { ContratosSalaService } from './contratos-sala.service';
 import { hojeEmSaoPaulo } from './data-local';
 
 const DIAS_DA_SEMANA = 7;
+
+/** Nome exibido no lugar do locatário de outro profissional para o usuário restrito (issue #153). */
+export const LOCATARIO_OCULTO = 'Ocupado';
 
 /** Blocos de um contrato nos dias da semana `[segunda, domingo]` em que ele está vigente. */
 function blocosDoContrato(contrato: ContratoSala, segunda: string): SalaOcupacaoBloco[] {
@@ -45,9 +49,14 @@ export class SalasPainelService {
   constructor(
     private readonly txHost: TransactionHost<PrismaAdapter>,
     private readonly contratos: ContratosSalaService,
+    private readonly escopo: EscopoDadosService,
   ) {}
 
-  /** Semana de segunda a domingo com os contratos ativos de cada sala, dentro da vigência. */
+  /**
+   * Semana de segunda a domingo com os contratos ativos de cada sala, dentro da vigência.
+   * Usuário restrito (issue #153, confirmado pelo dev) vê só as salas em que um profissional seu
+   * tem contrato na semana; os horários dos outros locatários aparecem só como "Ocupado".
+   */
   async ocupacao(query: SalaOcupacaoQuery): Promise<SalaOcupacao> {
     const segunda = segundaDaSemana(query.inicio ?? hojeEmSaoPaulo());
     const domingo = adicionarDias(segunda, DIAS_DA_SEMANA - 1);
@@ -55,14 +64,20 @@ export class SalasPainelService {
       this.salas(),
       this.contratos.ativosNoPeriodo(segunda, domingo),
     ]);
+    const proprio = (c: ContratoSala) =>
+      this.escopo.permite(c.locatarioTipo === 'PROFISSIONAL' ? c.locatarioId : null);
+    const visiveis = this.escopo.restrito()
+      ? salas.filter((sala) => contratos.some((c) => c.salaId === sala.id && proprio(c)))
+      : salas;
     return {
       inicio: segunda,
       fim: domingo,
-      salas: salas.map((sala) => ({
+      salas: visiveis.map((sala) => ({
         salaId: sala.id,
         salaNome: sala.nome,
         blocos: contratos
           .filter((c) => c.salaId === sala.id)
+          .map((c) => (proprio(c) ? c : { ...c, locatarioNome: LOCATARIO_OCULTO }))
           .flatMap((c) => blocosDoContrato(c, segunda))
           .sort(
             (a, b) =>
@@ -79,6 +94,8 @@ export class SalasPainelService {
    * contratada por sala (valor total mensal dos contratos, sem os de permuta).
    */
   async dashboard(query: SalaDashboardQuery): Promise<SalaDashboard> {
+    // Ocupação e receita de todas as salas são dados da administração (R §37): 403 para restrito.
+    if (this.escopo.restrito()) throw semPermissao();
     const data = query.data ?? hojeEmSaoPaulo();
     const [salas, contratos] = await Promise.all([
       this.salas(),

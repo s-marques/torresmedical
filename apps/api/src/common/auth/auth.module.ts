@@ -6,6 +6,7 @@ import { AUTH_CONFIG, loadAuthConfig } from './auth.config';
 import { AuthController } from './auth.controller';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
+import { EscopoDadosService } from './escopo-dados.service';
 import { throttlerOptions } from './auth.throttle';
 import {
   NOTIFICADOR_REDEFINICAO_SENHA,
@@ -38,7 +39,8 @@ import { SessoesService } from './sessoes.service';
     { provide: APP_GUARD, useClass: AuthGuard },
     AuthService,
     SessoesService,
+    EscopoDadosService,
   ],
-  exports: [AuthService],
+  exports: [AuthService, EscopoDadosService],
 })
 export class AuthModule {}

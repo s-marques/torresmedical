@@ -20,6 +20,7 @@ import type { ExportColumn, ExportFile } from '../../../common/export/export.typ
 import { EntidadeLookupService, type FonteLookup } from '../../../common/lookups/lookup-query';
 import { paginate, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
+import { PacientesVinculadosService } from '../../consultorio-assistencial/pacientes-vinculados/pacientes-vinculados.service';
 
 const CPF_DIGITOS = 11;
 const NAO_EXCLUIDOS = { deletedAt: null } as const;
@@ -124,13 +125,17 @@ export class PacientesService extends EntidadeLookupService<
   constructor(
     private readonly txHost: TransactionHost<PrismaAdapter>,
     private readonly exportService: ExportService,
+    private readonly vinculados: PacientesVinculadosService,
   ) {
     super();
   }
 
-  /** Tela Pacientes: busca, status e ordenação (a origem ordena pelo nome dela). */
-  list(query: ListPacientesQuery): Promise<Page<PacienteDto>> {
-    const where = this.where(query);
+  /**
+   * Tela Pacientes: busca, status e ordenação (a origem ordena pelo nome dela). Usuário com
+   * escopo restrito vê só os pacientes vinculados aos seus profissionais (issue #153).
+   */
+  async list(query: ListPacientesQuery): Promise<Page<PacienteDto>> {
+    const where = await this.whereNoEscopo(query);
     const orderBy = this.orderBy(query.sort);
     return paginate(query, {
       findMany: async (page) =>
@@ -141,8 +146,19 @@ export class PacientesService extends EntidadeLookupService<
     });
   }
 
+  /**
+   * Detalhe para outros módulos, sem o escopo: quem chama já aplicou o seu (ex.: o agendamento do
+   * Atendimento Médico). A tela Pacientes usa `detalheNoEscopo`.
+   */
   async detalhe(id: string): Promise<PacienteDto> {
     return toPacienteDto(await this.buscarComOrigem(id));
+  }
+
+  /** `GET /pacientes/:id`: 404 se não existe; 403 se não está vinculado ao usuário restrito. */
+  async detalheNoEscopo(id: string): Promise<PacienteDto> {
+    const paciente = await this.buscarComOrigem(id);
+    await this.vinculados.garantir(id);
+    return toPacienteDto(paciente);
   }
 
   async create(input: CreatePacienteInput): Promise<PacienteDto> {
@@ -156,6 +172,7 @@ export class PacientesService extends EntidadeLookupService<
 
   async update(id: string, input: UpdatePacienteInput): Promise<PacienteDto> {
     await this.findById(id);
+    await this.vinculados.garantir(id);
     await this.validar(input, id);
     const alterado = await this.txHost.tx.paciente.update({
       where: { id },
@@ -168,6 +185,7 @@ export class PacientesService extends EntidadeLookupService<
   /** Exclusão lógica: o histórico clínico e financeiro continua apontando para o paciente. */
   async remove(id: string): Promise<PacienteDto> {
     await this.findById(id);
+    await this.vinculados.garantir(id);
     const excluido = await this.txHost.tx.paciente.update({
       where: { id },
       data: { deletedAt: new Date() },
@@ -177,7 +195,7 @@ export class PacientesService extends EntidadeLookupService<
   }
 
   async export(query: ExportPacientesQuery): Promise<ExportFile> {
-    const where = this.where(query);
+    const where = await this.whereNoEscopo(query);
     this.exportService.ensureWithinLimit(await this.txHost.tx.paciente.count({ where }));
     const rows = await this.txHost.tx.paciente.findMany({
       where,
@@ -215,6 +233,15 @@ export class PacientesService extends EntidadeLookupService<
 
   private where(query: Pick<ListPacientesQuery, 'search' | 'status'>): Prisma.PacienteWhereInput {
     return { ...NAO_EXCLUIDOS, status: query.status, ...buscaLista(query.search) };
+  }
+
+  /** Filtros da lista e da exportação, limitados aos pacientes vinculados quando restrito. */
+  private async whereNoEscopo(
+    query: Pick<ListPacientesQuery, 'search' | 'status'>,
+  ): Promise<Prisma.PacienteWhereInput> {
+    const ids = await this.vinculados.idsNoEscopo();
+    const where = this.where(query);
+    return ids === null ? where : { AND: [where, { id: { in: ids } }] };
   }
 
   private orderBy(sort: ListPacientesQuery['sort']): Prisma.PacienteOrderByWithRelationInput[] {

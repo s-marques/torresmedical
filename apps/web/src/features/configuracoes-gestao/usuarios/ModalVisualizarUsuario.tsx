@@ -24,6 +24,10 @@ export function ModalVisualizarUsuario({
     ['Role', usuario.perfilNome ?? 'Sem perfil (usa padrão da role)'],
     ['Perfil', usuario.perfilNome ?? 'Sem perfil (usa padrão da role)'],
     ['Status', <StatusAtivo key="status" ativo={usuario.ativo} />],
+    [
+      'Profissionais vinculados',
+      usuario.profissionais.length > 0 ? usuario.profissionais.map((p) => p.nome).join(', ') : '-',
+    ],
     ['Ver dados sensíveis (LGPD)', usuario.verDadosSensiveis ? 'Sim' : 'Não'],
     ['Último Login', formatarDataHora(usuario.ultimoLoginEm)],
   ];

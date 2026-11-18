@@ -22,7 +22,22 @@ describe('createUsuarioSchema', () => {
       cargo: null,
       perfilId: null,
       verDadosSensiveis: false,
+      profissionalIds: [],
     });
+  });
+
+  it('aceita um ou mais profissionais vinculados e descarta repetidos (issue #153)', () => {
+    const a = '0b9f6f4e-1d6b-4f2a-9a43-6a0c2b1f8e01';
+    const b = '5c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f';
+    expect(
+      createUsuarioSchema.parse({ ...BASE, profissionalIds: [a, b, a] }).profissionalIds,
+    ).toEqual([a, b]);
+  });
+
+  it('recusa profissional com id inválido', () => {
+    expect(mensagens(createUsuarioSchema.safeParse({ ...BASE, profissionalIds: ['x'] }))).toEqual([
+      'Profissional inválido',
+    ]);
   });
 
   it('exige Nome, Email e Senha (confirmado pelo dev, issue #37)', () => {

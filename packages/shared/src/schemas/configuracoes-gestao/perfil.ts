@@ -25,6 +25,21 @@ const descricao = z
   .transform((valor) => valor || null);
 
 /**
+ * Escopo de dados do perfil (issue #153; requisitos R §14 e §37). `TODOS`: vê os dados de
+ * todos os profissionais. `PROFISSIONAIS_VINCULADOS`: vê só a agenda, os pacientes, o
+ * prontuário e as salas dos profissionais vinculados ao usuário; sem vínculo, não vê nada.
+ */
+export const ESCOPOS_DADOS = ['TODOS', 'PROFISSIONAIS_VINCULADOS'] as const;
+export type EscopoDadosPerfil = (typeof ESCOPOS_DADOS)[number];
+
+export const ESCOPO_DADOS_LABELS: Readonly<Record<EscopoDadosPerfil, string>> = {
+  TODOS: 'Todos os profissionais',
+  PROFISSIONAIS_VINCULADOS: 'Somente os profissionais vinculados ao usuário',
+};
+
+export const escopoDadosSchema = z.enum(ESCOPOS_DADOS, { error: 'Escopo de dados inválido' });
+
+/**
  * `POST` e `PATCH /api/configuracoes-gestao/perfis`. O modal Editar envia o formulário
  * inteiro (print do inventário), por isso create e update usam o mesmo schema. "Páginas
  * Permitidas" vira uma permissão `<tela>.ver` por página marcada.
@@ -36,6 +51,7 @@ export const perfilInputSchema = z.strictObject({
     .array(paginaPermitida)
     .min(1, { error: 'Selecione ao menos uma página.' })
     .transform((valor) => [...new Set(valor)]),
+  escopoDados: escopoDadosSchema.default('TODOS'),
 });
 
 export type PerfilFormulario = z.input<typeof perfilInputSchema>;
@@ -72,6 +88,7 @@ export const perfilSchema = z.object({
   descricao: z.string().nullable(),
   /** Ids de tela (`TelaId`) com permissão `.ver` concedida a este perfil. */
   paginasPermitidas: z.array(z.string()),
+  escopoDados: escopoDadosSchema,
   ativo: z.boolean(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
