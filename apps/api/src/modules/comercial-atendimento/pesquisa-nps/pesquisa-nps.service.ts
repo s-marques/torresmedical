@@ -13,6 +13,7 @@ import {
 } from '@torres/shared';
 import { Prisma } from '../../../generated/prisma/client';
 import { AuditService } from '../../../common/audit/audit.service';
+import { EscopoDadosService } from '../../../common/auth/escopo-dados.service';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { paginate, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
@@ -70,6 +71,7 @@ export class PesquisaNpsService {
   constructor(
     private readonly txHost: TransactionHost<PrismaAdapter>,
     private readonly audit: AuditService,
+    private readonly escopo: EscopoDadosService,
   ) {}
 
   /** Período com os padrões: Até = hoje e De = Até menos 30 dias (dias da clínica). */
@@ -88,7 +90,11 @@ export class PesquisaNpsService {
 
   private whereDoPeriodo(periodo: PeriodoNps): Prisma.PesquisaNpsWhereInput {
     const { de, ate } = this.periodo(periodo);
-    return { enviadaEm: { gte: intervaloDoDia(de).gte, lt: intervaloDoDia(ate).lt } };
+    return {
+      enviadaEm: { gte: intervaloDoDia(de).gte, lt: intervaloDoDia(ate).lt },
+      // Perfil restrito só vê as pesquisas dos profissionais vinculados (cartões e lista).
+      profissionalId: this.escopo.filtroProfissional(),
+    };
   }
 
   // ---------- Aba Dashboard ----------

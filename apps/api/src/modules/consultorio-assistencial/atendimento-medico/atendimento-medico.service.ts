@@ -118,11 +118,8 @@ export class AtendimentoMedicoService {
     private readonly profissionais: ProfissionaisService,
     private readonly protocolos: ProtocolosService,
     private readonly audit: AuditService,
-<<<<<<< HEAD
     private readonly escopo: EscopoDadosService,
-=======
     private readonly events: EventPublisher,
->>>>>>> ab9c0a3 (feat(comercial-atendimento): API da Pesquisa NPS e envio ao finalizar o atendimento (#12))
   ) {}
 
   listar(query: ListAtendimentoMedicoQuery): Promise<Page<AtendimentoMedicoItem>> {

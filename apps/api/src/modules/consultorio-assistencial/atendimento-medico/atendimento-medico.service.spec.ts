@@ -147,11 +147,8 @@ function setup({
     profissionais as unknown as ProfissionaisService,
     protocolos as unknown as ProtocolosService,
     audit as unknown as AuditService,
-<<<<<<< HEAD
     escopoFalso(escopo),
-=======
     events as unknown as EventPublisher,
->>>>>>> ab9c0a3 (feat(comercial-atendimento): API da Pesquisa NPS e envio ao finalizar o atendimento (#12))
   );
   return { service, tx, agendamentos, pacientes, profissionais, protocolos, audit, events };
 }

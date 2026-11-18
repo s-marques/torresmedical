@@ -210,6 +210,59 @@ describe('Pesquisa NPS (e2e)', () => {
     });
   });
 
+  describe('escopo de dados por profissional', () => {
+    it('perfil restrito vê só as pesquisas (lista e cartões) dos profissionais vinculados', async () => {
+      const p = await paciente('Ana Fictícia');
+      const outro = await prisma.profissional.create({
+        data: { nome: 'Dra. Outra', corCalendario: 'azul' },
+      });
+      await pesquisa(p.id, '2026-06-10', { nota: 10 });
+      await prisma.pesquisaNps.create({
+        data: {
+          atendimentoId: novoAtendimentoId(),
+          pacienteId: p.id,
+          profissionalId: outro.id,
+          status: 'RESPONDIDA',
+          nota: 0,
+          enviadaEm: new Date('2026-06-11T15:00:00.000Z'),
+          respondidaEm: new Date('2026-06-11T16:00:00.000Z'),
+        },
+      });
+      const restrito = await criarUsuarioTeste(app, {
+        permissoes: ['comercial-atendimento.pesquisa-nps.ver'],
+        escopoDados: 'PROFISSIONAIS_VINCULADOS',
+        profissionalIds: [profissionalId],
+      });
+      const comoRestrito = comUsuario(app, restrito);
+
+      const { body } = await comoRestrito.get(BASE).query(JUNHO).expect(200);
+      expect(pesquisaNpsPageSchema.parse(body).data.map((x) => x.profissional)).toEqual([
+        'Dr. Fictício',
+      ]);
+      const cartoes = resumoNpsSchema.parse(
+        (await comoRestrito.get(`${BASE}/resumo`).query(JUNHO).expect(200)).body,
+      );
+      expect(cartoes).toMatchObject({ score: 100, avaliacoes: 1, detratores: 0 });
+      // Sem restrição, o score soma os dois profissionais.
+      expect(await resumo(JUNHO)).toMatchObject({ score: 0, avaliacoes: 2 });
+    });
+
+    it('perfil restrito sem profissional vinculado não vê nenhuma pesquisa', async () => {
+      const p = await paciente('Ana Fictícia');
+      await pesquisa(p.id, '2026-06-10', { nota: 10 });
+      const semVinculo = await criarUsuarioTeste(app, {
+        permissoes: ['comercial-atendimento.pesquisa-nps.ver'],
+        escopoDados: 'PROFISSIONAIS_VINCULADOS',
+      });
+      const { body } = await comUsuario(app, semVinculo).get(BASE).query(JUNHO).expect(200);
+      expect(pesquisaNpsPageSchema.parse(body).meta.total).toBe(0);
+      const cartoes = (
+        await comUsuario(app, semVinculo).get(`${BASE}/resumo`).query(JUNHO).expect(200)
+      ).body;
+      expect(resumoNpsSchema.parse(cartoes)).toMatchObject({ enviadas: 0, avaliacoes: 0 });
+    });
+  });
+
   describe('envio da pesquisa (atendimento finalizado)', () => {
     const finalizado = (pacienteId: string) => ({
       atendimentoId: novoAtendimentoId(),
