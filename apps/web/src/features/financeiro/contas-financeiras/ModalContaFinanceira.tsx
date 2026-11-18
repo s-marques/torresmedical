@@ -19,6 +19,8 @@ export interface ModalContaFinanceiraProps<TIn extends FieldValues, TOut> {
   opcoesStatus: readonly OpcaoCampo[];
   /** Campo da pessoa (fornecedor/funcionário ou cliente), logo abaixo da Descrição. */
   pessoa: ReactNode;
+  /** Campos da tela logo após o Status (ex.: dados do recebimento em Contas a Receber). */
+  aposStatus?: ReactNode;
 }
 
 /** Modal "Nova/Editar Conta" de Contas a Pagar e Contas a Receber. */
@@ -32,6 +34,7 @@ export function ModalContaFinanceira<TIn extends FieldValues, TOut>({
   finalidade,
   opcoesStatus,
   pessoa,
+  aposStatus,
 }: Readonly<ModalContaFinanceiraProps<TIn, TOut>>) {
   const planoContas = usePlanoContas({ search: '' });
   const opcoesPlanoContas = (planoContas.data?.data ?? []).map((pc) => ({
@@ -85,6 +88,7 @@ export function ModalContaFinanceira<TIn extends FieldValues, TOut>({
         <FormField name="documento" label="Documento" />
         <FormField name="totalParcelas" label="Total Parcelas" tipo="numero" />
         <FormField name="status" label="Status" tipo="select" opcoes={opcoesStatus} />
+        {aposStatus}
         <FormField
           name="observacoes"
           label="Observações"

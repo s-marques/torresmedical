@@ -6,6 +6,8 @@ import { BandeirasController } from './bandeiras/bandeiras.controller';
 import { BandeirasService } from './bandeiras/bandeiras.service';
 import { CaixasController } from './caixas/caixas.controller';
 import { CaixasService } from './caixas/caixas.service';
+import { ConciliacaoController } from './conciliacao/conciliacao.controller';
+import { ConciliacaoService } from './conciliacao/conciliacao.service';
 import { ContasBancariasController } from './contas-bancarias/contas-bancarias.controller';
 import { ContasBancariasService } from './contas-bancarias/contas-bancarias.service';
 import { ContasPagarController } from './contas-pagar/contas-pagar.controller';
@@ -28,6 +30,7 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
     ContasBancariasController,
     ContasPagarController,
     ContasReceberController,
+    ConciliacaoController,
     criarLookupController('formas-pagamento', FormasPagamentoService),
   ],
   providers: [
@@ -38,6 +41,7 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
     ContasBancariasService,
     ContasPagarService,
     ContasReceberService,
+    ConciliacaoService,
   ],
   exports: [FormasPagamentoService, PlanoContasService, ContasReceberService],
 })

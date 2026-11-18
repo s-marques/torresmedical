@@ -1817,6 +1817,9 @@ model ContaReceber {
   documento        String?
   totalParcelas    Int                @default(1) @map("total_parcelas")
   status           ContaReceberStatus @default(PENDENTE)
+  /// Conta bancária e data do recebimento (status RECEBIDO), usadas pela Conciliação (#46).
+  contaBancariaId  String?            @map("conta_bancaria_id") @db.Uuid
+  dataRecebimento  DateTime?          @map("data_recebimento") @db.Date
   observacoes      String?
   createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt        DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
@@ -1825,27 +1828,47 @@ model ContaReceber {
   paciente       Paciente?       @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
   formaPagamento FormaPagamento? @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
   planoConta     PlanoConta?     @relation(fields: [planoContaId], references: [id], onDelete: Restrict)
+  contaBancaria  ContaBancaria?  @relation(fields: [contaBancariaId], references: [id], onDelete: Restrict)
 
   @@index([pacienteId])
   @@index([formaPagamentoId])
   @@index([planoContaId])
   @@index([status])
   @@index([dataVencimento])
+  @@index([contaBancariaId])
+  @@index([dataRecebimento])
   @@map("contas_receber")
 }
 
-/// Dono: financeiro. Conta bancária usada nas baixas de Contas a Pagar. Ainda sem tela de
-/// cadastro própria (issue #47); cadastrada via seed/admin por enquanto.
-model ContaBancaria {
-  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  nome      String
-  banco     String?
-  ativo     Boolean   @default(true)
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+enum ContaBancariaTipo {
+  CAIXA
+  CORRENTE
+  POUPANCA
+  INVESTIMENTO
 
-  baixas ContaPagarBaixa[]
+  @@map("conta_bancaria_tipo")
+}
+
+/// Dono: financeiro. Conta bancária, cadastrada na aba "Contas Bancárias" da tela Conciliação
+/// (#46) e usada nas baixas de Contas a Pagar e nos recebimentos de Contas a Receber. Exclusão
+/// lógica: histórico financeiro.
+model ContaBancaria {
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome             String
+  tipo             ContaBancariaTipo @default(CORRENTE)
+  banco            String?
+  agencia          String?
+  conta            String?
+  saldoInicial     Decimal           @default(0) @map("saldo_inicial") @db.Decimal(14, 2)
+  /// Pagamentos e recebimentos a partir desta data somam no saldo. Nula: todos.
+  dataSaldoInicial DateTime?         @map("data_saldo_inicial") @db.Date
+  ativo            Boolean           @default(true)
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt        DateTime?         @map("deleted_at") @db.Timestamptz(3)
+
+  baixas        ContaPagarBaixa[]
+  contasReceber ContaReceber[]
 
   @@map("contas_bancarias")
 }

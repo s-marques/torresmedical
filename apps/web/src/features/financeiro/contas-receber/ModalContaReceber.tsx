@@ -3,8 +3,10 @@ import {
   type ContaReceber,
   type ContaReceberFormulario,
 } from '@torres/shared';
+import { useWatch } from 'react-hook-form';
 import { FormField } from '@/components/shared/form/FormField';
 import { useFormulario } from '@/components/shared/form/use-formulario';
+import { useOpcoesContasBancarias } from '../contas-bancarias/use-contas-bancarias';
 import { ModalContaFinanceira } from '../contas-financeiras/ModalContaFinanceira';
 import { valoresIniciaisContaFinanceira } from '../contas-financeiras/valores-iniciais';
 import { OPCOES_STATUS } from './opcoes';
@@ -15,7 +17,36 @@ function valoresIniciais(conta?: ContaReceber): ContaReceberFormulario {
     ...valoresIniciaisContaFinanceira(conta),
     pacienteId: conta?.pacienteId ?? null,
     status: conta?.status ?? 'PENDENTE',
+    contaBancariaId: conta?.contaBancariaId ?? null,
+    dataRecebimento: conta?.dataRecebimento ?? '',
   };
+}
+
+/**
+ * Conta bancária e data do recebimento, só com status Recebido (decisão do dev na #46, para a
+ * Conciliação). Sem data, a API grava a de hoje.
+ */
+function CamposRecebimento() {
+  const status = useWatch<ContaReceberFormulario, 'status'>({ name: 'status' });
+  const opcoes = useOpcoesContasBancarias();
+  if (status !== 'RECEBIDO') return null;
+  return (
+    <>
+      <FormField
+        name="contaBancariaId"
+        label="Conta Bancária"
+        tipo="select"
+        opcoes={opcoes}
+        placeholder="Selecione (opcional)"
+      />
+      <FormField
+        name="dataRecebimento"
+        label="Data de Recebimento"
+        tipo="data"
+        descricao="Vazia: a data de hoje."
+      />
+    </>
+  );
 }
 
 export interface ModalContaReceberProps {
@@ -50,6 +81,7 @@ export function ModalContaReceber({ conta, onFechar }: Readonly<ModalContaRecebe
           className="sm:col-span-2"
         />
       }
+      aposStatus={<CamposRecebimento />}
     />
   );
 }

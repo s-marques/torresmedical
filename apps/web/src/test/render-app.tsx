@@ -38,7 +38,8 @@ export function sessaoJson(usuario: UsuarioSessao = USUARIO_TESTE, accessToken =
   return json({ accessToken, expiraEm: '2026-10-15T12:15:00.000Z', usuario });
 }
 
-type Rota = (init?: RequestInit) => Response | Promise<Response>;
+/** Resposta de uma rota. `url` traz a query string, para respostas que dependem dela. */
+type Rota = (init: RequestInit | undefined, url: string) => Response | Promise<Response>;
 export type FetchFalso = Mock<(url: string, init?: RequestInit) => Promise<Response>>;
 
 export interface ApiFalsaOptions {
@@ -56,7 +57,7 @@ export function apiFalsa({
   return vi.fn(async (url: string, init?: RequestInit): Promise<Response> => {
     const caminho = url.split('?')[0] ?? url;
     const rota = rotas[caminho];
-    if (rota) return rota(init);
+    if (rota) return rota(init, url);
     if (caminho === '/api/health') return healthOk();
     if (caminho === '/api/auth/refresh') return usuario ? sessaoJson(usuario) : json(ERRO_401, 401);
     if (caminho === '/api/auth/logout') return new Response(null, { status: 204 });

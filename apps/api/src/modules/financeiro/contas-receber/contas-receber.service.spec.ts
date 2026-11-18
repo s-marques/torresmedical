@@ -3,6 +3,7 @@ import { Prisma } from '../../../generated/prisma/client';
 import type { AuditService } from '../../../common/audit/audit.service';
 import type { ExportService } from '../../../common/export/export.service';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
+import type { ContasBancariasService } from '../contas-bancarias/contas-bancarias.service';
 import {
   CONTA_RECEBER_EXPORT_DEFINITIONS,
   ContasReceberService,
@@ -25,7 +26,10 @@ const CONTA = {
   planoConta: null,
   documento: null,
   totalParcelas: 1,
-  status: 'PENDENTE' as const,
+  status: 'PENDENTE' as 'PENDENTE' | 'RECEBIDO' | 'CANCELADO',
+  contaBancariaId: null as string | null,
+  contaBancaria: null as { nome: string } | null,
+  dataRecebimento: null as Date | null,
   observacoes: null,
   createdAt: new Date('2026-10-01T12:00:00.000Z'),
   updatedAt: new Date('2026-10-01T12:00:00.000Z'),
@@ -46,13 +50,95 @@ function setup() {
     export: jest.fn().mockResolvedValue({ filename: 'contas-receber.xlsx' }),
   };
   const audit = { record: jest.fn() };
+  const contasBancarias = { garantirExiste: jest.fn().mockResolvedValue(undefined) };
   const service = new ContasReceberService(
     txHost,
     exportService as unknown as ExportService,
     audit as unknown as AuditService,
+    contasBancarias as unknown as ContasBancariasService,
   );
-  return { service, contaReceber, exportService, audit };
+  return { service, contaReceber, exportService, audit, contasBancarias };
 }
+
+const ENTRADA = {
+  descricao: 'Mensalidade Outubro',
+  pacienteId: null,
+  valor: 150.5,
+  dataVencimento: '2026-10-10',
+  formaPagamentoId: null,
+  planoContaId: null,
+  documento: null,
+  totalParcelas: 1,
+  observacoes: null,
+};
+const CONTA_BANCARIA_ID = '2d9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
+
+describe('ContasReceberService: conta bancária e data do recebimento (#46)', () => {
+  it('com status Recebido grava a conta (validada) e a data informada', async () => {
+    const { service, contaReceber, contasBancarias } = setup();
+    await service.create({
+      ...ENTRADA,
+      status: 'RECEBIDO',
+      contaBancariaId: CONTA_BANCARIA_ID,
+      dataRecebimento: '2026-10-05',
+    });
+    expect(contasBancarias.garantirExiste).toHaveBeenCalledWith(CONTA_BANCARIA_ID);
+    const data = contaReceber.create.mock.calls[0][0].data;
+    expect(data.contaBancariaId).toBe(CONTA_BANCARIA_ID);
+    expect(data.dataRecebimento).toEqual(new Date('2026-10-05'));
+  });
+
+  it('com status Recebido sem data usa a de hoje', async () => {
+    const { service, contaReceber } = setup();
+    await service.create({ ...ENTRADA, status: 'RECEBIDO' });
+    const data = contaReceber.create.mock.calls[0][0].data;
+    expect(data.contaBancariaId).toBeNull();
+    expect(data.dataRecebimento).toEqual(new Date(new Date().toISOString().slice(0, 10)));
+  });
+
+  it('na edição sem data mantém a data de recebimento já gravada', async () => {
+    const { service, contaReceber } = setup();
+    contaReceber.findFirst.mockResolvedValue({
+      ...CONTA,
+      status: 'RECEBIDO',
+      dataRecebimento: new Date('2026-09-20'),
+    });
+    await service.update(ID, {
+      ...ENTRADA,
+      status: 'RECEBIDO',
+      contaBancariaId: null,
+      dataRecebimento: null,
+    });
+    expect(contaReceber.update.mock.calls[0][0].data.dataRecebimento).toEqual(
+      new Date('2026-09-20'),
+    );
+  });
+
+  it('fora de Recebido limpa conta e data, sem validar a conta', async () => {
+    const { service, contaReceber, contasBancarias } = setup();
+    await service.create({
+      ...ENTRADA,
+      status: 'PENDENTE',
+      contaBancariaId: CONTA_BANCARIA_ID,
+      dataRecebimento: '2026-10-05',
+    });
+    expect(contasBancarias.garantirExiste).not.toHaveBeenCalled();
+    const data = contaReceber.create.mock.calls[0][0].data;
+    expect(data.contaBancariaId).toBeNull();
+    expect(data.dataRecebimento).toBeNull();
+  });
+
+  it('toContaReceber traz a conta bancária e a data do recebimento', () => {
+    expect(
+      toContaReceber({
+        ...CONTA,
+        contaBancaria: { nome: 'Banco Teste' },
+        contaBancariaId: CONTA_BANCARIA_ID,
+        dataRecebimento: new Date('2026-10-05T00:00:00.000Z'),
+      }),
+    ).toMatchObject({ contaBancariaNome: 'Banco Teste', dataRecebimento: '2026-10-05' });
+  });
+});
 
 describe('ContasReceberService', () => {
   it('toContaReceber converte decimal em texto, data em AAAA-MM-DD e traz o nome do cliente', () => {
@@ -101,6 +187,8 @@ describe('ContasReceberService', () => {
       totalParcelas: 1,
       status: 'RECEBIDO',
       observacoes: null,
+      contaBancariaId: null,
+      dataRecebimento: null,
     });
     expect(contaReceber.findFirst).toHaveBeenCalled();
     expect(contaReceber.update).toHaveBeenCalled();
