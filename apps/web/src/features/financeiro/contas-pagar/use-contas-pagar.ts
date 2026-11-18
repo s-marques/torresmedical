@@ -1,5 +1,4 @@
 import {
-  contaBancariaListaSchema,
   contaPagarBaixaSchema,
   contaPagarSchema,
   type BaixarContaPagarInput,
@@ -11,7 +10,7 @@ import { apiFetch } from '@/lib/api/client';
 import { useMutationContaFinanceira } from '../contas-financeiras/use-mutation-conta';
 
 export const URL_CONTAS_PAGAR = '/api/financeiro/contas-pagar';
-export const URL_CONTAS_BANCARIAS = '/api/financeiro/contas-bancarias';
+export { URL_CONTAS_BANCARIAS, useContasBancarias } from '../contas-bancarias/use-contas-bancarias';
 
 function chamar(path: string, method: 'POST' | 'PATCH' | 'DELETE', body?: unknown) {
   return apiFetch(`${URL_CONTAS_PAGAR}${path}`, { method, body, schema: contaPagarSchema });
@@ -73,14 +72,5 @@ export function useBaixasContaPagar(id: string | undefined) {
         signal,
       }),
     enabled: Boolean(id),
-  });
-}
-
-/** Opções do combobox "Conta Bancária" da Baixa (lista inteira, sem paginação). */
-export function useContasBancarias() {
-  return useQuery({
-    queryKey: ['contas-bancarias'],
-    queryFn: ({ signal }) =>
-      apiFetch(URL_CONTAS_BANCARIAS, { schema: contaBancariaListaSchema, signal }),
   });
 }

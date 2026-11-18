@@ -17,6 +17,7 @@ import { ExportService, selectColumns } from '../../../common/export/export.serv
 import type { ExportFile } from '../../../common/export/export.types';
 import { paginate, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
+import { ContasBancariasService } from '../contas-bancarias/contas-bancarias.service';
 import {
   camposContaFinanceira,
   colunasExportContaFinanceira,
@@ -30,9 +31,19 @@ import {
 const INCLUDE = {
   ...INCLUDE_CONTA_FINANCEIRA,
   paciente: { select: { nome: true } },
+  contaBancaria: { select: { nome: true } },
 } as const;
 
 type ContaReceberComRelacoes = Prisma.ContaReceberGetPayload<{ include: typeof INCLUDE }>;
+
+/**
+ * Entrada de criação. Conta bancária e data de recebimento são opcionais para quem cria fora da
+ * tela (ex.: cobrança de contrato de sala).
+ */
+type DadosContaReceber = Omit<CreateContaReceberInput, 'contaBancariaId' | 'dataRecebimento'> &
+  Partial<Pick<CreateContaReceberInput, 'contaBancariaId' | 'dataRecebimento'>>;
+
+const hoje = () => new Date().toISOString().slice(0, 10);
 
 export function toContaReceber(conta: ContaReceberComRelacoes): ContaReceber {
   return {
@@ -40,6 +51,9 @@ export function toContaReceber(conta: ContaReceberComRelacoes): ContaReceber {
     pacienteId: conta.pacienteId,
     pacienteNome: conta.paciente?.nome ?? null,
     status: conta.status,
+    contaBancariaId: conta.contaBancariaId,
+    contaBancariaNome: conta.contaBancaria?.nome ?? null,
+    dataRecebimento: conta.dataRecebimento?.toISOString().slice(0, 10) ?? null,
   };
 }
 
@@ -59,6 +73,7 @@ export class ContasReceberService {
     private readonly txHost: TransactionHost<PrismaAdapter>,
     private readonly exportService: ExportService,
     private readonly audit: AuditService,
+    private readonly contasBancarias: ContasBancariasService,
   ) {}
 
   async list(query: ListContasReceberQuery): Promise<Page<ContaReceber>> {
@@ -81,17 +96,17 @@ export class ContasReceberService {
     return toContaReceber(conta);
   }
 
-  async create(input: CreateContaReceberInput): Promise<ContaReceber> {
+  async create(input: DadosContaReceber): Promise<ContaReceber> {
     const conta = await this.txHost.tx.contaReceber.create({
-      data: this.dados(input),
+      data: await this.dados(input),
       include: INCLUDE,
     });
     return toContaReceber(conta);
   }
 
   async update(id: string, input: UpdateContaReceberInput): Promise<ContaReceber> {
-    await this.findById(id);
-    return this.atualizar(id, this.dados(input));
+    const atual = await this.findById(id);
+    return this.atualizar(id, await this.dados(input, atual.dataRecebimento));
   }
 
   /** Exclusão lógica: histórico financeiro. */
@@ -121,7 +136,7 @@ export class ContasReceberService {
    * Cria uma conta a receber fora do fluxo da tela (ex.: cobrança de contrato de sala, Gestão
    * Profissionais), com auditoria própria já que não passa pelo `AuditInterceptor` do controller.
    */
-  async criarDeOrigemExterna(input: CreateContaReceberInput): Promise<ContaReceber> {
+  async criarDeOrigemExterna(input: DadosContaReceber): Promise<ContaReceber> {
     const conta = await this.create(input);
     await this.audit.record({
       action: 'CREATE',
@@ -178,8 +193,25 @@ export class ContasReceberService {
     return toContaReceber(conta);
   }
 
-  private dados(input: CreateContaReceberInput): Prisma.ContaReceberUncheckedCreateInput {
-    return { ...input, dataVencimento: new Date(input.dataVencimento) };
+  /**
+   * Conta bancária e data de recebimento só valem com status Recebido (decisão do dev na #46):
+   * sem data, vale a já gravada ou a de hoje; fora de Recebido, os dois são limpos.
+   */
+  private async dados(
+    input: DadosContaReceber,
+    dataRecebimentoAtual: string | null = null,
+  ): Promise<Prisma.ContaReceberUncheckedCreateInput> {
+    const { contaBancariaId, dataRecebimento, ...resto } = input;
+    const recebido = input.status === 'RECEBIDO';
+    if (recebido && contaBancariaId) await this.contasBancarias.garantirExiste(contaBancariaId);
+    return {
+      ...resto,
+      dataVencimento: new Date(input.dataVencimento),
+      contaBancariaId: recebido ? (contaBancariaId ?? null) : null,
+      dataRecebimento: recebido
+        ? new Date(dataRecebimento ?? dataRecebimentoAtual ?? hoje())
+        : null,
+    };
   }
 
   private orderBy(

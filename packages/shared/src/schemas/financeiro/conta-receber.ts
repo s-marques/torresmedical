@@ -64,6 +64,21 @@ export const contaReceberInputSchema = z.strictObject({
   ...camposEntradaContaFinanceira,
   pacienteId: idOpcional('Cliente'),
   status: contaReceberStatusSchema.default('PENDENTE'),
+  /**
+   * Conta bancária e data do recebimento (decisão do dev na #46, para a Conciliação): só valem
+   * com status Recebido. Sem data, o back usa a data de hoje; fora de Recebido, os dois são
+   * limpos.
+   */
+  contaBancariaId: z
+    .uuid({ error: 'Conta bancária inválida' })
+    .nullish()
+    .or(z.literal(''))
+    .transform((valor) => valor || null),
+  dataRecebimento: z.iso
+    .date({ error: 'Data de recebimento inválida' })
+    .nullish()
+    .or(z.literal(''))
+    .transform((valor) => valor || null),
 });
 
 export type ContaReceberFormulario = z.input<typeof contaReceberInputSchema>;
@@ -111,6 +126,9 @@ export const contaReceberSchema = z.object({
   pacienteId: z.uuid().nullable(),
   pacienteNome: z.string().nullable(),
   status: contaReceberStatusSchema,
+  contaBancariaId: z.uuid().nullable(),
+  contaBancariaNome: z.string().nullable(),
+  dataRecebimento: z.iso.date().nullable(),
 });
 export type ContaReceber = z.infer<typeof contaReceberSchema>;
 
