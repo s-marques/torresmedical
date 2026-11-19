@@ -202,7 +202,10 @@ describe('Bloqueios de salas (e2e)', () => {
 
     it('detalhe: 200, 404 e 403 sem permissão', async () => {
       const b = await criarNoBanco();
-      await http().get(`${BASE}/${b.id}`).expect(200);
+      const detalhe = salaBloqueioSchema.parse(
+        (await http().get(`${BASE}/${b.id}`).expect(200)).body,
+      );
+      expect(detalhe).toMatchObject({ id: b.id, salaNome: 'Sala 7', tipo: 'MANUTENCAO' });
       await http().get(`${BASE}/${INEXISTENTE}`).expect(404);
       const sem = await criarUsuarioTeste(app, { permissoes: [] });
       await comUsuario(app, sem).get(`${BASE}/${b.id}`).expect(403);
