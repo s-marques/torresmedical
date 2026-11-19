@@ -15,5 +15,6 @@
   "CREDENCIAIS_INVALIDAS": "Correo electrónico o contraseña no válidos",
   "LINK_REDEFINICAO_INVALIDO": "Enlace de restablecimiento no válido o expirado",
   "LINK_INVALIDO": "Enlace de descarga no válido",
-  "LINK_EXPIRADO": "Enlace de descarga expirado. Genere uno nuevo"
+  "LINK_EXPIRADO": "Enlace de descarga expirado. Genere uno nuevo",
+  "ANALISE_AI_GROWTH_EM_ANDAMENTO": "Ya hay un análisis en curso"
 }

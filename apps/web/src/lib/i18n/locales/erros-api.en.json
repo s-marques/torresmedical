@@ -15,5 +15,6 @@
   "CREDENCIAIS_INVALIDAS": "Invalid e-mail or password",
   "LINK_REDEFINICAO_INVALIDO": "Invalid or expired reset link",
   "LINK_INVALIDO": "Invalid download link",
-  "LINK_EXPIRADO": "Download link expired. Generate a new one"
+  "LINK_EXPIRADO": "Download link expired. Generate a new one",
+  "ANALISE_AI_GROWTH_EM_ANDAMENTO": "An analysis is already in progress"
 }

@@ -309,5 +309,113 @@
         "minha-empresa": "Mi Empresa"
       }
     }
+  },
+  "aiGrowth": {
+    "titulo": "AI Growth",
+    "descricao": "Puntos de atención del negocio: lo que merece atención en la clínica ahora.",
+    "analisarAgora": "Analizar Ahora",
+    "analisando": "Analizando…",
+    "ultimaAnalise": "Último análisis: {{data}}",
+    "semAnalise": "Aún no hay análisis. Haga clic en \"Analizar Ahora\".",
+    "pontosUm": "1 punto de atención",
+    "pontosVarios": "{{count}} puntos de atención",
+    "analiseIniciada": "Análisis iniciado. Los resultados aparecerán en instantes.",
+    "emAndamento": "Análisis en curso…",
+    "erroCarregar": "No se pudo cargar AI Growth.",
+    "verDetalhes": "Ver detalles",
+    "oQueFazer": "Qué hacer:",
+    "rodape": "Texto generado a partir de los números anteriores.",
+    "prioridade": {
+      "BAIXA": "baja",
+      "MEDIA": "media",
+      "ALTA": "alta"
+    },
+    "prioridadeChip": "Prioridad {{nivel}}",
+    "tipos": {
+      "PACIENTES_INATIVOS": {
+        "tituloVazio": "Ningún paciente inactivo hace +{{dias}} días",
+        "tituloUm": "1 paciente inactivo hace +{{dias}} días",
+        "tituloVarios": "{{count}} pacientes inactivos hace +{{dias}} días",
+        "descricaoVazio": "No tener pacientes inactivos por más de {{dias}} días indica buena retención y reduce el riesgo de perder ingresos recurrentes.",
+        "descricao": "Hay pacientes sin atención desde hace más de {{dias}} días y sin consulta programada. Sin contacto, sus ingresos recurrentes pueden perderse.",
+        "destaqueVazio": "Sin pendientes",
+        "destaqueUm": "1 paciente inactivo",
+        "destaqueVarios": "{{count}} pacientes inactivos",
+        "acaoVazio": "Siga enviando recordatorios y mensajes personalizados para mantener el compromiso de los pacientes. Use la agenda en línea para facilitar la reprogramación.",
+        "acao": "Contacte a estos pacientes por WhatsApp, ofrezca un retorno y use la agenda en línea para facilitar la reprogramación."
+      },
+      "PACIENTES_PENDENTES_RETORNO": {
+        "tituloVazio": "Ningún paciente pendiente de retorno",
+        "tituloUm": "1 paciente pendiente de retorno",
+        "tituloVarios": "{{count}} pacientes pendientes de retorno",
+        "descricaoVazio": "Ningún paciente pendiente de retorno muestra que el flujo de atención está organizado y la fidelización es alta.",
+        "descricao": "Hay pacientes con una cita en \"Reprogramar\" y sin nueva fecha. Sin seguimiento, la clínica corre el riesgo de perderlos.",
+        "destaqueVazio": "Al día",
+        "destaqueUm": "1 paciente por reprogramar",
+        "destaqueVarios": "{{count}} pacientes por reprogramar",
+        "acaoVazio": "Controle las fechas de retorno con notificaciones automáticas por WhatsApp e incentive la reserva anticipada.",
+        "acao": "Contacte para reprogramar estas citas y confirme la nueva fecha en la agenda."
+      },
+      "FAIXAS_BAIXA_OCUPACAO": {
+        "tituloVazio": "Ninguna franja horaria con baja ocupación",
+        "tituloUm": "1 franja horaria con baja ocupación",
+        "tituloVarios": "{{count}} franjas horarias con baja ocupación",
+        "descricaoVazio": "La ocupación de la agenda está equilibrada entre las franjas horarias de las últimas semanas.",
+        "descricao": "Hay franjas horarias con ocupación inferior al 50% del promedio en las últimas 12 semanas. Esto indica capacidad ociosa y pérdida de facturación potencial.",
+        "destaqueVazio": "Sin pendientes",
+        "destaqueUm": "Oportunidad de optimización",
+        "destaqueVarios": "Oportunidad de optimización",
+        "acaoVazio": "Mantenga la distribución actual de la agenda y siga la ocupación semanalmente.",
+        "acao": "Cree promociones específicas para las franjas de baja ocupación, como descuentos o beneficios, y reasigne profesionales a esos horarios."
+      },
+      "FALTAS_RECENTES": {
+        "tituloVazio": "Ninguna inasistencia en los últimos {{dias}} días",
+        "tituloUm": "1 inasistencia en los últimos {{dias}} días",
+        "tituloVarios": "{{count}} inasistencias en los últimos {{dias}} días",
+        "descricaoVazio": "Sin inasistencias en el período, la agenda se aprovecha por completo y la facturación es previsible.",
+        "descricao": "Las inasistencias de los últimos {{dias}} días pueden afectar la facturación y la planificación de la agenda. Las recurrentes pueden causar pérdidas financieras.",
+        "destaqueVazio": "Sin pendientes",
+        "destaqueUm": "1 inasistencia ({{dias}} días)",
+        "destaqueVarios": "{{count}} inasistencias ({{dias}} días)",
+        "acaoVazio": "Mantenga activas las confirmaciones automáticas para seguir sin inasistencias.",
+        "acao": "Envíe recordatorios personalizados y confirme las citas por WhatsApp con anticipación. Evalúe una política de confirmación para reducir inasistencias."
+      },
+      "PROFISSIONAIS_SUBUTILIZADOS": {
+        "tituloVazio": "Ningún profesional con agenda subutilizada",
+        "tituloUm": "1 profesional con agenda subutilizada",
+        "tituloVarios": "{{count}} profesionales con agenda subutilizada",
+        "descricaoVazio": "Todos los profesionales están cerca del promedio de atenciones de los últimos {{dias}} días.",
+        "descricao": "Los profesionales con agenda subutilizada atendieron menos del 50% del promedio de {{media}} atenciones en {{dias}} días. Hay potencial de aumentar la facturación.",
+        "destaqueVazio": "Sin pendientes",
+        "destaqueUm": "{{faturado}} facturado ({{dias}}d)",
+        "destaqueVarios": "{{faturado}} facturado ({{dias}}d)",
+        "acaoVazio": "Siga controlando la productividad del equipo.",
+        "acao": "Analice la agenda de los profesionales subutilizados para redistribuir pacientes o difundir los horarios disponibles por WhatsApp."
+      },
+      "ANIVERSARIANTES_PROXIMOS": {
+        "tituloVazio": "Ningún cumpleaños en los próximos {{dias}} días",
+        "tituloUm": "1 cumpleaños en los próximos {{dias}} días",
+        "tituloVarios": "{{count}} cumpleaños en los próximos {{dias}} días",
+        "descricaoVazio": "No hay pacientes que cumplan años en los próximos días.",
+        "descricao": "Los cumpleaños son una buena oportunidad para fortalecer la fidelización con mensajes personalizados y ofertas especiales.",
+        "destaqueVazio": "Sin pendientes",
+        "destaqueUm": "Fidelización",
+        "destaqueVarios": "Fidelización",
+        "acaoVazio": "Siga los próximos cumpleaños para mantener la relación con los pacientes.",
+        "acao": "Envíe mensajes de felicitación por WhatsApp con ofertas exclusivas y sugiera servicios complementarios."
+      },
+      "INATIVOS_POR_PROFISSIONAL": {
+        "tituloVazio": "Ningún paciente inactivo por profesional",
+        "tituloUm": "Pacientes inactivos con 1 profesional",
+        "tituloVarios": "Pacientes inactivos con {{count}} profesionales",
+        "descricaoVazio": "No tener pacientes inactivos por profesional muestra buena fidelización, con retorno constante a los profesionales habituales.",
+        "descricao": "Hay pacientes que no vuelven con el mismo profesional hace más de {{dias}} días y sin cita programada con él.",
+        "destaqueVazio": "Sin pendientes",
+        "destaqueUm": "1 profesional con pacientes inactivos",
+        "destaqueVarios": "{{count}} profesionales con pacientes inactivos",
+        "acaoVazio": "Siga incentivando la relación directa entre pacientes y sus profesionales habituales.",
+        "acao": "Pida a los profesionales que retomen el contacto con sus pacientes y ofrezcan un retorno."
+      }
+    }
   }
 }
