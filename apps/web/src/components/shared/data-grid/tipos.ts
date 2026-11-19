@@ -61,7 +61,9 @@ export type FiltroGrid =
       /** Texto exibido sem seleção, ex.: "Todos os produtos". */
       rotuloTodos: string;
     }
-  | { tipo: 'checkbox'; parametro: string; rotulo: string };
+  | { tipo: 'checkbox'; parametro: string; rotulo: string }
+  /** Texto livre com atraso, como a busca, num parâmetro próprio (ex.: só o nome). */
+  | { tipo: 'texto'; parametro: string; rotulo: string; placeholder: string };
 
 /** Ação do menu "⋯" de cada linha. Ações destrutivas devem abrir um `ConfirmDialog`. */
 export interface AcaoLinha {
