@@ -1,0 +1,11 @@
+{
+  "Nome": "Nombre",
+  "E-mail": "Correo electrónico",
+  "Telefone": "Teléfono",
+  "Cargo": "Cargo",
+  "Senha": "Contraseña",
+  "Data": "Fecha",
+  "Hora": "Hora",
+  "Descrição": "Descripción",
+  "Observação": "Observación"
+}
