@@ -456,6 +456,7 @@ model Profissional {
   documentosConhecimento DocumentoConhecimento[]
 
   baixasInsumos BaixaInsumo[]
+  receitas      ContaReceber[]
 
   @@index([especialidadeId])
   @@map("profissionais")
@@ -2007,6 +2008,9 @@ model ContaReceber {
   dataVencimento   DateTime           @map("data_vencimento") @db.Date
   formaPagamentoId String?            @map("forma_pagamento_id") @db.Uuid
   planoContaId     String?            @map("plano_conta_id") @db.Uuid
+  /// Receita do profissional (tela Receita Profissionais, #55). Preenchido: a conta é do
+  /// profissional e fica fora de Contas a Receber, Conciliação e saldos do Torres.
+  profissionalId   String?            @map("profissional_id") @db.Uuid
   documento        String?
   totalParcelas    Int                @default(1) @map("total_parcelas")
   status           ContaReceberStatus @default(PENDENTE)
@@ -2022,10 +2026,12 @@ model ContaReceber {
   formaPagamento FormaPagamento? @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
   planoConta     PlanoConta?     @relation(fields: [planoContaId], references: [id], onDelete: Restrict)
   contaBancaria  ContaBancaria?  @relation(fields: [contaBancariaId], references: [id], onDelete: Restrict)
+  profissional   Profissional?   @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
 
   @@index([pacienteId])
   @@index([formaPagamentoId])
   @@index([planoContaId])
+  @@index([profissionalId])
   @@index([status])
   @@index([dataVencimento])
   @@index([contaBancariaId])

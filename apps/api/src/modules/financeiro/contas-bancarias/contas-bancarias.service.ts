@@ -11,6 +11,8 @@ import { ErrorCode } from '../../../common/errors/error-codes';
 import { searchWhere } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 
+import { DO_TORRES } from '../conta-financeira';
+
 const NAO_EXCLUIDAS = { deletedAt: null } as const;
 const SELECIONAVEIS = { ...NAO_EXCLUIDAS, ativo: true } as const;
 
@@ -104,7 +106,7 @@ export class ContasBancariasService {
       this.txHost.tx.contaReceber.aggregate({
         _sum: { valor: true },
         where: {
-          ...NAO_EXCLUIDAS,
+          ...DO_TORRES,
           contaBancariaId: conta.id,
           status: 'RECEBIDO',
           dataRecebimento: desde,
