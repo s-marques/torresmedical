@@ -125,6 +125,18 @@ export function FiltrosExtras({
                 onChange={onChange}
               />
             );
+          case 'texto':
+            return (
+              <CampoBusca
+                key={filtro.parametro}
+                valor={valores[filtro.parametro]}
+                placeholder={filtro.placeholder}
+                rotulo={filtro.rotulo}
+                icone={false}
+                className="sm:max-w-64"
+                onChange={(texto) => onChange({ [filtro.parametro]: texto })}
+              />
+            );
         }
       })}
     </div>
@@ -242,8 +254,21 @@ export function CampoBusca({
   valor,
   placeholder,
   onChange,
-}: Readonly<{ valor?: string; placeholder: string; onChange: (valor?: string) => void }>) {
+  rotulo: rotuloInformado,
+  icone = true,
+  className,
+}: Readonly<{
+  valor?: string;
+  placeholder: string;
+  onChange: (valor?: string) => void;
+  /** Nome acessível do campo. */
+  rotulo?: string;
+  /** Lupa à esquerda. */
+  icone?: boolean;
+  className?: string;
+}>) {
   const { t } = useTranslation();
+  const rotulo = rotuloInformado ?? t('grid.buscarRotulo');
   const [texto, setTexto] = useState(valor ?? '');
   const [anterior, setAnterior] = useState(valor);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -256,16 +281,18 @@ export function CampoBusca({
   }
 
   return (
-    <div className="relative w-full sm:max-w-sm">
-      <SearchIcon
-        aria-hidden
-        className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
-      />
+    <div className={cn('relative w-full sm:max-w-sm', className)}>
+      {icone && (
+        <SearchIcon
+          aria-hidden
+          className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
+        />
+      )}
       <Input
         type="search"
-        aria-label={t('grid.buscarRotulo')}
+        aria-label={rotulo}
         placeholder={placeholder}
-        className="pl-8"
+        className={cn(icone && 'pl-8')}
         value={texto}
         onChange={(evento) => {
           const novo = evento.target.value;

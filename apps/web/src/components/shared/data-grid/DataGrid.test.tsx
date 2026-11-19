@@ -331,6 +331,32 @@ describe('DataGrid', () => {
     await waitFor(() => expect(ultimo()).toEqual({ page: '1', pageSize: '10' }));
   });
 
+  it('filtro de texto: parâmetro próprio, com atraso, junto com a busca e restaurado da URL', async () => {
+    const { user, router } = renderizar(
+      {
+        filtros: [
+          { tipo: 'texto', parametro: 'nome', rotulo: 'Nome', placeholder: 'Buscar nome...' },
+        ],
+        querySchema: undefined,
+      },
+      '/lista?search=centro',
+    );
+    await screen.findByText('Unidade 1');
+    const nome = screen.getByRole('searchbox', { name: 'Nome' });
+    expect(nome).toHaveAttribute('placeholder', 'Buscar nome...');
+
+    await user.type(nome, 'matriz');
+
+    await waitFor(() =>
+      expect(ultimo()).toEqual({ page: '1', pageSize: '10', search: 'centro', nome: 'matriz' }),
+    );
+    expect(pedidos[URL_LISTA]?.filter((p) => p.has('nome'))).toHaveLength(1);
+    expect(router.state.location.search).toContain('nome=matriz');
+
+    await user.clear(nome);
+    await waitFor(() => expect(ultimo()).toEqual({ page: '1', pageSize: '10', search: 'centro' }));
+  });
+
   it('restaura o checkbox marcado a partir da URL', async () => {
     renderizar(
       {
