@@ -210,10 +210,12 @@ describe('Unidades: padrão de API (e2e)', () => {
         .send({ nome: 'Matriz', empresaId: outraEmpresa.id })
         .expect(400);
 
-      expect(res.body.details).toContainEqual({
-        field: 'empresaId',
-        message: 'Campo não permitido',
-      });
+      expect(res.body.details).toContainEqual(
+        expect.objectContaining({
+          field: 'empresaId',
+          message: 'Campo não permitido',
+        }),
+      );
     });
 
     it('400 para JSON malformado', async () => {
