@@ -1,6 +1,10 @@
 import { Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { criarRelatoriosController } from '../../common/relatorios/relatorios.controller';
+import { AiGrowthController } from './ai-growth/ai-growth.controller';
+import { AiGrowthService } from './ai-growth/ai-growth.service';
+import { AnalisarAiGrowthConsumer } from './ai-growth/analisar-ai-growth.consumer';
+import { FontesInsightsAiGrowth } from './ai-growth/fontes-insights-ai-growth';
 import { BaseConhecimentoController } from './base-conhecimento/base-conhecimento.controller';
 import { BaseConhecimentoService } from './base-conhecimento/base-conhecimento.service';
 import { BypassAgenteController } from './bypass-agente/bypass-agente.controller';
@@ -84,7 +88,7 @@ const SERVICES = [
     criarLookupController('usuarios', UsuariosLookupService),
     criarRelatoriosController('configuracoes-gestao.relatorios', RelatoriosGestao),
   ],
-  providers: [...SERVICES, RelatoriosGestao],
+  providers: [...SERVICES, RelatoriosGestao, AnalisarAiGrowthConsumer],
   exports: SERVICES,
 })
 export class ConfiguracoesGestaoModule {}

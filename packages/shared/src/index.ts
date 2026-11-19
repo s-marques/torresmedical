@@ -52,6 +52,7 @@ export * from './schemas/configuracoes-gestao/resposta-rapida';
 export * from './schemas/configuracoes-gestao/documento-conhecimento';
 export * from './schemas/configuracoes-gestao/tipo-agendamento';
 export * from './schemas/configuracoes-gestao/agente-instrucao';
+export * from './schemas/configuracoes-gestao/ai-growth';
 export * from './schemas/configuracoes-gestao/bypass-agente';
 export * from './schemas/configuracoes-gestao/unidade';
 export * from './schemas/configuracoes-gestao/usuario';
