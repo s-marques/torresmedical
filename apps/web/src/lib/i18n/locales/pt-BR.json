@@ -314,5 +314,52 @@
         "acao": "Peça aos profissionais que retomem o contato com seus pacientes e ofereçam um retorno."
       }
     }
+  },
+  "receitaProfissionais": {
+    "titulo": "Receita Profissionais",
+    "totais": "Totais",
+    "totalRecebido": "Total Recebido",
+    "totalPendente": "Total Pendente",
+    "registros": "Registros",
+    "resumoPorProfissional": "Resumo por Profissional",
+    "registrosAbreviado": "{{total}} reg.",
+    "colunas": {
+      "data": "Data",
+      "profissional": "Profissional",
+      "paciente": "Paciente",
+      "descricao": "Descrição",
+      "formaPagamento": "Forma Pgto",
+      "valor": "Valor",
+      "status": "Status"
+    },
+    "profissional": "Profissional",
+    "paciente": "Paciente",
+    "formaPagamento": "Forma de Pagamento",
+    "todasFormas": "Todas",
+    "periodo": "Vencimento",
+    "contaBancaria": "Conta Bancária",
+    "dataRecebimento": "Data de Recebimento",
+    "status": {
+      "pendente": "Pendente",
+      "recebido": "Recebido",
+      "cancelado": "Cancelado",
+      "vencido": "Vencido"
+    },
+    "acoes": {
+      "detalhar": "Detalhar",
+      "estornarBaixa": "Estornar Baixa",
+      "editar": "Editar",
+      "excluir": "Excluir"
+    },
+    "buscar": "Buscar receitas...",
+    "vazio": "Nenhuma receita encontrada.",
+    "editarTitulo": "Editar Receita",
+    "editada": "Receita atualizada.",
+    "baixaEstornada": "Baixa estornada.",
+    "excluida": "Receita excluída.",
+    "estornarTitulo": "Estornar Baixa",
+    "estornarDescricao": "Estornar a baixa da receita \"{{descricao}}\"? Ela volta para Pendente.",
+    "excluirTitulo": "Excluir Receita",
+    "excluirDescricao": "Tem certeza que deseja excluir a receita \"{{descricao}}\"? Esta ação não pode ser desfeita."
   }
 }

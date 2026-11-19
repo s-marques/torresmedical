@@ -16,5 +16,6 @@
   "LINK_REDEFINICAO_INVALIDO": "Invalid or expired reset link",
   "LINK_INVALIDO": "Invalid download link",
   "LINK_EXPIRADO": "Download link expired. Generate a new one",
-  "ANALISE_AI_GROWTH_EM_ANDAMENTO": "An analysis is already in progress"
+  "ANALISE_AI_GROWTH_EM_ANDAMENTO": "An analysis is already in progress",
+  "RECEITA_NAO_RECEBIDA": "The payment can only be reversed on a received revenue"
 }

@@ -417,5 +417,52 @@
         "acao": "Pida a los profesionales que retomen el contacto con sus pacientes y ofrezcan un retorno."
       }
     }
+  },
+  "receitaProfissionais": {
+    "titulo": "Ingresos Profesionales",
+    "totais": "Totales",
+    "totalRecebido": "Total Recibido",
+    "totalPendente": "Total Pendiente",
+    "registros": "Registros",
+    "resumoPorProfissional": "Resumen por Profesional",
+    "registrosAbreviado": "{{total}} reg.",
+    "colunas": {
+      "data": "Fecha",
+      "profissional": "Profesional",
+      "paciente": "Paciente",
+      "descricao": "Descripción",
+      "formaPagamento": "Forma de Pago",
+      "valor": "Valor",
+      "status": "Estado"
+    },
+    "profissional": "Profesional",
+    "paciente": "Paciente",
+    "formaPagamento": "Forma de Pago",
+    "todasFormas": "Todas",
+    "periodo": "Vencimiento",
+    "contaBancaria": "Cuenta Bancaria",
+    "dataRecebimento": "Fecha de Recepción",
+    "status": {
+      "pendente": "Pendiente",
+      "recebido": "Recibido",
+      "cancelado": "Cancelado",
+      "vencido": "Vencido"
+    },
+    "acoes": {
+      "detalhar": "Ver detalle",
+      "estornarBaixa": "Revertir Cobro",
+      "editar": "Editar",
+      "excluir": "Eliminar"
+    },
+    "buscar": "Buscar ingresos...",
+    "vazio": "No se encontraron ingresos.",
+    "editarTitulo": "Editar Ingreso",
+    "editada": "Ingreso actualizado.",
+    "baixaEstornada": "Cobro revertido.",
+    "excluida": "Ingreso eliminado.",
+    "estornarTitulo": "Revertir Cobro",
+    "estornarDescricao": "¿Revertir el cobro de \"{{descricao}}\"? Vuelve a Pendiente.",
+    "excluirTitulo": "Eliminar Ingreso",
+    "excluirDescricao": "¿Seguro que desea eliminar el ingreso \"{{descricao}}\"? Esta acción no se puede deshacer."
   }
 }
