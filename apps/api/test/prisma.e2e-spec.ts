@@ -103,6 +103,8 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'pacote_itens',
       'pacote_usos',
       'pacotes',
+      'pedido_compra_itens',
+      'pedidos_compra',
       'perfis',
       'perfis_permissoes',
       'pesquisas_nps',

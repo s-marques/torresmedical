@@ -500,6 +500,7 @@ model Fornecedor {
   deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
 
   compras              Compra[]
+  pedidosCompra        PedidoCompra[]
   movimentacoesEstoque MovimentacaoEstoque[]
 
   @@index([documento])
@@ -582,6 +583,7 @@ model Produto {
 
   protocoloItens       ProtocoloItem[]
   compraItens          CompraItem[]
+  pedidoCompraItens    PedidoCompraItem[]
   movimentacoesEstoque MovimentacaoEstoque[]
   lotes                Lote[]
 
@@ -716,6 +718,58 @@ model CompraItem {
   @@index([compraId])
   @@index([produtoId])
   @@map("compra_itens")
+}
+
+enum PedidoCompraStatus {
+  EM_TRANSITO
+  RECEBIDO
+  CANCELADO
+
+  @@map("pedido_compra_status")
+}
+
+/// Dono: compras-estoque. Pedido de compra (tela Pedidos em Trânsito, `/pedidos-compra`, issue #23):
+/// fornecedor, custo e previsão de entrega. Não movimenta estoque: "Recebido" só muda o status
+/// (decisão do dev na issue #23). `valorTotal` é a soma dos itens ou o valor digitado
+/// (`valorTotalInformado`). Exclusão lógica.
+model PedidoCompra {
+  id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fornecedorId        String             @map("fornecedor_id") @db.Uuid
+  numeroNf            String?            @map("numero_nf")
+  dataPedido          DateTime           @map("data_pedido") @db.Date
+  dataPrevisao        DateTime?          @map("data_previsao") @db.Date
+  valorTotal          Decimal            @map("valor_total") @db.Decimal(12, 2)
+  valorTotalInformado Boolean            @default(false) @map("valor_total_informado")
+  status              PedidoCompraStatus @default(EM_TRANSITO)
+  observacoes         String?
+  createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt           DateTime?          @map("deleted_at") @db.Timestamptz(3)
+
+  fornecedor Fornecedor         @relation(fields: [fornecedorId], references: [id], onDelete: Restrict)
+  itens      PedidoCompraItem[]
+
+  @@index([fornecedorId])
+  @@index([status])
+  @@index([dataPedido])
+  @@map("pedidos_compra")
+}
+
+/// Dono: compras-estoque. Item do pedido de compra: produto, quantidade e valor unitário.
+model PedidoCompraItem {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pedidoCompraId String   @map("pedido_compra_id") @db.Uuid
+  produtoId      String   @map("produto_id") @db.Uuid
+  quantidade     Decimal  @db.Decimal(12, 3)
+  valorUnitario  Decimal  @map("valor_unitario") @db.Decimal(12, 2)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  pedidoCompra PedidoCompra @relation(fields: [pedidoCompraId], references: [id], onDelete: Cascade)
+  produto      Produto      @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+
+  @@index([pedidoCompraId])
+  @@index([produtoId])
+  @@map("pedido_compra_itens")
 }
 
 /// Dono: regulatorio-qualidade.
