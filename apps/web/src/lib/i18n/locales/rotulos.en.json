@@ -7,5 +7,7 @@
   "Data": "Date",
   "Hora": "Time",
   "Descrição": "Description",
-  "Observação": "Note"
+  "Observação": "Note",
+  "Unidade": "Unit",
+  "Tipo de Licença": "License Type"
 }

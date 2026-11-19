@@ -417,5 +417,86 @@
         "acao": "Pida a los profesionales que retomen el contacto con sus pacientes y ofrezcan un retorno."
       }
     }
+  },
+  "alvarasLicencas": {
+    "titulo": "Permisos y Licencias",
+    "descricao": "Control de permisos, licencias y certificados por unidad.",
+    "novoTipo": "Nuevo Tipo",
+    "novaLicenca": "Nueva Licencia",
+    "unidade": "Unidad:",
+    "todasUnidades": "Todas las Unidades",
+    "buscar": "Buscar licencias...",
+    "vazio": "No se encontraron licencias.",
+    "semAlertas": "Ninguna licencia vencida o por vencer en 60 días.",
+    "erroCarregar": "No se pudieron cargar las licencias.",
+    "editar": "Editar",
+    "cadastrar": "Registrar",
+    "criarTipo": "Crear Tipo",
+    "novoTipoTitulo": "Nuevo Tipo de Licencia",
+    "novaLicencaTitulo": "Nueva Licencia",
+    "editarLicencaTitulo": "Editar Licencia",
+    "regraParidade": "Al crear un nuevo tipo, el sistema crea automáticamente una licencia \"No aplica\" para cada unidad existente (regla de paridad).",
+    "tipoCriado": "Tipo de licencia creado.",
+    "licencaCriada": "Licencia registrada.",
+    "licencaAtualizada": "Licencia actualizada.",
+    "abas": {
+      "licencas": "Licencias",
+      "alertas": "Alertas",
+      "ordemRenovacao": "Orden de Renovación"
+    },
+    "resumo": {
+      "total": "Total",
+      "ok": "OK",
+      "alerta": "Alerta",
+      "vencido": "Vencido",
+      "na": "N/A"
+    },
+    "status": {
+      "ok": "OK",
+      "alerta-60": "Alerta 60 días",
+      "alerta-30": "Alerta 30 días",
+      "vencido": "Vencido",
+      "na": "N/A"
+    },
+    "colunas": {
+      "tipoLicenca": "Tipo de Licencia",
+      "unidade": "Unidad",
+      "numeroDocumento": "N.º Documento",
+      "orgaoEmissor": "Órgano Emisor",
+      "vencimento": "Vencimiento",
+      "dias": "Días",
+      "status": "Estado",
+      "responsavel": "Responsable"
+    },
+    "secoes": {
+      "documento": "Datos del Documento",
+      "contato": "Contacto y Departamento",
+      "renovacao": "Renovación"
+    },
+    "campos": {
+      "nome": "Nombre",
+      "nomePlaceholder": "Ej: Permiso de Bomberos",
+      "descricao": "Descripción",
+      "descricaoPlaceholder": "Descripción opcional",
+      "unidade": "Unidad",
+      "tipoLicenca": "Tipo de Licencia",
+      "naoSeAplica": "No aplica a esta unidad",
+      "numeroDocumento": "Número del Documento",
+      "orgaoEmissor": "Órgano Emisor",
+      "titular": "Titular",
+      "dataEmissao": "Fecha de Emisión",
+      "dataVencimento": "Fecha de Vencimiento",
+      "telefone": "Teléfono",
+      "email": "Correo",
+      "departamento": "Departamento",
+      "plataformaOnline": "Plataforma en Línea",
+      "comoRenovar": "Cómo Renovar",
+      "documentosObrigatorios": "Documentos Obligatorios",
+      "enderecoPresencial": "Dirección Presencial",
+      "horarioAtendimento": "Horario de Atención",
+      "prazoAnalise": "Plazo de Análisis",
+      "responsavel": "Responsable",
+      "observacoes": "Observaciones"
+    }
   }
 }
