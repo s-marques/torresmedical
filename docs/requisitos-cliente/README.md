@@ -15,8 +15,9 @@ O inventário continua sendo a referência das **telas**. Estes documentos acres
 
 ## Onde cada requisito está no board
 
-A matriz requisito → card fica na issue
-[#135](https://github.com/s-marques/torresmedical/issues/135). Nos cards:
+A matriz requisito → card fica em [`matriz-rastreabilidade.md`](matriz-rastreabilidade.md)
+(origem: issue [#135](https://github.com/s-marques/torresmedical/issues/135)). Ao criar ou
+complementar um card a partir destes documentos, atualize a matriz. Nos cards:
 
 - label **`requisito-cliente`**: card criado ou complementado a partir destes documentos;
 - label **`ajuste`**: ajuste de uma funcionalidade já entregue;

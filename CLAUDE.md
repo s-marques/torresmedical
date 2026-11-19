@@ -5,7 +5,8 @@ documentado em `docs/inventario/`. São 70 telas em 9 módulos: um `.md` e um sc
 por tela, com índice em `docs/inventario/README.md`. Cada tela tem uma issue no board.
 
 Os requisitos do cliente (regras de negócio, prioridades e lacunas que o inventário não mostra)
-estão em `docs/requisitos-cliente/`, e a matriz requisito → card fica na issue #135.
+estão em `docs/requisitos-cliente/`, e a matriz requisito → card fica em
+`docs/requisitos-cliente/matriz-rastreabilidade.md` (origem: issue #135).
 
 - Repositório: `s-marques/torresmedical`
 - Board: https://github.com/users/s-marques/projects/2 (projeto **2** do usuário `s-marques`)
