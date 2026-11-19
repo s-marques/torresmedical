@@ -1,14 +1,18 @@
 import { IDIOMAS, type Idioma, type ModuloMenu, type TelaMenu } from '@torres/shared';
 import i18next, { type TFunction } from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import { EN } from './locales/en';
-import { ES } from './locales/es';
-import { PT_BR } from './locales/pt-BR';
+import EN from './locales/en.json';
+import ES from './locales/es.json';
+import PT_BR from './locales/pt-BR.json';
 
 /**
  * Idiomas da interface (issue #30): português (padrão), inglês e espanhol, escolhidos na aba
  * Aparência da tela Configurações. Por enquanto só o layout (menu, cabeçalho, busca) e a
  * própria tela Configurações são traduzidos; as demais telas seguem em português.
+ *
+ * Os textos ficam em `locales/*.json` (formato padrão do i18next). Os nomes das telas e
+ * módulos em português vêm do `MENU` (`packages/shared`), por isso `pt-BR.json` não tem `menu`.
+ * O teste `locales.test.ts` garante que os três idiomas têm as mesmas chaves.
  */
 export const IDIOMA_PADRAO: Idioma = 'pt-BR';
 
