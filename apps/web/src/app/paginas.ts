@@ -123,6 +123,9 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   'configuracoes-gestao.respostas-rapidas': lazy(
     () => import('@/features/configuracoes-gestao/respostas-rapidas/RespostasRapidasPage'),
   ),
+  'configuracoes-gestao.base-conhecimento': lazy(
+    () => import('@/features/configuracoes-gestao/base-conhecimento/BaseConhecimentoPage'),
+  ),
   'configuracoes-gestao.relatorios': lazy(
     () => import('@/features/configuracoes-gestao/relatorios/RelatoriosGestaoPage'),
   ),

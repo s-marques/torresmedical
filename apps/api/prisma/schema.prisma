@@ -427,6 +427,7 @@ model Profissional {
   canaisWhatsapp CanalWhatsapp[]
   usuarios       UsuarioProfissional[]
   pesquisasNps PesquisaNps[]
+  documentosConhecimento DocumentoConhecimento[]
 
   baixasInsumos BaixaInsumo[]
   @@index([especialidadeId])
@@ -990,6 +991,25 @@ model RespostaRapida {
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
 
   @@map("respostas_rapidas")
+}
+
+model DocumentoConhecimento {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  titulo         String
+  /// Sem profissional, o documento vale para todos ("Geral").
+  profissionalId String?   @map("profissional_id") @db.Uuid
+  categoria      String    @default("Geral")
+  conteudo       String
+  /// Preenchido a cada "Salvar e Indexar". A indexação para a IA (#174) lê só os indexados.
+  indexadoEm     DateTime? @map("indexado_em") @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  profissional Profissional? @relation(fields: [profissionalId], references: [id])
+
+  @@index([profissionalId])
+  @@map("documentos_conhecimento")
 }
 
 enum CanalWhatsappTipo {
