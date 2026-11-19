@@ -4,7 +4,9 @@ import type {
   AgendamentoStatus,
   AtendimentoMedicoItem,
   CreateRecebimentoInput,
+  EvolucaoVozAgendamento,
   ListAtendimentoMedicoQuery,
+  ListEvolucaoVozQuery,
   PagamentoAtendimento,
   Recebimento,
 } from '@torres/shared';
@@ -39,6 +41,10 @@ export function toAtendimentoMedicoItem(a: AgendamentoCompleto): AtendimentoMedi
     status: a.status,
     pago: a.pagoEm !== null,
   };
+}
+
+function toEvolucaoVozAgendamento(a: AgendamentoCompleto): EvolucaoVozAgendamento {
+  return { ...toAtendimentoMedicoItem(a), numero: a.numero };
 }
 
 /** Estado gravado no audit_log ao mudar o status do agendamento. */
@@ -181,6 +187,35 @@ export class AgendamentosAtendimentoService {
     return { ...pagina, data: pagina.data.map(toAtendimentoMedicoItem) };
   }
 
+  /**
+   * "Agendamentos de Hoje" da tela Evolução por Voz (#39): o dia sem os cancelados, com busca
+   * pelo nome do paciente e filtro por profissional.
+   */
+  async listarParaEvolucaoVoz(query: ListEvolucaoVozQuery): Promise<Page<EvolucaoVozAgendamento>> {
+    const { gte, lt } = intervaloDoPeriodo(query.data, query.data);
+    const where: Prisma.AgendamentoWhereInput = {
+      deletedAt: null,
+      inicio: { gte, lt },
+      status: { not: 'CANCELADO' },
+      profissionalId: this.escopo.filtroProfissional(query.profissionalId),
+      ...(query.search && {
+        paciente: { nome: { contains: query.search, mode: 'insensitive' } },
+      }),
+    };
+    const orderBy = this.orderBy(query.sort);
+    const pagina = await paginate(query, {
+      findMany: (p) =>
+        this.txHost.tx.agendamento.findMany({ where, orderBy, include: INCLUDE, ...p }),
+      count: () => this.txHost.tx.agendamento.count({ where }),
+    });
+    return { ...pagina, data: pagina.data.map(toEvolucaoVozAgendamento) };
+  }
+
+  /** Cabeçalho da sessão de gravação, com o número do agendamento. 404/403 como `resumo`. */
+  async resumoComNumero(id: string): Promise<EvolucaoVozAgendamento> {
+    return toEvolucaoVozAgendamento(await this.buscar(id));
+  }
+
   /** Cabeçalho do detalhe. 404 se o agendamento não existir. */
   async resumo(id: string): Promise<AtendimentoMedicoItem> {
     return toAtendimentoMedicoItem(await this.buscar(id));
@@ -223,7 +258,7 @@ export class AgendamentosAtendimentoService {
   }
 
   private orderBy(
-    sort: ListAtendimentoMedicoQuery['sort'],
+    sort: ListAtendimentoMedicoQuery['sort'] | ListEvolucaoVozQuery['sort'],
   ): Prisma.AgendamentoOrderByWithRelationInput[] {
     const { field, direction } = sort;
     const principal: Prisma.AgendamentoOrderByWithRelationInput =

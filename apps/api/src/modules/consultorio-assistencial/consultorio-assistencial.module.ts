@@ -3,6 +3,8 @@ import { ComercialAtendimentoModule } from '../comercial-atendimento/comercial-a
 import { GestaoProfissionaisModule } from '../gestao-profissionais/gestao-profissionais.module';
 import { AtendimentoMedicoController } from './atendimento-medico/atendimento-medico.controller';
 import { AtendimentoMedicoService } from './atendimento-medico/atendimento-medico.service';
+import { EvolucaoVozController } from './evolucao-voz/evolucao-voz.controller';
+import { EvolucaoVozService } from './evolucao-voz/evolucao-voz.service';
 import { PacientesVinculadosService } from './pacientes-vinculados/pacientes-vinculados.service';
 import { ProntuariosController } from './prontuarios/prontuarios.controller';
 import { ProntuariosService } from './prontuarios/prontuarios.service';
@@ -16,8 +18,13 @@ import { ProntuariosService } from './prontuarios/prontuarios.service';
   // lidos pelos services exportados, sem FK nas tabelas deste módulo (CLAUDE.md, seção 3).
   // A tela Pacientes (comercial-atendimento) usa os pacientes vinculados daqui (issue #153).
   imports: [forwardRef(() => ComercialAtendimentoModule), GestaoProfissionaisModule],
-  controllers: [ProntuariosController, AtendimentoMedicoController],
-  providers: [ProntuariosService, AtendimentoMedicoService, PacientesVinculadosService],
+  controllers: [ProntuariosController, AtendimentoMedicoController, EvolucaoVozController],
+  providers: [
+    ProntuariosService,
+    AtendimentoMedicoService,
+    EvolucaoVozService,
+    PacientesVinculadosService,
+  ],
   exports: [PacientesVinculadosService],
 })
 export class ConsultorioAssistencialModule {}
