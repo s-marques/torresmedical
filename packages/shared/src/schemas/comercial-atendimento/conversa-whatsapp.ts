@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { listQuerySchema, searchSchema } from '../common/list-query';
-import { mensagemObrigatoria } from '../common/obrigatorio';
+import { erroObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 
 /** Situação da conversa (chips e badge da lista da tela WhatsApp, `/atendimento`). */
@@ -86,8 +86,8 @@ export type ContadoresConversasWhatsapp = z.infer<typeof contadoresConversasWhat
 
 /** `POST /api/comercial-atendimento/conversas-whatsapp`: formulário "Nova conversa". */
 export const novaConversaWhatsappSchema = z.strictObject({
-  pacienteId: z.uuid({ error: mensagemObrigatoria('Paciente') }),
-  canalId: z.uuid({ error: mensagemObrigatoria('Canal') }),
+  pacienteId: z.uuid({ error: erroObrigatorio('Paciente') }),
+  canalId: z.uuid({ error: erroObrigatorio('Canal') }),
 });
 
 export type NovaConversaWhatsappInput = z.infer<typeof novaConversaWhatsappSchema>;
@@ -167,9 +167,9 @@ export const MENSAGEM_WHATSAPP_MAX = 4096;
 /** `POST /api/comercial-atendimento/conversas-whatsapp/:id/mensagens`: texto digitado no painel. */
 export const enviarMensagemWhatsappSchema = z.strictObject({
   conteudo: z
-    .string({ error: mensagemObrigatoria('Mensagem', 'f') })
+    .string({ error: erroObrigatorio('Mensagem', 'f') })
     .trim()
-    .min(1, { error: mensagemObrigatoria('Mensagem', 'f') })
+    .min(1, { error: erroObrigatorio('Mensagem', 'f') })
     .max(MENSAGEM_WHATSAPP_MAX, {
       error: `A mensagem deve ter no máximo ${MENSAGEM_WHATSAPP_MAX} caracteres`,
     }),
@@ -179,7 +179,7 @@ export type EnviarMensagemWhatsappInput = z.infer<typeof enviarMensagemWhatsappS
 
 /** `POST /api/comercial-atendimento/conversas-whatsapp/:id/transferir`. */
 export const transferirConversaWhatsappSchema = z.strictObject({
-  usuarioId: z.uuid({ error: mensagemObrigatoria('Usuário') }),
+  usuarioId: z.uuid({ error: erroObrigatorio('Usuário') }),
 });
 
 export type TransferirConversaWhatsappInput = z.infer<typeof transferirConversaWhatsappSchema>;

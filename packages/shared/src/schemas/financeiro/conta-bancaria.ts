@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
 import { searchSchema } from '../common/list-query';
+import { erroObrigatorio, textoObrigatorio } from '../common/obrigatorio';
 
 /**
  * Conta bancária do Financeiro. Cadastrada na aba "Contas Bancárias" da tela Conciliação (#46) e
@@ -12,7 +12,7 @@ import { searchSchema } from '../common/list-query';
 /** Tipos citados na aba: "caixa, corrente, poupança e investimento". */
 export const CONTA_BANCARIA_TIPOS = ['CAIXA', 'CORRENTE', 'POUPANCA', 'INVESTIMENTO'] as const;
 export const contaBancariaTipoSchema = z.enum(CONTA_BANCARIA_TIPOS, {
-  error: mensagemObrigatoria('Tipo'),
+  error: erroObrigatorio('Tipo'),
 });
 export type ContaBancariaTipo = (typeof CONTA_BANCARIA_TIPOS)[number];
 

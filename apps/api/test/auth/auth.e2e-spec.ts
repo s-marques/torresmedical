@@ -124,8 +124,8 @@ describe('Autenticação (e2e)', () => {
 
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'email', message: 'E-mail inválido' },
-          { field: 'senha', message: 'Informe a senha' },
+          expect.objectContaining({ field: 'email', message: 'E-mail inválido' }),
+          expect.objectContaining({ field: 'senha', message: 'Informe a senha' }),
         ]),
       );
     });
@@ -348,7 +348,12 @@ describe('Autenticação (e2e)', () => {
       const reuso = await redefinir(token).expect(400);
       expect(reuso.body).toMatchObject({
         code: 'LINK_REDEFINICAO_INVALIDO',
-        details: [{ field: 'token', message: 'Link de redefinição inválido ou expirado' }],
+        details: [
+          expect.objectContaining({
+            field: 'token',
+            message: 'Link de redefinição inválido ou expirado',
+          }),
+        ],
       });
     });
 
@@ -380,7 +385,10 @@ describe('Autenticação (e2e)', () => {
       const res = await redefinir('qualquer', 'curta').expect(400);
 
       expect(res.body.details).toEqual([
-        { field: 'senha', message: 'A senha deve ter no mínimo 8 caracteres' },
+        expect.objectContaining({
+          field: 'senha',
+          message: 'A senha deve ter no mínimo 8 caracteres',
+        }),
       ]);
     });
   });

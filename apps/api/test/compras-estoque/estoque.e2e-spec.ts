@@ -126,9 +126,9 @@ describe('Estoque (e2e)', () => {
       const res = await http().post(`${BASE}/entradas`).send({}).expect(400);
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'produtoId', message: 'Produto é obrigatório.' },
-          { field: 'quantidade', message: 'Quantidade é obrigatória.' },
-          { field: 'motivo', message: 'Motivo é obrigatório.' },
+          expect.objectContaining({ field: 'produtoId', message: 'Produto é obrigatório.' }),
+          expect.objectContaining({ field: 'quantidade', message: 'Quantidade é obrigatória.' }),
+          expect.objectContaining({ field: 'motivo', message: 'Motivo é obrigatório.' }),
         ]),
       );
       await expectNoAudit(prisma, { entity: ENTITY });
@@ -208,7 +208,12 @@ describe('Estoque (e2e)', () => {
       expect(res.body).toMatchObject({
         code: 'ESTOQUE_INSUFICIENTE',
         message: 'Estoque insuficiente. Saldo atual: 2.',
-        details: [{ field: 'quantidade', message: 'Estoque insuficiente. Saldo atual: 2.' }],
+        details: [
+          expect.objectContaining({
+            field: 'quantidade',
+            message: 'Estoque insuficiente. Saldo atual: 2.',
+          }),
+        ],
       });
       expect(await saldo(produto.id)).toBe(2);
       await expectNoAudit(prisma, { entity: ENTITY });
@@ -273,7 +278,7 @@ describe('Estoque (e2e)', () => {
         .send({ produtoId: produto.id, quantidadeReal: 1, motivo: '' })
         .expect(400);
       expect(semMotivo.body.details).toEqual([
-        { field: 'motivo', message: 'Motivo é obrigatório.' },
+        expect.objectContaining({ field: 'motivo', message: 'Motivo é obrigatório.' }),
       ]);
       await expectNoAudit(prisma, { entity: ENTITY });
     });

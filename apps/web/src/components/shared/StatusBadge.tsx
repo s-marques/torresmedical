@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -35,7 +36,10 @@ export function StatusBadge({ tom = 'neutro', children, className }: Readonly<St
 
 /** Status Ativo/Inativo, o mais comum do inventário. */
 export function StatusAtivo({ ativo }: Readonly<{ ativo: boolean }>) {
+  const { t } = useTranslation();
   return (
-    <StatusBadge tom={ativo ? 'sucesso' : 'perigo'}>{ativo ? 'Ativo' : 'Inativo'}</StatusBadge>
+    <StatusBadge tom={ativo ? 'sucesso' : 'perigo'}>
+      {t(ativo ? 'comum.ativo' : 'comum.inativo')}
+    </StatusBadge>
   );
 }

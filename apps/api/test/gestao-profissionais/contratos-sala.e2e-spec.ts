@@ -239,12 +239,21 @@ describe('Contratos de salas (e2e)', () => {
 
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'salaId', message: 'Sala é obrigatória.' },
-          { field: 'locatarioId', message: 'Locatário é obrigatório.' },
-          { field: 'valorUnitario', message: 'O valor não pode ser negativo' },
-          { field: 'dataInicio', message: 'Data de início é obrigatória.' },
-          { field: 'indiceReajuste', message: 'Índice de reajuste inválido' },
-          { field: 'extra', message: 'Campo não permitido' },
+          expect.objectContaining({ field: 'salaId', message: 'Sala é obrigatória.' }),
+          expect.objectContaining({ field: 'locatarioId', message: 'Locatário é obrigatório.' }),
+          expect.objectContaining({
+            field: 'valorUnitario',
+            message: 'O valor não pode ser negativo',
+          }),
+          expect.objectContaining({
+            field: 'dataInicio',
+            message: 'Data de início é obrigatória.',
+          }),
+          expect.objectContaining({
+            field: 'indiceReajuste',
+            message: 'Índice de reajuste inválido',
+          }),
+          expect.objectContaining({ field: 'extra', message: 'Campo não permitido' }),
         ]),
       );
       await expectNoAudit(prisma, { entity: ENTITY });
@@ -267,10 +276,19 @@ describe('Contratos de salas (e2e)', () => {
 
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'quantidadeMensal', message: 'Turnos contratados é obrigatório.' },
-          { field: 'dataFim', message: 'A data de fim não pode ser anterior à data de início' },
-          { field: 'dias.0.fim', message: 'A hora final deve ser depois da hora inicial' },
-          { field: 'dias.1.diaSemana', message: 'Dia da semana repetido' },
+          expect.objectContaining({
+            field: 'quantidadeMensal',
+            message: 'Turnos contratados é obrigatório.',
+          }),
+          expect.objectContaining({
+            field: 'dataFim',
+            message: 'A data de fim não pode ser anterior à data de início',
+          }),
+          expect.objectContaining({
+            field: 'dias.0.fim',
+            message: 'A hora final deve ser depois da hora inicial',
+          }),
+          expect.objectContaining({ field: 'dias.1.diaSemana', message: 'Dia da semana repetido' }),
         ]),
       );
     });
@@ -280,12 +298,16 @@ describe('Contratos de salas (e2e)', () => {
         .post(BASE)
         .send(mensal({ salaId: INEXISTENTE }))
         .expect(400);
-      expect(sala.body.details).toEqual([{ field: 'salaId', message: 'Sala inválida' }]);
+      expect(sala.body.details).toEqual([
+        expect.objectContaining({ field: 'salaId', message: 'Sala inválida' }),
+      ]);
       const prof = await http()
         .post(BASE)
         .send(mensal({ locatarioId: INEXISTENTE }))
         .expect(400);
-      expect(prof.body.details).toEqual([{ field: 'locatarioId', message: 'Locatário inválido' }]);
+      expect(prof.body.details).toEqual([
+        expect.objectContaining({ field: 'locatarioId', message: 'Locatário inválido' }),
+      ]);
       const paciente = await http()
         .post(BASE)
         .send(mensal({ locatarioTipo: 'CLIENTE', locatarioId: profissionalId }))
@@ -296,7 +318,10 @@ describe('Contratos de salas (e2e)', () => {
         .send(mensal({ formaPagamentoId: INEXISTENTE }))
         .expect(400);
       expect(forma.body.details).toEqual([
-        { field: 'formaPagamentoId', message: 'Forma de pagamento inválida' },
+        expect.objectContaining({
+          field: 'formaPagamentoId',
+          message: 'Forma de pagamento inválida',
+        }),
       ]);
       await expectNoAudit(prisma, { entity: ENTITY });
     });
@@ -471,8 +496,8 @@ describe('Contratos de salas (e2e)', () => {
         .expect(400);
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'data', message: obrigatorio },
-          { field: 'extra', message: 'Campo não permitido' },
+          expect.objectContaining({ field: 'data', message: obrigatorio }),
+          expect.objectContaining({ field: 'extra', message: 'Campo não permitido' }),
         ]),
       );
       await expectNoAudit(prisma, { entity: ENTITY });

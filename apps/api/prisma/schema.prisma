@@ -2875,3 +2875,94 @@ model AgenteRegra {
   @@index([nome])
   @@map("agente_regras")
 }
+
+/// Dono: consultorio-assistencial. Categoria do prestador (filtro "Todas categorias" e aba Serviço).
+enum PrestadorCategoria {
+  ELETRICA
+  HIDRAULICA
+  PINTURA
+  AR_CONDICIONADO
+  JARDINAGEM
+  SERRALHERIA
+  MARCENARIA
+  GESSO
+  DEDETIZACAO
+  LIMPEZA_CAIXA
+  TI
+  REFRIGERACAO
+  OUTROS
+
+  @@map("prestador_categoria")
+}
+
+enum PrestadorStatus {
+  ATIVO
+  INATIVO
+  BLOQUEADO
+
+  @@map("prestador_status")
+}
+
+enum PrestadorTipoPessoa {
+  FISICA
+  JURIDICA
+
+  @@map("prestador_tipo_pessoa")
+}
+
+enum PrestadorFormaPagamento {
+  PIX
+  TRANSFERENCIA
+  BOLETO
+  DINHEIRO
+  CARTAO
+
+  @@map("prestador_forma_pagamento")
+}
+
+enum PrestadorAvaliacaoPreco {
+  BARATO
+  JUSTO
+  CARO
+
+  @@map("prestador_avaliacao_preco")
+}
+
+/// Dono: consultorio-assistencial. Prestador de serviço de manutenção (tela Prestadores,
+/// `/prestadores`, issue #40). Abas do modal: Dados, Serviço, Comercial e Avaliação.
+/// Exclusão lógica.
+model Prestador {
+  id               String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome             String
+  nomeFantasia     String?                 @map("nome_fantasia")
+  tipoPessoa       PrestadorTipoPessoa     @default(FISICA) @map("tipo_pessoa")
+  /// CPF ou CNPJ, somente dígitos.
+  documento        String?
+  telefone         String?
+  email            String?
+  status           PrestadorStatus         @default(ATIVO)
+  endereco         String?
+  categoria        PrestadorCategoria      @default(ELETRICA)
+  descricaoServico String?                 @map("descricao_servico")
+  atendeUrgencia   Boolean                 @default(false) @map("atende_urgencia")
+  atendeFimSemana  Boolean                 @default(false) @map("atende_fim_semana")
+  formaPagamento   PrestadorFormaPagamento @default(PIX) @map("forma_pagamento")
+  /// Só preenchida quando a forma de pagamento é PIX.
+  chavePix         String?                 @map("chave_pix")
+  valorHora        Decimal?                @map("valor_hora") @db.Decimal(12, 2)
+  valorDiaria      Decimal?                @map("valor_diaria") @db.Decimal(12, 2)
+  emiteNotaFiscal  Boolean                 @default(false) @map("emite_nota_fiscal")
+  /// Qualidade do Serviço, de 1 a 5 (coluna Avaliação do grid).
+  notaQualidade    Int                     @default(3) @map("nota_qualidade") @db.SmallInt
+  /// Pontualidade, de 1 a 5.
+  notaPontualidade Int                     @default(3) @map("nota_pontualidade") @db.SmallInt
+  avaliacaoPreco   PrestadorAvaliacaoPreco @default(JUSTO) @map("avaliacao_preco")
+  observacoes      String?
+  createdAt        DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt        DateTime?               @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([categoria])
+  @@index([documento])
+  @@map("prestadores")
+}

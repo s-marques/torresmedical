@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { exportQuerySchema, listQuerySchema } from '../common/list-query';
-import { mensagemObrigatoria } from '../common/obrigatorio';
+import { erroObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 
 export const PEDIDO_COMPRA_NF_MAX = 20;
@@ -24,8 +24,8 @@ export const PEDIDO_COMPRA_ROTULO_STATUS: Readonly<Record<PedidoCompraStatus, st
 
 const idObrigatorio = (rotulo: string) =>
   z
-    .string({ error: mensagemObrigatoria(rotulo) })
-    .min(1, { error: mensagemObrigatoria(rotulo) })
+    .string({ error: erroObrigatorio(rotulo) })
+    .min(1, { error: erroObrigatorio(rotulo) })
     .pipe(z.uuid({ error: `${rotulo} inválido` }));
 
 const textoOpcional = (rotulo: string, max: number) =>
@@ -47,11 +47,11 @@ const dataOpcional = (rotulo: string) =>
 export const pedidoCompraItemInputSchema = z.strictObject({
   produtoId: idObrigatorio('Produto'),
   quantidade: z
-    .number({ error: mensagemObrigatoria('Quantidade', 'f') })
+    .number({ error: erroObrigatorio('Quantidade', 'f') })
     .positive({ error: 'A quantidade deve ser maior que zero' })
     .max(PEDIDO_COMPRA_QUANTIDADE_MAX, { error: 'Quantidade inválida' }),
   valorUnitario: z
-    .number({ error: mensagemObrigatoria('Valor unitário') })
+    .number({ error: erroObrigatorio('Valor unitário') })
     .min(0, { error: 'O valor unitário não pode ser negativo' })
     .max(PEDIDO_COMPRA_VALOR_MAX, { error: 'Valor unitário inválido' }),
 });

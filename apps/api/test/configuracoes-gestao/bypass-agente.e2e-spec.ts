@@ -124,8 +124,8 @@ describe('Bypass Agente (e2e)', () => {
       const res = await http().post(BASE).send({ telefone: '', extra: 1 }).expect(400);
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'telefone', message: 'Telefone é obrigatório.' },
-          { field: 'extra', message: 'Campo não permitido' },
+          expect.objectContaining({ field: 'telefone', message: 'Telefone é obrigatório.' }),
+          expect.objectContaining({ field: 'extra', message: 'Campo não permitido' }),
         ]),
       );
       await http().post(BASE).send({ telefone: '123' }).expect(400);
@@ -139,7 +139,12 @@ describe('Bypass Agente (e2e)', () => {
       const res = await http().post(BASE).send({ telefone: '(65) 99999-0000' }).expect(409);
       expect(res.body).toMatchObject({
         code: 'DUPLICATE',
-        details: [{ field: 'telefone', message: 'Este telefone já está na lista de bypass' }],
+        details: [
+          expect.objectContaining({
+            field: 'telefone',
+            message: 'Este telefone já está na lista de bypass',
+          }),
+        ],
       });
       await expectNoAudit(prisma, { entity: ENTITY });
       await http().post(BASE).send({ telefone: '65988880000' }).expect(201);

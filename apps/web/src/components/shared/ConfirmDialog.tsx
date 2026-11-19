@@ -1,5 +1,6 @@
 import { Loader2Icon } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,12 +40,13 @@ export function ConfirmDialog({
   onAbertoChange,
   titulo,
   descricao,
-  rotuloConfirmar = 'Confirmar',
-  rotuloCancelar = 'Cancelar',
+  rotuloConfirmar,
+  rotuloCancelar,
   destrutivo = true,
   onConfirmar,
 }: Readonly<ConfirmDialogProps>) {
   const [executando, setExecutando] = useState(false);
+  const { t } = useTranslation();
   const foco = useFocoDeRetorno();
 
   async function confirmar(evento: { preventDefault: () => void }) {
@@ -72,7 +74,7 @@ export function ConfirmDialog({
         <AlertDialogFooter>
           {/* `aria-disabled` em vez de `disabled`: o botão desabilitado perderia o foco do teclado. */}
           <AlertDialogCancel aria-disabled={executando} className={cn(executando && 'opacity-50')}>
-            {rotuloCancelar}
+            {rotuloCancelar ?? t('comum.cancelar')}
           </AlertDialogCancel>
           <AlertDialogAction
             variant={destrutivo ? 'destructive' : 'default'}
@@ -82,7 +84,7 @@ export function ConfirmDialog({
             onClick={confirmar}
           >
             {executando && <Loader2Icon aria-hidden className="animate-spin" />}
-            {rotuloConfirmar}
+            {rotuloConfirmar ?? t('comum.confirmar')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

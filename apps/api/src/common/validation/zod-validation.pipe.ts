@@ -1,7 +1,7 @@
 import { Injectable, type PipeTransform } from '@nestjs/common';
 import type { z } from 'zod';
 import { ValidationException } from '../errors/api.exception';
-import { zodIssuesToDetails } from './zod-issues';
+import { validarComCodigos, zodIssuesToDetails } from './zod-issues';
 
 /**
  * Valida e converte o valor com um schema Zod de `packages/shared`.
@@ -13,7 +13,7 @@ export class ZodValidationPipe<T extends z.ZodType> implements PipeTransform<unk
   constructor(private readonly schema: T) {}
 
   transform(value: unknown): z.output<T> {
-    const result = this.schema.safeParse(value);
+    const result = validarComCodigos(this.schema, value);
     if (!result.success) throw new ValidationException(zodIssuesToDetails(result.error.issues));
     return result.data;
   }

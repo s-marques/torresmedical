@@ -1,17 +1,19 @@
 import { z } from 'zod';
-import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
+import { traduzirValidacao } from '../../i18n/validacao';
+import { erroObrigatorio, textoObrigatorio } from '../common/obrigatorio';
 import { cargoUsuarioSchema, telefoneUsuarioSchema, USUARIO_NOME_MAX } from './usuario';
 
-const EMAIL_OBRIGATORIO = mensagemObrigatoria('E-mail');
+const emailObrigatorio = erroObrigatorio('E-mail');
+const emailInvalido = () => traduzirValidacao('validacao.formato.email');
 
 const email = z
   .string({
-    error: (issue) => (issue.input === undefined ? EMAIL_OBRIGATORIO : 'E-mail inválido'),
+    error: (issue) => (issue.input === undefined ? emailObrigatorio() : emailInvalido()),
   })
   .trim()
   .toLowerCase()
-  .min(1, { error: EMAIL_OBRIGATORIO })
-  .pipe(z.email({ error: 'E-mail inválido' }));
+  .min(1, { error: emailObrigatorio })
+  .pipe(z.email({ error: emailInvalido }));
 
 /**
  * `PUT /api/configuracoes-gestao/configuracoes/perfil`: aba "Perfil" da tela Configurações,

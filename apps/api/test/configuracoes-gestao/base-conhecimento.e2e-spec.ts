@@ -162,10 +162,10 @@ describe('Base de Conhecimento (e2e)', () => {
 
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'titulo', message: 'Título é obrigatório.' },
-          { field: 'conteudo', message: 'Conteúdo é obrigatório.' },
-          { field: 'categoria', message: 'Categoria inválida' },
-          { field: 'extra', message: 'Campo não permitido' },
+          expect.objectContaining({ field: 'titulo', message: 'Título é obrigatório.' }),
+          expect.objectContaining({ field: 'conteudo', message: 'Conteúdo é obrigatório.' }),
+          expect.objectContaining({ field: 'categoria', message: 'Categoria inválida' }),
+          expect.objectContaining({ field: 'extra', message: 'Campo não permitido' }),
         ]),
       );
       await expectNoAudit(prisma, { entity: ENTITY });
@@ -178,7 +178,12 @@ describe('Base de Conhecimento (e2e)', () => {
         .expect(400);
       expect(res.body).toMatchObject({
         code: 'PROFISSIONAL_INVALIDO',
-        details: [{ field: 'profissionalId', message: 'Profissional não encontrado' }],
+        details: [
+          expect.objectContaining({
+            field: 'profissionalId',
+            message: 'Profissional não encontrado',
+          }),
+        ],
       });
       await expectNoAudit(prisma, { entity: ENTITY });
     });

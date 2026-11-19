@@ -7,6 +7,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useId } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -41,29 +42,30 @@ export function DataGridPaginacao({
   onTamanho,
 }: Readonly<DataGridPaginacaoProps>) {
   const id = useId();
+  const { t } = useTranslation();
   const total = meta?.total ?? 0;
   const totalPaginas = meta?.totalPages ?? 0;
   const botoes: { rotulo: string; Icone: LucideIcon; destino: number; desabilitado: boolean }[] = [
     {
-      rotulo: 'Ir para primeira página',
+      rotulo: t('grid.primeiraPagina'),
       Icone: ChevronsLeftIcon,
       destino: 1,
       desabilitado: page <= 1,
     },
     {
-      rotulo: 'Ir para página anterior',
+      rotulo: t('grid.paginaAnterior'),
       Icone: ChevronLeftIcon,
       destino: page - 1,
       desabilitado: page <= 1,
     },
     {
-      rotulo: 'Ir para próxima página',
+      rotulo: t('grid.proximaPagina'),
       Icone: ChevronRightIcon,
       destino: page + 1,
       desabilitado: page >= totalPaginas,
     },
     {
-      rotulo: 'Ir para última página',
+      rotulo: t('grid.ultimaPagina'),
       Icone: ChevronsRightIcon,
       destino: totalPaginas,
       desabilitado: page >= totalPaginas,
@@ -73,11 +75,11 @@ export function DataGridPaginacao({
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 px-2">
       <p className="text-sm text-muted-foreground" aria-live="polite">
-        {total} linha(s) no total.
+        {t('grid.totalLinhas', { total })}
       </p>
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
         <div className="flex items-center gap-2">
-          <Label htmlFor={id}>Linhas por página</Label>
+          <Label htmlFor={id}>{t('grid.linhasPorPagina')}</Label>
           <Select value={String(pageSize)} onValueChange={(valor) => onTamanho(Number(valor))}>
             <SelectTrigger id={id} size="sm" className="w-20">
               <SelectValue />
@@ -92,9 +94,9 @@ export function DataGridPaginacao({
           </Select>
         </div>
         <p className="text-sm font-medium">
-          Página {page} de {totalPaginas}
+          {t('grid.paginaDe', { pagina: page, total: totalPaginas })}
         </p>
-        <nav aria-label="Paginação" className="flex items-center gap-2">
+        <nav aria-label={t('grid.paginacao')} className="flex items-center gap-2">
           {botoes.map(({ rotulo, Icone, destino, desabilitado }) => (
             <Button
               key={rotulo}

@@ -1,0 +1,19 @@
+{
+  "VALIDATION_ERROR": "Invalid data",
+  "UNAUTHORIZED": "Not authenticated",
+  "FORBIDDEN": "No permission",
+  "NOT_FOUND": "Record not found",
+  "METHOD_NOT_ALLOWED": "Method not allowed",
+  "CONFLICT": "Conflict with the current state of the record",
+  "DUPLICATE": "Duplicate record",
+  "RELATION_CONFLICT": "The record is in use by other records",
+  "PAYLOAD_TOO_LARGE": "Content too large",
+  "TOO_MANY_REQUESTS": "Too many requests. Try again in a moment",
+  "BAD_REQUEST": "Invalid request",
+  "INTERNAL_ERROR": "Internal error. Try again later",
+  "SESSAO_INVALIDA": "Session expired. Sign in again",
+  "CREDENCIAIS_INVALIDAS": "Invalid e-mail or password",
+  "LINK_REDEFINICAO_INVALIDO": "Invalid or expired reset link",
+  "LINK_INVALIDO": "Invalid download link",
+  "LINK_EXPIRADO": "Download link expired. Generate a new one"
+}

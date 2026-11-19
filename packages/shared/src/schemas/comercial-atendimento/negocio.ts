@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { exportQuerySchema, listQuerySchema, searchSchema } from '../common/list-query';
+import { erroObrigatorio, mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
-import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
 import { MARCOS_ESTAGIO } from './crm-config';
 
 /**
@@ -111,7 +111,7 @@ export const negocioInputSchema = z.strictObject({
     .max(NEGOCIO_VALOR_MAX, { error: 'Valor muito alto' })
     .nullish()
     .transform((valor) => valor ?? null),
-  estagioId: z.uuid({ error: mensagemObrigatoria('Estágio') }),
+  estagioId: z.uuid({ error: erroObrigatorio('Estágio') }),
   contatoTipo: z
     .enum(NEGOCIO_CONTATO_TIPOS, { error: 'Tipo de contato inválido' })
     .default('PACIENTE'),
@@ -209,13 +209,13 @@ export type ExportNegociosQuery = z.infer<typeof exportNegociosQuerySchema>;
 
 /** `PATCH /negocios/:id/mover`: "Mover → <estágio>" e arrastar o cartão. */
 export const moverNegocioSchema = z.strictObject({
-  estagioId: z.uuid({ error: mensagemObrigatoria('Estágio') }),
+  estagioId: z.uuid({ error: erroObrigatorio('Estágio') }),
 });
 export type MoverNegocioInput = z.output<typeof moverNegocioSchema>;
 
 /** `PATCH /negocios/:id/perdido`: o motivo de perda é obrigatório. */
 export const perderNegocioSchema = z.strictObject({
-  motivoPerdaId: z.uuid({ error: mensagemObrigatoria('Motivo da perda') }),
+  motivoPerdaId: z.uuid({ error: erroObrigatorio('Motivo da perda') }),
 });
 export type PerderNegocioInput = z.output<typeof perderNegocioSchema>;
 export type PerderNegocioFormulario = z.input<typeof perderNegocioSchema>;
@@ -223,17 +223,17 @@ export type PerderNegocioFormulario = z.input<typeof perderNegocioSchema>;
 /** Campos comuns do agendamento de atividade (Pipeline e tela Atividades). */
 export const camposAgendamentoAtividade = {
   titulo: textoObrigatorio('Título', { max: ATIVIDADE_TITULO_MAX }),
-  data: z.iso.date({ error: mensagemObrigatoria('Data', 'f') }),
+  data: z.iso.date({ error: erroObrigatorio('Data', 'f') }),
   hora: z
-    .string({ error: mensagemObrigatoria('Hora', 'f') })
-    .min(1, { error: mensagemObrigatoria('Hora', 'f'), abort: true })
+    .string({ error: erroObrigatorio('Hora', 'f') })
+    .min(1, { error: erroObrigatorio('Hora', 'f'), abort: true })
     .regex(HORA, { error: 'Hora inválida (HH:MM)' }),
   responsavelId: uuidOpcional('Responsável inválido'),
 };
 
 /** `POST /negocios/:id/atividades`: "Agendar Follow-up". */
 export const atividadeNegocioInputSchema = z.strictObject({
-  tipo: z.enum(ATIVIDADE_TIPOS, { error: mensagemObrigatoria('Tipo') }).default('FOLLOW_UP'),
+  tipo: z.enum(ATIVIDADE_TIPOS, { error: erroObrigatorio('Tipo') }).default('FOLLOW_UP'),
   ...camposAgendamentoAtividade,
 });
 export type AtividadeNegocioInput = z.output<typeof atividadeNegocioInputSchema>;

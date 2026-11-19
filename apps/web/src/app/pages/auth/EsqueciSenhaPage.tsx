@@ -1,19 +1,18 @@
 import { esqueciSenhaSchema } from '@torres/shared';
 import { useId, useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
-import { ApiRequestError, ERRO_INESPERADO_API } from '@/lib/api/api-error';
+import { ApiRequestError, erroInesperadoApi } from '@/lib/api/api-error';
 import { pedirRedefinicaoSenha } from '@/lib/auth/sessao';
 import { errosDoZod } from '@/lib/forms/erros-zod';
 import { AuthLayout } from './AuthLayout';
 import { CampoAuth } from './CampoAuth';
 
-export const MENSAGEM_LINK_ENVIADO =
-  'Se o e-mail estiver cadastrado, você receberá um link para redefinir a senha.';
-
 /** Pede o link de redefinição de senha. A resposta é a mesma exista ou não o e-mail. */
 export function EsqueciSenhaPage() {
   const id = useId();
+  const { t } = useTranslation();
   const [erro, setErro] = useState<string | undefined>();
   const [erroGeral, setErroGeral] = useState<string | null>(null);
   const [enviado, setEnviado] = useState(false);
@@ -36,17 +35,17 @@ export function EsqueciSenhaPage() {
       await pedirRedefinicaoSenha(dados.data);
       setEnviado(true);
     } catch (error) {
-      setErroGeral(error instanceof ApiRequestError ? error.message : ERRO_INESPERADO_API);
+      setErroGeral(error instanceof ApiRequestError ? error.message : erroInesperadoApi());
     } finally {
       setEnviando(false);
     }
   }
 
   return (
-    <AuthLayout titulo="Esqueci minha senha" descricao="Informe o e-mail usado para entrar">
+    <AuthLayout titulo={t('auth.esqueciSenha')} descricao={t('auth.esqueciDescricao')}>
       {enviado ? (
         <p role="status" className="text-center text-sm">
-          {MENSAGEM_LINK_ENVIADO}
+          {t('auth.linkEnviado')}
         </p>
       ) : (
         <form className="grid gap-4" noValidate onSubmit={(event) => void enviar(event)}>
@@ -57,19 +56,19 @@ export function EsqueciSenhaPage() {
           )}
           <CampoAuth
             id={`${id}-email`}
-            rotulo="E-mail"
+            rotulo={t('auth.email')}
             name="email"
             type="email"
             autoComplete="email"
             erro={erro}
           />
           <Button type="submit" className="w-full" disabled={enviando}>
-            Enviar link
+            {t('auth.enviarLink')}
           </Button>
         </form>
       )}
       <Link to="/login" className="mt-4 block text-center text-sm text-primary hover:underline">
-        Voltar ao login
+        {t('auth.voltarLogin')}
       </Link>
     </AuthLayout>
   );

@@ -185,9 +185,9 @@ describe('Perfis de Acesso (e2e)', () => {
 
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'nome', message: 'Nome é obrigatório.' },
-          { field: 'paginasPermitidas.0', message: 'Página inválida' },
-          { field: 'extra', message: 'Campo não permitido' },
+          expect.objectContaining({ field: 'nome', message: 'Nome é obrigatório.' }),
+          expect.objectContaining({ field: 'paginasPermitidas.0', message: 'Página inválida' }),
+          expect.objectContaining({ field: 'extra', message: 'Campo não permitido' }),
         ]),
       );
       await expectNoAudit(prisma, { entity: 'Perfil' });
@@ -201,7 +201,10 @@ describe('Perfis de Acesso (e2e)', () => {
 
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'paginasPermitidas', message: 'Selecione ao menos uma página.' },
+          expect.objectContaining({
+            field: 'paginasPermitidas',
+            message: 'Selecione ao menos uma página.',
+          }),
         ]),
       );
     });

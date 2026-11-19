@@ -1,8 +1,11 @@
 import { ARQUIVO_CAMPO, arquivoSchema, type Arquivo, type ArquivoUso } from '@torres/shared';
-import { ApiRequestError, ERRO_CONEXAO, erroDaResposta } from './api-error';
+import { i18next } from '@/lib/i18n';
+import PT_BR from '@/lib/i18n/locales/pt-BR.json';
+import { ApiRequestError, erroConexao, erroDaResposta, mensagemDoDetalhe } from './api-error';
 import { authorizationHeader } from './client';
 
-export const ERRO_INESPERADO = 'Não foi possível enviar o arquivo. Tente novamente';
+/** Texto em português (testes); na tela vale `erros.envioArquivo` no idioma atual. */
+export const ERRO_INESPERADO = PT_BR.erros.envioArquivo;
 
 export interface UploadArquivoOptions {
   uso: ArquivoUso;
@@ -46,7 +49,7 @@ export function uploadArquivo({
       }
       reject(erroDaResposta(xhr.status, corpo, ERRO_INESPERADO));
     };
-    xhr.onerror = () => reject(new ApiRequestError(0, null, ERRO_CONEXAO));
+    xhr.onerror = () => reject(new ApiRequestError(0, null, erroConexao()));
     xhr.onabort = () => reject(abortError());
     signal?.addEventListener('abort', () => xhr.abort(), { once: true });
 
@@ -58,11 +61,11 @@ export function uploadArquivo({
 
 /** Mensagem para o usuário: o erro do campo `arquivo` (400) ou a mensagem geral. */
 export function mensagemDoErroDeUpload(error: unknown): string {
-  if (!(error instanceof ApiRequestError)) return ERRO_INESPERADO;
+  if (!(error instanceof ApiRequestError)) return i18next.t('erros.envioArquivo');
   const detalhe = error.body?.details?.find((d) => d.field === ARQUIVO_CAMPO);
-  return detalhe?.message ?? error.message;
+  return detalhe ? mensagemDoDetalhe(detalhe) : error.message;
 }
 
 function abortError(): DOMException {
-  return new DOMException('Envio cancelado', 'AbortError');
+  return new DOMException(i18next.t('erros.envioCancelado'), 'AbortError');
 }

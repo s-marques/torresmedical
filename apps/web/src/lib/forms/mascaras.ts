@@ -1,3 +1,5 @@
+import { formatoNumero } from '@/lib/i18n';
+
 /**
  * Máscaras dos formulários. O valor do campo guarda só os dígitos (CPF `12345678901`) e a
  * moeda guarda `number`; a formatação é só de exibição.
@@ -61,11 +63,14 @@ export function formatarMascara(tipo: TipoMascara, valor: string | null | undefi
   return MASCARAS[tipo].formatar(apenasDigitos(valor ?? ''));
 }
 
-const MOEDA = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const MOEDA: Intl.NumberFormatOptions = { style: 'currency', currency: 'BRL' };
 
-/** `1234.5` → `R$ 1.234,50`. Vazio para `null`/`undefined`. */
+/**
+ * `1234.5` → `R$ 1.234,50` (em português). A moeda é sempre o real; a separação de milhares e
+ * decimais segue o idioma do usuário (issue #205). Vazio para `null`/`undefined`.
+ */
 export function formatarMoeda(valor: number | null | undefined): string {
-  return valor === null || valor === undefined ? '' : MOEDA.format(valor);
+  return valor === null || valor === undefined ? '' : formatoNumero(MOEDA).format(valor);
 }
 
 /** Maior valor aceito pelo campo de moeda (15 dígitos, ainda exato em `number`). */

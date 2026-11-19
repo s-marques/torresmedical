@@ -1,4 +1,4 @@
-import type { ErrorDetail } from '@torres/shared';
+import { traduzirPtBr, type ErrorDetail } from '@torres/shared';
 import { Prisma } from '../../generated/prisma/client';
 import { ApiException } from './api.exception';
 import { ErrorCode } from './error-codes';
@@ -69,5 +69,9 @@ function toCamelCase(column: string): string {
 function duplicateDetails(error: KnownError): ErrorDetail[] | undefined {
   const fields = uniqueFields(error);
   if (fields.length === 0) return undefined;
-  return fields.map((field) => ({ field, message: 'Já existe um registro com este valor' }));
+  return fields.map((field) => ({
+    field,
+    message: traduzirPtBr({ chave: 'validacao.duplicado' }),
+    code: 'validacao.duplicado',
+  }));
 }

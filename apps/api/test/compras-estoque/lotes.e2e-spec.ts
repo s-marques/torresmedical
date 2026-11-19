@@ -112,10 +112,13 @@ describe('Lotes / Validade (e2e)', () => {
       const res = await http().post(BASE).send({}).expect(400);
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'produtoId', message: 'Produto é obrigatório.' },
-          { field: 'numero', message: 'Número do Lote é obrigatório.' },
-          { field: 'dataVencimento', message: 'Data de Vencimento é obrigatória.' },
-          { field: 'quantidade', message: 'Quantidade é obrigatória.' },
+          expect.objectContaining({ field: 'produtoId', message: 'Produto é obrigatório.' }),
+          expect.objectContaining({ field: 'numero', message: 'Número do Lote é obrigatório.' }),
+          expect.objectContaining({
+            field: 'dataVencimento',
+            message: 'Data de Vencimento é obrigatória.',
+          }),
+          expect.objectContaining({ field: 'quantidade', message: 'Quantidade é obrigatória.' }),
         ]),
       );
       await expectNoAudit(prisma, { entity: ENTITY });
@@ -128,7 +131,10 @@ describe('Lotes / Validade (e2e)', () => {
         .send({ produtoId: produto.id, numero: 'L1', dataVencimento: hoje, quantidade: 0 })
         .expect(400);
       expect(res.body.details).toEqual([
-        { field: 'quantidade', message: 'A quantidade deve ser maior que zero' },
+        expect.objectContaining({
+          field: 'quantidade',
+          message: 'A quantidade deve ser maior que zero',
+        }),
       ]);
     });
 

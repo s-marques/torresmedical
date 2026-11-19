@@ -1,5 +1,6 @@
 import { DownloadIcon, SearchIcon, Settings2Icon } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { EntitySelect } from '@/components/shared/EntitySelect';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -33,14 +34,15 @@ export function ChipsStatus({
   valor,
   onChange,
 }: Readonly<{ status: FiltroStatus; valor?: string; onChange: (valor?: string) => void }>) {
+  const { t } = useTranslation();
   const opcoes: OpcaoFiltro[] = [
-    { valor: '', rotulo: status.rotuloTodos ?? 'Todos' },
+    { valor: '', rotulo: status.rotuloTodos ?? t('comum.todos') },
     ...status.opcoes,
   ];
   return (
     <div
       role="group"
-      aria-label="Filtrar por status"
+      aria-label={t('grid.filtrarStatus')}
       className="inline-flex w-fit flex-wrap gap-1 rounded-lg bg-muted p-1"
     >
       {opcoes.map((opcao) => {
@@ -123,6 +125,18 @@ export function FiltrosExtras({
                 onChange={onChange}
               />
             );
+          case 'texto':
+            return (
+              <CampoBusca
+                key={filtro.parametro}
+                valor={valores[filtro.parametro]}
+                placeholder={filtro.placeholder}
+                rotulo={filtro.rotulo}
+                icone={false}
+                className="sm:max-w-64"
+                onChange={(texto) => onChange({ [filtro.parametro]: texto })}
+              />
+            );
         }
       })}
     </div>
@@ -162,6 +176,7 @@ function FiltroSelect({
   valor?: string;
   onChange: Alterar;
 }>) {
+  const { t } = useTranslation();
   const id = useId();
   return (
     <div className="flex items-center gap-2">
@@ -179,7 +194,7 @@ function FiltroSelect({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={TODOS}>{filtro.rotuloTodos ?? 'Todos'}</SelectItem>
+          <SelectItem value={TODOS}>{filtro.rotuloTodos ?? t('comum.todos')}</SelectItem>
           {filtro.opcoes.map((opcao) => (
             <SelectItem key={opcao.valor} value={opcao.valor}>
               {opcao.rotulo}
@@ -200,11 +215,12 @@ function FiltroPeriodo({
   valores: Record<string, string>;
   onChange: Alterar;
 }>) {
+  const { t } = useTranslation();
   const id = useId();
   const { parametroDe, parametroAte } = filtro;
   const extremos = [
-    { parametro: parametroDe, rotulo: `${filtro.rotulo} de:` },
-    { parametro: parametroAte, rotulo: 'até:' },
+    { parametro: parametroDe, rotulo: t('grid.periodoDe', { rotulo: filtro.rotulo }) },
+    { parametro: parametroAte, rotulo: t('grid.periodoAte') },
   ];
   return (
     <div role="group" aria-label={filtro.rotulo} className="flex flex-wrap items-center gap-2">
@@ -224,10 +240,10 @@ function FiltroPeriodo({
         type="button"
         variant="ghost"
         size="sm"
-        aria-label={`Limpar ${filtro.rotulo}`}
+        aria-label={t('grid.limparFiltro', { rotulo: filtro.rotulo })}
         onClick={() => onChange({ [parametroDe]: undefined, [parametroAte]: undefined })}
       >
-        Limpar
+        {t('comum.limpar')}
       </Button>
     </div>
   );
@@ -238,7 +254,21 @@ export function CampoBusca({
   valor,
   placeholder,
   onChange,
-}: Readonly<{ valor?: string; placeholder: string; onChange: (valor?: string) => void }>) {
+  rotulo: rotuloInformado,
+  icone = true,
+  className,
+}: Readonly<{
+  valor?: string;
+  placeholder: string;
+  onChange: (valor?: string) => void;
+  /** Nome acessível do campo. */
+  rotulo?: string;
+  /** Lupa à esquerda. */
+  icone?: boolean;
+  className?: string;
+}>) {
+  const { t } = useTranslation();
+  const rotulo = rotuloInformado ?? t('grid.buscarRotulo');
   const [texto, setTexto] = useState(valor ?? '');
   const [anterior, setAnterior] = useState(valor);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -251,16 +281,18 @@ export function CampoBusca({
   }
 
   return (
-    <div className="relative w-full sm:max-w-sm">
-      <SearchIcon
-        aria-hidden
-        className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
-      />
+    <div className={cn('relative w-full sm:max-w-sm', className)}>
+      {icone && (
+        <SearchIcon
+          aria-hidden
+          className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
+        />
+      )}
       <Input
         type="search"
-        aria-label="Buscar"
+        aria-label={rotulo}
         placeholder={placeholder}
-        className="pl-8"
+        className={cn(icone && 'pl-8')}
         value={texto}
         onChange={(evento) => {
           const novo = evento.target.value;
@@ -282,12 +314,13 @@ export interface ColunaOcultavel {
 
 /** Botão "Colunas": mostra e oculta colunas (o menu fica aberto entre as escolhas). */
 export function MenuColunas({ colunas }: Readonly<{ colunas: readonly ColunaOcultavel[] }>) {
+  const { t } = useTranslation();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm">
           <Settings2Icon aria-hidden />
-          Colunas
+          {t('grid.colunas')}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
@@ -311,20 +344,21 @@ export function MenuExportar({
   exportando,
   onExportar,
 }: Readonly<{ exportando: boolean; onExportar: (formato: 'xlsx' | 'pdf') => void }>) {
+  const { t } = useTranslation();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" aria-busy={exportando}>
           <DownloadIcon aria-hidden />
-          Exportar
+          {t('grid.exportar')}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem disabled={exportando} onSelect={() => onExportar('xlsx')}>
-          Excel
+          {t('grid.excel')}
         </DropdownMenuItem>
         <DropdownMenuItem disabled={exportando} onSelect={() => onExportar('pdf')}>
-          PDF
+          {t('grid.pdf')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -113,8 +113,11 @@ describe('Caixas (e2e)', () => {
       const res = await http().post(BASE).send({}).expect(400);
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'nome', message: 'Nome é obrigatório.' },
-          { field: 'valorAbertura', message: 'Valor de abertura é obrigatório.' },
+          expect.objectContaining({ field: 'nome', message: 'Nome é obrigatório.' }),
+          expect.objectContaining({
+            field: 'valorAbertura',
+            message: 'Valor de abertura é obrigatório.',
+          }),
         ]),
       );
       await http().post(BASE).send({ nome: 'X', valorAbertura: -1 }).expect(400);

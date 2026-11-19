@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { traduzirPtBr, traduzirValidacao } from '../../i18n/validacao';
 import type { TelaId } from '../../menu/menu';
 import {
   exportColumnsSchema,
@@ -14,7 +15,10 @@ export type TelaRelatorios = Extract<TelaId, `${string}.relatorios`>;
 /** Data do calendário (`AAAA-MM-DD`), sem hora. */
 const DATA = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-export const PERIODO_INVALIDO = 'A data inicial deve ser anterior ou igual à final';
+/** Mensagem em português (o schema usa a chave `validacao.periodo.invalido`). */
+export const PERIODO_INVALIDO = traduzirPtBr({ chave: 'validacao.periodo.invalido' });
+
+const periodoInvalido = () => traduzirValidacao('validacao.periodo.invalido');
 
 function dataValida(valor: string): boolean {
   const partes = DATA.exec(valor);
@@ -27,11 +31,14 @@ function dataValida(valor: string): boolean {
 }
 
 function dataSchema(qual: 'inicial' | 'final') {
+  const sufixo = qual === 'inicial' ? 'Inicial' : 'Final';
+  const informe = () => traduzirValidacao(`validacao.periodo.informeData${sufixo}`);
+  const invalida = () => traduzirValidacao(`validacao.periodo.data${sufixo}Invalida`);
   return z
-    .string({ error: `Informe a data ${qual}` })
+    .string({ error: informe })
     .trim()
-    .min(1, { error: `Informe a data ${qual}`, abort: true })
-    .refine(dataValida, { error: `Data ${qual} inválida` });
+    .min(1, { error: informe, abort: true })
+    .refine(dataValida, { error: invalida });
 }
 
 /** Campos De/Até (`AAAA-MM-DD`), obrigatórios. */
@@ -43,7 +50,7 @@ export const periodoShape = { de: dataSchema('inicial'), ate: dataSchema('final'
  */
 export function comPeriodoValido<T extends z.ZodType<{ de: string; ate: string }>>(schema: T) {
   return schema.refine(({ de, ate }) => !dataValida(de) || !dataValida(ate) || de <= ate, {
-    error: PERIODO_INVALIDO,
+    error: periodoInvalido,
     path: ['ate'],
   });
 }
