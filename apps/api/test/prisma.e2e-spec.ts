@@ -112,6 +112,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'pesquisas_nps',
       'pipelines',
       'planos_contas',
+      'preferencias_usuario',
       'processed_events',
       'produtos',
       'profissionais',

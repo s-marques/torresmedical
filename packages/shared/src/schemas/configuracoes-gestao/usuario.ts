@@ -7,7 +7,8 @@ import { paginatedResponseSchema } from '../common/pagination';
 export const USUARIO_NOME_MAX = 200;
 export const USUARIO_CARGO_MAX = 120;
 
-const telefoneOpcional = z
+/** Telefone opcional do usuário: só dígitos, 10 ou 11. Também usado em "Meu Perfil". */
+export const telefoneUsuarioSchema = z
   .string({ error: 'Telefone inválido' })
   .nullish()
   .transform((valor) => (valor ? valor.replaceAll(/\D/g, '') : null))
@@ -15,7 +16,8 @@ const telefoneOpcional = z
     error: 'Telefone inválido',
   });
 
-const cargoOpcional = z
+/** Cargo opcional do usuário. Também usado em "Meu Perfil". */
+export const cargoUsuarioSchema = z
   .string({ error: 'Cargo inválido' })
   .trim()
   .max(USUARIO_CARGO_MAX, { error: `Cargo deve ter no máximo ${USUARIO_CARGO_MAX} caracteres` })
@@ -55,8 +57,8 @@ export const createUsuarioSchema = z.strictObject({
   nome: textoObrigatorio('Nome', { max: USUARIO_NOME_MAX }),
   email,
   senha: senhaNovaSchema,
-  telefone: telefoneOpcional,
-  cargo: cargoOpcional,
+  telefone: telefoneUsuarioSchema,
+  cargo: cargoUsuarioSchema,
   /** "Perfil de Acesso (Páginas)": vazio = "Sem perfil (usa padrão da role)". */
   perfilId: z.uuid({ error: 'Perfil inválido' }).nullish().default(null),
   verDadosSensiveis: z.boolean({ error: 'Valor inválido' }).default(false),
@@ -73,8 +75,8 @@ export type UsuarioFormulario = z.input<typeof createUsuarioSchema>;
 export const updateUsuarioSchema = z.strictObject({
   nome: textoObrigatorio('Nome', { max: USUARIO_NOME_MAX }),
   email,
-  telefone: telefoneOpcional,
-  cargo: cargoOpcional,
+  telefone: telefoneUsuarioSchema,
+  cargo: cargoUsuarioSchema,
   perfilId: z.uuid({ error: 'Perfil inválido' }).nullish().default(null),
   verDadosSensiveis: z.boolean({ error: 'Valor inválido' }).default(false),
   profissionalIds,

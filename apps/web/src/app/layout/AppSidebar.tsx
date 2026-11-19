@@ -1,8 +1,9 @@
 import { encontrarTelaPorRota, filtrarMenu, MENU, type ModuloId } from '@torres/shared';
 import { ChevronRight, LogOut } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { AvatarUsuario } from '@/components/shared/AvatarUsuario';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Sidebar,
@@ -18,6 +19,7 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { nomeModulo, nomeTela } from '@/lib/i18n';
 import { ICONES_TELA } from './menu-icones';
 import { useSair, useUsuarioExibido } from './use-usuario-logado';
 
@@ -31,6 +33,7 @@ export interface AppSidebarProps {
  * rota atual. Recolhível no desktop e em drawer no mobile.
  */
 export function AppSidebar({ permissoes }: Readonly<AppSidebarProps>) {
+  const { t } = useTranslation();
   const { pathname } = useLocation();
   const { isMobile, setOpenMobile } = useSidebar();
   const usuario = useUsuarioExibido();
@@ -46,10 +49,10 @@ export function AppSidebar({ permissoes }: Readonly<AppSidebarProps>) {
     if (moduloDaRota) setAberto(moduloDaRota);
   }
 
-  const nomeDoModuloAtual = MENU.find((modulo) => modulo.id === moduloDaRota)?.nome;
+  const moduloAtual = MENU.find((modulo) => modulo.id === moduloDaRota);
 
   return (
-    <Sidebar aria-label="Menu principal">
+    <Sidebar aria-label={t('layout.menuPrincipal')}>
       <SidebarHeader className="border-b border-sidebar-border">
         <Link to="/" className="flex items-center gap-2 rounded-md p-2">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">
@@ -58,7 +61,7 @@ export function AppSidebar({ permissoes }: Readonly<AppSidebarProps>) {
           <span className="grid leading-tight">
             <span className="text-sm font-semibold uppercase">Torres Medical</span>
             <span className="text-xs text-sidebar-foreground/60 uppercase">
-              {nomeDoModuloAtual ?? 'Gestão'}
+              {moduloAtual ? nomeModulo(t, moduloAtual) : t('layout.gestao')}
             </span>
           </span>
         </Link>
@@ -78,7 +81,7 @@ export function AppSidebar({ permissoes }: Readonly<AppSidebarProps>) {
                 className="h-9 text-[0.7rem] font-bold tracking-wider text-sidebar-foreground uppercase hover:bg-sidebar-accent"
               >
                 <CollapsibleTrigger>
-                  {modulo.nome}
+                  {nomeModulo(t, modulo)}
                   <ChevronRight
                     aria-hidden
                     className="ml-auto transition-transform group-data-[state=open]/modulo:rotate-90"
@@ -106,7 +109,7 @@ export function AppSidebar({ permissoes }: Readonly<AppSidebarProps>) {
                               }}
                             >
                               <Icone aria-hidden />
-                              <span>{tela.nome}</span>
+                              <span>{nomeTela(t, tela)}</span>
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -122,18 +125,18 @@ export function AppSidebar({ permissoes }: Readonly<AppSidebarProps>) {
 
       <SidebarFooter className="border-t border-sidebar-border">
         <div className="flex items-center gap-2 p-1">
-          <Avatar className="size-8">
-            <AvatarFallback className="bg-sidebar-primary text-xs text-sidebar-primary-foreground">
-              {usuario.iniciais}
-            </AvatarFallback>
-          </Avatar>
+          <AvatarUsuario
+            nome={usuario.nome}
+            arquivoId={usuario.avatarArquivoId}
+            classNameIniciais="bg-sidebar-primary text-xs font-normal text-sidebar-primary-foreground"
+          />
           <span className="grid min-w-0 flex-1 leading-tight">
             <span className="truncate text-sm font-medium">{usuario.nome}</span>
             <span className="truncate text-xs text-sidebar-foreground/60">{usuario.perfil}</span>
           </span>
           <button
             type="button"
-            aria-label="Sair"
+            aria-label={t('layout.sair')}
             onClick={sair}
             className="rounded-md p-2 text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           >

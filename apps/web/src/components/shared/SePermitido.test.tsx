@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { entrar } from '@/lib/auth/sessao';
 import { errosDoZod } from '@/lib/forms/erros-zod';
 import { apiFalsa, sessaoJson, USUARIO_TESTE } from '../../test/render-app';
-import { iniciais } from '../../app/layout/use-usuario-logado';
+import { iniciais } from '@/lib/formatar';
 import { SePermitido } from './SePermitido';
 
 async function logarCom(permissoes: (typeof USUARIO_TESTE)['permissoes']) {

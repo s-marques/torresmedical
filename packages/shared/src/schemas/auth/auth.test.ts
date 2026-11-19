@@ -6,6 +6,7 @@ import {
   redefinirSenhaSchema,
   sessaoSchema,
 } from './auth';
+import { PREFERENCIAS_PADRAO } from '../configuracoes-gestao/preferencias';
 
 function mensagens(resultado: { error?: { issues: { path: PropertyKey[]; message: string }[] } }) {
   return Object.fromEntries(
@@ -91,6 +92,8 @@ describe('sessaoSchema', () => {
         email: 'pessoa@example.com',
         perfil: null,
         permissoes: ['financeiro.caixas.ver'],
+        avatarArquivoId: null,
+        preferencias: PREFERENCIAS_PADRAO,
       },
     };
     expect(sessaoSchema.safeParse(base).success).toBe(true);

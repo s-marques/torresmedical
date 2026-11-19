@@ -21,3 +21,11 @@ function formatarCom(formato: Intl.DateTimeFormat, valor: string | null | undefi
     : new Date(valor);
   return Number.isNaN(data.getTime()) ? '-' : formato.format(data);
 }
+
+/** Iniciais do primeiro e do último nome: "Ana Maria Souza" → "AS". */
+export function iniciais(nome: string): string {
+  const partes = nome.trim().split(/\s+/).filter(Boolean);
+  const primeira = partes[0]?.[0] ?? '';
+  const ultima = partes.length > 1 ? (partes.at(-1)?.[0] ?? '') : '';
+  return `${primeira}${ultima}`.toUpperCase() || '?';
+}

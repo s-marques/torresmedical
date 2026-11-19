@@ -1,7 +1,10 @@
-import { fireEvent, screen, within } from '@testing-library/react';
+import { PREFERENCIAS_PADRAO } from '@torres/shared';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { apiFalsa, chamadasPara, renderApp } from '../../test/render-app';
+import { apiFalsa, chamadasPara, json, renderApp, USUARIO_TESTE } from '../../test/render-app';
+
+const URL_PREFERENCIAS = '/api/configuracoes-gestao/configuracoes/preferencias';
 
 /** O layout aparece depois de a sessão ser retomada. */
 async function layoutPronto() {
@@ -32,19 +35,67 @@ describe('AppLayout: cabeçalho', () => {
     expect(screen.queryByText('Falha de conexão. Tente novamente')).not.toBeInTheDocument();
   });
 
-  it('troca o tema para escuro e volta para claro pelo menu de tema', async () => {
-    renderApp('/');
+  it('troca o tema para escuro e volta para claro, gravando na preferência do usuário', async () => {
+    let gravadas = { ...PREFERENCIAS_PADRAO };
+    const fetchMock = apiFalsa({
+      rotas: {
+        [URL_PREFERENCIAS]: (init) => {
+          gravadas = { ...gravadas, ...JSON.parse(String(init?.body)) };
+          return json(gravadas);
+        },
+      },
+    });
+    renderApp('/', fetchMock);
     await layoutPronto();
 
     await userEvent.click(screen.getByRole('button', { name: 'Tema' }));
     await userEvent.click(await screen.findByRole('menuitemradio', { name: 'Escuro' }));
-    expect(document.documentElement).toHaveClass('dark');
+    await waitFor(() => expect(document.documentElement).toHaveClass('dark'));
     expect(localStorage.getItem('torres-theme')).toBe('dark');
 
     await userEvent.click(screen.getByRole('button', { name: 'Tema' }));
     await userEvent.click(await screen.findByRole('menuitemradio', { name: 'Claro' }));
-    expect(document.documentElement).not.toHaveClass('dark');
+    await waitFor(() => expect(document.documentElement).not.toHaveClass('dark'));
     expect(localStorage.getItem('torres-theme')).toBe('light');
+
+    const corpos = chamadasPara(fetchMock, URL_PREFERENCIAS).map(([, init]) =>
+      JSON.parse(String(init?.body)),
+    );
+    expect(corpos).toEqual([{ tema: 'escuro' }, { tema: 'claro' }]);
+  });
+
+  it('sem permissão de editar Configurações, o tema vale só no navegador', async () => {
+    const usuario = { ...USUARIO_TESTE, permissoes: ['painel.painel.ver' as const] };
+    const fetchMock = apiFalsa({ usuario });
+    renderApp('/', fetchMock);
+    await layoutPronto();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Tema' }));
+    await userEvent.click(await screen.findByRole('menuitemradio', { name: 'Escuro' }));
+
+    expect(document.documentElement).toHaveClass('dark');
+    expect(chamadasPara(fetchMock, URL_PREFERENCIAS)).toHaveLength(0);
+  });
+
+  it('aplica o tema, a cor, a densidade e o idioma da sessão', async () => {
+    const usuario = {
+      ...USUARIO_TESTE,
+      preferencias: {
+        ...PREFERENCIAS_PADRAO,
+        tema: 'escuro' as const,
+        esquemaCor: 'azul' as const,
+        densidade: 'compacto' as const,
+        idioma: 'en' as const,
+      },
+    };
+    renderApp('/', apiFalsa({ usuario }));
+
+    expect(await screen.findByRole('button', { name: 'User menu' })).toBeInTheDocument();
+    expect(document.documentElement).toHaveClass('dark');
+    expect(document.documentElement.dataset.cor).toBe('azul');
+    expect(document.documentElement.dataset.densidade).toBe('compacto');
+    expect(document.documentElement.lang).toBe('en');
+    expect(screen.getByRole('button', { name: 'SETTINGS / MANAGEMENT' })).toBeInTheDocument();
   });
 
   it('mostra as notificações vazias', async () => {

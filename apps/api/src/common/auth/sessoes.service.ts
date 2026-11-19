@@ -5,12 +5,14 @@ import type { Prisma } from '../../generated/prisma/client';
 import type { PrismaAdapter } from '../prisma/prisma-transaction';
 import { AUTH_CONFIG, type AuthConfig } from './auth.config';
 import { escopoDoUsuario } from './escopo-dados';
+import { toPreferencias } from './preferencias-usuario';
 import { gerarSegredo, hashToken, lerRefreshToken, montarRefreshToken } from './tokens';
 import type { UsuarioAutenticado } from './usuario-autenticado';
 
 export const USUARIO_COM_PERMISSOES = {
   perfil: { include: { permissoes: { select: { permissao: true } } } },
   profissionais: { select: { profissionalId: true } },
+  preferencias: true,
 } satisfies Prisma.UsuarioInclude;
 
 export type UsuarioComPermissoes = Prisma.UsuarioGetPayload<{
@@ -49,6 +51,8 @@ export function toUsuarioAutenticado(
       ativo ? perfil.escopoDados : null,
       usuario.profissionais.map((v) => v.profissionalId),
     ),
+    avatarArquivoId: usuario.avatarArquivoId,
+    preferencias: toPreferencias(usuario.preferencias),
   };
 }
 

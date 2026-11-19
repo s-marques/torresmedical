@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Torres Medical</title>
     <script>
-      // Aplica o tema salvo antes da primeira pintura (mesma chave de src/lib/theme.ts).
+      // Aplica tema, cor e densidade salvos antes da primeira pintura (mesmas chaves de
+      // src/lib/theme.ts e src/lib/aparencia.ts).
       try {
         var tema = localStorage.getItem('torres-theme');
         var escuro =
@@ -13,6 +14,10 @@
           (tema !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
         document.documentElement.classList.toggle('dark', escuro);
         document.documentElement.style.colorScheme = escuro ? 'dark' : 'light';
+        var cor = localStorage.getItem('torres-cor');
+        if (cor) document.documentElement.dataset.cor = cor;
+        var densidade = localStorage.getItem('torres-densidade');
+        if (densidade) document.documentElement.dataset.densidade = densidade;
       } catch (e) {}
     </script>
   </head>
