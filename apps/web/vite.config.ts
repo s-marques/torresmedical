@@ -25,6 +25,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     restoreMocks: true,
+    // Cada worker jsdom ocupa centenas de MB: sem limite, o Vitest abre um por núcleo e esgota a RAM.
+    maxWorkers: 4,
     coverage: {
       provider: 'v8',
       // Caminhos relativos à raiz do repo, como o Sonar espera.
