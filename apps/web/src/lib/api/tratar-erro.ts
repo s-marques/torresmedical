@@ -1,10 +1,10 @@
 import { toast } from 'sonner';
 import { i18next } from '@/lib/i18n';
-import { BASE_PT_BR } from '@/lib/i18n/locales/base';
+import PT_BR from '@/lib/i18n/locales/pt-BR.json';
 import { ApiRequestError, erroInesperadoApi, mensagemDoDetalhe } from './api-error';
 
 /** "Sem permissão" em português (testes); na tela vale `erros.semPermissao` no idioma atual. */
-export const MENSAGEM_SEM_PERMISSAO = BASE_PT_BR.erros.semPermissao;
+export const MENSAGEM_SEM_PERMISSAO = PT_BR.erros.semPermissao;
 
 export interface TratarErroOptions {
   /** Chamado no 401 (sessão ausente ou expirada): leva para o login. */

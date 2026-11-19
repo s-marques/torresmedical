@@ -1,11 +1,11 @@
 import { ARQUIVO_CAMPO, arquivoSchema, type Arquivo, type ArquivoUso } from '@torres/shared';
 import { i18next } from '@/lib/i18n';
-import { BASE_PT_BR } from '@/lib/i18n/locales/base';
+import PT_BR from '@/lib/i18n/locales/pt-BR.json';
 import { ApiRequestError, erroConexao, erroDaResposta, mensagemDoDetalhe } from './api-error';
 import { authorizationHeader } from './client';
 
 /** Texto em português (testes); na tela vale `erros.envioArquivo` no idioma atual. */
-export const ERRO_INESPERADO = BASE_PT_BR.erros.envioArquivo;
+export const ERRO_INESPERADO = PT_BR.erros.envioArquivo;
 
 export interface UploadArquivoOptions {
   uso: ArquivoUso;

@@ -208,9 +208,10 @@ O sistema tem português (padrão), inglês e espanhol (issues #30 e #205). O id
 usuário; a API, os logs e as exportações Excel/PDF continuam em português.
 - **Textos de tela:** nada de texto fixo em JSX. Use `t('<chave>')` (`useTranslation` do
   `react-i18next`; fora de componente, `i18next.t` de `@/lib/i18n`), com a chave em `pt-BR`, `en` e
-  `es` (`apps/web/src/lib/i18n/locales/`; dicionários grandes em JSON por idioma, como
-  `base.<idioma>.json`, para não duplicar código). Textos comuns (Salvar, Cancelar, Ações, Ativo…) já
-  estão em `comum`, `grid`, `selecao`, `upload` e `relatorio`: reaproveite.
+  `es` (`apps/web/src/lib/i18n/locales/pt-BR.json`, `en.json` e `es.json`; em JSON para o Sonar
+  não contar como código duplicado). O teste `locales.test.ts` confere as mesmas chaves nos três.
+  Textos comuns (Salvar, Cancelar, Ações, Ativo…) já estão em `comum`, `grid`, `selecao`, `upload` e
+  `relatorio`: reaproveite.
 - **Validação:** a mensagem é chave + parâmetros, calculada na hora da validação. Use os helpers
   (`textoObrigatorio`, `erroObrigatorio`) ou `traduzirValidacao('validacao.<chave>', params)` dentro
   de uma função (`{ error: () => traduzirValidacao(...) }`), nunca texto fixo no schema. O português

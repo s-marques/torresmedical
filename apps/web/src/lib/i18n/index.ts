@@ -5,19 +5,32 @@ import {
   type MensagemValidacao,
   type ModuloMenu,
   type TelaMenu,
+  VALIDACAO_PT_BR,
 } from '@torres/shared';
 import i18next, { type TFunction } from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import { EN } from './locales/en';
-import { ES } from './locales/es';
-import { PT_BR } from './locales/pt-BR';
-import { ERROS_API_EN, ERROS_API_ES, ROTULOS_EN, ROTULOS_ES } from './locales/validacao';
+import EN from './locales/en.json';
+import ES from './locales/es.json';
+import PT_BR from './locales/pt-BR.json';
+import {
+  ERROS_API_EN,
+  ERROS_API_ES,
+  ROTULOS_EN,
+  ROTULOS_ES,
+  VALIDACAO_EN,
+  VALIDACAO_ES,
+} from './locales/validacao';
 
 /**
  * Idiomas da interface (issue #30): português (padrão), inglês e espanhol, escolhidos na aba
  * Aparência da tela Configurações. Traduzidos: layout, componentes compartilhados, login,
  * páginas de erro, validação e erros da API (#205) e a tela Configurações. As telas dos
  * módulos são traduzidas nas issues com a label `i18n`.
+ *
+ * Os textos ficam em `locales/*.json` (formato padrão do i18next). Os nomes das telas e
+ * módulos em português vêm do `MENU` (`packages/shared`), por isso `pt-BR.json` não tem `menu`.
+ * As mensagens de validação em português vêm de `VALIDACAO_PT_BR` (`packages/shared`), que
+ * também vale no back. O teste `locales.test.ts` garante que os três idiomas têm as mesmas chaves.
  */
 export const IDIOMA_PADRAO: Idioma = 'pt-BR';
 
@@ -50,9 +63,21 @@ function salvarIdioma(idioma: Idioma): void {
 
 void i18next.use(initReactI18next).init({
   resources: {
-    'pt-BR': { translation: PT_BR, rotulos: {}, errosApi: {} },
-    en: { translation: EN, rotulos: ROTULOS_EN, errosApi: ERROS_API_EN },
-    es: { translation: ES, rotulos: ROTULOS_ES, errosApi: ERROS_API_ES },
+    'pt-BR': {
+      translation: { ...PT_BR, validacao: VALIDACAO_PT_BR },
+      rotulos: {},
+      errosApi: {},
+    },
+    en: {
+      translation: { ...EN, validacao: VALIDACAO_EN },
+      rotulos: ROTULOS_EN,
+      errosApi: ERROS_API_EN,
+    },
+    es: {
+      translation: { ...ES, validacao: VALIDACAO_ES },
+      rotulos: ROTULOS_ES,
+      errosApi: ERROS_API_ES,
+    },
   },
   lng: lerIdiomaSalvo(),
   ns: ['translation', 'rotulos', 'errosApi'],

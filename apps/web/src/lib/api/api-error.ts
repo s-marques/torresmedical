@@ -1,10 +1,10 @@
 import { apiErrorSchema, traduzirValidacao, type ApiError, type ErrorDetail } from '@torres/shared';
 import { i18next, traduzirErroApi } from '@/lib/i18n';
-import { BASE_PT_BR } from '@/lib/i18n/locales/base';
+import PT_BR from '@/lib/i18n/locales/pt-BR.json';
 
 /** Textos em português (para os testes); na tela, use `erroConexao()`/`erroInesperadoApi()`. */
-export const ERRO_CONEXAO = BASE_PT_BR.erros.conexao;
-export const ERRO_INESPERADO_API = BASE_PT_BR.erros.inesperado;
+export const ERRO_CONEXAO = PT_BR.erros.conexao;
+export const ERRO_INESPERADO_API = PT_BR.erros.inesperado;
 
 /** "Falha de conexão…" no idioma atual. */
 export function erroConexao(): string {
