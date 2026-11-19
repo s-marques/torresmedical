@@ -2753,6 +2753,129 @@ model BypassAgente {
   @@map("bypass_agentes")
 }
 
+enum AgenteInstrucaoStatus {
+  RASCUNHO
+  EM_TESTE
+  APROVADO
+  PUBLICADO
+
+  @@map("agente_instrucao_status")
+}
+
+enum AgenteAlertaTipo {
+  NUMERO
+  GRUPO
+
+  @@map("agente_alerta_tipo")
+}
+
+enum AgenteRegraTipo {
+  POS_RESPOSTA
+  PRE_TOOL
+
+  @@map("agente_regra_tipo")
+}
+
+enum AgenteRegraAcao {
+  BLOQUEAR
+  SUBSTITUIR
+  ALERTAR
+
+  @@map("agente_regra_acao")
+}
+
+/// Dono: configuracoes-gestao. System prompt do agente de IA (tela Instruções Agente), com ciclo de
+/// aprovação (rascunho → em teste → aprovado → publicado). Só uma instrução publicada pode ficar ativa.
+model AgenteInstrucao {
+  id              String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome            String
+  modelo          String
+  temperatura     Decimal               @db.Decimal(3, 2)
+  maxTokens       Int                   @map("max_tokens")
+  ativo           Boolean               @default(false)
+  systemPrompt    String                @map("system_prompt")
+  status          AgenteInstrucaoStatus @default(RASCUNHO)
+  /// Número da última versão gravada em `agente_instrucao_versoes`.
+  versaoAtual     Int                   @default(1) @map("versao_atual")
+  aprovadoPor     String?               @map("aprovado_por") @db.Uuid
+  aprovadoPorNome String?               @map("aprovado_por_nome")
+  aprovadoEm      DateTime?             @map("aprovado_em") @db.Timestamptz(3)
+  createdAt       DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt       DateTime?             @map("deleted_at") @db.Timestamptz(3)
+
+  versoes AgenteInstrucaoVersao[]
+
+  @@index([status])
+  @@map("agente_instrucoes")
+}
+
+/// Histórico de versões do conteúdo de uma instrução (IA p. 4): permite comparar e restaurar.
+model AgenteInstrucaoVersao {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  instrucaoId   String   @map("instrucao_id") @db.Uuid
+  numero        Int
+  nome          String
+  modelo        String
+  temperatura   Decimal  @db.Decimal(3, 2)
+  maxTokens     Int      @map("max_tokens")
+  systemPrompt  String   @map("system_prompt")
+  criadoPor     String?  @map("criado_por") @db.Uuid
+  criadoPorNome String?  @map("criado_por_nome")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  instrucao AgenteInstrucao @relation(fields: [instrucaoId], references: [id])
+
+  @@unique([instrucaoId, numero])
+  @@map("agente_instrucao_versoes")
+}
+
+/// Instruções extras injetadas no prompt do agente enquanto estiverem ativas (promoções, regras especiais).
+model AgenteInstrucaoExtra {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  titulo    String
+  descricao String
+  ativo     Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@map("agente_instrucoes_extras")
+}
+
+/// Número ou grupo de WhatsApp que recebe o alerta quando o agente não sabe responder uma dúvida.
+model AgenteAlertaDestino {
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipo      AgenteAlertaTipo
+  nome      String
+  /// Só dígitos. Único entre os não excluídos; a regra fica no service.
+  numero    String
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt DateTime?        @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([numero])
+  @@map("agente_alertas_destinos")
+}
+
+/// Regra de validação do agente, aplicada antes de uma ferramenta (pré-tool) ou depois da resposta.
+model AgenteRegra {
+  id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// snake_case, único entre os não excluídos; a regra fica no service.
+  nome      String
+  descricao String
+  tipo      AgenteRegraTipo
+  /// `qualquer`, `agendamento` ou `venda` (valida o schema Zod).
+  gatilho   String
+  acao      AgenteRegraAcao
+  ativo     Boolean         @default(true)
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime?       @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([nome])
+  @@map("agente_regras")
+}
+
 /// Dono: consultorio-assistencial. Categoria do prestador (filtro "Todas categorias" e aba Serviço).
 enum PrestadorCategoria {
   ELETRICA

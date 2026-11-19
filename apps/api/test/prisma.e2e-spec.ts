@@ -43,6 +43,11 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
     expect(tabelas.map((t) => t.table_name)).toEqual([
       'agendamento_recebimentos',
       'agendamentos',
+      'agente_alertas_destinos',
+      'agente_instrucao_versoes',
+      'agente_instrucoes',
+      'agente_instrucoes_extras',
+      'agente_regras',
       'anamneses',
       'arquivos',
       'atendimento_evolucoes',

@@ -120,6 +120,9 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   'configuracoes-gestao.perfis-acesso': lazy(
     () => import('@/features/configuracoes-gestao/perfis-acesso/PerfisAcessoPage'),
   ),
+  'configuracoes-gestao.instrucoes-agente': lazy(
+    () => import('@/features/configuracoes-gestao/instrucoes-agente/InstrucoesAgentePage'),
+  ),
   'configuracoes-gestao.bypass-agente': lazy(
     () => import('@/features/configuracoes-gestao/bypass-agente/BypassAgentePage'),
   ),
