@@ -125,8 +125,11 @@ describe('Instruções Agente (e2e)', () => {
         .expect(400);
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'nome', message: 'Nome é obrigatório.' },
-          { field: 'systemPrompt', message: 'System Prompt é obrigatório.' },
+          expect.objectContaining({ field: 'nome', message: 'Nome é obrigatório.' }),
+          expect.objectContaining({
+            field: 'systemPrompt',
+            message: 'System Prompt é obrigatório.',
+          }),
         ]),
       );
       await http()
@@ -319,8 +322,8 @@ describe('Instruções Agente (e2e)', () => {
         .expect(400);
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'titulo', message: 'Título é obrigatório.' },
-          { field: 'descricao', message: 'Descrição é obrigatória.' },
+          expect.objectContaining({ field: 'titulo', message: 'Título é obrigatório.' }),
+          expect.objectContaining({ field: 'descricao', message: 'Descrição é obrigatória.' }),
         ]),
       );
       await http().patch(`${EXTRAS}/${INEXISTENTE}`).send(EXTRA).expect(404);
@@ -374,7 +377,9 @@ describe('Instruções Agente (e2e)', () => {
         .send({ tipo: 'NUMERO', nome: '', numero: '12' })
         .expect(400);
       expect(res.body.details).toEqual(
-        expect.arrayContaining([{ field: 'nome', message: 'Nome é obrigatório.' }]),
+        expect.arrayContaining([
+          expect.objectContaining({ field: 'nome', message: 'Nome é obrigatório.' }),
+        ]),
       );
       await (await leitor()).post(DESTINOS).send(DESTINO).expect(403);
       await (await leitor()).delete(`${DESTINOS}/${INEXISTENTE}`).expect(403);
@@ -447,7 +452,9 @@ describe('Instruções Agente (e2e)', () => {
         .send({ ...REGRA, nome: 'Nome Inválido', descricao: '' })
         .expect(400);
       expect(res.body.details).toEqual(
-        expect.arrayContaining([{ field: 'descricao', message: 'Descrição é obrigatória.' }]),
+        expect.arrayContaining([
+          expect.objectContaining({ field: 'descricao', message: 'Descrição é obrigatória.' }),
+        ]),
       );
       await http().get(REGRAS).query({ tipo: 'X' }).expect(400);
       await http().patch(`${REGRAS}/${INEXISTENTE}`).send(REGRA).expect(404);

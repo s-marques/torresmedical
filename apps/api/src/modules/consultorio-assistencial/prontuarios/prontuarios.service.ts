@@ -13,8 +13,10 @@ import {
   type Paciente as PacienteApiDto,
   type PacienteComRegistros,
   type PacienteResumoProntuario,
+  type Prescricao,
   type Prontuario as ProntuarioDto,
   mensagemObrigatoria,
+  RECEITUARIO_TIPO_ROTULOS,
   type UpsertProntuarioInput,
 } from '@torres/shared';
 import type {
@@ -28,6 +30,7 @@ import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { PacientesService } from '../../comercial-atendimento/pacientes/pacientes.service';
 import { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
 import { PacientesVinculadosService } from '../pacientes-vinculados/pacientes-vinculados.service';
+import { PrescricoesService } from '../receituarios/prescricoes.service';
 
 const NAO_EXCLUIDOS = { deletedAt: null } as const;
 
@@ -143,6 +146,7 @@ export class ProntuariosService {
     private readonly profissionais: ProfissionaisService,
     private readonly vinculados: PacientesVinculadosService,
     private readonly escopo: EscopoDadosService,
+    private readonly prescricoes: PrescricoesService,
   ) {}
 
   /** Cabeçalho do paciente (nome, contato, nascimento, sexo), ao abrir a tela de detalhe. */
@@ -340,10 +344,19 @@ export class ProntuariosService {
     return toAnamneseDto(criado, profissional?.nome ?? null);
   }
 
+  /** Aba "Receitas": prescrições do paciente feitas na tela Receituários (#42). */
+  async listarReceitas(
+    pacienteId: string,
+    query: ListRegistrosQuery,
+  ): Promise<{ data: Prescricao[]; meta: PageRequest & { total: number; totalPages: number } }> {
+    await this.pacienteNoEscopo(pacienteId);
+    return this.prescricoes.doPaciente(pacienteId, query);
+  }
+
   /**
-   * Aba "Histórico Clínico": linha do tempo somente leitura, agregando Atendimentos e
-   * Anamneses do paciente (Receitas ficam para a tela Receituários, #42). O resumo de cada
-   * item é o primeiro campo clínico não vazio do registro.
+   * Aba "Histórico Clínico": linha do tempo somente leitura, agregando Atendimentos, Anamneses
+   * e Prescrições (tela Receituários, #42) do paciente. O resumo de cada item é o primeiro campo
+   * clínico não vazio do registro; na prescrição, a medicação.
    */
   async historicoClinico(
     pacienteId: string,
@@ -358,9 +371,10 @@ export class ProntuariosService {
       ...NAO_EXCLUIDOS,
       profissionalId: this.escopo.filtroProfissional(),
     };
-    const [atendimentos, anamneses] = await Promise.all([
+    const [atendimentos, anamneses, prescricoes] = await Promise.all([
       this.txHost.tx.atendimento.findMany({ where, orderBy: { createdAt: 'desc' } }),
       this.txHost.tx.anamnese.findMany({ where, orderBy: { createdAt: 'desc' } }),
+      this.prescricoes.todasDoPaciente(pacienteId),
     ]);
     const nomes = await this.nomesProfissionais([
       ...atendimentos.map((a) => a.profissionalId),
@@ -383,6 +397,14 @@ export class ProntuariosService {
         data: a.createdAt.toISOString(),
         profissionalNome: a.profissionalId ? (nomes.get(a.profissionalId) ?? null) : null,
         resumo: resumoAnamnese(a),
+      })),
+      ...prescricoes.map((p): HistoricoClinicoItem => ({
+        id: p.id,
+        tipo: 'PRESCRICAO',
+        rotulo: `Receita ${RECEITUARIO_TIPO_ROTULOS[p.tipo]}`,
+        data: p.createdAt,
+        profissionalNome: p.profissionalNome,
+        resumo: p.medicacao,
       })),
     ].sort((x, y) => y.data.localeCompare(x.data));
 

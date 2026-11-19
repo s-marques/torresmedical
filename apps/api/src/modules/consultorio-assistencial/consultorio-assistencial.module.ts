@@ -10,10 +10,14 @@ import { PrestadoresController } from './prestadores/prestadores.controller';
 import { PrestadoresService } from './prestadores/prestadores.service';
 import { ProntuariosController } from './prontuarios/prontuarios.controller';
 import { ProntuariosService } from './prontuarios/prontuarios.service';
+import { PrescricoesController } from './receituarios/prescricoes.controller';
+import { PrescricoesService } from './receituarios/prescricoes.service';
+import { ReceituarioBlocosController } from './receituarios/receituario-blocos.controller';
+import { ReceituarioBlocosService } from './receituarios/receituario-blocos.service';
 
 /**
  * Módulo CONSULTÓRIO / ASSISTENCIAL do inventário. Dono de Prontuário, Atendimento, Evolução,
- * Anamnese e Prestador (de serviço de manutenção).
+ * Anamnese, Prestador (de serviço de manutenção) e Receituários (blocos e prescrições).
  */
 @Module({
   // Paciente e Agendamento (comercial-atendimento) e Profissional (gestao-profissionais) são
@@ -25,6 +29,8 @@ import { ProntuariosService } from './prontuarios/prontuarios.service';
     AtendimentoMedicoController,
     EvolucaoVozController,
     PrestadoresController,
+    ReceituarioBlocosController,
+    PrescricoesController,
   ],
   providers: [
     ProntuariosService,
@@ -32,6 +38,8 @@ import { ProntuariosService } from './prontuarios/prontuarios.service';
     EvolucaoVozService,
     PacientesVinculadosService,
     PrestadoresService,
+    ReceituarioBlocosService,
+    PrescricoesService,
   ],
   exports: [PacientesVinculadosService],
 })

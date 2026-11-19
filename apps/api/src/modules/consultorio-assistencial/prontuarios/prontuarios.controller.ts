@@ -12,6 +12,7 @@ import {
   listRegistrosQuerySchema,
   pacienteResumoProntuarioSchema,
   pacientesComRegistrosPageSchema,
+  prescricaoPageSchema,
   prontuarioInputSchema,
   prontuarioSchema,
   type Anamnese,
@@ -23,6 +24,7 @@ import {
   type ListRegistrosQuery,
   type PacienteComRegistros,
   type PacienteResumoProntuario,
+  type Prescricao,
   type Prontuario,
   type UpsertProntuarioInput,
 } from '@torres/shared';
@@ -145,10 +147,24 @@ export class ProntuariosController {
     return this.prontuarios.criarAnamnese(pacienteId, body);
   }
 
+  @Get(':pacienteId/receitas')
+  @RequirePermission('consultorio-assistencial.prontuarios.ver')
+  @ApiOperation({ summary: 'Aba "Receitas": prescrições do paciente (tela Receituários)' })
+  @ApiZodQuery(listRegistrosQuerySchema)
+  @ApiZodResponse(200, prescricaoPageSchema)
+  @ApiErrorResponses(400, 401, 403, 404)
+  listarReceitas(
+    @IdParam('pacienteId') pacienteId: string,
+    @Query(new ZodValidationPipe(listRegistrosQuerySchema)) query: ListRegistrosQuery,
+  ): Promise<Page<Prescricao>> {
+    return this.prontuarios.listarReceitas(pacienteId, query);
+  }
+
   @Get(':pacienteId/historico-clinico')
   @RequirePermission('consultorio-assistencial.prontuarios.ver')
   @ApiOperation({
-    summary: 'Aba "Histórico Clínico": linha do tempo somente leitura (atendimentos e anamneses)',
+    summary:
+      'Aba "Histórico Clínico": linha do tempo somente leitura (atendimentos, anamneses e prescrições)',
   })
   @ApiZodQuery(listRegistrosQuerySchema)
   @ApiZodResponse(200, historicoClinicoPageSchema)

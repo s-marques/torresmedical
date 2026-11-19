@@ -186,16 +186,16 @@ export type Anamnese = z.infer<typeof anamneseSchema>;
 export const anamnesePageSchema = paginatedResponseSchema(anamneseSchema);
 export type AnamnesePage = z.infer<typeof anamnesePageSchema>;
 
-// --- Histórico Clínico (aba somente leitura, agrega Atendimentos e Anamneses) ----------------
+// --- Histórico Clínico (aba somente leitura: Atendimentos, Anamneses e Prescrições) -------
 
-export const HISTORICO_CLINICO_TIPOS = ['ATENDIMENTO', 'ANAMNESE'] as const;
+export const HISTORICO_CLINICO_TIPOS = ['ATENDIMENTO', 'ANAMNESE', 'PRESCRICAO'] as const;
 export const historicoClinicoTipoSchema = z.enum(HISTORICO_CLINICO_TIPOS);
 export type HistoricoClinicoTipo = z.infer<typeof historicoClinicoTipoSchema>;
 
 export const historicoClinicoItemSchema = z.object({
   id: z.uuid(),
   tipo: historicoClinicoTipoSchema,
-  /** Rótulo do selo: tipo do atendimento (ex.: "Consulta") ou "Anamnese". */
+  /** Rótulo do selo: tipo do atendimento (ex.: "Consulta"), "Anamnese" ou o receituário. */
   rotulo: z.string(),
   data: z.iso.datetime(),
   profissionalNome: z.string().nullable(),
