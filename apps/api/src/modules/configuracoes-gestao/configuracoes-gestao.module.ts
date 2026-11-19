@@ -10,6 +10,14 @@ import { CanaisWhatsappService } from './canais-whatsapp/canais-whatsapp.service
 import { ConfiguracoesController } from './configuracoes/configuracoes.controller';
 import { ConfiguracoesService } from './configuracoes/configuracoes.service';
 import { EmpresasService } from './empresas/empresas.service';
+import { AgenteAlertasDestinosController } from './instrucoes-agente/agente-alertas-destinos.controller';
+import { AgenteAlertasDestinosService } from './instrucoes-agente/agente-alertas-destinos.service';
+import { AgenteInstrucoesController } from './instrucoes-agente/agente-instrucoes.controller';
+import { AgenteInstrucoesExtrasController } from './instrucoes-agente/agente-instrucoes-extras.controller';
+import { AgenteInstrucoesExtrasService } from './instrucoes-agente/agente-instrucoes-extras.service';
+import { AgenteInstrucoesService } from './instrucoes-agente/agente-instrucoes.service';
+import { AgenteRegrasController } from './instrucoes-agente/agente-regras.controller';
+import { AgenteRegrasService } from './instrucoes-agente/agente-regras.service';
 import { MinhaEmpresaController } from './minha-empresa/minha-empresa.controller';
 import { MinhaEmpresaService } from './minha-empresa/minha-empresa.service';
 import { PerfisAcessoController } from './perfis-acesso/perfis-acesso.controller';
@@ -37,6 +45,10 @@ const SERVICES = [
   RespostasRapidasService,
   BaseConhecimentoService,
   BypassAgenteService,
+  AgenteInstrucoesService,
+  AgenteInstrucoesExtrasService,
+  AgenteAlertasDestinosService,
+  AgenteRegrasService,
   PerfisAcessoService,
   UsuariosService,
   PerfisLookupService,
@@ -57,6 +69,10 @@ const SERVICES = [
     RespostasRapidasController,
     BaseConhecimentoController,
     BypassAgenteController,
+    AgenteInstrucoesController,
+    AgenteInstrucoesExtrasController,
+    AgenteAlertasDestinosController,
+    AgenteRegrasController,
     CanaisWhatsappController,
     PerfisAcessoController,
     UsuariosController,
