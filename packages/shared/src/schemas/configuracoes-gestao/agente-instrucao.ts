@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ativoStatusSchema, listQuerySchema } from '../common/list-query';
-import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
+import { erroObrigatorio, textoObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 import { normalizarTelefoneWhatsapp } from '../comercial-atendimento/conversa-whatsapp';
 
@@ -78,9 +78,9 @@ const maxTokens = z
 export const agenteInstrucaoInputSchema = z.strictObject({
   nome: textoObrigatorio('Nome', { max: AGENTE_NOME_MAX }),
   modelo: z
-    .string({ error: mensagemObrigatoria('Modelo') })
+    .string({ error: erroObrigatorio('Modelo') })
     .trim()
-    .min(1, { error: mensagemObrigatoria('Modelo') })
+    .min(1, { error: erroObrigatorio('Modelo') })
     .max(100, { error: 'Modelo deve ter no máximo 100 caracteres' }),
   temperatura,
   maxTokens,
@@ -212,9 +212,9 @@ export const agenteAlertaDestinoInputSchema = z.strictObject({
   tipo: agenteAlertaTipoSchema,
   nome: textoObrigatorio('Nome', { max: AGENTE_ALERTA_NOME_MAX }),
   numero: z
-    .string({ error: mensagemObrigatoria('Número WhatsApp') })
+    .string({ error: erroObrigatorio('Número WhatsApp') })
     .trim()
-    .min(1, { error: mensagemObrigatoria('Número WhatsApp') })
+    .min(1, { error: erroObrigatorio('Número WhatsApp') })
     .transform((valor) => normalizarTelefoneWhatsapp(valor))
     .refine(
       (digitos) =>
