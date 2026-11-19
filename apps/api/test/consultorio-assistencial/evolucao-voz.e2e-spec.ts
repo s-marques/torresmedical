@@ -183,7 +183,10 @@ describe('Evolução por Voz (e2e)', () => {
     it('com atendimento em andamento: grava no mesmo atendimento', async () => {
       const { confirmado } = await cenario();
       await http().post(`${BASE}/${confirmado.id}/evolucoes`).send({ texto: 'Primeira' });
-      await http().post(`${BASE}/${confirmado.id}/evolucoes`).send({ texto: 'Segunda' }).expect(201);
+      await http()
+        .post(`${BASE}/${confirmado.id}/evolucoes`)
+        .send({ texto: 'Segunda' })
+        .expect(201);
 
       expect(await prisma.atendimento.count({ where: { agendamentoId: confirmado.id } })).toBe(1);
       expect(await prisma.atendimentoEvolucao.count()).toBe(2);

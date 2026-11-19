@@ -126,6 +126,7 @@ const PROFISSIONAL = telas(
   'gestao-profissionais.salas',
   'comercial-atendimento.agenda',
   'consultorio-assistencial.atendimento-medico',
+  'consultorio-assistencial.evolucao-voz',
   'consultorio-assistencial.receituarios',
   'gestao-profissionais.protocolos',
   'gestao-profissionais.receita-profissionais',
