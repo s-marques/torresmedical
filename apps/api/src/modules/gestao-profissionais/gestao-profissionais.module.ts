@@ -1,6 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { ComercialAtendimentoModule } from '../comercial-atendimento/comercial-atendimento.module';
 import { ComprasEstoqueModule } from '../compras-estoque/compras-estoque.module';
+import { ConfiguracoesGestaoModule } from '../configuracoes-gestao/configuracoes-gestao.module';
 import { FinanceiroModule } from '../financeiro/financeiro.module';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { EspecialidadesController } from './especialidades/especialidades.controller';
@@ -12,6 +13,8 @@ import { ContratosSalaHorasController } from './salas/contratos-sala-horas.contr
 import { ContratosSalaHorasService } from './salas/contratos-sala-horas.service';
 import { ContratosSalaService } from './salas/contratos-sala.service';
 import { SALA_EM_USO_VERIFICADORES } from './salas/sala-em-uso';
+import { SalasBloqueiosController } from './salas/salas-bloqueios.controller';
+import { SalasBloqueiosService } from './salas/salas-bloqueios.service';
 import { SalasController } from './salas/salas.controller';
 import { SalasPainelController } from './salas/salas-painel.controller';
 import { SalasPainelService } from './salas/salas-painel.service';
@@ -37,6 +40,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
   imports: [
     forwardRef(() => ComercialAtendimentoModule),
     FinanceiroModule,
+    ConfiguracoesGestaoModule,
     forwardRef(() => ComprasEstoqueModule),
   ],
   controllers: [
@@ -53,6 +57,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ContratosSalaCobrancaController,
     ContratosSalaHorasController,
     ReceitaProfissionaisController,
+    SalasBloqueiosController,
   ],
   providers: [
     ProfissionaisService,
@@ -67,6 +72,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ContratosSalaCobrancaService,
     ContratosSalaHorasService,
     ReceitaProfissionaisService,
+    SalasBloqueiosService,
     // Sala com contrato não pode ser excluída.
     {
       provide: SALA_EM_USO_VERIFICADORES,
@@ -83,6 +89,8 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ProtocolosService,
     ProtocolosMaeService,
     SalasService,
+    // Bloqueios de sala: a Agenda (#136) consulta antes de agendar.
+    SalasBloqueiosService,
   ],
 })
 export class GestaoProfissionaisModule {}

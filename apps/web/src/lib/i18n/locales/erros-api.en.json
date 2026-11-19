@@ -17,5 +17,8 @@
   "LINK_INVALIDO": "Invalid download link",
   "LINK_EXPIRADO": "Download link expired. Generate a new one",
   "ANALISE_AI_GROWTH_EM_ANDAMENTO": "An analysis is already in progress",
-  "RECEITA_NAO_RECEBIDA": "The payment can only be reversed on a received revenue"
+  "RECEITA_NAO_RECEBIDA": "The payment can only be reversed on a received revenue",
+  "SALA_BLOQUEIO_CONFLITO": "The room already has another block or booking at this time",
+  "SALA_BLOQUEIO_CANCELADO": "This block has already been canceled and cannot be changed",
+  "SALA_BLOQUEIO_INVALIDO": "Invalid room block data"
 }

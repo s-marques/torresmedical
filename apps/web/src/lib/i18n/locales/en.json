@@ -533,5 +533,109 @@
       "descricao": "Are you sure you want to delete the property \"{{descricao}}\"? This action cannot be undone.",
       "confirmar": "Delete"
     }
+  },
+  "salasBloqueios": {
+    "aba": "Blocks",
+    "novo": "New Block",
+    "editar": "Edit Block",
+    "vazio": "No room blocks or bookings yet.",
+    "tipos": {
+      "BLOQUEIO": "Block",
+      "MANUTENCAO": "Maintenance",
+      "RESERVA": "Booking",
+      "CORTESIA": "Courtesy",
+      "USO_AVULSO": "Walk-in use"
+    },
+    "status": {
+      "ATIVO": "Active",
+      "CANCELADO": "Canceled"
+    },
+    "colunas": {
+      "sala": "Room",
+      "tipo": "Type",
+      "periodo": "Period",
+      "horario": "Time",
+      "profissional": "Professional",
+      "motivo": "Reason",
+      "responsavel": "Registered by",
+      "status": "Status",
+      "acoes": "Actions"
+    },
+    "filtros": {
+      "tipo": "Type",
+      "todosTipos": "All types",
+      "sala": "Room",
+      "todasSalas": "All rooms",
+      "periodo": "Period"
+    },
+    "ocupado": "Occupied",
+    "diaInteiro": "All day",
+    "ate": "to",
+    "canceladoPor": "Canceled on {{data}} by {{nome}}",
+    "canceladoEm": "Canceled on {{data}}",
+    "acoes": {
+      "editar": "Edit block of {{sala}}",
+      "cancelar": "Cancel block of {{sala}}",
+      "tituloEditar": "Edit",
+      "tituloCancelar": "Cancel block"
+    },
+    "campos": {
+      "salaId": "Room",
+      "tipo": "Type",
+      "profissionalId": "Professional (optional)",
+      "recorrente": "Repeat on weekdays",
+      "dataInicio": "Start date",
+      "dataFim": "End date",
+      "horaInicio": "Start time",
+      "horaFim": "End time",
+      "dias": "Days of the week",
+      "motivo": "Reason (optional)",
+      "horaInicialDe": "{{dia}}: start time",
+      "horaFinalDe": "{{dia}}: end time",
+      "as": "to"
+    },
+    "placeholders": {
+      "sala": "Select the room...",
+      "tipo": "Select the type...",
+      "profissional": "Select professional...",
+      "motivo": "E.g.: air conditioner replacement"
+    },
+    "ajudaPeriodo": "Continuous period: from the start date and time to the end date and time.",
+    "ajudaRecorrente": "Applies on the selected days, between the start and end dates.",
+    "cancelar": {
+      "titulo": "Cancel block",
+      "descricao": "{{tipo}} of {{sala}} on {{periodo}}. The record is not deleted: it stays as canceled, with who, when and the reason.",
+      "motivo": "Cancellation reason",
+      "placeholder": "Why was the block canceled?",
+      "voltar": "Back",
+      "confirmar": "Cancel block"
+    },
+    "sucesso": {
+      "criado": "Block created.",
+      "atualizado": "Block updated.",
+      "cancelado": "Block canceled."
+    },
+    "mapa": {
+      "legenda": "Legend",
+      "contratado": "Contracted"
+    },
+    "diasSemana": {
+      "0": "Sunday",
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday"
+    },
+    "diasAbrev": {
+      "0": "Sun",
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat"
+    }
   }
 }

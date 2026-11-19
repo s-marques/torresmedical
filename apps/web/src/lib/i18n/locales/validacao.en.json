@@ -55,5 +55,11 @@
     "tipoNaoPermitido": "File type not allowed. Send {{formatos}}",
     "tamanhoMax": "The file must be at most {{tamanho}}",
     "ou": "or"
+  },
+  "salaBloqueio": {
+    "horaFimAposInicio": "The end time must be after the start time",
+    "diasObrigatorio": "Select at least one day of the week",
+    "diaDuplicado": "Repeated day of the week",
+    "diaInvalido": "Invalid day of the week"
   }
 }

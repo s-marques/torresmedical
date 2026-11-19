@@ -73,6 +73,7 @@ export * from './schemas/gestao-profissionais/contrato-sala-cobranca';
 export * from './schemas/gestao-profissionais/contrato-sala-hora';
 export * from './schemas/gestao-profissionais/sala';
 export * from './schemas/gestao-profissionais/sala-painel';
+export * from './schemas/gestao-profissionais/sala-bloqueio';
 export * from './schemas/gestao-profissionais/servico-profissional';
 export * from './schemas/gestao-profissionais/protocolo';
 export * from './schemas/gestao-profissionais/protocolo-mae';

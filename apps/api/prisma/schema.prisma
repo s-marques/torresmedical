@@ -457,6 +457,7 @@ model Profissional {
 
   baixasInsumos BaixaInsumo[]
   receitas      ContaReceber[]
+  bloqueiosSala SalaBloqueio[]
 
   @@index([especialidadeId])
   @@map("profissionais")
@@ -1456,6 +1457,7 @@ model Sala {
   deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
 
   contratos ContratoSala[]
+  bloqueios SalaBloqueio[]
 
   @@map("salas")
 }
@@ -1602,6 +1604,65 @@ model ContratoSalaHora {
 
   @@index([contratoId, data])
   @@map("contratos_sala_horas")
+}
+
+/// Dono: gestao-profissionais. Tipo do bloqueio ou da reserva de sala (issue #138).
+enum SalaBloqueioTipo {
+  BLOQUEIO
+  MANUTENCAO
+  RESERVA
+  CORTESIA
+  USO_AVULSO
+
+  @@map("sala_bloqueio_tipo")
+}
+
+/// Dono: gestao-profissionais. Bloqueio ou reserva da sala num período (issue #138). Período único
+/// (de `data_inicio hora_inicio` a `data_fim hora_fim`) ou recorrente (dias da semana em
+/// `salas_bloqueio_dias`, entre as datas). Horas "HH:MM" no fuso da clínica. Não é excluído: o
+/// cancelamento grava quem, quando e o motivo. Usuário é de configuracoes-gestao: sem FK.
+model SalaBloqueio {
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  salaId             String           @map("sala_id") @db.Uuid
+  tipo               SalaBloqueioTipo
+  /// Profissional que usa a sala (reserva, cortesia, uso avulso); opcional.
+  profissionalId     String?          @map("profissional_id") @db.Uuid
+  recorrente         Boolean          @default(false)
+  dataInicio         DateTime         @map("data_inicio") @db.Date
+  dataFim            DateTime         @map("data_fim") @db.Date
+  /// Só no período único.
+  horaInicio         String?          @map("hora_inicio")
+  horaFim            String?          @map("hora_fim")
+  motivo             String?
+  /// Responsável: usuário que registrou.
+  criadoPorId        String?          @map("criado_por_id") @db.Uuid
+  canceladoEm        DateTime?        @map("cancelado_em") @db.Timestamptz(3)
+  canceladoPorId     String?          @map("cancelado_por_id") @db.Uuid
+  motivoCancelamento String?          @map("motivo_cancelamento")
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  sala         Sala              @relation(fields: [salaId], references: [id], onDelete: Restrict)
+  profissional Profissional?     @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+  dias         SalaBloqueioDia[]
+
+  @@index([salaId, dataInicio, dataFim])
+  @@index([profissionalId])
+  @@map("salas_bloqueio")
+}
+
+/// Dia da semana (0 = domingo) e horário "HH:MM" de um bloqueio de sala recorrente.
+model SalaBloqueioDia {
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bloqueioId String @map("bloqueio_id") @db.Uuid
+  diaSemana  Int    @map("dia_semana")
+  inicio     String
+  fim        String
+
+  bloqueio SalaBloqueio @relation(fields: [bloqueioId], references: [id], onDelete: Cascade)
+
+  @@unique([bloqueioId, diaSemana])
+  @@map("salas_bloqueio_dias")
 }
 
 enum AuditAction {

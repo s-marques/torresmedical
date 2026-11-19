@@ -533,5 +533,109 @@
       "descricao": "¿Está seguro de que desea eliminar el inmueble \"{{descricao}}\"? Esta acción no se puede deshacer.",
       "confirmar": "Eliminar"
     }
+  },
+  "salasBloqueios": {
+    "aba": "Bloqueos",
+    "novo": "Nuevo Bloqueo",
+    "editar": "Editar Bloqueo",
+    "vazio": "No hay bloqueos ni reservas registrados.",
+    "tipos": {
+      "BLOQUEIO": "Bloqueo",
+      "MANUTENCAO": "Mantenimiento",
+      "RESERVA": "Reserva",
+      "CORTESIA": "Cortesía",
+      "USO_AVULSO": "Uso ocasional"
+    },
+    "status": {
+      "ATIVO": "Activo",
+      "CANCELADO": "Cancelado"
+    },
+    "colunas": {
+      "sala": "Sala",
+      "tipo": "Tipo",
+      "periodo": "Período",
+      "horario": "Horario",
+      "profissional": "Profesional",
+      "motivo": "Motivo",
+      "responsavel": "Responsable",
+      "status": "Estado",
+      "acoes": "Acciones"
+    },
+    "filtros": {
+      "tipo": "Tipo",
+      "todosTipos": "Todos los tipos",
+      "sala": "Sala",
+      "todasSalas": "Todas las salas",
+      "periodo": "Período"
+    },
+    "ocupado": "Ocupado",
+    "diaInteiro": "Todo el día",
+    "ate": "a",
+    "canceladoPor": "Cancelado el {{data}} por {{nome}}",
+    "canceladoEm": "Cancelado el {{data}}",
+    "acoes": {
+      "editar": "Editar bloqueo de {{sala}}",
+      "cancelar": "Cancelar bloqueo de {{sala}}",
+      "tituloEditar": "Editar",
+      "tituloCancelar": "Cancelar bloqueo"
+    },
+    "campos": {
+      "salaId": "Sala",
+      "tipo": "Tipo",
+      "profissionalId": "Profesional (opcional)",
+      "recorrente": "Repetir en los días de la semana",
+      "dataInicio": "Fecha inicial",
+      "dataFim": "Fecha final",
+      "horaInicio": "Hora inicial",
+      "horaFim": "Hora final",
+      "dias": "Días de la semana",
+      "motivo": "Motivo (opcional)",
+      "horaInicialDe": "{{dia}}: hora inicial",
+      "horaFinalDe": "{{dia}}: hora final",
+      "as": "a"
+    },
+    "placeholders": {
+      "sala": "Seleccione la sala...",
+      "tipo": "Seleccione el tipo...",
+      "profissional": "Seleccione profesional...",
+      "motivo": "Ej.: cambio del aire acondicionado"
+    },
+    "ajudaPeriodo": "Período continuo: desde la fecha y hora inicial hasta la fecha y hora final.",
+    "ajudaRecorrente": "Vale en los días marcados, entre la fecha inicial y la final.",
+    "cancelar": {
+      "titulo": "Cancelar bloqueo",
+      "descricao": "{{tipo}} de {{sala}} el {{periodo}}. El registro no se elimina: queda como cancelado, con quién, cuándo y el motivo.",
+      "motivo": "Motivo de la cancelación",
+      "placeholder": "¿Por qué se canceló el bloqueo?",
+      "voltar": "Volver",
+      "confirmar": "Cancelar bloqueo"
+    },
+    "sucesso": {
+      "criado": "Bloqueo creado.",
+      "atualizado": "Bloqueo actualizado.",
+      "cancelado": "Bloqueo cancelado."
+    },
+    "mapa": {
+      "legenda": "Leyenda",
+      "contratado": "Contratado"
+    },
+    "diasSemana": {
+      "0": "Domingo",
+      "1": "Lunes",
+      "2": "Martes",
+      "3": "Miércoles",
+      "4": "Jueves",
+      "5": "Viernes",
+      "6": "Sábado"
+    },
+    "diasAbrev": {
+      "0": "Dom",
+      "1": "Lun",
+      "2": "Mar",
+      "3": "Mié",
+      "4": "Jue",
+      "5": "Vie",
+      "6": "Sáb"
+    }
   }
 }
