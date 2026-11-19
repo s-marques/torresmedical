@@ -51,6 +51,7 @@ model Unidade {
   empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Restrict)
 
   baixasInsumos BaixaInsumo[]
+  licencas      Licenca[]
 
   @@index([empresaId])
   @@map("unidades")
@@ -886,6 +887,57 @@ model Comissao {
 
   @@index([funcionarioId])
   @@map("comissoes")
+}
+
+/// Dono: regulatorio-qualidade. Tipo de licença da tela Alvarás e Licenças (modal "Novo Tipo").
+/// Criar um tipo gera uma licença "Não se aplica" para cada unidade (regra de paridade).
+model TipoLicenca {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String
+  descricao String?
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  licencas Licenca[]
+
+  @@map("tipos_licenca")
+}
+
+/// Dono: regulatorio-qualidade. Alvará, licença ou certidão de uma unidade (modal "Nova Licenca").
+/// O status (OK, alertas, vencido, N/A) é calculado na leitura a partir de `dataVencimento`.
+model Licenca {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  unidadeId              String    @map("unidade_id") @db.Uuid
+  tipoLicencaId          String    @map("tipo_licenca_id") @db.Uuid
+  naoSeAplica            Boolean   @default(false) @map("nao_se_aplica")
+  numeroDocumento        String?   @map("numero_documento")
+  orgaoEmissor           String?   @map("orgao_emissor")
+  titular                String?
+  dataEmissao            DateTime? @map("data_emissao") @db.Date
+  dataVencimento         DateTime? @map("data_vencimento") @db.Date
+  telefone               String?
+  email                  String?
+  departamento           String?
+  plataformaOnline       Boolean   @default(false) @map("plataforma_online")
+  comoRenovar            String?   @map("como_renovar")
+  documentosObrigatorios String?   @map("documentos_obrigatorios")
+  enderecoPresencial     String?   @map("endereco_presencial")
+  horarioAtendimento     String?   @map("horario_atendimento")
+  prazoAnalise           String?   @map("prazo_analise")
+  responsavel            String?
+  observacoes            String?
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt              DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  unidade     Unidade     @relation(fields: [unidadeId], references: [id], onDelete: Restrict)
+  tipoLicenca TipoLicenca @relation(fields: [tipoLicencaId], references: [id], onDelete: Restrict)
+
+  @@index([unidadeId])
+  @@index([tipoLicencaId])
+  @@index([dataVencimento])
+  @@map("licencas")
 }
 
 enum FinalidadePagamento {
