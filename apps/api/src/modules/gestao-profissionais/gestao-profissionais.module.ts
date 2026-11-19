@@ -26,6 +26,8 @@ import { ProtocolosController } from './protocolos/protocolos.controller';
 import { ProtocolosService } from './protocolos/protocolos.service';
 import { ProtocolosMaeController } from './protocolos-mae/protocolos-mae.controller';
 import { ProtocolosMaeService } from './protocolos-mae/protocolos-mae.service';
+import { ReceitaProfissionaisController } from './receita-profissionais/receita-profissionais.controller';
+import { ReceitaProfissionaisService } from './receita-profissionais/receita-profissionais.service';
 import { ProfissionalAgendaService } from './profissionais/profissional-agenda.service';
 import { ProfissionaisController } from './profissionais/profissionais.controller';
 import { ProfissionaisService } from './profissionais/profissionais.service';
@@ -50,6 +52,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ContratosSalaController,
     ContratosSalaCobrancaController,
     ContratosSalaHorasController,
+    ReceitaProfissionaisController,
   ],
   providers: [
     ProfissionaisService,
@@ -63,6 +66,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ContratosSalaService,
     ContratosSalaCobrancaService,
     ContratosSalaHorasService,
+    ReceitaProfissionaisService,
     // Sala com contrato não pode ser excluída.
     {
       provide: SALA_EM_USO_VERIFICADORES,

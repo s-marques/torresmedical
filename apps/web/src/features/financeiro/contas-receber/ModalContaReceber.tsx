@@ -26,7 +26,7 @@ function valoresIniciais(conta?: ContaReceber): ContaReceberFormulario {
  * Conta bancária e data do recebimento, só com status Recebido (decisão do dev na #46, para a
  * Conciliação). Sem data, a API grava a de hoje.
  */
-function CamposRecebimento() {
+export function CamposRecebimento() {
   const status = useWatch<ContaReceberFormulario, 'status'>({ name: 'status' });
   const opcoes = useOpcoesContasBancarias();
   if (status !== 'RECEBIDO') return null;

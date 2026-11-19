@@ -417,5 +417,52 @@
         "acao": "Ask the professionals to reach out to their patients and offer a follow-up."
       }
     }
+  },
+  "receitaProfissionais": {
+    "titulo": "Professional Revenue",
+    "totais": "Totals",
+    "totalRecebido": "Total Received",
+    "totalPendente": "Total Pending",
+    "registros": "Records",
+    "resumoPorProfissional": "Summary by Professional",
+    "registrosAbreviado": "{{total}} rec.",
+    "colunas": {
+      "data": "Date",
+      "profissional": "Professional",
+      "paciente": "Patient",
+      "descricao": "Description",
+      "formaPagamento": "Payment Method",
+      "valor": "Amount",
+      "status": "Status"
+    },
+    "profissional": "Professional",
+    "paciente": "Patient",
+    "formaPagamento": "Payment Method",
+    "todasFormas": "All",
+    "periodo": "Due date",
+    "contaBancaria": "Bank Account",
+    "dataRecebimento": "Received On",
+    "status": {
+      "pendente": "Pending",
+      "recebido": "Received",
+      "cancelado": "Canceled",
+      "vencido": "Overdue"
+    },
+    "acoes": {
+      "detalhar": "View details",
+      "estornarBaixa": "Reverse Payment",
+      "editar": "Edit",
+      "excluir": "Delete"
+    },
+    "buscar": "Search revenue...",
+    "vazio": "No revenue found.",
+    "editarTitulo": "Edit Revenue",
+    "editada": "Revenue updated.",
+    "baixaEstornada": "Payment reversed.",
+    "excluida": "Revenue deleted.",
+    "estornarTitulo": "Reverse Payment",
+    "estornarDescricao": "Reverse the payment of \"{{descricao}}\"? It goes back to Pending.",
+    "excluirTitulo": "Delete Revenue",
+    "excluirDescricao": "Are you sure you want to delete the revenue \"{{descricao}}\"? This action cannot be undone."
   }
 }

@@ -31,6 +31,7 @@ const PAGAR = {
 const RECEBER = {
   ...BASE,
   pacienteId: null,
+  profissionalId: null,
   paciente: { nome: 'Cliente Teste' },
   status: 'RECEBIDO' as 'RECEBIDO' | 'PENDENTE' | 'CANCELADO',
   contaBancariaId: null,

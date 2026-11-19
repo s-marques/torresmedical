@@ -16,5 +16,6 @@
   "LINK_REDEFINICAO_INVALIDO": "Enlace de restablecimiento no válido o expirado",
   "LINK_INVALIDO": "Enlace de descarga no válido",
   "LINK_EXPIRADO": "Enlace de descarga expirado. Genere uno nuevo",
-  "ANALISE_AI_GROWTH_EM_ANDAMENTO": "Ya hay un análisis en curso"
+  "ANALISE_AI_GROWTH_EM_ANDAMENTO": "Ya hay un análisis en curso",
+  "RECEITA_NAO_RECEBIDA": "Solo se puede revertir el cobro de un ingreso recibido"
 }
