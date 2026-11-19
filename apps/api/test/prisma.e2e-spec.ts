@@ -94,6 +94,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'horarios_atendimento',
       'horarios_funcionamento',
       'horarios_intervalos',
+      'imoveis',
       'insights_ai_growth',
       'lotes',
       'mensagens_automaticas',

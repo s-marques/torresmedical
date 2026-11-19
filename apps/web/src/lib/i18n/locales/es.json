@@ -464,5 +464,74 @@
     "estornarDescricao": "¿Revertir el cobro de \"{{descricao}}\"? Vuelve a Pendiente.",
     "excluirTitulo": "Eliminar Ingreso",
     "excluirDescricao": "¿Seguro que desea eliminar el ingreso \"{{descricao}}\"? Esta acción no se puede deshacer."
+  },
+  "imoveis": {
+    "titulo": "Inmuebles",
+    "descricao": "Administre los inmuebles registrados.",
+    "novo": "Nuevo Inmueble",
+    "editar": "Editar Inmueble",
+    "buscar": "Buscar inmuebles...",
+    "vazio": "No se encontraron inmuebles.",
+    "cadastrar": "Registrar",
+    "acoes": {
+      "editar": "Editar",
+      "excluir": "Eliminar"
+    },
+    "colunas": {
+      "descricao": "Descripción",
+      "tipo": "Tipo",
+      "endereco": "Dirección",
+      "valorCompra": "Valor de Compra",
+      "financiamentoParcela": "Cuota Financ.",
+      "despesaMensal": "Gasto Mensual"
+    },
+    "secoes": {
+      "dados": "Datos del Inmueble",
+      "financiamento": "Financiamiento",
+      "despesas": "Gastos Mensuales Vinculados"
+    },
+    "campos": {
+      "descricao": "Descripción",
+      "tipo": "Tipo",
+      "endereco": "Dirección",
+      "matricula": "Matrícula",
+      "valorCompra": "Valor de Compra (R$)",
+      "dataCompra": "Fecha de Compra",
+      "iptuAnual": "Impuesto Predial Anual (R$)",
+      "itbiPago": "Impuesto de Transmisión Pagado (R$)",
+      "banco": "Banco",
+      "financiamentoParcela": "Cuota (R$)",
+      "saldoDevedor": "Saldo Deudor (R$)",
+      "vencimentoFinanciamento": "Vencimiento del Financiamiento",
+      "condominio": "Condominio (R$)",
+      "contaLuz": "Factura de Luz (R$)",
+      "contaAgua": "Factura de Agua (R$)",
+      "internet": "Internet (R$)",
+      "seguro": "Seguro (R$)",
+      "observacoes": "Observaciones"
+    },
+    "placeholders": {
+      "descricao": "Ej.: Depto 302 Ed. Solar",
+      "endereco": "Calle, número, barrio, ciudad",
+      "banco": "Ej.: Caixa, Itaú",
+      "observacoes": "Notas generales sobre el inmueble"
+    },
+    "tipos": {
+      "APARTAMENTO": "Departamento",
+      "SALA_COMERCIAL": "Oficina Comercial",
+      "TERRENO": "Terreno",
+      "CASA": "Casa",
+      "GALPAO": "Galpón"
+    },
+    "sucesso": {
+      "criado": "Inmueble registrado.",
+      "atualizado": "Inmueble actualizado.",
+      "excluido": "Inmueble eliminado."
+    },
+    "excluir": {
+      "titulo": "Eliminar Inmueble",
+      "descricao": "¿Está seguro de que desea eliminar el inmueble \"{{descricao}}\"? Esta acción no se puede deshacer.",
+      "confirmar": "Eliminar"
+    }
   }
 }
