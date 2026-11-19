@@ -56,28 +56,36 @@ export function hojeDaClinica(agora: Date = new Date()): Date {
 }
 
 const somarDias = (data: Date, dias: number): Date => new Date(data.getTime() + dias * DIA_MS);
-const paraIsoData = (data: Date | null): string | null => (data ? data.toISOString().slice(0, 10) : null);
-const paraDate = (iso: string | null): Date | null => (iso ? new Date(`${iso}T00:00:00.000Z`) : null);
+const paraIsoData = (data: Date | null): string | null =>
+  data ? data.toISOString().slice(0, 10) : null;
+const paraDate = (iso: string | null): Date | null =>
+  iso ? new Date(`${iso}T00:00:00.000Z`) : null;
 
 export function diasRestantes(vencimento: Date | null, hoje: Date): number | null {
   return vencimento ? Math.round((vencimento.getTime() - hoje.getTime()) / DIA_MS) : null;
 }
 
-export const LICENCA_EXPORT_DEFINITIONS: readonly ExportColumn<LicencaDto, LicencaExportColumn>[] = [
-  { key: 'tipoLicenca', header: 'Tipo Licença', value: (l) => l.tipoLicencaNome, width: 3 },
-  { key: 'unidade', header: 'Unidade', value: (l) => l.unidadeNome, width: 3 },
-  { key: 'numeroDocumento', header: 'Nº Documento', value: (l) => l.numeroDocumento ?? '', width: 2 },
-  { key: 'orgaoEmissor', header: 'Órgão Emissor', value: (l) => l.orgaoEmissor ?? '', width: 2 },
-  {
-    key: 'dataVencimento',
-    header: 'Vencimento',
-    type: 'date',
-    value: (l) => paraDate(l.dataVencimento),
-  },
-  { key: 'dias', header: 'Dias', type: 'number', value: (l) => l.diasRestantes },
-  { key: 'status', header: 'Status', value: (l) => STATUS_TEXTO[l.status] },
-  { key: 'responsavel', header: 'Responsável', value: (l) => l.responsavel ?? '', width: 2 },
-];
+export const LICENCA_EXPORT_DEFINITIONS: readonly ExportColumn<LicencaDto, LicencaExportColumn>[] =
+  [
+    { key: 'tipoLicenca', header: 'Tipo Licença', value: (l) => l.tipoLicencaNome, width: 3 },
+    { key: 'unidade', header: 'Unidade', value: (l) => l.unidadeNome, width: 3 },
+    {
+      key: 'numeroDocumento',
+      header: 'Nº Documento',
+      value: (l) => l.numeroDocumento ?? '',
+      width: 2,
+    },
+    { key: 'orgaoEmissor', header: 'Órgão Emissor', value: (l) => l.orgaoEmissor ?? '', width: 2 },
+    {
+      key: 'dataVencimento',
+      header: 'Vencimento',
+      type: 'date',
+      value: (l) => paraDate(l.dataVencimento),
+    },
+    { key: 'dias', header: 'Dias', type: 'number', value: (l) => l.diasRestantes },
+    { key: 'status', header: 'Status', value: (l) => STATUS_TEXTO[l.status] },
+    { key: 'responsavel', header: 'Responsável', value: (l) => l.responsavel ?? '', width: 2 },
+  ];
 
 /** Tipos de licença e licenças por unidade (tela Alvarás e Licenças). */
 @Injectable()
@@ -315,7 +323,10 @@ export class AlvarasLicencasService {
     };
   }
 
-  private paraDto(licenca: Licenca & Pick<LicencaComRelacoes, 'unidade' | 'tipoLicenca'>, hoje: Date): LicencaDto {
+  private paraDto(
+    licenca: Licenca & Pick<LicencaComRelacoes, 'unidade' | 'tipoLicenca'>,
+    hoje: Date,
+  ): LicencaDto {
     const dias = licenca.naoSeAplica ? null : diasRestantes(licenca.dataVencimento, hoje);
     return {
       id: licenca.id,
