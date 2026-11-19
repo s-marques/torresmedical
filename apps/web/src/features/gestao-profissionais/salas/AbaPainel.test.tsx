@@ -20,9 +20,9 @@ function semana(inicio: string, fim: string, blocosPorSala: Record<string, unkno
     inicio,
     fim,
     salas: [
-      { salaId: S1, salaNome: 'Sala 1', blocos: blocosPorSala.S1 ?? [] },
-      { salaId: S2, salaNome: 'Sala 2', blocos: blocosPorSala.S2 ?? [] },
-      { salaId: S10, salaNome: 'Sala 10', blocos: blocosPorSala.S10 ?? [] },
+      { salaId: S1, salaNome: 'Sala 1', blocos: blocosPorSala.S1 ?? [], bloqueios: [] },
+      { salaId: S2, salaNome: 'Sala 2', blocos: blocosPorSala.S2 ?? [], bloqueios: [] },
+      { salaId: S10, salaNome: 'Sala 10', blocos: blocosPorSala.S10 ?? [], bloqueios: [] },
     ],
   };
 }

@@ -17,5 +17,8 @@
   "LINK_INVALIDO": "Enlace de descarga no válido",
   "LINK_EXPIRADO": "Enlace de descarga expirado. Genere uno nuevo",
   "ANALISE_AI_GROWTH_EM_ANDAMENTO": "Ya hay un análisis en curso",
-  "RECEITA_NAO_RECEBIDA": "Solo se puede revertir el cobro de un ingreso recibido"
+  "RECEITA_NAO_RECEBIDA": "Solo se puede revertir el cobro de un ingreso recibido",
+  "SALA_BLOQUEIO_CONFLITO": "La sala ya tiene otro bloqueo o reserva en este horario",
+  "SALA_BLOQUEIO_CANCELADO": "Este bloqueo ya fue cancelado y no puede modificarse",
+  "SALA_BLOQUEIO_INVALIDO": "Datos del bloqueo de sala inválidos"
 }
