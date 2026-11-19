@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { JwtService } from '@nestjs/jwt';
+import { PREFERENCIAS_PADRAO } from '@torres/shared';
 import type { RequestContextService } from '../context/request-context.service';
 import { ApiException } from '../errors/api.exception';
 import { AuthGuard } from './auth.guard';
@@ -34,6 +35,8 @@ const USUARIO: UsuarioAutenticado = {
   perfil: null,
   permissoes: new Set(['financeiro.caixas.ver']),
   escopo: { tipo: 'PROFISSIONAIS', profissionalIds: [] },
+  avatarArquivoId: null,
+  preferencias: PREFERENCIAS_PADRAO,
 };
 
 function contexto(handler: keyof Rotas, authorization?: string, tipo = 'http') {

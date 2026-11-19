@@ -67,6 +67,65 @@
   --sidebar-ring: oklch(0.627 0.194 149.214);
 }
 
+/*
+ * Aparência (tela Configurações, issue #30). "Esquema de Cores": troca só a cor primária
+ * (botões, destaques, menu ativo); Esmeralda é a cor padrão acima. O `<html>` recebe
+ * `data-cor` e `data-densidade` (src/lib/aparencia.ts e o script do index.html).
+ */
+:root[data-cor='azul'] {
+  --primary: oklch(0.546 0.245 262.881);
+  --ring: oklch(0.623 0.214 259.815);
+  --sidebar-primary: oklch(0.707 0.165 254.624);
+  --sidebar-ring: oklch(0.623 0.214 259.815);
+}
+:root.dark[data-cor='azul'] {
+  --primary: oklch(0.623 0.214 259.815);
+}
+:root[data-cor='violeta'] {
+  --primary: oklch(0.541 0.281 293.009);
+  --ring: oklch(0.606 0.25 292.717);
+  --sidebar-primary: oklch(0.702 0.183 293.541);
+  --sidebar-ring: oklch(0.606 0.25 292.717);
+}
+:root.dark[data-cor='violeta'] {
+  --primary: oklch(0.606 0.25 292.717);
+}
+:root[data-cor='rosa'] {
+  --primary: oklch(0.592 0.249 0.584);
+  --ring: oklch(0.656 0.241 354.308);
+  --sidebar-primary: oklch(0.718 0.202 349.761);
+  --sidebar-ring: oklch(0.656 0.241 354.308);
+}
+:root.dark[data-cor='rosa'] {
+  --primary: oklch(0.656 0.241 354.308);
+}
+:root[data-cor='laranja'] {
+  --primary: oklch(0.646 0.222 41.116);
+  --ring: oklch(0.705 0.213 47.604);
+  --sidebar-primary: oklch(0.75 0.183 55.934);
+  --sidebar-ring: oklch(0.705 0.213 47.604);
+}
+:root.dark[data-cor='laranja'] {
+  --primary: oklch(0.705 0.213 47.604);
+}
+:root[data-cor='ardosia'] {
+  --primary: oklch(0.446 0.043 257.281);
+  --ring: oklch(0.554 0.046 257.417);
+  --sidebar-primary: oklch(0.704 0.04 256.788);
+  --sidebar-ring: oklch(0.554 0.046 257.417);
+}
+:root.dark[data-cor='ardosia'] {
+  --primary: oklch(0.704 0.04 256.788);
+}
+
+/* "Densidade": escala o tamanho base (o layout usa rem). Confortável é o padrão (100%). */
+:root[data-densidade='compacto'] {
+  font-size: 87.5%;
+}
+:root[data-densidade='espacoso'] {
+  font-size: 112.5%;
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

@@ -105,6 +105,8 @@ model Usuario {
   verDadosSensiveis Boolean   @default(false) @map("ver_dados_sensiveis")
   ativo             Boolean   @default(true)
   ultimoLoginEm     DateTime? @map("ultimo_login_em") @db.Timestamptz(3)
+  /// Id do Arquivo (common/storage, uso `avatar`) da tela Configurações (issue #30). Sem FK.
+  avatarArquivoId   String?   @map("avatar_arquivo_id") @db.Uuid
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(3)
@@ -118,10 +120,33 @@ model Usuario {
   mensagensWhatsapp MensagemWhatsapp[]
   canaisWhatsapp    CanalWhatsappUsuario[]
   profissionais     UsuarioProfissional[]
+  preferencias      PreferenciaUsuario?
 
   @@index([empresaId])
   @@index([perfilId])
   @@map("usuarios")
+}
+
+/// Preferências do usuário (tela Configurações, abas Preferências e Aparência; issue #30).
+/// Sem linha = valores padrão (`PREFERENCIAS_PADRAO` de `packages/shared`). Os textos de
+/// tema, esquema de cor, densidade e idioma são validados pelo catálogo de `packages/shared`.
+model PreferenciaUsuario {
+  usuarioId          String   @id @map("usuario_id") @db.Uuid
+  notificacoesAgenda Boolean  @default(true) @map("notificacoes_agenda")
+  novidadesSistema   Boolean  @default(false) @map("novidades_sistema")
+  alertasSeguranca   Boolean  @default(true) @map("alertas_seguranca")
+  notificacoesPush   Boolean  @default(true) @map("notificacoes_push")
+  resumoSemanal      Boolean  @default(false) @map("resumo_semanal")
+  tema               String   @default("sistema")
+  esquemaCor         String   @default("esmeralda") @map("esquema_cor")
+  densidade          String   @default("confortavel")
+  idioma             String   @default("pt-BR")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("preferencias_usuario")
 }
 
 /// Profissional vinculado ao usuário (issue #153): define de quem são os dados que ele vê quando

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { permissaoSchema } from '../../auth/permissoes';
+import { preferenciasSchema } from '../configuracoes-gestao/preferencias';
 
 export const SENHA_MIN = 8;
 export const SENHA_MAX = 128;
@@ -64,6 +65,10 @@ export const usuarioSessaoSchema = z.object({
   email: z.string(),
   perfil: z.object({ id: z.uuid(), nome: z.string() }).nullable(),
   permissoes: z.array(permissaoSchema),
+  /** Avatar da tela Configurações (issue #30), exibido no cabeçalho e no menu. */
+  avatarArquivoId: z.uuid().nullable(),
+  /** Preferências e aparência (issue #30): o front aplica tema, cor, densidade e idioma. */
+  preferencias: preferenciasSchema,
 });
 
 export type UsuarioSessao = z.infer<typeof usuarioSessaoSchema>;

@@ -7,6 +7,8 @@ import { BypassAgenteController } from './bypass-agente/bypass-agente.controller
 import { BypassAgenteService } from './bypass-agente/bypass-agente.service';
 import { CanaisWhatsappController } from './canais-whatsapp/canais-whatsapp.controller';
 import { CanaisWhatsappService } from './canais-whatsapp/canais-whatsapp.service';
+import { ConfiguracoesController } from './configuracoes/configuracoes.controller';
+import { ConfiguracoesService } from './configuracoes/configuracoes.service';
 import { EmpresasService } from './empresas/empresas.service';
 import { MinhaEmpresaController } from './minha-empresa/minha-empresa.controller';
 import { MinhaEmpresaService } from './minha-empresa/minha-empresa.service';
@@ -30,6 +32,7 @@ const SERVICES = [
   UnidadesService,
   EmpresasService,
   MinhaEmpresaService,
+  ConfiguracoesService,
   TiposAgendamentoService,
   RespostasRapidasService,
   BaseConhecimentoService,
@@ -48,6 +51,7 @@ const SERVICES = [
 @Module({
   controllers: [
     MinhaEmpresaController,
+    ConfiguracoesController,
     UnidadesController,
     TiposAgendamentoController,
     RespostasRapidasController,

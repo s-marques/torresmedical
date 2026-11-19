@@ -35,6 +35,18 @@ export function obterSessao(): EstadoSessao {
   return estado;
 }
 
+/**
+ * Atualiza os dados do usuário logado sem nova chamada à API (ex.: nome, avatar e
+ * preferências salvos na tela Configurações). Sem sessão, não faz nada.
+ */
+export function atualizarUsuarioSessao(
+  alterar: (usuario: UsuarioSessao) => Partial<UsuarioSessao>,
+): void {
+  if (estado.status !== 'autenticado') return;
+  const usuario = { ...estado.usuario, ...alterar(estado.usuario) };
+  definir({ status: 'autenticado', usuario }, accessToken);
+}
+
 export function assinarSessao(ouvinte: () => void): () => void {
   ouvintes.add(ouvinte);
   return () => ouvintes.delete(ouvinte);

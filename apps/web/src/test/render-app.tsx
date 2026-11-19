@@ -1,4 +1,4 @@
-import { PERMISSOES, type UsuarioSessao } from '@torres/shared';
+import { PERMISSOES, PREFERENCIAS_PADRAO, type UsuarioSessao } from '@torres/shared';
 import { render } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { vi, type Mock } from 'vitest';
@@ -13,6 +13,8 @@ export const USUARIO_TESTE: UsuarioSessao = {
   email: 'pessoa@example.com',
   perfil: { id: '00000000-0000-4000-8000-000000000002', nome: 'Administrador' },
   permissoes: [...PERMISSOES],
+  avatarArquivoId: null,
+  preferencias: PREFERENCIAS_PADRAO,
 };
 
 export const ERRO_401 = { statusCode: 401, code: 'SESSAO_INVALIDA', message: 'Sessão expirada' };

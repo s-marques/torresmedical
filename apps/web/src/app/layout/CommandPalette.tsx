@@ -1,5 +1,6 @@
 import { filtrarMenu, MENU } from '@torres/shared';
 import { useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import {
   CommandDialog,
@@ -9,6 +10,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
+import { nomeModulo, nomeTela } from '@/lib/i18n';
 import { ICONES_TELA } from './menu-icones';
 
 export interface CommandPaletteProps {
@@ -20,6 +22,7 @@ export interface CommandPaletteProps {
 
 /** Busca de telas (⌘K / Ctrl+K): filtra pelo nome e navega para a tela escolhida. */
 export function CommandPalette({ open, onOpenChange, permissoes }: Readonly<CommandPaletteProps>) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const menu = useMemo(() => filtrarMenu(MENU, permissoes), [permissoes]);
 
@@ -38,27 +41,28 @@ export function CommandPalette({ open, onOpenChange, permissoes }: Readonly<Comm
     <CommandDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Buscar tela"
-      description="Digite o nome da tela para navegar até ela"
+      title={t('layout.buscarTela')}
+      description={t('layout.buscarTelaDescricao')}
     >
-      <CommandInput placeholder="Buscar tela…" />
+      <CommandInput placeholder={t('layout.buscarTelaPlaceholder')} />
       <CommandList>
-        <CommandEmpty>Nenhuma tela encontrada.</CommandEmpty>
+        <CommandEmpty>{t('layout.nenhumaTela')}</CommandEmpty>
         {menu.map((modulo) => (
-          <CommandGroup key={modulo.id} heading={modulo.nome}>
+          <CommandGroup key={modulo.id} heading={nomeModulo(t, modulo)}>
             {modulo.telas.map((tela) => {
               const Icone = ICONES_TELA[tela.id];
+              const nome = nomeTela(t, tela);
               return (
                 <CommandItem
                   key={tela.id}
-                  value={`${tela.nome} ${modulo.nome}`}
+                  value={`${nome} ${nomeModulo(t, modulo)}`}
                   onSelect={() => {
                     onOpenChange(false);
                     void navigate(tela.rota);
                   }}
                 >
                   <Icone aria-hidden />
-                  {tela.nome}
+                  {nome}
                 </CommandItem>
               );
             })}

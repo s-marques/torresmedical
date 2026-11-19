@@ -325,7 +325,8 @@ export class UsuariosService {
     };
   }
 
-  private async ensureEmailDisponivel(email: string, ignorarId?: string): Promise<void> {
+  /** E-mail livre para o usuário (também usado por "Meu Perfil", tela Configurações). */
+  async ensureEmailDisponivel(email: string, ignorarId?: string): Promise<void> {
     const existente = await this.txHost.tx.usuario.findFirst({
       where: { email, id: ignorarId ? { not: ignorarId } : undefined },
       select: { id: true },
