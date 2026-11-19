@@ -3,6 +3,8 @@ import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { criarRelatoriosController } from '../../common/relatorios/relatorios.controller';
 import { BaseConhecimentoController } from './base-conhecimento/base-conhecimento.controller';
 import { BaseConhecimentoService } from './base-conhecimento/base-conhecimento.service';
+import { BypassAgenteController } from './bypass-agente/bypass-agente.controller';
+import { BypassAgenteService } from './bypass-agente/bypass-agente.service';
 import { CanaisWhatsappController } from './canais-whatsapp/canais-whatsapp.controller';
 import { CanaisWhatsappService } from './canais-whatsapp/canais-whatsapp.service';
 import { EmpresasService } from './empresas/empresas.service';
@@ -31,6 +33,7 @@ const SERVICES = [
   TiposAgendamentoService,
   RespostasRapidasService,
   BaseConhecimentoService,
+  BypassAgenteService,
   PerfisAcessoService,
   UsuariosService,
   PerfisLookupService,
@@ -49,6 +52,7 @@ const SERVICES = [
     TiposAgendamentoController,
     RespostasRapidasController,
     BaseConhecimentoController,
+    BypassAgenteController,
     CanaisWhatsappController,
     PerfisAcessoController,
     UsuariosController,

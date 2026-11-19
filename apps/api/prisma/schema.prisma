@@ -2711,3 +2711,19 @@ model PesquisaNps {
   @@index([pacienteId, status])
   @@map("pesquisas_nps")
 }
+
+/// Telefone que o agente de IA não responde: as mensagens vão direto para a fila de atendentes.
+model BypassAgente {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Só dígitos, com DDI. Único entre os não excluídos; a regra fica no service.
+  telefone  String
+  nome      String?
+  cargo     String?
+  ativo     Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([telefone])
+  @@map("bypass_agentes")
+}
