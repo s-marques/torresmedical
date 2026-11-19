@@ -417,5 +417,74 @@
         "acao": "Ask the professionals to reach out to their patients and offer a follow-up."
       }
     }
+  },
+  "imoveis": {
+    "titulo": "Real Estate",
+    "descricao": "Manage the registered properties.",
+    "novo": "New Property",
+    "editar": "Edit Property",
+    "buscar": "Search properties...",
+    "vazio": "No properties found.",
+    "cadastrar": "Register",
+    "acoes": {
+      "editar": "Edit",
+      "excluir": "Delete"
+    },
+    "colunas": {
+      "descricao": "Description",
+      "tipo": "Type",
+      "endereco": "Address",
+      "valorCompra": "Purchase Price",
+      "financiamentoParcela": "Loan Installment",
+      "despesaMensal": "Monthly Expenses"
+    },
+    "secoes": {
+      "dados": "Property Details",
+      "financiamento": "Financing",
+      "despesas": "Linked Monthly Expenses"
+    },
+    "campos": {
+      "descricao": "Description",
+      "tipo": "Type",
+      "endereco": "Address",
+      "matricula": "Registry Number",
+      "valorCompra": "Purchase Price (R$)",
+      "dataCompra": "Purchase Date",
+      "iptuAnual": "Annual Property Tax (R$)",
+      "itbiPago": "Transfer Tax Paid (R$)",
+      "banco": "Bank",
+      "financiamentoParcela": "Installment (R$)",
+      "saldoDevedor": "Outstanding Balance (R$)",
+      "vencimentoFinanciamento": "Loan Maturity",
+      "condominio": "Condo Fee (R$)",
+      "contaLuz": "Electricity Bill (R$)",
+      "contaAgua": "Water Bill (R$)",
+      "internet": "Internet (R$)",
+      "seguro": "Insurance (R$)",
+      "observacoes": "Notes"
+    },
+    "placeholders": {
+      "descricao": "E.g.: Apt 302 Solar Bldg.",
+      "endereco": "Street, number, district, city",
+      "banco": "E.g.: Caixa, Itaú",
+      "observacoes": "General notes about the property"
+    },
+    "tipos": {
+      "APARTAMENTO": "Apartment",
+      "SALA_COMERCIAL": "Commercial Office",
+      "TERRENO": "Land",
+      "CASA": "House",
+      "GALPAO": "Warehouse"
+    },
+    "sucesso": {
+      "criado": "Property registered.",
+      "atualizado": "Property updated.",
+      "excluido": "Property deleted."
+    },
+    "excluir": {
+      "titulo": "Delete Property",
+      "descricao": "Are you sure you want to delete the property \"{{descricao}}\"? This action cannot be undone.",
+      "confirmar": "Delete"
+    }
   }
 }

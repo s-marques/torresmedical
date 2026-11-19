@@ -7,5 +7,9 @@
   "Data": "Fecha",
   "Hora": "Hora",
   "Descrição": "Descripción",
-  "Observação": "Observación"
+  "Observação": "Observación",
+  "Endereço": "Dirección",
+  "Matrícula": "Matrícula",
+  "Banco": "Banco",
+  "Observações": "Observaciones"
 }

@@ -7,5 +7,9 @@
   "Data": "Date",
   "Hora": "Time",
   "Descrição": "Description",
-  "Observação": "Note"
+  "Observação": "Note",
+  "Endereço": "Address",
+  "Matrícula": "Registry Number",
+  "Banco": "Bank",
+  "Observações": "Notes"
 }

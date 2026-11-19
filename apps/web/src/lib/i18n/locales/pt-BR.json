@@ -314,5 +314,74 @@
         "acao": "Peça aos profissionais que retomem o contato com seus pacientes e ofereçam um retorno."
       }
     }
+  },
+  "imoveis": {
+    "titulo": "Imóveis",
+    "descricao": "Gerencie os imóveis cadastrados.",
+    "novo": "Novo Imóvel",
+    "editar": "Editar Imóvel",
+    "buscar": "Buscar imóveis...",
+    "vazio": "Nenhum imóvel encontrado.",
+    "cadastrar": "Cadastrar",
+    "acoes": {
+      "editar": "Editar",
+      "excluir": "Excluir"
+    },
+    "colunas": {
+      "descricao": "Descrição",
+      "tipo": "Tipo",
+      "endereco": "Endereço",
+      "valorCompra": "Valor Compra",
+      "financiamentoParcela": "Financ. Parcela",
+      "despesaMensal": "Desp. Mensal"
+    },
+    "secoes": {
+      "dados": "Dados do Imóvel",
+      "financiamento": "Financiamento",
+      "despesas": "Despesas Mensais Vinculadas"
+    },
+    "campos": {
+      "descricao": "Descrição",
+      "tipo": "Tipo",
+      "endereco": "Endereço",
+      "matricula": "Matrícula",
+      "valorCompra": "Valor Compra (R$)",
+      "dataCompra": "Data Compra",
+      "iptuAnual": "IPTU Anual (R$)",
+      "itbiPago": "ITBI Pago (R$)",
+      "banco": "Banco",
+      "financiamentoParcela": "Parcela (R$)",
+      "saldoDevedor": "Saldo Devedor (R$)",
+      "vencimentoFinanciamento": "Vencimento Financiamento",
+      "condominio": "Condomínio (R$)",
+      "contaLuz": "Conta Luz (R$)",
+      "contaAgua": "Conta Água (R$)",
+      "internet": "Internet (R$)",
+      "seguro": "Seguro (R$)",
+      "observacoes": "Observações"
+    },
+    "placeholders": {
+      "descricao": "Ex: Apto 302 Ed. Solar",
+      "endereco": "Rua, número, bairro, cidade",
+      "banco": "Ex: Caixa, Itaú",
+      "observacoes": "Anotações gerais sobre o imóvel"
+    },
+    "tipos": {
+      "APARTAMENTO": "Apartamento",
+      "SALA_COMERCIAL": "Sala Comercial",
+      "TERRENO": "Terreno",
+      "CASA": "Casa",
+      "GALPAO": "Galpão"
+    },
+    "sucesso": {
+      "criado": "Imóvel cadastrado.",
+      "atualizado": "Imóvel atualizado.",
+      "excluido": "Imóvel excluído."
+    },
+    "excluir": {
+      "titulo": "Excluir Imóvel",
+      "descricao": "Tem certeza que deseja excluir o imóvel \"{{descricao}}\"? Esta ação não pode ser desfeita.",
+      "confirmar": "Excluir"
+    }
   }
 }
