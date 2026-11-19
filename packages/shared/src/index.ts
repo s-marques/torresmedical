@@ -1,6 +1,7 @@
 import './zod-pt-br';
 
 export * from './auth/permissoes';
+export * from './i18n/validacao';
 export * from './menu/menu';
 export * from './schemas/arquivos/arquivo';
 export * from './schemas/auditoria/audit-log';
@@ -32,6 +33,7 @@ export * from './schemas/consultorio-assistencial/atendimento-medico';
 export * from './schemas/consultorio-assistencial/prestador';
 export * from './schemas/consultorio-assistencial/prontuario';
 export * from './schemas/consultorio-assistencial/receituarios';
+export * from './schemas/consultorio-assistencial/evolucao-voz';
 export * from './schemas/compras-estoque/baixa-insumos';
 export * from './schemas/compras-estoque/categoria';
 export * from './schemas/compras-estoque/compra';

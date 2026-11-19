@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { exportQuerySchema, listQuerySchema } from '../common/list-query';
-import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
+import { erroObrigatorio, textoObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 import {
   competenciaSchema,
@@ -52,9 +52,9 @@ export function podeMudarStatusMensalidade(
 
 const dataObrigatoria = (rotulo: string) =>
   z
-    .string({ error: mensagemObrigatoria(rotulo, 'f') })
+    .string({ error: erroObrigatorio(rotulo, 'f') })
     .trim()
-    .min(1, { error: mensagemObrigatoria(rotulo, 'f') })
+    .min(1, { error: erroObrigatorio(rotulo, 'f') })
     .pipe(z.iso.date({ error: `${rotulo} inválida` }));
 
 const dataOpcional = (rotulo: string) =>
@@ -69,14 +69,14 @@ const dataOpcional = (rotulo: string) =>
  */
 export const mensalidadeInputSchema = z
   .strictObject({
-    pacienteId: z.uuid({ error: mensagemObrigatoria('Cliente') }),
+    pacienteId: z.uuid({ error: erroObrigatorio('Cliente') }),
     descricao: textoObrigatorio('Descrição', { genero: 'f', max: MENSALIDADE_DESCRICAO_MAX }),
     valor: z
-      .number({ error: mensagemObrigatoria('Valor') })
+      .number({ error: erroObrigatorio('Valor') })
       .positive({ error: 'O valor deve ser maior que zero' })
       .max(MENSALIDADE_VALOR_MAX, { error: 'Valor inválido' }),
     diaVencimento: z
-      .number({ error: mensagemObrigatoria('Dia de vencimento') })
+      .number({ error: erroObrigatorio('Dia de vencimento') })
       .int({ error: 'Informe um dia de 1 a 28' })
       .min(MENSALIDADE_DIA_MIN, { error: 'Informe um dia de 1 a 28' })
       .max(MENSALIDADE_DIA_MAX, { error: 'Informe um dia de 1 a 28' }),
@@ -196,11 +196,11 @@ export const MESES = [
 export const gerarTitulosMensalidadesFormularioSchema = z
   .object({
     mes: z
-      .string({ error: mensagemObrigatoria('Mês') })
-      .regex(/^(0[1-9]|1[0-2])$/, { error: mensagemObrigatoria('Mês') }),
+      .string({ error: erroObrigatorio('Mês') })
+      .regex(/^(0[1-9]|1[0-2])$/, { error: erroObrigatorio('Mês') }),
     ano: z
-      .string({ error: mensagemObrigatoria('Ano') })
-      .regex(/^\d{4}$/, { error: mensagemObrigatoria('Ano') }),
+      .string({ error: erroObrigatorio('Ano') })
+      .regex(/^\d{4}$/, { error: erroObrigatorio('Ano') }),
   })
   .transform(({ mes, ano }): GerarTitulosMensalidadesInput => ({ competencia: `${ano}-${mes}` }));
 export type GerarTitulosMensalidadesFormulario = z.input<

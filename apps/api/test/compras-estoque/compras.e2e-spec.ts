@@ -130,8 +130,8 @@ describe('Entrada de Compras (e2e)', () => {
       const res = await http().post(BASE).send({ dataEntrada: '2026-11-05' }).expect(400);
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'fornecedorId', message: 'Fornecedor é obrigatório.' },
-          { field: 'itens', message: 'Adicione pelo menos um produto.' },
+          expect.objectContaining({ field: 'fornecedorId', message: 'Fornecedor é obrigatório.' }),
+          expect.objectContaining({ field: 'itens', message: 'Adicione pelo menos um produto.' }),
         ]),
       );
       await expectNoAudit(prisma, { entity: ENTITY });
@@ -143,7 +143,12 @@ describe('Entrada de Compras (e2e)', () => {
       });
       const res = await http().post(BASE).send(body).expect(400);
       expect(res.body.details).toEqual(
-        expect.arrayContaining([{ field: 'itens.0.produtoId', message: 'Produto é obrigatório.' }]),
+        expect.arrayContaining([
+          expect.objectContaining({
+            field: 'itens.0.produtoId',
+            message: 'Produto é obrigatório.',
+          }),
+        ]),
       );
     });
 

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { listQuerySchema } from '../common/list-query';
-import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
+import { erroObrigatorio, textoObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 
 export const PROTOCOLO_NOME_MAX = 150;
@@ -61,7 +61,7 @@ export const textoLongoProtocoloSchema = (rotulo: string) =>
 
 /** Linha da tabela "Itens do Protocolo (composição)". */
 export const protocoloItemInputSchema = z.strictObject({
-  produtoId: z.uuid({ error: mensagemObrigatoria('Produto/Serviço') }),
+  produtoId: z.uuid({ error: erroObrigatorio('Produto/Serviço') }),
   quantidade: z
     .number({ error: 'Informe a quantidade' })
     .int({ error: 'A quantidade deve ser um número inteiro' })

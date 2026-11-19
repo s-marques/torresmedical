@@ -1,7 +1,7 @@
-import { createUnidadeSchema } from '@torres/shared';
+import { createUnidadeSchema, mensagemObrigatoria, textoObrigatorio } from '@torres/shared';
 import { z } from 'zod';
 import { ValidationException } from '../errors/api.exception';
-import { zodIssuesToDetails } from './zod-issues';
+import { validarComCodigos, zodIssuesToDetails } from './zod-issues';
 import { ZodValidationPipe } from './zod-validation.pipe';
 
 describe('ZodValidationPipe', () => {
@@ -31,9 +31,35 @@ describe('zodIssuesToDetails', () => {
 
     expect(zodIssuesToDetails(result.error?.issues ?? [])).toEqual([
       { field: 'itens.0.valor', message: 'Valor inválido' },
-      { field: 'extra', message: 'Campo não permitido' },
-      { field: 'outro', message: 'Campo não permitido' },
+      { field: 'extra', message: 'Campo não permitido', code: 'validacao.campoNaoPermitido' },
+      { field: 'outro', message: 'Campo não permitido', code: 'validacao.campoNaoPermitido' },
     ]);
+  });
+});
+
+describe('validarComCodigos', () => {
+  it('mensagens por chave: texto em português com code e params (issue #205)', () => {
+    const schema = z.object({ nome: textoObrigatorio('Nome', { max: 3 }), idade: z.number() });
+    const result = validarComCodigos(schema, { nome: 'abcd' });
+
+    expect(zodIssuesToDetails(result.error?.issues ?? [])).toEqual([
+      {
+        field: 'nome',
+        message: 'Nome deve ter no máximo 3 caracteres',
+        code: 'validacao.campoMax',
+        params: { campo: 'Nome', count: 3 },
+      },
+      { field: 'idade', message: 'Campo obrigatório', code: 'validacao.campoObrigatorio' },
+    ]);
+  });
+
+  it('mensagem literal do schema segue sem code e o tradutor volta ao português', () => {
+    const result = validarComCodigos(z.string().min(1, { error: 'Informe o nome' }), '');
+
+    expect(zodIssuesToDetails(result.error?.issues ?? [])).toEqual([
+      { field: '', message: 'Informe o nome' },
+    ]);
+    expect(mensagemObrigatoria('Nome')).toBe('Nome é obrigatório.');
   });
 });
 

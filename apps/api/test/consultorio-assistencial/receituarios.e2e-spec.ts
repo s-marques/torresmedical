@@ -94,9 +94,12 @@ describe('Receituários (e2e)', () => {
       const vazio = await http().post(BLOCOS).send({ tipo: '' }).expect(400);
       expect(vazio.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'tipo', message: 'Tipo é obrigatório.' },
-          { field: 'numeroInicio', message: 'Número início é obrigatório.' },
-          { field: 'numeroFim', message: 'Número fim é obrigatório.' },
+          expect.objectContaining({ field: 'tipo', message: 'Tipo é obrigatório.' }),
+          expect.objectContaining({
+            field: 'numeroInicio',
+            message: 'Número início é obrigatório.',
+          }),
+          expect.objectContaining({ field: 'numeroFim', message: 'Número fim é obrigatório.' }),
         ]),
       );
       const invertido = await http()
@@ -104,7 +107,10 @@ describe('Receituários (e2e)', () => {
         .send({ tipo: 'AZUL', numeroInicio: 10, numeroFim: 5 })
         .expect(400);
       expect(invertido.body.details).toEqual([
-        { field: 'numeroFim', message: 'Número fim deve ser maior ou igual ao início' },
+        expect.objectContaining({
+          field: 'numeroFim',
+          message: 'Número fim deve ser maior ou igual ao início',
+        }),
       ]);
       await expectNoAudit(prisma, { entity: 'ReceituarioBloco' });
     });
@@ -274,9 +280,9 @@ describe('Receituários (e2e)', () => {
       const vazio = await http().post(PRESCRICOES).send({}).expect(400);
       expect(vazio.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'blocoId', message: 'Bloco é obrigatório.' },
-          { field: 'pacienteId', message: 'Paciente é obrigatório.' },
-          { field: 'medicacao', message: 'Medicação é obrigatória.' },
+          expect.objectContaining({ field: 'blocoId', message: 'Bloco é obrigatório.' }),
+          expect.objectContaining({ field: 'pacienteId', message: 'Paciente é obrigatório.' }),
+          expect.objectContaining({ field: 'medicacao', message: 'Medicação é obrigatória.' }),
         ]),
       );
       await expectNoAudit(prisma, { entity: 'Prescricao' });

@@ -109,7 +109,10 @@ describe('Arquivos: upload e download (e2e)', () => {
       ).expect(400);
 
       expect(detalhes(res.body)).toEqual([
-        { field: 'arquivo', message: 'Tipo de arquivo não permitido. Envie JPG, PNG ou GIF' },
+        expect.objectContaining({
+          field: 'arquivo',
+          message: 'Tipo de arquivo não permitido. Envie JPG, PNG ou GIF',
+        }),
       ]);
       expect(await prisma.arquivo.count()).toBe(0);
       await expectNoAudit(prisma, { entity: 'Arquivo' });
@@ -121,7 +124,10 @@ describe('Arquivos: upload e download (e2e)', () => {
       );
 
       expect(detalhes(res.body)).toEqual([
-        { field: 'arquivo', message: 'O conteúdo do arquivo não corresponde ao tipo informado' },
+        expect.objectContaining({
+          field: 'arquivo',
+          message: 'O conteúdo do arquivo não corresponde ao tipo informado',
+        }),
       ]);
     });
 
@@ -131,7 +137,7 @@ describe('Arquivos: upload e download (e2e)', () => {
       const res = await enviar('avatar', grande, 'foto.png', 'image/png').expect(400);
 
       expect(detalhes(res.body)).toEqual([
-        { field: 'arquivo', message: 'O arquivo deve ter no máximo 2 MB' },
+        expect.objectContaining({ field: 'arquivo', message: 'O arquivo deve ter no máximo 2 MB' }),
       ]);
       await expectNoAudit(prisma, { entity: 'Arquivo' });
     });
@@ -150,12 +156,17 @@ describe('Arquivos: upload e download (e2e)', () => {
       const json = await http().post(BASE).query({ uso: 'avatar' }).send({ a: 1 }).expect(400);
 
       expect(detalhes(semArquivo.body)).toEqual([
-        { field: 'arquivo', message: 'Selecione um arquivo' },
+        expect.objectContaining({ field: 'arquivo', message: 'Selecione um arquivo' }),
       ]);
       expect(detalhes(campoErrado.body)).toEqual([
-        { field: 'arquivo', message: 'Envie um único arquivo no campo "arquivo"' },
+        expect.objectContaining({
+          field: 'arquivo',
+          message: 'Envie um único arquivo no campo "arquivo"',
+        }),
       ]);
-      expect(detalhes(json.body)).toEqual([{ field: 'arquivo', message: 'Selecione um arquivo' }]);
+      expect(detalhes(json.body)).toEqual([
+        expect.objectContaining({ field: 'arquivo', message: 'Selecione um arquivo' }),
+      ]);
     });
 
     it('400 para uso ausente ou inválido', async () => {
@@ -163,10 +174,10 @@ describe('Arquivos: upload e download (e2e)', () => {
       const usoInvalido = await enviar('nao-existe', PNG, 'foto.png').expect(400);
 
       expect(detalhes(semUso.body)).toEqual([
-        { field: 'uso', message: 'Informe o uso do arquivo' },
+        expect.objectContaining({ field: 'uso', message: 'Informe o uso do arquivo' }),
       ]);
       expect(detalhes(usoInvalido.body)).toEqual([
-        { field: 'uso', message: 'Uso de arquivo inválido' },
+        expect.objectContaining({ field: 'uso', message: 'Uso de arquivo inválido' }),
       ]);
     });
   });
@@ -188,7 +199,9 @@ describe('Arquivos: upload e download (e2e)', () => {
         code: 'NOT_FOUND',
         message: 'Arquivo não encontrado',
       });
-      expect(invalido.body.details).toEqual([{ field: 'id', message: 'Identificador inválido' }]);
+      expect(invalido.body.details).toEqual([
+        expect.objectContaining({ field: 'id', message: 'Identificador inválido' }),
+      ]);
     });
   });
 

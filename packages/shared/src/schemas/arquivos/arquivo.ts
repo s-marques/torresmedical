@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { traduzirPtBr, traduzirValidacao } from '../../i18n/validacao';
 
 const MB = 1024 * 1024;
 
@@ -117,7 +118,8 @@ export function extensaoArquivo(nome: string): string {
 export function descreverFormatos(uso: ArquivoUso): string {
   const rotulos = [...new Set(ARQUIVO_USOS[uso].formatos.map((f) => ARQUIVO_FORMATOS[f].rotulo))];
   const ultimo = rotulos.pop() ?? '';
-  return rotulos.length ? `${rotulos.join(', ')} ou ${ultimo}` : ultimo;
+  const ou = traduzirValidacao('validacao.arquivo.ou');
+  return rotulos.length ? `${rotulos.join(', ')} ${ou} ${ultimo}` : ultimo;
 }
 
 /** "2 MB". */
@@ -127,15 +129,20 @@ export function formatarTamanho(bytes: number): string {
 }
 
 export function mensagemTipoInvalido(uso: ArquivoUso): string {
-  return `Tipo de arquivo não permitido. Envie ${descreverFormatos(uso)}`;
+  return traduzirValidacao('validacao.arquivo.tipoNaoPermitido', {
+    formatos: descreverFormatos(uso),
+  });
 }
 
 export function mensagemTamanhoExcedido(uso: ArquivoUso): string {
-  return `O arquivo deve ter no máximo ${formatarTamanho(ARQUIVO_USOS[uso].maxBytes)}`;
+  return traduzirValidacao('validacao.arquivo.tamanhoMax', {
+    tamanho: formatarTamanho(ARQUIVO_USOS[uso].maxBytes),
+  });
 }
 
-export const ARQUIVO_OBRIGATORIO_MENSAGEM = 'Selecione um arquivo';
-export const ARQUIVO_VAZIO_MENSAGEM = 'O arquivo está vazio';
+/** Mensagens em português (o back usa estas; o front traduz por `validacao.arquivo.*`). */
+export const ARQUIVO_OBRIGATORIO_MENSAGEM = traduzirPtBr({ chave: 'validacao.arquivo.selecione' });
+export const ARQUIVO_VAZIO_MENSAGEM = traduzirPtBr({ chave: 'validacao.arquivo.vazio' });
 
 /** Tipos que o navegador informa quando não reconhece a extensão. */
 const MIMES_GENERICOS = new Set(['', 'application/octet-stream']);
@@ -158,7 +165,7 @@ export function validarArquivo(arquivo: ArquivoCandidato, uso: ArquivoUso): stri
   if (!formato || !(MIMES_GENERICOS.has(tipo) || mimes.includes(tipo))) {
     return mensagemTipoInvalido(uso);
   }
-  if (arquivo.tamanho <= 0) return ARQUIVO_VAZIO_MENSAGEM;
+  if (arquivo.tamanho <= 0) return traduzirValidacao('validacao.arquivo.vazio');
   if (arquivo.tamanho > ARQUIVO_USOS[uso].maxBytes) return mensagemTamanhoExcedido(uso);
   return null;
 }

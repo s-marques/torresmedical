@@ -4,7 +4,7 @@ import {
   PERIODO_CONSULTA_INVALIDO,
 } from '../comercial-atendimento/periodo-vendas';
 import { exportQuerySchema, listQuerySchema } from '../common/list-query';
-import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
+import { erroObrigatorio, textoObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 
 // --- Tipos e status ----------------------------------------------------------------------
@@ -64,8 +64,8 @@ export function formatarNumeracaoBloco(bloco: { numeroInicio: number; numeroFim:
 
 const idObrigatorio = (rotulo: string) =>
   z
-    .string({ error: mensagemObrigatoria(rotulo) })
-    .min(1, { error: mensagemObrigatoria(rotulo) })
+    .string({ error: erroObrigatorio(rotulo) })
+    .min(1, { error: erroObrigatorio(rotulo) })
     .pipe(z.uuid({ error: `${rotulo} inválido` }));
 
 const textoOpcional = (rotulo: string, max: number) =>
@@ -85,7 +85,7 @@ const dataOpcional = (rotulo: string) =>
 
 const numeroFolha = (rotulo: string) =>
   z
-    .number({ error: mensagemObrigatoria(rotulo) })
+    .number({ error: erroObrigatorio(rotulo) })
     .int({ error: `${rotulo} deve ser um número inteiro` })
     .min(1, { error: `${rotulo} deve ser maior que zero` })
     .max(RECEITUARIO_NUMERO_MAX, {
@@ -107,8 +107,8 @@ export const NUMERO_FIM_MENOR_QUE_INICIO = 'Número fim deve ser maior ou igual 
 export const receituarioBlocoInputSchema = z
   .strictObject({
     tipo: z
-      .string({ error: mensagemObrigatoria('Tipo') })
-      .min(1, { error: mensagemObrigatoria('Tipo') })
+      .string({ error: erroObrigatorio('Tipo') })
+      .min(1, { error: erroObrigatorio('Tipo') })
       .pipe(receituarioTipoSchema),
     numeroInicio: numeroFolha('Número início'),
     numeroFim: numeroFolha('Número fim'),

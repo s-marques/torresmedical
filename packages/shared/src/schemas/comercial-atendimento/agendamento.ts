@@ -1,6 +1,6 @@
 import { z } from 'zod';
+import { erroObrigatorio } from '../common/obrigatorio';
 import { profissionalCorSchema } from '../gestao-profissionais/profissional';
-import { mensagemObrigatoria } from '../common/obrigatorio';
 
 export const AGENDAMENTO_DURACAO_PADRAO = 30;
 export const AGENDAMENTO_DURACAO_MAX = 1440;
@@ -73,9 +73,9 @@ const valorOpcional = z
 export const createAgendamentoSchema = z.strictObject({
   pacienteId: uuidObrigatorio(MSG_PACIENTE),
   profissionalId: uuidObrigatorio(MSG_PROFISSIONAL),
-  data: z.iso.date({ error: mensagemObrigatoria('Data', 'f') }),
+  data: z.iso.date({ error: erroObrigatorio('Data', 'f') }),
   hora: z
-    .string({ error: mensagemObrigatoria('Hora', 'f') })
+    .string({ error: erroObrigatorio('Hora', 'f') })
     .regex(HORA, { error: 'Hora inválida (HH:MM)' }),
   duracaoMinutos: z
     .number({ error: 'Informe a duração em minutos' })

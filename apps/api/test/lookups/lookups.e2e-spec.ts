@@ -233,7 +233,7 @@ describe('Lookups das entidades compartilhadas (e2e)', () => {
           .sort((a, b) => a.localeCompare(b)),
       ).toEqual(['pageSize', 'sort']);
       expect(apiErrorSchema.parse(detalhe.body).details).toEqual([
-        { field: 'id', message: 'Identificador inválido' },
+        expect.objectContaining({ field: 'id', message: 'Identificador inválido' }),
       ]);
     });
 
@@ -362,7 +362,9 @@ describe('Lookups das entidades compartilhadas (e2e)', () => {
         .expect(400);
 
       expect(res.body.data.map((u: { label: string }) => u.label)).toEqual(['Filial']);
-      expect(invalido.body.details).toEqual([{ field: 'empresaId', message: 'Empresa inválida' }]);
+      expect(invalido.body.details).toEqual([
+        expect.objectContaining({ field: 'empresaId', message: 'Empresa inválida' }),
+      ]);
     });
   });
 });

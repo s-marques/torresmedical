@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
+import { erroObrigatorio, textoObrigatorio } from '../common/obrigatorio';
 
 /**
  * Base comum de Contas a Pagar e Contas a Receber: os mesmos campos do modal, os mesmos filtros
@@ -52,12 +52,12 @@ export const observacoesContaFinanceira = z
 export const camposEntradaContaFinanceira = {
   descricao: textoObrigatorio('Descrição', { max: CONTA_FINANCEIRA_DESCRICAO_MAX }),
   valor: z
-    .number({ error: mensagemObrigatoria('Valor') })
+    .number({ error: erroObrigatorio('Valor') })
     .positive({ error: 'O valor deve ser maior que zero' })
     .max(CONTA_FINANCEIRA_VALOR_MAX, { error: 'Valor inválido' }),
   dataVencimento: z
-    .string({ error: mensagemObrigatoria('Data de vencimento', 'f') })
-    .min(1, { error: mensagemObrigatoria('Data de vencimento', 'f') })
+    .string({ error: erroObrigatorio('Data de vencimento', 'f') })
+    .min(1, { error: erroObrigatorio('Data de vencimento', 'f') })
     .pipe(z.iso.date({ error: 'Data de vencimento inválida' })),
   formaPagamentoId: idOpcional('Forma de pagamento'),
   planoContaId: idOpcional('Plano de contas'),

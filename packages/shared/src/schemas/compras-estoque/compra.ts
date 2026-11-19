@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { exportQuerySchema, listQuerySchema } from '../common/list-query';
-import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
+import { erroObrigatorio, textoObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 
 export const COMPRA_DESCRICAO_MAX = 200;
@@ -26,8 +26,8 @@ export const COMPRA_ROTULO_STATUS: Readonly<Record<CompraStatus, string>> = {
 
 const idObrigatorio = (rotulo: string, genero: 'm' | 'f' = 'm') =>
   z
-    .string({ error: mensagemObrigatoria(rotulo, genero) })
-    .min(1, { error: mensagemObrigatoria(rotulo, genero) })
+    .string({ error: erroObrigatorio(rotulo, genero) })
+    .min(1, { error: erroObrigatorio(rotulo, genero) })
     .pipe(z.uuid({ error: `${rotulo} inválido` }));
 
 const idOpcional = (rotulo: string) =>
@@ -46,8 +46,8 @@ const textoOpcional = (rotulo: string, max: number) =>
 
 const dataObrigatoria = (rotulo: string) =>
   z
-    .string({ error: mensagemObrigatoria(rotulo, 'f') })
-    .min(1, { error: mensagemObrigatoria(rotulo, 'f') })
+    .string({ error: erroObrigatorio(rotulo, 'f') })
+    .min(1, { error: erroObrigatorio(rotulo, 'f') })
     .pipe(z.iso.date({ error: `${rotulo} inválida` }));
 
 const dataEmissao = z
@@ -69,11 +69,11 @@ export const compraItemInputSchema = z.strictObject({
   produtoId: idObrigatorio('Produto'),
   descricao: textoObrigatorio('Descrição', { genero: 'f', max: COMPRA_DESCRICAO_MAX }),
   quantidade: z
-    .number({ error: mensagemObrigatoria('Quantidade', 'f') })
+    .number({ error: erroObrigatorio('Quantidade', 'f') })
     .positive({ error: 'A quantidade deve ser maior que zero' })
     .max(COMPRA_QUANTIDADE_MAX, { error: 'Quantidade inválida' }),
   valorUnitario: z
-    .number({ error: mensagemObrigatoria('Valor unitário') })
+    .number({ error: erroObrigatorio('Valor unitário') })
     .min(0, { error: 'O valor unitário não pode ser negativo' })
     .max(COMPRA_VALOR_MAX, { error: 'Valor unitário inválido' }),
   /** "Conta contábil (opcional)": conta do Plano de Contas. */

@@ -118,7 +118,7 @@ describe('Painel: dashboard (e2e)', () => {
       const faltando = await http().get(`${BASE}/executivo`).query({ modo: 'periodo' }).expect(400);
 
       expect(apiErrorSchema.parse(mes.body).details).toEqual([
-        { field: 'mes', message: 'Mês inválido' },
+        expect.objectContaining({ field: 'mes', message: 'Mês inválido' }),
       ]);
       expect(apiErrorSchema.parse(periodo.body).details?.[0]?.field).toBe('ate');
       expect(apiErrorSchema.parse(faltando.body).details?.map((d) => d.field)).toEqual([

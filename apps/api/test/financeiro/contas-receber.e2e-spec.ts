@@ -133,9 +133,12 @@ describe('Contas a Receber (e2e)', () => {
     it('400 com descrição, valor e vencimento ausentes, sem auditar', async () => {
       const res = await http().post(BASE).send({}).expect(400);
       expect(res.body.details).toEqual([
-        { field: 'descricao', message: 'Descrição é obrigatório.' },
-        { field: 'valor', message: 'Valor é obrigatório.' },
-        { field: 'dataVencimento', message: 'Data de vencimento é obrigatória.' },
+        expect.objectContaining({ field: 'descricao', message: 'Descrição é obrigatório.' }),
+        expect.objectContaining({ field: 'valor', message: 'Valor é obrigatório.' }),
+        expect.objectContaining({
+          field: 'dataVencimento',
+          message: 'Data de vencimento é obrigatória.',
+        }),
       ]);
       await expectNoAudit(prisma, { entity: ENTITY });
     });
@@ -237,7 +240,10 @@ describe('Contas a Receber (e2e)', () => {
         })
         .expect(404);
       expect(res.body.details).toEqual([
-        { field: 'contaBancariaId', message: 'Conta bancária não encontrada' },
+        expect.objectContaining({
+          field: 'contaBancariaId',
+          message: 'Conta bancária não encontrada',
+        }),
       ]);
     });
 

@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import {
   Breadcrumb,
@@ -31,9 +32,14 @@ export function PageHeader({
   titulo,
   descricao,
   acoes,
-  breadcrumb = [{ rotulo: 'Painel', para: '/' }, { rotulo: titulo }],
+  breadcrumb: breadcrumbInformado,
   className,
 }: Readonly<PageHeaderProps>) {
+  const { t } = useTranslation();
+  const breadcrumb = breadcrumbInformado ?? [
+    { rotulo: t('comum.painel'), para: '/' },
+    { rotulo: titulo },
+  ];
   return (
     <header className={cn('flex flex-col gap-3', className)}>
       <Breadcrumb>

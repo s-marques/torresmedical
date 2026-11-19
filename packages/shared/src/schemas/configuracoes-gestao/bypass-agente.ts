@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { normalizarTelefoneWhatsapp } from '../comercial-atendimento/conversa-whatsapp';
 import { ativoStatusSchema, listQuerySchema } from '../common/list-query';
-import { mensagemObrigatoria } from '../common/obrigatorio';
+import { erroObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 
 export const BYPASS_AGENTE_NOME_MAX = 100;
@@ -14,9 +14,9 @@ export const BYPASS_AGENTE_TELEFONE_INVALIDO =
 export const BYPASS_AGENTE_TELEFONE_DUPLICADO = 'Este telefone já está na lista de bypass';
 
 const telefone = z
-  .string({ error: mensagemObrigatoria('Telefone') })
+  .string({ error: erroObrigatorio('Telefone') })
   .trim()
-  .min(1, { error: mensagemObrigatoria('Telefone') })
+  .min(1, { error: erroObrigatorio('Telefone') })
   .transform(normalizarTelefoneWhatsapp)
   .refine(
     (digitos) =>

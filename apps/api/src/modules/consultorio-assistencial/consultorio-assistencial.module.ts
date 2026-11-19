@@ -3,6 +3,8 @@ import { ComercialAtendimentoModule } from '../comercial-atendimento/comercial-a
 import { GestaoProfissionaisModule } from '../gestao-profissionais/gestao-profissionais.module';
 import { AtendimentoMedicoController } from './atendimento-medico/atendimento-medico.controller';
 import { AtendimentoMedicoService } from './atendimento-medico/atendimento-medico.service';
+import { EvolucaoVozController } from './evolucao-voz/evolucao-voz.controller';
+import { EvolucaoVozService } from './evolucao-voz/evolucao-voz.service';
 import { PacientesVinculadosService } from './pacientes-vinculados/pacientes-vinculados.service';
 import { PrestadoresController } from './prestadores/prestadores.controller';
 import { PrestadoresService } from './prestadores/prestadores.service';
@@ -25,6 +27,7 @@ import { ReceituarioBlocosService } from './receituarios/receituario-blocos.serv
   controllers: [
     ProntuariosController,
     AtendimentoMedicoController,
+    EvolucaoVozController,
     PrestadoresController,
     ReceituarioBlocosController,
     PrescricoesController,
@@ -32,6 +35,7 @@ import { ReceituarioBlocosService } from './receituarios/receituario-blocos.serv
   providers: [
     ProntuariosService,
     AtendimentoMedicoService,
+    EvolucaoVozService,
     PacientesVinculadosService,
     PrestadoresService,
     ReceituarioBlocosService,

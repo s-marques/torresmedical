@@ -1,8 +1,16 @@
-import { MENU } from '@torres/shared';
+import { MENU, VALIDACAO_PT_BR } from '@torres/shared';
 import { describe, expect, it } from 'vitest';
 import EN from './locales/en.json';
 import ES from './locales/es.json';
 import PT_BR from './locales/pt-BR.json';
+import {
+  ERROS_API_EN,
+  ERROS_API_ES,
+  ROTULOS_EN,
+  ROTULOS_ES,
+  VALIDACAO_EN,
+  VALIDACAO_ES,
+} from './locales/validacao';
 
 /** Chaves das folhas (`layout.sair`, `configuracoes.abas.perfil`…), ordenadas. */
 function chaves(objeto: object, prefixo = ''): string[] {
@@ -53,5 +61,17 @@ describe('textos dos idiomas (locales/*.json)', () => {
       });
       expect(vazios).toEqual([]);
     }
+  });
+
+  it.each([
+    ['en', VALIDACAO_EN],
+    ['es', VALIDACAO_ES],
+  ])('validação em %s tem as mesmas chaves do português (issue #205)', (_idioma, textos) => {
+    expect(chaves(textos)).toEqual(chaves(VALIDACAO_PT_BR));
+  });
+
+  it('erros da API e rótulos têm as mesmas chaves em inglês e espanhol', () => {
+    expect(chaves(ERROS_API_ES)).toEqual(chaves(ERROS_API_EN));
+    expect(chaves(ROTULOS_ES)).toEqual(chaves(ROTULOS_EN));
   });
 });

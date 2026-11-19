@@ -1,18 +1,17 @@
 import type { LinhaRelatorio, RelatorioResumo, TipoColunaRelatorio } from '@torres/shared';
 import { formatarData, formatarDataHora } from '@/lib/formatar';
 import { formatarMoeda } from '@/lib/forms/mascaras';
+import { formatoNumero, i18next } from '@/lib/i18n';
 import type { ColunaGrid } from '../data-grid/tipos';
-
-const NUMERO = new Intl.NumberFormat('pt-BR');
 
 const FORMATOS: Readonly<Record<TipoColunaRelatorio, (valor: unknown) => string>> = {
   text: String,
-  number: (valor) => NUMERO.format(Number(valor)),
+  number: (valor) => formatoNumero().format(Number(valor)),
   // Valores decimais chegam como texto (ex.: "1234.50").
   currency: (valor) => formatarMoeda(Number(valor)),
   date: (valor) => formatarData(String(valor)),
   datetime: (valor) => formatarDataHora(String(valor)),
-  boolean: (valor) => (valor ? 'Sim' : 'Não'),
+  boolean: (valor) => i18next.t(valor ? 'comum.sim' : 'comum.nao'),
 };
 
 const NUMERICOS: ReadonlySet<TipoColunaRelatorio> = new Set(['number', 'currency']);

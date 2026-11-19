@@ -169,7 +169,7 @@ describe('WhatsApp (e2e)', () => {
     it('400 "Digite pelo menos 2 caracteres" e para status ou canal inválidos', async () => {
       const curta = await http().get(CONVERSAS).query({ search: 'a' }).expect(400);
       expect(curta.body.details).toEqual([
-        { field: 'search', message: 'Digite pelo menos 2 caracteres' },
+        expect.objectContaining({ field: 'search', message: 'Digite pelo menos 2 caracteres' }),
       ]);
       const invalida = await http()
         .get(CONVERSAS)
@@ -362,8 +362,8 @@ describe('WhatsApp (e2e)', () => {
     it('400 "Paciente é obrigatório." e "Canal é obrigatório."; 404 para inexistentes', async () => {
       const vazio = await http().post(CONVERSAS).send({}).expect(400);
       expect(vazio.body.details).toEqual([
-        { field: 'pacienteId', message: 'Paciente é obrigatório.' },
-        { field: 'canalId', message: 'Canal é obrigatório.' },
+        expect.objectContaining({ field: 'pacienteId', message: 'Paciente é obrigatório.' }),
+        expect.objectContaining({ field: 'canalId', message: 'Canal é obrigatório.' }),
       ]);
 
       const paciente = await criarPaciente({ celular: '65999990000' });
@@ -417,7 +417,7 @@ describe('WhatsApp (e2e)', () => {
     it('POST 400 "Nome da tag é obrigatório." e 409 para nome repetido (sem diferenciar maiúsculas)', async () => {
       const vazio = await http().post(TAGS).send({ nome: ' ' }).expect(400);
       expect(vazio.body.details).toEqual([
-        { field: 'nome', message: 'Nome da tag é obrigatório.' },
+        expect.objectContaining({ field: 'nome', message: 'Nome da tag é obrigatório.' }),
       ]);
 
       await http().post(TAGS).send({ nome: 'Retorno' }).expect(201);
@@ -699,7 +699,7 @@ describe('WhatsApp (e2e)', () => {
             .send(body)
             .expect(400);
           expect(res.body.details).toEqual([
-            { field: 'conteudo', message: 'Mensagem é obrigatória.' },
+            expect.objectContaining({ field: 'conteudo', message: 'Mensagem é obrigatória.' }),
           ]);
         }
         await http()
@@ -827,7 +827,7 @@ describe('WhatsApp (e2e)', () => {
           .send({})
           .expect(400);
         expect(vazio.body.details).toEqual([
-          { field: 'usuarioId', message: 'Usuário é obrigatório.' },
+          expect.objectContaining({ field: 'usuarioId', message: 'Usuário é obrigatório.' }),
         ]);
         for (const usuarioId of [INEXISTENTE, inativo.id]) {
           const res = await http()

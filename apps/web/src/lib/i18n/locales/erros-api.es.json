@@ -1,0 +1,19 @@
+{
+  "VALIDATION_ERROR": "Datos no válidos",
+  "UNAUTHORIZED": "No autenticado",
+  "FORBIDDEN": "Sin permiso",
+  "NOT_FOUND": "Registro no encontrado",
+  "METHOD_NOT_ALLOWED": "Método no permitido",
+  "CONFLICT": "Conflicto con el estado actual del registro",
+  "DUPLICATE": "Registro duplicado",
+  "RELATION_CONFLICT": "El registro está en uso por otros registros",
+  "PAYLOAD_TOO_LARGE": "Contenido demasiado grande",
+  "TOO_MANY_REQUESTS": "Demasiadas solicitudes. Inténtelo de nuevo en unos instantes",
+  "BAD_REQUEST": "Solicitud no válida",
+  "INTERNAL_ERROR": "Error interno. Inténtelo de nuevo más tarde",
+  "SESSAO_INVALIDA": "Sesión expirada. Inicie sesión de nuevo",
+  "CREDENCIAIS_INVALIDAS": "Correo electrónico o contraseña no válidos",
+  "LINK_REDEFINICAO_INVALIDO": "Enlace de restablecimiento no válido o expirado",
+  "LINK_INVALIDO": "Enlace de descarga no válido",
+  "LINK_EXPIRADO": "Enlace de descarga expirado. Genere uno nuevo"
+}
