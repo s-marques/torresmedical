@@ -6,6 +6,7 @@ import {
   historicoClinicoPageSchema,
   pacienteResumoProntuarioSchema,
   pacientesComRegistrosPageSchema,
+  prescricaoPageSchema,
   prontuarioSchema,
   type Anamnese,
   type Atendimento,
@@ -106,6 +107,20 @@ export function useCriarAtendimento(pacienteId: string) {
       ]);
       toast.success('Atendimento criado.');
     },
+  });
+}
+
+/** Aba "Receitas": prescrições do paciente (tela Receituários, #42). */
+export function useReceitas(pacienteId: string | null) {
+  return useQuery({
+    queryKey: ['prontuarios', 'receitas', pacienteId] as const,
+    enabled: Boolean(pacienteId),
+    queryFn: ({ signal }) =>
+      apiFetch(`${URL_PRONTUARIOS}/${pacienteId}/receitas`, {
+        query: { page: 1, pageSize: TAMANHO_PAGINA_REGISTROS },
+        schema: prescricaoPageSchema,
+        signal,
+      }),
   });
 }
 

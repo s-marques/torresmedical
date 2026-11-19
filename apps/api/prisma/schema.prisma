@@ -2210,8 +2210,9 @@ model Atendimento {
   updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt       DateTime?         @map("deleted_at") @db.Timestamptz(3)
 
-  evolucoes AtendimentoEvolucao[]
-  receitas  AtendimentoReceita[]
+  evolucoes   AtendimentoEvolucao[]
+  receitas    AtendimentoReceita[]
+  prescricoes Prescricao[]
 
   @@index([pacienteId])
   @@index([profissionalId])
@@ -2751,4 +2752,79 @@ model BypassAgente {
 
   @@index([telefone])
   @@map("bypass_agentes")
+}
+
+/// Dono: consultorio-assistencial. Tipo do receituário controlado (ANVISA): Amarela (A), Azul (B)
+/// e Branca (C).
+enum ReceituarioTipo {
+  AMARELA
+  AZUL
+  BRANCA
+
+  @@map("receituario_tipo")
+}
+
+enum ReceituarioBlocoStatus {
+  ATIVO
+  FINALIZADO
+  CANCELADO
+
+  @@map("receituario_bloco_status")
+}
+
+/// Dono: consultorio-assistencial. Bloco (talão) de receituário controlado (aba Blocos da tela
+/// Receituários, `/receituarios`, issue #42). Nasce Ativo e vira Finalizado quando todas as
+/// folhas são usadas. Exclusão lógica.
+model ReceituarioBloco {
+  id              String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipo            ReceituarioTipo
+  numeroInicio    Int                    @map("numero_inicio")
+  numeroFim       Int                    @map("numero_fim")
+  localizacao     String?
+  /// Médico do bloco (gestao-profissionais), sem FK. Sem médico, o bloco não serve para prescrever.
+  profissionalId  String?                @map("profissional_id") @db.Uuid
+  dataRecebimento DateTime?              @map("data_recebimento") @db.Date
+  /// Folhas já usadas: a próxima prescrição recebe `numero_inicio + usados`.
+  usados          Int                    @default(0)
+  status          ReceituarioBlocoStatus @default(ATIVO)
+  createdAt       DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt       DateTime?              @map("deleted_at") @db.Timestamptz(3)
+
+  prescricoes Prescricao[]
+
+  @@index([tipo, numeroInicio])
+  @@index([profissionalId])
+  @@map("receituario_blocos")
+}
+
+/// Dono: consultorio-assistencial. Prescrição em receituário controlado (aba Prescricoes da tela
+/// Receituários, issue #42). Usa a próxima folha do bloco; o médico é o do bloco. Aparece na aba
+/// Receitas e no Histórico Clínico do Prontuário. Sem edição nem exclusão pela tela.
+model Prescricao {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  blocoId        String    @map("bloco_id") @db.Uuid
+  /// Folha do bloco (coluna "N Receita").
+  numero         Int
+  /// Paciente (comercial-atendimento), sem FK.
+  pacienteId     String    @map("paciente_id") @db.Uuid
+  /// Médico do bloco no momento da prescrição (gestao-profissionais), sem FK.
+  profissionalId String    @map("profissional_id") @db.Uuid
+  /// Atendimento de origem, quando houver. A Nova Prescricao da tela não informa.
+  atendimentoId  String?   @map("atendimento_id") @db.Uuid
+  medicacao      String
+  posologia      String?
+  dataPrescricao DateTime  @map("data_prescricao") @db.Date
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  bloco       ReceituarioBloco @relation(fields: [blocoId], references: [id], onDelete: Restrict)
+  atendimento Atendimento?     @relation(fields: [atendimentoId], references: [id], onDelete: Restrict)
+
+  @@unique([blocoId, numero])
+  @@index([pacienteId])
+  @@index([profissionalId])
+  @@index([dataPrescricao])
+  @@map("prescricoes")
 }

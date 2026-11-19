@@ -58,6 +58,9 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   'consultorio-assistencial.prontuarios': lazy(
     () => import('@/features/consultorio-assistencial/prontuarios/ProntuariosPage'),
   ),
+  'consultorio-assistencial.receituarios': lazy(
+    () => import('@/features/consultorio-assistencial/receituarios/ReceituariosPage'),
+  ),
   'compras-estoque.baixa-insumos': lazy(
     () => import('@/features/compras-estoque/baixa-insumos/BaixasInsumosPage'),
   ),

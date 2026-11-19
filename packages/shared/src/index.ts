@@ -30,6 +30,7 @@ export * from './schemas/comercial-atendimento/pesquisa-nps';
 export * from './schemas/comercial-atendimento/tag-atendimento';
 export * from './schemas/consultorio-assistencial/atendimento-medico';
 export * from './schemas/consultorio-assistencial/prontuario';
+export * from './schemas/consultorio-assistencial/receituarios';
 export * from './schemas/compras-estoque/baixa-insumos';
 export * from './schemas/compras-estoque/categoria';
 export * from './schemas/compras-estoque/compra';

@@ -17,6 +17,7 @@ import { AbaAnamneses } from './AbaAnamneses';
 import { AbaAtendimentos } from './AbaAtendimentos';
 import { AbaHistoricoClinico } from './AbaHistoricoClinico';
 import { AbaProntuario } from './AbaProntuario';
+import { AbaReceitas } from './AbaReceitas';
 import { CardPacientesComRegistros } from './CardPacientesComRegistros';
 import { PacienteHeaderProntuario } from './PacienteHeaderProntuario';
 import { useHistoricoClinico, usePacienteResumo } from './use-prontuarios';
@@ -120,21 +121,10 @@ function DetalhePaciente({
       <div id="painel-aba-prontuario" role="tabpanel" aria-labelledby={`aba-${aba}`}>
         {aba === 'prontuario' && <AbaProntuario pacienteId={pacienteId} />}
         {aba === 'atendimentos' && <AbaAtendimentos pacienteId={pacienteId} />}
-        {aba === 'receitas' && <AbaReceitas />}
+        {aba === 'receitas' && <AbaReceitas pacienteId={pacienteId} />}
         {aba === 'anamneses' && <AbaAnamneses pacienteId={pacienteId} />}
         {aba === 'historico' && <AbaHistoricoClinico pacienteId={pacienteId} />}
       </div>
     </div>
-  );
-}
-
-/** Aba "Receitas": fica vazia até a tela Receituários (#42) existir. */
-function AbaReceitas() {
-  return (
-    <Card>
-      <CardContent className="py-10 text-center text-sm text-muted-foreground" role="status">
-        Em breve.
-      </CardContent>
-    </Card>
   );
 }

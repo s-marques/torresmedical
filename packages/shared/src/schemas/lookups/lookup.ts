@@ -113,6 +113,7 @@ const PACIENTE = telas(
   'comercial-atendimento.mensalidades',
   'consultorio-assistencial.prontuarios',
   'consultorio-assistencial.atendimento-medico',
+  'consultorio-assistencial.receituarios',
   'financeiro.contas-receber',
   'regulatorio-qualidade.fiscal',
   'gestao-profissionais.salas',

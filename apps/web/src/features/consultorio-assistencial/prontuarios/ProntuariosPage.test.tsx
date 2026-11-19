@@ -242,4 +242,48 @@ describe('Prontuários (/prontuarios)', () => {
     expect(await screen.findByText('Sem alterações')).toBeVisible();
     expect(screen.getByText('Consulta')).toBeVisible();
   });
+
+  it('aba Receitas lista as prescrições do paciente (tela Receituários)', async () => {
+    const { user } = renderTela(
+      api({
+        rotas: {
+          [`${API}/${ID_PACIENTE}/receitas`]: () =>
+            pagina([
+              {
+                id: '00000000-0000-4000-8000-0000000000d1',
+                numero: 12,
+                tipo: 'AMARELA',
+                blocoId: '00000000-0000-4000-8000-0000000000e1',
+                pacienteId: ID_PACIENTE,
+                pacienteNome: PACIENTE.nome,
+                profissionalId: ID_PROFISSIONAL,
+                profissionalNome: 'Dra. Ana Teste',
+                atendimentoId: null,
+                medicacao: 'Medicamento X 10mg',
+                posologia: '1 comprimido à noite',
+                dataPrescricao: '2026-11-15',
+                createdAt: '2026-11-15T12:00:00.000Z',
+              },
+            ]),
+        },
+      }),
+    );
+    await user.click(await screen.findByText('Lucas Zanchet Fernandes'));
+    await user.click(await screen.findByRole('tab', { name: /Receitas/ }));
+
+    expect(await screen.findByText('Medicamento X 10mg')).toBeVisible();
+    expect(screen.getByText('nº 000012')).toBeVisible();
+    expect(screen.getByText('Amarela (A)')).toBeVisible();
+    expect(screen.getByText('1 comprimido à noite')).toBeVisible();
+    expect(screen.getByText('15/11/2026')).toBeVisible();
+  });
+
+  it('aba Receitas sem prescrições mostra o estado vazio', async () => {
+    const { user } = renderTela(
+      api({ rotas: { [`${API}/${ID_PACIENTE}/receitas`]: () => pagina([]) } }),
+    );
+    await user.click(await screen.findByText('Lucas Zanchet Fernandes'));
+    await user.click(await screen.findByRole('tab', { name: /Receitas/ }));
+    expect(await screen.findByText('Nenhuma receita registrada.')).toBeVisible();
+  });
 });
