@@ -1,34 +1,39 @@
 import { z } from 'zod';
 import { permissaoSchema } from '../../auth/permissoes';
+import { traduzirValidacao } from '../../i18n/validacao';
 import { preferenciasSchema } from '../configuracoes-gestao/preferencias';
+
+const msg = (chave: string, params?: Record<string, number>) => () =>
+  traduzirValidacao(`validacao.${chave}`, params);
 
 export const SENHA_MIN = 8;
 export const SENHA_MAX = 128;
 
 const email = z
   .string({
-    error: (issue) => (issue.input === undefined ? 'Informe o e-mail' : 'E-mail inválido'),
+    error: (issue) =>
+      issue.input === undefined ? msg('auth.informeEmail')() : msg('formato.email')(),
   })
   .trim()
   .toLowerCase()
-  .min(1, { error: 'Informe o e-mail' })
-  .pipe(z.email({ error: 'E-mail inválido' }));
+  .min(1, { error: msg('auth.informeEmail') })
+  .pipe(z.email({ error: msg('formato.email') }));
 
 /** Senha nova (redefinição e, depois, cadastro de usuário). */
 export const senhaNovaSchema = z
-  .string({ error: 'Informe a senha' })
+  .string({ error: msg('auth.informeSenha') })
   // `abort`: uma mensagem por vez, a do tamanho primeiro.
-  .min(SENHA_MIN, { error: `A senha deve ter no mínimo ${SENHA_MIN} caracteres`, abort: true })
-  .max(SENHA_MAX, { error: `A senha deve ter no máximo ${SENHA_MAX} caracteres`, abort: true })
-  .regex(/^(?=.*[A-Za-z])(?=.*\d)/, { error: 'A senha deve ter letras e números' });
+  .min(SENHA_MIN, { error: msg('auth.senhaMin', { min: SENHA_MIN }), abort: true })
+  .max(SENHA_MAX, { error: msg('auth.senhaMax', { max: SENHA_MAX }), abort: true })
+  .regex(/^(?=.*[A-Za-z])(?=.*\d)/, { error: msg('auth.senhaLetrasNumeros') });
 
 /** `POST /api/auth/login`. */
 export const loginSchema = z.strictObject({
   email,
   senha: z
-    .string({ error: 'Informe a senha' })
-    .min(1, { error: 'Informe a senha' })
-    .max(SENHA_MAX, { error: 'E-mail ou senha inválidos' }),
+    .string({ error: msg('auth.informeSenha') })
+    .min(1, { error: msg('auth.informeSenha') })
+    .max(SENHA_MAX, { error: msg('auth.credenciaisInvalidas') }),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -40,9 +45,7 @@ export type EsqueciSenhaInput = z.infer<typeof esqueciSenhaSchema>;
 
 /** `POST /api/auth/redefinir-senha`. */
 export const redefinirSenhaSchema = z.strictObject({
-  token: z
-    .string({ error: 'Link de redefinição inválido' })
-    .min(1, { error: 'Link de redefinição inválido' }),
+  token: z.string({ error: msg('auth.linkInvalido') }).min(1, { error: msg('auth.linkInvalido') }),
   senha: senhaNovaSchema,
 });
 
@@ -52,7 +55,7 @@ export type RedefinirSenhaInput = z.infer<typeof redefinirSenhaSchema>;
 export const redefinirSenhaFormSchema = z
   .object({ senha: senhaNovaSchema, confirmacao: z.string() })
   .refine((dados) => dados.senha === dados.confirmacao, {
-    error: 'As senhas não conferem',
+    error: msg('auth.senhasNaoConferem'),
     path: ['confirmacao'],
   });
 

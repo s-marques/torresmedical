@@ -158,7 +158,7 @@ describe('Unidades: padrão de API (e2e)', () => {
 
       expect(res.body).toMatchObject({
         code: 'VALIDATION_ERROR',
-        details: [{ field: 'id', message: 'Identificador inválido' }],
+        details: [expect.objectContaining({ field: 'id', message: 'Identificador inválido' })],
       });
     });
   });
@@ -192,9 +192,9 @@ describe('Unidades: padrão de API (e2e)', () => {
 
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'nome', message: 'Informe o nome' },
-          { field: 'ativo', message: 'Valor inválido' },
-          { field: 'extra', message: 'Campo não permitido' },
+          expect.objectContaining({ field: 'nome', message: 'Informe o nome' }),
+          expect.objectContaining({ field: 'ativo', message: 'Valor inválido' }),
+          expect.objectContaining({ field: 'extra', message: 'Campo não permitido' }),
         ]),
       );
       await expectNoAudit(prisma, { entity: 'Unidade' });
@@ -236,7 +236,12 @@ describe('Unidades: padrão de API (e2e)', () => {
 
       expect(res.body).toMatchObject({
         code: 'UNIDADE_DUPLICADA',
-        details: [{ field: 'nome', message: 'Já existe uma unidade com este nome' }],
+        details: [
+          expect.objectContaining({
+            field: 'nome',
+            message: 'Já existe uma unidade com este nome',
+          }),
+        ],
       });
       await expectNoAudit(prisma, { entity: 'Unidade' });
     });
@@ -258,7 +263,9 @@ describe('Unidades: padrão de API (e2e)', () => {
       expect(res.body).toMatchObject({
         statusCode: 422,
         code: 'EMPRESA_NAO_ENCONTRADA',
-        details: [{ field: 'empresaId', message: 'Empresa não encontrada' }],
+        details: [
+          expect.objectContaining({ field: 'empresaId', message: 'Empresa não encontrada' }),
+        ],
       });
     });
   });
@@ -290,7 +297,7 @@ describe('Unidades: padrão de API (e2e)', () => {
       const res = await http().patch(`${BASE}/${unidade.id}`).send({}).expect(400);
 
       expect(res.body.details).toEqual([
-        { field: '', message: 'Informe ao menos um campo para alterar' },
+        expect.objectContaining({ field: '', message: 'Informe ao menos um campo para alterar' }),
       ]);
     });
 
@@ -417,7 +424,7 @@ describe('Unidades: padrão de API (e2e)', () => {
         .expect(400);
 
       expect(res.body.details).toEqual([
-        { field: 'format', message: 'Formato deve ser xlsx ou pdf' },
+        expect.objectContaining({ field: 'format', message: 'Formato deve ser xlsx ou pdf' }),
         {
           field: 'columns',
           message: 'Colunas inválidas: senha. Disponíveis: nome, status, createdAt',

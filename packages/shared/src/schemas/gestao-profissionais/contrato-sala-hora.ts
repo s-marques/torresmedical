@@ -1,13 +1,13 @@
 import { z } from 'zod';
-import { mensagemObrigatoria } from '../common/obrigatorio';
+import { erroObrigatorio } from '../common/obrigatorio';
 
 export const CONTRATO_HORA_OBSERVACAO_MAX = 300;
 
 const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 const horaSchema = (rotulo: string) =>
   z
-    .string({ error: mensagemObrigatoria(rotulo, 'f') })
-    .min(1, { error: mensagemObrigatoria(rotulo, 'f') })
+    .string({ error: erroObrigatorio(rotulo, 'f') })
+    .min(1, { error: erroObrigatorio(rotulo, 'f') })
     .regex(HORA, { error: `${rotulo} inválida` });
 
 /**
@@ -17,8 +17,8 @@ const horaSchema = (rotulo: string) =>
 export const contratoHoraInputSchema = z
   .strictObject({
     data: z
-      .string({ error: mensagemObrigatoria('Data', 'f') })
-      .min(1, { error: mensagemObrigatoria('Data', 'f') })
+      .string({ error: erroObrigatorio('Data', 'f') })
+      .min(1, { error: erroObrigatorio('Data', 'f') })
       .pipe(z.iso.date({ error: 'Data inválida' })),
     entrada: horaSchema('Hora de entrada'),
     saida: horaSchema('Hora de saída'),
@@ -48,7 +48,7 @@ export const createContratoHoraSchema = contratoHoraInputSchema;
 /** `GET .../horas?mes=AAAA-MM`: o mês consultado. */
 export const listContratoHorasQuerySchema = z.object({
   mes: z
-    .string({ error: mensagemObrigatoria('Mês') })
+    .string({ error: erroObrigatorio('Mês') })
     .regex(/^\d{4}-(0[1-9]|1[0-2])$/, { error: 'Mês inválido. Use AAAA-MM' }),
 });
 export type ListContratoHorasQuery = z.infer<typeof listContratoHorasQuerySchema>;

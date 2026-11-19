@@ -1,8 +1,13 @@
+import { VALIDACAO_PT_BR } from '@torres/shared';
+import { BASE_PT_BR } from './base';
+
 /**
  * Textos em português (idioma padrão). Os nomes das telas e módulos do menu não ficam aqui:
  * vêm de `MENU` (`packages/shared`), que é a fonte em português.
  */
 export const PT_BR = {
+  ...BASE_PT_BR,
+  validacao: VALIDACAO_PT_BR,
   layout: {
     menuPrincipal: 'Menu principal',
     gestao: 'Gestão',

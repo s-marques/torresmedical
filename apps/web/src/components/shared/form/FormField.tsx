@@ -1,5 +1,6 @@
 import { useId, type ReactNode } from 'react';
 import { useController, useFormContext } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
@@ -48,10 +49,11 @@ function CampoPeriodo(props: Readonly<Extract<FormFieldProps, { tipo: 'periodo' 
   const de = useController({ name, control });
   const ate = useController({ name: nameAte, control });
   const id = useId();
+  const { t } = useTranslation();
   const erros = [de.fieldState.error?.message, ate.fieldState.error?.message];
   const extremos = [
-    { rotulo: 'De', controle: de.field, erro: erros[0] },
-    { rotulo: 'até', controle: ate.field, erro: erros[1] },
+    { rotulo: t('comum.de'), controle: de.field, erro: erros[0] },
+    { rotulo: t('comum.ate'), controle: ate.field, erro: erros[1] },
   ];
 
   return (

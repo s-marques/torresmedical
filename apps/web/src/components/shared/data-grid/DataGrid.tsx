@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-table';
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, MoreHorizontalIcon } from 'lucide-react';
 import { useMemo, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -27,6 +28,7 @@ import {
 } from '@/components/ui/table';
 import { apiFetch } from '@/lib/api/client';
 import { usePermissoes } from '@/lib/auth/use-sessao';
+import { i18next } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '../EmptyState';
 import { ChipsStatus, CampoBusca, FiltrosExtras, MenuColunas, MenuExportar } from './DataGridBarra';
@@ -77,16 +79,19 @@ export function DataGrid<T extends RowData>({
   colunas,
   idLinha = idPadrao,
   consultaFixa,
-  busca = 'Buscar...',
+  busca: buscaInformada,
   status,
   filtros,
   exportacao,
   acoes,
   aoClicarLinha,
-  mensagemVazio = 'Nenhum resultado.',
+  mensagemVazio: mensagemVazioInformada,
   tamanhosPagina = TAMANHOS_PAGINA,
   resumo,
 }: Readonly<DataGridProps<T>>) {
+  const { t } = useTranslation();
+  const busca = buscaInformada ?? t('grid.buscar');
+  const mensagemVazio = mensagemVazioInformada ?? t('grid.nenhumResultado');
   const { estado, alterar } = useEstadoGrid({
     parametros: parametrosDosFiltros(status, filtros),
     tamanhos: tamanhosPagina,
@@ -132,7 +137,7 @@ export function DataGrid<T extends RowData>({
   const linhas = table.getRowModel().rows;
 
   return (
-    <section className="grid gap-4" aria-label="Listagem">
+    <section className="grid gap-4" aria-label={t('grid.listagem')}>
       {status && (
         <ChipsStatus
           status={status}
@@ -263,7 +268,7 @@ function montarDefinicoes<T extends RowData>(
   if (acoes) {
     definicoes.push({
       id: COLUNA_ACOES,
-      header: 'Ações',
+      header: i18next.t('comum.acoes'),
       enableHiding: false,
       cell: ({ row }) => <AcoesDaLinha acoes={acoes(row.original)} />,
     });
@@ -279,7 +284,7 @@ function Cabecalho<T>({
   if (!coluna) {
     return (
       <TableHead className="w-12">
-        <span className="sr-only">Ações</span>
+        <span className="sr-only">{i18next.t('comum.acoes')}</span>
       </TableHead>
     );
   }
@@ -321,6 +326,7 @@ function CorpoEspecial({
   mensagemVazio: string;
   onTentarDeNovo: () => void;
 }>) {
+  const { t } = useTranslation();
   if (carregando) {
     return Array.from({ length: LINHAS_CARREGANDO }, (_, i) => (
       <TableRow key={i} aria-hidden>
@@ -336,9 +342,9 @@ function CorpoEspecial({
       <TableCell colSpan={colunas} className="h-24 text-center">
         {erro ? (
           <div role="alert" className="flex flex-col items-center gap-2 text-sm text-destructive">
-            Não foi possível carregar os dados.
+            {t('grid.erroCarregar')}
             <Button type="button" variant="outline" size="sm" onClick={onTentarDeNovo}>
-              Tentar novamente
+              {t('comum.tentarNovamente')}
             </Button>
           </div>
         ) : (
@@ -350,13 +356,14 @@ function CorpoEspecial({
 }
 
 function AcoesDaLinha({ acoes }: Readonly<{ acoes: AcaoLinha[] }>) {
+  const { t } = useTranslation();
   const permissoes = usePermissoes();
   const permitidas = acoes.filter((acao) => !acao.permissao || permissoes.includes(acao.permissao));
   if (permitidas.length === 0) return null;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button type="button" variant="ghost" size="icon-sm" aria-label="Ações">
+        <Button type="button" variant="ghost" size="icon-sm" aria-label={t('comum.acoes')}>
           <MoreHorizontalIcon aria-hidden />
         </Button>
       </DropdownMenuTrigger>

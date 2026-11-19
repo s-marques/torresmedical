@@ -130,9 +130,9 @@ describe('Plano de Contas (e2e)', () => {
     it('400 com código, tipo e nome ausentes, sem auditar', async () => {
       const res = await http().post(BASE).send({}).expect(400);
       expect(res.body.details).toEqual([
-        { field: 'codigo', message: 'Código é obrigatório.' },
-        { field: 'tipo', message: 'Tipo é obrigatório.' },
-        { field: 'nome', message: 'Nome é obrigatório.' },
+        expect.objectContaining({ field: 'codigo', message: 'Código é obrigatório.' }),
+        expect.objectContaining({ field: 'tipo', message: 'Tipo é obrigatório.' }),
+        expect.objectContaining({ field: 'nome', message: 'Nome é obrigatório.' }),
       ]);
       await expectNoAudit(prisma, { entity: ENTITY });
     });

@@ -109,7 +109,9 @@ describe('Baixa de Insumos (e2e)', () => {
     it('400: sem insumo, com as mensagens do formulário, sem auditar', async () => {
       const res = await http().post(BASE).send({}).expect(400);
       expect(res.body.details).toEqual(
-        expect.arrayContaining([{ field: 'itens', message: 'Selecione ao menos um insumo.' }]),
+        expect.arrayContaining([
+          expect.objectContaining({ field: 'itens', message: 'Selecione ao menos um insumo.' }),
+        ]),
       );
       await expectNoAudit(prisma, { entity: ENTITY });
     });
@@ -121,7 +123,10 @@ describe('Baixa de Insumos (e2e)', () => {
         .send({ itens: [{ produtoId: luva.id, quantidade: 0 }] })
         .expect(400);
       expect(quantidade.body.details).toEqual([
-        { field: 'itens.0.quantidade', message: 'A quantidade deve ser maior que zero' },
+        expect.objectContaining({
+          field: 'itens.0.quantidade',
+          message: 'A quantidade deve ser maior que zero',
+        }),
       ]);
       const repetido = await http()
         .post(BASE)

@@ -125,9 +125,12 @@ describe('Usuários (e2e)', () => {
 
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'nome', message: 'Nome é obrigatório.' },
-          { field: 'email', message: 'Email é obrigatório.' },
-          { field: 'senha', message: 'A senha deve ter no mínimo 8 caracteres' },
+          expect.objectContaining({ field: 'nome', message: 'Nome é obrigatório.' }),
+          expect.objectContaining({ field: 'email', message: 'Email é obrigatório.' }),
+          expect.objectContaining({
+            field: 'senha',
+            message: 'A senha deve ter no mínimo 8 caracteres',
+          }),
         ]),
       );
       await expectNoAudit(prisma, { entity: 'Usuario' });
@@ -261,7 +264,12 @@ describe('Usuários (e2e)', () => {
 
       expect(res.body).toMatchObject({
         code: 'PROFISSIONAL_INVALIDO',
-        details: [{ field: 'profissionalIds', message: 'Profissional não encontrado' }],
+        details: [
+          expect.objectContaining({
+            field: 'profissionalIds',
+            message: 'Profissional não encontrado',
+          }),
+        ],
       });
       expect(await prisma.usuario.count({ where: { email: 'medico@example.com' } })).toBe(0);
       await expectNoAudit(prisma, { entity: 'Usuario' });

@@ -1,14 +1,23 @@
-import { IDIOMAS, type Idioma, type ModuloMenu, type TelaMenu } from '@torres/shared';
+import {
+  definirTradutorValidacao,
+  IDIOMAS,
+  type Idioma,
+  type MensagemValidacao,
+  type ModuloMenu,
+  type TelaMenu,
+} from '@torres/shared';
 import i18next, { type TFunction } from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { EN } from './locales/en';
 import { ES } from './locales/es';
 import { PT_BR } from './locales/pt-BR';
+import { ERROS_API_EN, ERROS_API_ES, ROTULOS_EN, ROTULOS_ES } from './locales/validacao';
 
 /**
  * Idiomas da interface (issue #30): português (padrão), inglês e espanhol, escolhidos na aba
- * Aparência da tela Configurações. Por enquanto só o layout (menu, cabeçalho, busca) e a
- * própria tela Configurações são traduzidos; as demais telas seguem em português.
+ * Aparência da tela Configurações. Traduzidos: layout, componentes compartilhados, login,
+ * páginas de erro, validação e erros da API (#205) e a tela Configurações. As telas dos
+ * módulos são traduzidas nas issues com a label `i18n`.
  */
 export const IDIOMA_PADRAO: Idioma = 'pt-BR';
 
@@ -41,11 +50,13 @@ function salvarIdioma(idioma: Idioma): void {
 
 void i18next.use(initReactI18next).init({
   resources: {
-    'pt-BR': { translation: PT_BR },
-    en: { translation: EN },
-    es: { translation: ES },
+    'pt-BR': { translation: PT_BR, rotulos: {}, errosApi: {} },
+    en: { translation: EN, rotulos: ROTULOS_EN, errosApi: ERROS_API_EN },
+    es: { translation: ES, rotulos: ROTULOS_ES, errosApi: ERROS_API_ES },
   },
   lng: lerIdiomaSalvo(),
+  ns: ['translation', 'rotulos', 'errosApi'],
+  defaultNS: 'translation',
   fallbackLng: IDIOMA_PADRAO,
   supportedLngs: [...IDIOMAS],
   interpolation: { escapeValue: false },
@@ -73,3 +84,62 @@ export function nomeTela(t: TFunction, tela: Pick<TelaMenu, 'id' | 'nome'>): str
 }
 
 export { i18next };
+
+/**
+ * Rótulo de campo no idioma atual. A chave é o rótulo em português, como está no schema
+ * (ex.: "Nome"); sem tradução, fica o português.
+ */
+export function traduzirRotulo(rotulo: string): string {
+  return i18next.t(rotulo, {
+    ns: 'rotulos',
+    keySeparator: false,
+    nsSeparator: false,
+    defaultValue: rotulo,
+  });
+}
+
+/** Mensagem de erro da API pelo `code`; sem tradução (e sempre em português), a do servidor. */
+export function traduzirErroApi(code: string, mensagemServidor: string): string {
+  return i18next.t(code, { ns: 'errosApi', defaultValue: mensagemServidor });
+}
+
+/** Mensagens de validação por chave (`packages/shared`), no idioma atual. */
+export function traduzirMensagemValidacao({ chave, params = {} }: MensagemValidacao): string {
+  const { campo, genero, ...resto } = params;
+  return i18next.t(chave, {
+    ...resto,
+    ...(campo === undefined ? {} : { campo: traduzirRotulo(String(campo)) }),
+    ...(genero === 'f' ? { context: 'f' } : {}),
+  });
+}
+
+definirTradutorValidacao(traduzirMensagemValidacao);
+
+/** Idioma atual da interface (para `Intl`: datas e números seguem o idioma; a moeda é sempre R$). */
+export function idiomaAtual(): Idioma {
+  return IDIOMAS.find((idioma) => idioma === i18next.language) ?? IDIOMA_PADRAO;
+}
+
+const formatadores = new Map<string, Intl.DateTimeFormat | Intl.NumberFormat>();
+
+/** `Intl.DateTimeFormat` do idioma atual, guardado por idioma e opções. */
+export function formatoData(opcoes: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+  const chave = `d:${idiomaAtual()}:${JSON.stringify(opcoes)}`;
+  let formato = formatadores.get(chave);
+  if (!formato) {
+    formato = new Intl.DateTimeFormat(idiomaAtual(), opcoes);
+    formatadores.set(chave, formato);
+  }
+  return formato as Intl.DateTimeFormat;
+}
+
+/** `Intl.NumberFormat` do idioma atual, guardado por idioma e opções. */
+export function formatoNumero(opcoes: Intl.NumberFormatOptions = {}): Intl.NumberFormat {
+  const chave = `n:${idiomaAtual()}:${JSON.stringify(opcoes)}`;
+  let formato = formatadores.get(chave);
+  if (!formato) {
+    formato = new Intl.NumberFormat(idiomaAtual(), opcoes);
+    formatadores.set(chave, formato);
+  }
+  return formato as Intl.NumberFormat;
+}

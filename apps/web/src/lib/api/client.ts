@@ -1,4 +1,4 @@
-import { ApiRequestError, ERRO_CONEXAO, erroDaResposta } from './api-error';
+import { ApiRequestError, erroConexao, erroDaResposta } from './api-error';
 
 type Query = Record<string, string | number | boolean | null | undefined>;
 
@@ -129,7 +129,7 @@ async function enviar<T>(
     });
   } catch (error) {
     if (signal?.aborted) throw error;
-    throw new ApiRequestError(0, null, ERRO_CONEXAO);
+    throw new ApiRequestError(0, null, erroConexao());
   }
 }
 

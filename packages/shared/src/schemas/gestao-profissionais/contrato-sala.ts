@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { exportQuerySchema, listQuerySchema } from '../common/list-query';
-import { mensagemObrigatoria } from '../common/obrigatorio';
+import { erroObrigatorio, mensagemObrigatoria } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 import { DIAS_SEMANA } from './profissional-agenda';
 
@@ -110,9 +110,7 @@ export function abreviarDiaSemana(diaSemana: number): string {
 
 const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 const horaSchema = (rotulo: string) =>
-  z
-    .string({ error: mensagemObrigatoria(rotulo, 'f') })
-    .regex(HORA, { error: `${rotulo} inválida` });
+  z.string({ error: erroObrigatorio(rotulo, 'f') }).regex(HORA, { error: `${rotulo} inválida` });
 
 export const contratoDiaSchema = z.strictObject({
   diaSemana: z
@@ -127,8 +125,8 @@ export type ContratoDia = z.infer<typeof contratoDiaSchema>;
 
 const dataSchema = (rotulo: string, genero: 'm' | 'f') =>
   z
-    .string({ error: mensagemObrigatoria(rotulo, genero) })
-    .min(1, { error: mensagemObrigatoria(rotulo, genero) })
+    .string({ error: erroObrigatorio(rotulo, genero) })
+    .min(1, { error: erroObrigatorio(rotulo, genero) })
     .pipe(z.iso.date({ error: `${rotulo} inválida` }));
 
 const valorSchema = z
@@ -138,8 +136,8 @@ const valorSchema = z
 
 const uuidObrigatorio = (rotulo: string, genero: 'm' | 'f' = 'm') =>
   z
-    .string({ error: mensagemObrigatoria(rotulo, genero) })
-    .min(1, { error: mensagemObrigatoria(rotulo, genero) })
+    .string({ error: erroObrigatorio(rotulo, genero) })
+    .min(1, { error: erroObrigatorio(rotulo, genero) })
     .pipe(z.uuid({ error: `${rotulo} inválid${genero === 'f' ? 'a' : 'o'}` }));
 
 /**
@@ -263,8 +261,8 @@ const motivoSchema = z
 
 const dataEncerramento = (rotulo: string) =>
   z
-    .string({ error: mensagemObrigatoria(rotulo, 'f') })
-    .min(1, { error: mensagemObrigatoria(rotulo, 'f') })
+    .string({ error: erroObrigatorio(rotulo, 'f') })
+    .min(1, { error: erroObrigatorio(rotulo, 'f') })
     .pipe(z.iso.date({ error: `${rotulo} inválida` }));
 
 /**

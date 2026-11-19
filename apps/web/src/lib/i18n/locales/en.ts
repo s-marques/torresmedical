@@ -1,6 +1,10 @@
+import { BASE_EN } from './base';
 import type { Textos } from './pt-BR';
+import { VALIDACAO_EN } from './validacao';
 
 export const EN: Textos & { menu: unknown } = {
+  ...BASE_EN,
+  validacao: VALIDACAO_EN,
   layout: {
     menuPrincipal: 'Main menu',
     gestao: 'Management',

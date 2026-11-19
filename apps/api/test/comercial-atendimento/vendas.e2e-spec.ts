@@ -285,7 +285,9 @@ describe('Vendas/PDV (e2e)', () => {
       for (const corpo of [{}, { itens: [] }]) {
         const res = await http().post(BASE).send(corpo).expect(400);
         expect(res.body.details).toEqual(
-          expect.arrayContaining([{ field: 'itens', message: MSG_VENDA_SEM_ITENS }]),
+          expect.arrayContaining([
+            expect.objectContaining({ field: 'itens', message: MSG_VENDA_SEM_ITENS }),
+          ]),
         );
       }
       await expectNoAudit(prisma, { entity: 'Venda' });

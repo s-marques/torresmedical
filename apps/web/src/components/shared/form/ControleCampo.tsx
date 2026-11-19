@@ -19,6 +19,7 @@ import {
   moedaDoTexto,
   type TipoMascara,
 } from '@/lib/forms/mascaras';
+import { i18next } from '@/lib/i18n';
 import { EntityMultiSelect } from '../EntityMultiSelect';
 import { EntitySelect } from '../EntitySelect';
 import type { AriaCampo, FormFieldProps } from './tipos';
@@ -100,7 +101,7 @@ const RENDERIZADORES: Record<
     <div className="flex items-center gap-2">
       <input
         type="color"
-        aria-label={`Escolher ${props.label}`}
+        aria-label={i18next.t('comum.escolher', { campo: props.label })}
         className="h-9 w-12 shrink-0 cursor-pointer rounded-md border bg-transparent p-1"
         value={CORHEX.test(campo.value ?? '') ? campo.value : COR_NEUTRA}
         onChange={(evento) => campo.onChange(evento.target.value)}
@@ -162,7 +163,7 @@ const RENDERIZADORES: Record<
       disabled={props.disabled}
     >
       <SelectTrigger {...aria} ref={campo.ref} className="w-full">
-        <SelectValue placeholder={props.placeholder ?? 'Selecione'} />
+        <SelectValue placeholder={props.placeholder ?? i18next.t('comum.selecione')} />
       </SelectTrigger>
       <SelectContent>
         {props.tipo === 'select' &&

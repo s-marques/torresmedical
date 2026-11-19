@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { listQuerySchema } from '../common/list-query';
-import { mensagemObrigatoria } from '../common/obrigatorio';
-import { paginatedResponseSchema } from '../common/pagination';
 import {
   agendamentoStatusSchema,
   type AgendamentoStatus,
 } from '../comercial-atendimento/agendamento';
 import { pacienteSexoSchema } from '../comercial-atendimento/paciente';
+import { listQuerySchema } from '../common/list-query';
+import { erroObrigatorio } from '../common/obrigatorio';
+import { paginatedResponseSchema } from '../common/pagination';
 import { lookupItemSchema } from '../lookups/lookup';
 import { atendimentoStatusSchema } from './prontuario';
 
@@ -64,9 +64,9 @@ export const listAtendimentoMedicoQuerySchema = listQuerySchema({
   defaultSort: 'inicio:asc',
   filters: {
     data: z
-      .string({ error: mensagemObrigatoria('Data', 'f') })
+      .string({ error: erroObrigatorio('Data', 'f') })
       .trim()
-      .min(1, { error: mensagemObrigatoria('Data', 'f') })
+      .min(1, { error: erroObrigatorio('Data', 'f') })
       .refine(dataValida, { error: 'Data inválida' }),
     profissionalId: z.uuid({ error: 'Profissional inválido' }).optional(),
     status: z.enum(ATENDIMENTO_MEDICO_STATUS_FILTRO, { error: 'Status inválido' }).optional(),
@@ -142,9 +142,9 @@ export const EVOLUCAO_TEXTO_MAX = 10_000;
 export const evolucaoInputSchema = z.strictObject({
   tipo: evolucaoTipoSchema.default('EVOLUCAO'),
   texto: z
-    .string({ error: mensagemObrigatoria('Evolução', 'f') })
+    .string({ error: erroObrigatorio('Evolução', 'f') })
     .trim()
-    .min(1, { error: mensagemObrigatoria('Evolução', 'f') })
+    .min(1, { error: erroObrigatorio('Evolução', 'f') })
     .max(EVOLUCAO_TEXTO_MAX, {
       error: `A evolução deve ter no máximo ${EVOLUCAO_TEXTO_MAX} caracteres`,
     }),
@@ -216,9 +216,9 @@ export const receitaInputSchema = z.strictObject({
     })
     .default(30),
   texto: z
-    .string({ error: mensagemObrigatoria('Receita', 'f') })
+    .string({ error: erroObrigatorio('Receita', 'f') })
     .trim()
-    .min(1, { error: mensagemObrigatoria('Receita', 'f') })
+    .min(1, { error: erroObrigatorio('Receita', 'f') })
     .max(RECEITA_TEXTO_MAX, {
       error: `A receita deve ter no máximo ${RECEITA_TEXTO_MAX} caracteres`,
     }),
@@ -286,10 +286,10 @@ export const RECEBIMENTO_VALOR_MAX = 999_999_999;
 /** Corpo de `POST .../atendimento-medico/:agendamentoId/recebimentos` ("Registrar Pagamento"). */
 export const recebimentoInputSchema = z.strictObject({
   valor: z
-    .number({ error: mensagemObrigatoria('Valor a receber') })
+    .number({ error: erroObrigatorio('Valor a receber') })
     .positive({ error: 'O valor a receber deve ser maior que zero' })
     .max(RECEBIMENTO_VALOR_MAX, { error: 'Valor inválido' }),
-  formaPagamentoId: z.uuid({ error: mensagemObrigatoria('Forma de pagamento', 'f') }),
+  formaPagamentoId: z.uuid({ error: erroObrigatorio('Forma de pagamento', 'f') }),
 });
 export type RecebimentoFormulario = z.input<typeof recebimentoInputSchema>;
 export type CreateRecebimentoInput = z.output<typeof recebimentoInputSchema>;

@@ -1,6 +1,7 @@
 import './zod-pt-br';
 
 export * from './auth/permissoes';
+export * from './i18n/validacao';
 export * from './menu/menu';
 export * from './schemas/arquivos/arquivo';
 export * from './schemas/auditoria/audit-log';

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { listQuerySchema } from '../common/list-query';
+import { erroObrigatorio, mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema, paginationQuerySchema } from '../common/pagination';
-import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
 import { uuidOpcional } from './negocio';
 
 /**
@@ -91,7 +91,7 @@ function exigirCamposDoFiltro(valor: FiltroDestinatarios, ctx: z.RefinementCtx):
   }
 }
 
-const canalObrigatorio = z.uuid({ error: mensagemObrigatoria('Canal WhatsApp') });
+const canalObrigatorio = z.uuid({ error: erroObrigatorio('Canal WhatsApp') });
 const mensagemCampo = textoObrigatorio('Mensagem', { genero: 'f', max: CAMPANHA_MENSAGEM_MAX });
 const tipoEnvioCampo = z
   .enum(CAMPANHA_TIPOS_ENVIO, { error: 'Tipo de envio inválido' })
@@ -241,8 +241,8 @@ export const mensagemAutomaticaInputSchema = z
     canalId: canalObrigatorio,
     ...filtroDestinatariosCampos,
     horario: z
-      .string({ error: mensagemObrigatoria('Horário') })
-      .min(1, { error: mensagemObrigatoria('Horário'), abort: true })
+      .string({ error: erroObrigatorio('Horário') })
+      .min(1, { error: erroObrigatorio('Horário'), abort: true })
       .regex(HORA, { error: 'Horário inválido (HH:MM)' }),
     diasSemana: z
       .array(z.number().int().min(0).max(6), { error: 'Dias da semana inválidos' })

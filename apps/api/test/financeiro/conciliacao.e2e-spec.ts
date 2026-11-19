@@ -158,8 +158,8 @@ describe('Conciliação (e2e)', () => {
     it('POST 400 com nome e tipo ausentes (mensagem padrão), sem auditar', async () => {
       const res = await http().post(CONTAS).send({}).expect(400);
       expect(res.body.details).toEqual([
-        { field: 'nome', message: 'Nome é obrigatório.' },
-        { field: 'tipo', message: 'Tipo é obrigatório.' },
+        expect.objectContaining({ field: 'nome', message: 'Nome é obrigatório.' }),
+        expect.objectContaining({ field: 'tipo', message: 'Tipo é obrigatório.' }),
       ]);
       await expectNoAudit(prisma, { entity: ENTITY });
     });
@@ -260,7 +260,9 @@ describe('Conciliação (e2e)', () => {
     it('400 sem período, com período invertido ou tipo inválido; 403 sem permissão', async () => {
       const semPeriodo = await http().get(LANCAMENTOS).expect(400);
       expect(semPeriodo.body.details).toEqual(
-        expect.arrayContaining([{ field: 'de', message: 'Data inicial é obrigatória.' }]),
+        expect.arrayContaining([
+          expect.objectContaining({ field: 'de', message: 'Data inicial é obrigatória.' }),
+        ]),
       );
       await http().get(LANCAMENTOS).query({ de: '2026-10-30', ate: '2026-10-01' }).expect(400);
       await http()

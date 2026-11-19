@@ -137,7 +137,12 @@ describe('Auditoria (e2e)', () => {
 
       expect(res.body).toMatchObject({
         code: 'DUPLICATE',
-        details: [{ field: 'documento', message: 'Já existe um registro com este valor' }],
+        details: [
+          expect.objectContaining({
+            field: 'documento',
+            message: 'Já existe um registro com este valor',
+          }),
+        ],
       });
       await expectNoAudit(prisma, { entity: 'Empresa' });
     });

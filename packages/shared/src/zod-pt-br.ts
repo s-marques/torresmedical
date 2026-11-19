@@ -1,68 +1,58 @@
 import { z } from 'zod';
+import { traduzirValidacao, type ParametrosValidacao } from './i18n/validacao';
 
 type Issue = Parameters<NonNullable<z.core.$ZodConfig['customError']>>[0];
 
-const FORMAT_MESSAGES: Readonly<Record<string, string>> = {
-  email: 'E-mail inválido',
-  uuid: 'Identificador inválido',
-  guid: 'Identificador inválido',
-  url: 'URL inválida',
-  datetime: 'Data/hora inválida',
-  date: 'Data inválida',
-  time: 'Hora inválida',
-};
-
-const COMPARISON: Readonly<Record<string, string>> = {
-  'min:true': 'maior ou igual a',
-  'min:false': 'maior que',
-  'max:true': 'menor ou igual a',
-  'max:false': 'menor que',
-};
+const FORMATOS = new Set(['email', 'uuid', 'guid', 'url', 'datetime', 'date', 'time']);
 
 function isMissing(input: unknown): boolean {
   return input === undefined || input === null;
 }
 
-function plural(count: number | bigint, singular: string, pluralForm: string): string {
-  return `${count} ${Number(count) === 1 ? singular : pluralForm}`;
+function t(chave: string, params?: ParametrosValidacao): string {
+  return traduzirValidacao(`validacao.${chave}`, params);
+}
+
+function chaveComparacao(min: boolean, inclusive: boolean): string {
+  if (min) return inclusive ? 'maiorOuIgual' : 'maior';
+  return inclusive ? 'menorOuIgual' : 'menor';
 }
 
 function sizeMessage(issue: Issue & { code: 'too_small' | 'too_big' }): string {
   const min = issue.code === 'too_small';
   const limit = min ? issue.minimum : issue.maximum;
-  const inclusive = issue.inclusive ?? true;
   switch (issue.origin) {
     case 'string':
-      return `Deve ter no ${min ? 'mínimo' : 'máximo'} ${plural(limit, 'caractere', 'caracteres')}`;
+      return t(min ? 'textoMin' : 'textoMax', { count: Number(limit) });
     case 'array':
     case 'set':
-      return `Deve ter no ${min ? 'mínimo' : 'máximo'} ${plural(limit, 'item', 'itens')}`;
+      return t(min ? 'itensMin' : 'itensMax', { count: Number(limit) });
     default:
-      return `Deve ser ${COMPARISON[`${min ? 'min' : 'max'}:${inclusive}`]} ${String(limit)}`;
+      return t(chaveComparacao(min, issue.inclusive ?? true), { valor: String(limit) });
   }
 }
 
 /**
- * Mensagens padrão de validação em português do Brasil (CLAUDE.md, seção 3).
- * Mensagens definidas no próprio schema têm precedência.
+ * Mensagens padrão de validação (CLAUDE.md, seção 3), por chave: em português no back e no
+ * idioma do usuário no front (issue #205). Mensagens definidas no próprio schema têm precedência.
  */
 export function zodErrorPtBr(issue: Issue): string | undefined {
   switch (issue.code) {
     case 'invalid_type':
-      return isMissing(issue.input) ? 'Campo obrigatório' : 'Valor inválido';
+      return isMissing(issue.input) ? t('campoObrigatorio') : t('valorInvalido');
     case 'too_small':
     case 'too_big':
       return sizeMessage(issue);
     case 'invalid_format':
-      return FORMAT_MESSAGES[issue.format] ?? 'Formato inválido';
+      return FORMATOS.has(issue.format) ? t(`formato.${issue.format}`) : t('formatoInvalido');
     case 'invalid_value':
-      return isMissing(issue.input) ? 'Campo obrigatório' : 'Opção inválida';
+      return isMissing(issue.input) ? t('campoObrigatorio') : t('opcaoInvalida');
     case 'not_multiple_of':
-      return `Deve ser múltiplo de ${String(issue.divisor)}`;
+      return t('multiploDe', { valor: String(issue.divisor) });
     case 'unrecognized_keys':
-      return `Campo não permitido: ${issue.keys.join(', ')}`;
+      return t('camposNaoPermitidos', { campos: issue.keys.join(', ') });
     default:
-      return 'Valor inválido';
+      return t('valorInvalido');
   }
 }
 

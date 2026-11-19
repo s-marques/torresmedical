@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { exportQuerySchema, listQuerySchema, searchSchema } from '../common/list-query';
-import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
+import { erroObrigatorio, mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema, paginationQuerySchema } from '../common/pagination';
 
 export const PACOTE_NOME_MAX = 200;
@@ -90,12 +90,12 @@ export type PacoteItemInput = z.output<typeof pacoteItemInputSchema>;
  */
 export const pacoteInputSchema = z
   .strictObject({
-    pacienteId: z.uuid({ error: mensagemObrigatoria('Cliente') }),
+    pacienteId: z.uuid({ error: erroObrigatorio('Cliente') }),
     nome: textoObrigatorio('Nome do Pacote', { max: PACOTE_NOME_MAX }),
     descricao: textoOpcional('A descrição'),
     itens: z
-      .array(pacoteItemInputSchema, { error: MSG_PACOTE_SEM_ITENS })
-      .min(1, { error: MSG_PACOTE_SEM_ITENS })
+      .array(pacoteItemInputSchema, { error: erroObrigatorio('Itens / Procedimentos') })
+      .min(1, { error: erroObrigatorio('Itens / Procedimentos') })
       .max(PACOTE_ITENS_MAX, { error: `Informe no máximo ${PACOTE_ITENS_MAX} itens` }),
     valorTotal: z
       .number({ error: 'Informe um valor válido' })
@@ -128,7 +128,7 @@ export function somarItensPacote(
 
 /** `POST /api/comercial-atendimento/pacotes/:id/usos`: modal "Registrar Uso de Sessão". */
 export const registrarUsoPacoteSchema = z.strictObject({
-  profissionalId: z.uuid({ error: mensagemObrigatoria('Profissional') }),
+  profissionalId: z.uuid({ error: erroObrigatorio('Profissional') }),
   quantidade: z
     .number({ error: 'Informe a quantidade' })
     .int({ error: 'A quantidade deve ser um número inteiro' })

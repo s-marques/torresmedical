@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import {
   catalogoRelatoriosSchema,
   paginaRelatorioSchema,
@@ -5,17 +6,18 @@ import {
   type RelatorioResumo,
   type TelaRelatorios,
 } from '@torres/shared';
-import { useQuery } from '@tanstack/react-query';
+import type { TFunction } from 'i18next';
 import { BarChart3Icon } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiFetch } from '@/lib/api/client';
-import { DataGrid } from '../data-grid/DataGrid';
 import { EmptyState } from '../EmptyState';
+import { PageHeader, type ItemBreadcrumb } from '../PageHeader';
+import { DataGrid } from '../data-grid/DataGrid';
 import { FormField } from '../form/FormField';
 import { FormLayout } from '../form/FormLayout';
 import { useFormulario } from '../form/use-formulario';
-import { PageHeader, type ItemBreadcrumb } from '../PageHeader';
 import { colunasDoRelatorio } from './colunas-relatorio';
 import { useSelecaoRelatorio } from './use-selecao-relatorio';
 
@@ -38,6 +40,7 @@ const SUFIXO = '.relatorios';
  * o período, sem botão; relatório e período ficam na URL.
  */
 export function ReportPage({ tela, titulo, descricao, breadcrumb }: Readonly<ReportPageProps>) {
+  const { t } = useTranslation();
   const url = `/api/${tela.slice(0, -SUFIXO.length)}/relatorios`;
   const catalogo = useQuery({
     queryKey: ['relatorios', url],
@@ -71,20 +74,20 @@ export function ReportPage({ tela, titulo, descricao, breadcrumb }: Readonly<Rep
     <div className="grid gap-6">
       <PageHeader titulo={titulo} descricao={descricao} breadcrumb={breadcrumb} />
       <section
-        aria-label="Seleção do relatório"
+        aria-label={t('relatorio.selecao')}
         className="rounded-xl border bg-card p-4 shadow-xs"
       >
         <FormLayout form={form} onSubmit={aplicar} acoes={null} colunas={3}>
           <FormField
             name="relatorio"
-            label="Relatório"
+            label={t('relatorio.relatorio')}
             tipo="select"
             opcoes={opcoes}
-            placeholder={placeholderDoSeletor(catalogo.isPending, opcoes.length)}
+            placeholder={placeholderDoSeletor(t, catalogo.isPending, opcoes.length)}
             disabled={catalogo.isPending}
           />
-          <FormField name="de" label="De" tipo="data" obrigatorio />
-          <FormField name="ate" label="Até" tipo="data" obrigatorio />
+          <FormField name="de" label={t('relatorio.de')} tipo="data" obrigatorio />
+          <FormField name="ate" label={t('relatorio.ate')} tipo="data" obrigatorio />
         </FormLayout>
       </section>
       <Resultado
@@ -98,9 +101,9 @@ export function ReportPage({ tela, titulo, descricao, breadcrumb }: Readonly<Rep
   );
 }
 
-function placeholderDoSeletor(carregando: boolean, opcoes: number): string {
-  if (carregando) return 'Carregando...';
-  return opcoes > 0 ? 'Selecione um relatório...' : 'Nenhum relatório disponível';
+function placeholderDoSeletor(t: TFunction, carregando: boolean, opcoes: number): string {
+  if (carregando) return t('relatorio.carregando');
+  return t(opcoes > 0 ? 'relatorio.selecioneReticencias' : 'relatorio.nenhumDisponivel');
 }
 
 function Resultado({
@@ -117,13 +120,15 @@ function Resultado({
   periodo?: { de: string; ate: string };
 }>) {
   const colunas = useMemo(() => relatorio && colunasDoRelatorio(relatorio), [relatorio]);
-  if (carregando) return <Skeleton className="h-40 w-full" aria-label="Carregando relatórios" />;
+  const { t } = useTranslation();
+  if (carregando)
+    return <Skeleton className="h-40 w-full" aria-label={t('relatorio.carregandoRelatorios')} />;
   if (!relatorio || !colunas) {
     return (
       <EmptyState
         icone={BarChart3Icon}
-        titulo="Selecione um relatório"
-        descricao="Escolha o relatório e o período para ver o resultado."
+        titulo={t('relatorio.selecione')}
+        descricao={t('relatorio.selecioneDescricao')}
       />
     );
   }
@@ -143,7 +148,7 @@ function Resultado({
         permissao: `${tela}.exportar`,
         nomeArquivo: `relatorio-${relatorio.id.toLowerCase()}`,
       }}
-      mensagemVazio="Nenhum registro no período."
+      mensagemVazio={t('relatorio.nenhumRegistro')}
     />
   );
 }

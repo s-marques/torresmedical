@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { exportQuerySchema, listQuerySchema, searchSchema } from '../common/list-query';
+import { erroObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
-import { mensagemObrigatoria } from '../common/obrigatorio';
 import {
   ATIVIDADE_STATUS,
   ATIVIDADE_TIPOS,
@@ -25,7 +25,7 @@ export const ATIVIDADE_DESCRICAO_MAX = 2000;
  */
 export const atividadeInputSchema = z.strictObject({
   ...camposAgendamentoAtividade,
-  tipo: z.enum(ATIVIDADE_TIPOS, { error: mensagemObrigatoria('Tipo') }).default('TAREFA'),
+  tipo: z.enum(ATIVIDADE_TIPOS, { error: erroObrigatorio('Tipo') }).default('TAREFA'),
   negocioId: uuidOpcional('Negócio inválido'),
   descricao: z
     .string()

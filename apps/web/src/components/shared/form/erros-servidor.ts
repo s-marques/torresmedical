@@ -1,5 +1,5 @@
 import type { FieldValues, Path, UseFormSetError } from 'react-hook-form';
-import { ApiRequestError, ERRO_INESPERADO_API } from '@/lib/api/api-error';
+import { ApiRequestError, erroInesperadoApi } from '@/lib/api/api-error';
 import { errosPorCampo } from '@/lib/api/tratar-erro';
 
 /** Chave do erro geral do servidor em `formState.errors.root`. */
@@ -25,6 +25,6 @@ export function aplicarErroServidor<T extends FieldValues>(
     return;
   }
 
-  const message = error instanceof ApiRequestError ? error.message : ERRO_INESPERADO_API;
+  const message = error instanceof ApiRequestError ? error.message : erroInesperadoApi();
   setError(`root.${ERRO_SERVIDOR}`, { type: 'server', message });
 }

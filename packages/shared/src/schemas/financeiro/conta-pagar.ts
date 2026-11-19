@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { exportQuerySchema, listQuerySchema } from '../common/list-query';
-import { mensagemObrigatoria } from '../common/obrigatorio';
+import { erroObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 import {
   camposEntradaContaFinanceira,
@@ -134,13 +134,13 @@ export type ContaPagarPage = z.infer<typeof contaPagarPageSchema>;
 // --- Baixa (modal "Baixar Conta a Pagar") ---
 
 const valorPago = z
-  .number({ error: mensagemObrigatoria('Valor pago') })
+  .number({ error: erroObrigatorio('Valor pago') })
   .positive({ error: 'O valor pago deve ser maior que zero' })
   .max(CONTA_FINANCEIRA_VALOR_MAX, { error: 'Valor inválido' });
 
 const dataPagamento = z
-  .string({ error: mensagemObrigatoria('Data de pagamento', 'f') })
-  .min(1, { error: mensagemObrigatoria('Data de pagamento', 'f') })
+  .string({ error: erroObrigatorio('Data de pagamento', 'f') })
+  .min(1, { error: erroObrigatorio('Data de pagamento', 'f') })
   .pipe(z.iso.date({ error: 'Data de pagamento inválida' }));
 
 const valorAdicional = (rotulo: string) =>

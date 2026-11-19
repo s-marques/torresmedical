@@ -1,7 +1,10 @@
 import { toast } from 'sonner';
-import { ApiRequestError, ERRO_INESPERADO_API } from './api-error';
+import { i18next } from '@/lib/i18n';
+import { BASE_PT_BR } from '@/lib/i18n/locales/base';
+import { ApiRequestError, erroInesperadoApi, mensagemDoDetalhe } from './api-error';
 
-export const MENSAGEM_SEM_PERMISSAO = 'Sem permissão';
+/** "Sem permissão" em português (testes); na tela vale `erros.semPermissao` no idioma atual. */
+export const MENSAGEM_SEM_PERMISSAO = BASE_PT_BR.erros.semPermissao;
 
 export interface TratarErroOptions {
   /** Chamado no 401 (sessão ausente ou expirada): leva para o login. */
@@ -36,12 +39,12 @@ export function tratarErroApi(
     return;
   }
   if (status === 403) {
-    toast.error(MENSAGEM_SEM_PERMISSAO);
+    toast.error(i18next.t('erros.semPermissao'));
     return;
   }
   if (erroNoFormulario) return;
   if (!(error instanceof ApiRequestError)) {
-    toast.error(ERRO_INESPERADO_API);
+    toast.error(erroInesperadoApi());
     return;
   }
   if (error.status === 400 && error.body?.details?.length) return;
@@ -52,8 +55,8 @@ export function tratarErroApi(
 export function errosPorCampo(error: unknown): Record<string, string> {
   if (!(error instanceof ApiRequestError) || error.status !== 400) return {};
   const erros: Record<string, string> = {};
-  for (const { field, message } of error.body?.details ?? []) {
-    erros[field] ??= message;
+  for (const detalhe of error.body?.details ?? []) {
+    erros[detalhe.field] ??= mensagemDoDetalhe(detalhe);
   }
   return erros;
 }
