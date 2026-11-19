@@ -1,3 +1,4 @@
+import { InsightsAgendaAiGrowth } from './ai-growth/insights-agenda.fonte';
 import { forwardRef, Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { ComprasEstoqueModule } from '../compras-estoque/compras-estoque.module';
@@ -135,6 +136,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     PesquisaNpsService,
     EnvioPesquisaNpsService,
     EnviarPesquisaNpsConsumer,
+    InsightsAgendaAiGrowth,
   ],
   exports: [
     PacientesService,

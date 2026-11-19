@@ -309,5 +309,113 @@
         "minha-empresa": "My Company"
       }
     }
+  },
+  "aiGrowth": {
+    "titulo": "AI Growth",
+    "descricao": "Business attention points: what deserves attention in the clinic right now.",
+    "analisarAgora": "Analyze Now",
+    "analisando": "Analyzing…",
+    "ultimaAnalise": "Last analysis: {{data}}",
+    "semAnalise": "No analysis yet. Click \"Analyze Now\".",
+    "pontosUm": "1 attention point",
+    "pontosVarios": "{{count}} attention points",
+    "analiseIniciada": "Analysis started. Results will show up shortly.",
+    "emAndamento": "Analysis in progress…",
+    "erroCarregar": "Could not load AI Growth.",
+    "verDetalhes": "View details",
+    "oQueFazer": "What to do:",
+    "rodape": "Text generated from the numbers above.",
+    "prioridade": {
+      "BAIXA": "low",
+      "MEDIA": "medium",
+      "ALTA": "high"
+    },
+    "prioridadeChip": "{{nivel}} priority",
+    "tipos": {
+      "PACIENTES_INATIVOS": {
+        "tituloVazio": "No patients inactive for +{{dias}} days",
+        "tituloUm": "1 patient inactive for +{{dias}} days",
+        "tituloVarios": "{{count}} patients inactive for +{{dias}} days",
+        "descricaoVazio": "No patients inactive for over {{dias}} days indicates good retention and lowers the risk of losing recurring revenue.",
+        "descricao": "Some patients have had no appointment for over {{dias}} days and none scheduled. Without contact, their recurring revenue may be lost.",
+        "destaqueVazio": "No pending items",
+        "destaqueUm": "1 inactive patient",
+        "destaqueVarios": "{{count}} inactive patients",
+        "acaoVazio": "Keep sending reminders and personalized messages to maintain patient engagement. Use the online schedule to make rebooking easy.",
+        "acao": "Contact these patients on WhatsApp, offer a follow-up and use the online schedule to make rebooking easy."
+      },
+      "PACIENTES_PENDENTES_RETORNO": {
+        "tituloVazio": "No patients pending follow-up",
+        "tituloUm": "1 patient pending follow-up",
+        "tituloVarios": "{{count}} patients pending follow-up",
+        "descricaoVazio": "No patients pending follow-up shows that care flow is organized and loyalty is high.",
+        "descricao": "Some patients have an appointment marked \"Reschedule\" with no new date. Without follow-up, the clinic risks losing them.",
+        "destaqueVazio": "Up to date",
+        "destaqueUm": "1 patient to reschedule",
+        "destaqueVarios": "{{count}} patients to reschedule",
+        "acaoVazio": "Track follow-up dates with automatic WhatsApp notifications and encourage early booking.",
+        "acao": "Contact them to reschedule these appointments and confirm the new date on the schedule."
+      },
+      "FAIXAS_BAIXA_OCUPACAO": {
+        "tituloVazio": "No time slots with low occupancy",
+        "tituloUm": "1 time slot with low occupancy",
+        "tituloVarios": "{{count}} time slots with low occupancy",
+        "descricaoVazio": "Schedule occupancy is balanced across time slots over the last weeks.",
+        "descricao": "Some time slots are below 50% of the average occupancy over the last 12 weeks. This means idle capacity and potential lost revenue.",
+        "destaqueVazio": "No pending items",
+        "destaqueUm": "Optimization opportunity",
+        "destaqueVarios": "Optimization opportunity",
+        "acaoVazio": "Keep the current schedule distribution and track occupancy weekly.",
+        "acao": "Create specific promotions for low-occupancy slots, such as discounts or perks, and move professionals to those times."
+      },
+      "FALTAS_RECENTES": {
+        "tituloVazio": "No no-shows in the last {{dias}} days",
+        "tituloUm": "1 no-show in the last {{dias}} days",
+        "tituloVarios": "{{count}} no-shows in the last {{dias}} days",
+        "descricaoVazio": "With no no-shows in the period, the schedule is fully used and revenue is predictable.",
+        "descricao": "No-shows in the last {{dias}} days can hurt revenue and schedule planning. Recurring no-shows can cause financial losses.",
+        "destaqueVazio": "No pending items",
+        "destaqueUm": "1 no-show ({{dias}} days)",
+        "destaqueVarios": "{{count}} no-shows ({{dias}} days)",
+        "acaoVazio": "Keep automatic confirmations on to stay free of no-shows.",
+        "acao": "Send personalized reminders and confirm appointments on WhatsApp ahead of time. Consider a confirmation policy to reduce no-shows."
+      },
+      "PROFISSIONAIS_SUBUTILIZADOS": {
+        "tituloVazio": "No professionals with an underused schedule",
+        "tituloUm": "1 professional with an underused schedule",
+        "tituloVarios": "{{count}} professionals with an underused schedule",
+        "descricaoVazio": "All professionals are close to the average number of appointments over the last {{dias}} days.",
+        "descricao": "Professionals with an underused schedule saw less than 50% of the average of {{media}} appointments in {{dias}} days. There is room to grow revenue.",
+        "destaqueVazio": "No pending items",
+        "destaqueUm": "{{faturado}} billed ({{dias}}d)",
+        "destaqueVarios": "{{faturado}} billed ({{dias}}d)",
+        "acaoVazio": "Keep tracking the team's productivity.",
+        "acao": "Review the schedule of underused professionals to redistribute patients or promote open slots on WhatsApp."
+      },
+      "ANIVERSARIANTES_PROXIMOS": {
+        "tituloVazio": "No birthdays in the next {{dias}} days",
+        "tituloUm": "1 birthday in the next {{dias}} days",
+        "tituloVarios": "{{count}} birthdays in the next {{dias}} days",
+        "descricaoVazio": "No patients have a birthday in the coming days.",
+        "descricao": "Birthdays are a good chance to build loyalty with personalized messages and special offers.",
+        "destaqueVazio": "No pending items",
+        "destaqueUm": "Loyalty",
+        "destaqueVarios": "Loyalty",
+        "acaoVazio": "Keep an eye on upcoming birthdays to nurture patient relationships.",
+        "acao": "Send birthday messages on WhatsApp with exclusive offers and suggest complementary services."
+      },
+      "INATIVOS_POR_PROFISSIONAL": {
+        "tituloVazio": "No inactive patients per professional",
+        "tituloUm": "Inactive patients with 1 professional",
+        "tituloVarios": "Inactive patients with {{count}} professionals",
+        "descricaoVazio": "No inactive patients per professional shows good loyalty, with steady returns to regular professionals.",
+        "descricao": "Some patients have not returned to the same professional in over {{dias}} days and have nothing scheduled with them.",
+        "destaqueVazio": "No pending items",
+        "destaqueUm": "1 professional with inactive patients",
+        "destaqueVarios": "{{count}} professionals with inactive patients",
+        "acaoVazio": "Keep encouraging the direct relationship between patients and their usual professionals.",
+        "acao": "Ask the professionals to reach out to their patients and offer a follow-up."
+      }
+    }
   }
 }

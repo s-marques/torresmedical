@@ -3045,3 +3045,61 @@ model Prestador {
   @@index([documento])
   @@map("prestadores")
 }
+
+enum AiGrowthStatusAnalise {
+  PENDENTE
+  PROCESSANDO
+  CONCLUIDA
+  FALHOU
+
+  @@map("ai_growth_status_analise")
+}
+
+enum AiGrowthPrioridade {
+  BAIXA
+  MEDIA
+  ALTA
+
+  @@map("ai_growth_prioridade")
+}
+
+/// Dono: configuracoes-gestao. Uma execução do "Analisar Agora" (tela `/ai-growth`): o comando
+/// `configuracoes.ai-growth.analisar` cria a linha como PENDENTE e o consumidor a processa.
+model AnaliseAiGrowth {
+  id              String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  status          AiGrowthStatusAnalise @default(PENDENTE)
+  /// Usuário que clicou em "Analisar Agora", sem FK (o histórico não depende do cadastro).
+  solicitadaPorId String?               @map("solicitada_por_id") @db.Uuid
+  /// Código do erro (sem dados pessoais) quando FALHOU.
+  erro            String?
+  solicitadaEm    DateTime              @default(now()) @map("solicitada_em") @db.Timestamptz(3)
+  iniciadaEm      DateTime?             @map("iniciada_em") @db.Timestamptz(3)
+  concluidaEm     DateTime?             @map("concluida_em") @db.Timestamptz(3)
+
+  insights InsightAiGrowth[]
+
+  @@index([status])
+  @@index([solicitadaEm])
+  @@map("analises_ai_growth")
+}
+
+/// Dono: configuracoes-gestao. Ponto de atenção de uma análise. Guarda só o tipo e os números
+/// (nunca dado pessoal); o texto é montado no front, no idioma do usuário.
+model InsightAiGrowth {
+  id         String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  analiseId  String             @map("analise_id") @db.Uuid
+  /// Um dos `AI_GROWTH_TIPOS` de `packages/shared`.
+  tipo       String
+  prioridade AiGrowthPrioridade
+  quantidade Int
+  /// `{ media?, faturado?, dias? }`.
+  parametros Json               @default("{}")
+  ordem      Int
+  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  analise AnaliseAiGrowth @relation(fields: [analiseId], references: [id], onDelete: Cascade)
+
+  @@unique([analiseId, tipo])
+  @@index([analiseId, ordem])
+  @@map("insights_ai_growth")
+}
