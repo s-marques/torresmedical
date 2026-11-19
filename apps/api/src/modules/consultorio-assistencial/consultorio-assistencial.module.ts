@@ -10,6 +10,8 @@ import { PrestadoresController } from './prestadores/prestadores.controller';
 import { PrestadoresService } from './prestadores/prestadores.service';
 import { ProntuariosController } from './prontuarios/prontuarios.controller';
 import { ProntuariosService } from './prontuarios/prontuarios.service';
+import { SoroterapiaController } from './soroterapia/soroterapia.controller';
+import { SoroterapiaService } from './soroterapia/soroterapia.service';
 import { PrescricoesController } from './receituarios/prescricoes.controller';
 import { PrescricoesService } from './receituarios/prescricoes.service';
 import { ReceituarioBlocosController } from './receituarios/receituario-blocos.controller';
@@ -17,7 +19,8 @@ import { ReceituarioBlocosService } from './receituarios/receituario-blocos.serv
 
 /**
  * Módulo CONSULTÓRIO / ASSISTENCIAL do inventário. Dono de Prontuário, Atendimento, Evolução,
- * Anamnese, Prestador (de serviço de manutenção) e Receituários (blocos e prescrições).
+ * Anamnese, Prestador (de serviço de manutenção) e Receituários (blocos e prescrições)
+ * e Soroterapia (checklists).
  */
 @Module({
   // Paciente e Agendamento (comercial-atendimento) e Profissional (gestao-profissionais) são
@@ -31,6 +34,7 @@ import { ReceituarioBlocosService } from './receituarios/receituario-blocos.serv
     PrestadoresController,
     ReceituarioBlocosController,
     PrescricoesController,
+    SoroterapiaController,
   ],
   providers: [
     ProntuariosService,
@@ -40,6 +44,7 @@ import { ReceituarioBlocosService } from './receituarios/receituario-blocos.serv
     PrestadoresService,
     ReceituarioBlocosService,
     PrescricoesService,
+    SoroterapiaService,
   ],
   exports: [PacientesVinculadosService],
 })

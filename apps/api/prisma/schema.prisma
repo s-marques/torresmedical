@@ -3212,3 +3212,37 @@ model Imovel {
   @@index([descricao])
   @@map("imoveis")
 }
+
+enum SoroterapiaChecklistStatus {
+  EM_ANDAMENTO
+  FINALIZADO
+  SUSPENSO
+
+  @@map("soroterapia_checklist_status")
+}
+
+/// Dono: consultorio-assistencial. Checklist de infusão/soroterapia (tela Soroterapia, #44, abas
+/// Em Andamento e Historico). O fluxo de criação ainda não está documentado, então a tela só lê.
+/// Paciente, profissional e agendamento são de outros módulos: ficam só os ids, sem FK (CLAUDE.md,
+/// seção 3). O protocolo é copiado (snapshot). Exclusão lógica: histórico assistencial.
+model SoroterapiaChecklist {
+  id                 String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agendamentoId      String?                    @map("agendamento_id") @db.Uuid
+  pacienteId         String                     @map("paciente_id") @db.Uuid
+  profissionalId     String                     @map("profissional_id") @db.Uuid
+  protocoloNome      String                     @map("protocolo_nome")
+  /// Coluna "Sinais Vitais Inicio" (texto livre até o fluxo ser confirmado).
+  sinaisVitaisInicio String?                    @map("sinais_vitais_inicio")
+  status             SoroterapiaChecklistStatus @default(EM_ANDAMENTO)
+  iniciadoEm         DateTime                   @map("iniciado_em") @db.Timestamptz(3)
+  finalizadoEm       DateTime?                  @map("finalizado_em") @db.Timestamptz(3)
+  createdAt          DateTime                   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt          DateTime?                  @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([status, iniciadoEm])
+  @@index([pacienteId])
+  @@index([profissionalId])
+  @@index([agendamentoId])
+  @@map("soroterapia_checklists")
+}

@@ -14,6 +14,7 @@ import {
   type Orcamento,
   type OrcamentoExportColumn,
   type OrcamentoOrigem,
+  type SoroterapiaPacote,
 } from '@torres/shared';
 import type { Prisma } from '../../../generated/prisma/client';
 import { ExportService, selectColumns } from '../../../common/export/export.service';
@@ -116,6 +117,46 @@ export class OrcamentosService {
       count: () => this.txHost.tx.orcamento.count({ where }),
     });
     return { ...page, data: page.data.map(toOrcamento) };
+  }
+
+  /**
+   * Aba Pacotes da tela Soroterapia (#44): itens de protocolo dos orçamentos Aprovados, do mais
+   * recente ao mais antigo. `pacienteIds` limita aos pacientes do escopo do usuário (`null` =
+   * todos); orçamento sem paciente só aparece para quem não tem restrição.
+   */
+  async listarPacotesProtocolo(
+    pacienteIds: readonly string[] | null,
+  ): Promise<SoroterapiaPacote[]> {
+    const itens = await this.txHost.tx.orcamentoItem.findMany({
+      where: {
+        origem: 'PROTOCOLO',
+        orcamento: {
+          ...NAO_EXCLUIDOS,
+          status: 'APROVADO',
+          ...(pacienteIds && { pacienteId: { in: [...pacienteIds] } }),
+        },
+      },
+      include: {
+        orcamento: {
+          select: {
+            id: true,
+            numero: true,
+            pacienteId: true,
+            paciente: { select: { nome: true } },
+          },
+        },
+      },
+      orderBy: [{ orcamento: { numero: 'desc' } }, { posicao: 'asc' }],
+    });
+    return itens.map((item) => ({
+      id: item.id,
+      orcamentoId: item.orcamento.id,
+      orcamentoNumero: item.orcamento.numero,
+      pacienteId: item.orcamento.pacienteId,
+      pacienteNome: item.orcamento.paciente?.nome ?? null,
+      protocolo: item.descricao,
+      quantidade: item.quantidade,
+    }));
   }
 
   /** Cria como Pendente. Os totais são sempre recalculados aqui, nunca vêm do front. */
