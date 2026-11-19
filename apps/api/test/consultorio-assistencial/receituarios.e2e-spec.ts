@@ -252,7 +252,7 @@ describe('Receituários (e2e)', () => {
       const b = await bloco({ numeroInicio: 1, numeroFim: 3, profissionalId: medico.id });
       const respostas = await Promise.all([1, 2, 3, 4].map(() => prescrever(b.id, p.id)));
       const criadas = respostas.filter((r) => r.status === 201);
-      expect(criadas.map((r) => r.body.numero).sort()).toEqual([1, 2, 3]);
+      expect(criadas.map((r) => r.body.numero as number).sort((a, b) => a - b)).toEqual([1, 2, 3]);
       expect(respostas.filter((r) => r.status === 422)).toHaveLength(1);
       expect(await prisma.prescricao.count()).toBe(3);
     });
