@@ -224,10 +224,7 @@ describe('Base de Conhecimento (e2e)', () => {
 
     it('404 inexistente/excluído, 400 validação e 403 sem permissão', async () => {
       const excluido = await criarNoBanco('X', { deletedAt: new Date() });
-      await http()
-        .patch(`${BASE}/${INEXISTENTE}`)
-        .send({ titulo: 'A', conteudo: 'B' })
-        .expect(404);
+      await http().patch(`${BASE}/${INEXISTENTE}`).send({ titulo: 'A', conteudo: 'B' }).expect(404);
       await http().patch(`${BASE}/${excluido.id}`).send({ titulo: 'A', conteudo: 'B' }).expect(404);
 
       const documento = await criarNoBanco('Retorno');

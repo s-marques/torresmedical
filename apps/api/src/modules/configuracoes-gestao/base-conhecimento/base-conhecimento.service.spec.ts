@@ -5,7 +5,12 @@ import { BaseConhecimentoService } from './base-conhecimento.service';
 const ID = '0b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 const PROFISSIONAL = '1c9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 const DOCUMENTO = { id: ID, titulo: 'FAQ', categoria: 'Geral', conteudo: 'Texto' };
-const ENTRADA = { titulo: 'FAQ', profissionalId: null, categoria: 'Geral', conteudo: 'Texto' } as const;
+const ENTRADA = {
+  titulo: 'FAQ',
+  profissionalId: null,
+  categoria: 'Geral',
+  conteudo: 'Texto',
+} as const;
 
 function servico(documentoFindFirst: unknown = DOCUMENTO) {
   const fake = txHostFalso('documentoConhecimento', [DOCUMENTO]);
@@ -80,15 +85,20 @@ describe('BaseConhecimentoService', () => {
     });
   });
 
-  it.each(['P2003', 'P2025'])('400 PROFISSIONAL_INVALIDO quando o prisma devolve %s', async (code) => {
-    const { service, delegate } = servico();
-    delegate.create.mockRejectedValue(erroPrisma(code));
+  it.each(['P2003', 'P2025'])(
+    '400 PROFISSIONAL_INVALIDO quando o prisma devolve %s',
+    async (code) => {
+      const { service, delegate } = servico();
+      delegate.create.mockRejectedValue(erroPrisma(code));
 
-    await expect(service.create({ ...ENTRADA, profissionalId: PROFISSIONAL })).rejects.toMatchObject({
-      status: 400,
-      details: [{ field: 'profissionalId', message: 'Profissional não encontrado' }],
-    });
-  });
+      await expect(
+        service.create({ ...ENTRADA, profissionalId: PROFISSIONAL }),
+      ).rejects.toMatchObject({
+        status: 400,
+        details: [{ field: 'profissionalId', message: 'Profissional não encontrado' }],
+      });
+    },
+  );
 
   it('repassa erros que não são de profissional', async () => {
     const { service, delegate } = servico();

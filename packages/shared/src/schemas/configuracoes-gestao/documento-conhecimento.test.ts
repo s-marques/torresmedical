@@ -14,7 +14,12 @@ describe('documento de conhecimento', () => {
 
   it('assume Geral e sem profissional', () => {
     const r = createDocumentoConhecimentoSchema.parse({ titulo: 'FAQ', conteudo: 'Texto' });
-    expect(r).toEqual({ titulo: 'FAQ', conteudo: 'Texto', categoria: 'Geral', profissionalId: null });
+    expect(r).toEqual({
+      titulo: 'FAQ',
+      conteudo: 'Texto',
+      categoria: 'Geral',
+      profissionalId: null,
+    });
   });
 
   it('rejeita categoria fora da lista e campo extra', () => {
