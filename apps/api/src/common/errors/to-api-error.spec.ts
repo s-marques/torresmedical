@@ -93,7 +93,13 @@ describe('toApiError', () => {
       statusCode: 409,
       code: 'DUPLICATE',
       message: 'Registro duplicado',
-      details: [{ field: 'documento', message: 'Já existe um registro com este valor' }],
+      details: [
+        {
+          field: 'documento',
+          message: 'Já existe um registro com este valor',
+          code: 'validacao.duplicado',
+        },
+      ],
     });
   });
 

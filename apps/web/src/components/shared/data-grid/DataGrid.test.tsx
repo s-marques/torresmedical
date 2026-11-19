@@ -12,6 +12,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { aplicarIdioma } from '@/lib/i18n';
 import { servidorMsw, usarMsw } from '../../../test/msw';
 import { StatusAtivo } from '../StatusBadge';
 import { DataGrid } from './DataGrid';
@@ -124,6 +125,19 @@ beforeEach(() => {
 });
 
 describe('DataGrid', () => {
+  it('textos do grid no idioma do usuário (issue #205)', async () => {
+    aplicarIdioma('en');
+    renderizar();
+
+    expect(await screen.findByText('Unidade 1')).toBeInTheDocument();
+    expect(screen.getByText('25 row(s) in total.')).toBeInTheDocument();
+    expect(screen.getByText('Page 1 of 3')).toBeInTheDocument();
+    expect(screen.getByText('Rows per page')).toBeInTheDocument();
+    expect(botao('Go to next page')).toBeInTheDocument();
+    expect(botao('Columns')).toBeInTheDocument();
+    expect(screen.getAllByText('Active').length).toBeGreaterThan(0);
+  });
+
   it('lista as colunas e as linhas da primeira página com o rodapé', async () => {
     renderizar();
 
@@ -315,6 +329,32 @@ describe('DataGrid', () => {
     await user.click(screen.getByRole('combobox', { name: 'Produto' }));
     await user.click(await screen.findByRole('option', { name: 'Limpar seleção' }));
     await waitFor(() => expect(ultimo()).toEqual({ page: '1', pageSize: '10' }));
+  });
+
+  it('filtro de texto: parâmetro próprio, com atraso, junto com a busca e restaurado da URL', async () => {
+    const { user, router } = renderizar(
+      {
+        filtros: [
+          { tipo: 'texto', parametro: 'nome', rotulo: 'Nome', placeholder: 'Buscar nome...' },
+        ],
+        querySchema: undefined,
+      },
+      '/lista?search=centro',
+    );
+    await screen.findByText('Unidade 1');
+    const nome = screen.getByRole('searchbox', { name: 'Nome' });
+    expect(nome).toHaveAttribute('placeholder', 'Buscar nome...');
+
+    await user.type(nome, 'matriz');
+
+    await waitFor(() =>
+      expect(ultimo()).toEqual({ page: '1', pageSize: '10', search: 'centro', nome: 'matriz' }),
+    );
+    expect(pedidos[URL_LISTA]?.filter((p) => p.has('nome'))).toHaveLength(1);
+    expect(router.state.location.search).toContain('nome=matriz');
+
+    await user.clear(nome);
+    await waitFor(() => expect(ultimo()).toEqual({ page: '1', pageSize: '10', search: 'centro' }));
   });
 
   it('restaura o checkbox marcado a partir da URL', async () => {

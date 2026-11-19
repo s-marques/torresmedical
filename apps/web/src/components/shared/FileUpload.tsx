@@ -8,6 +8,7 @@ import {
   type ArquivoUso,
 } from '@torres/shared';
 import { useEffect, useId, useRef, useState, type DragEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { mensagemDoErroDeUpload, uploadArquivo } from '../../lib/api/upload-arquivo';
@@ -32,13 +33,10 @@ type Estado =
  * Campo de upload com arrastar e soltar, clique (ou teclado) para escolher, validação de
  * tipo/tamanho antes de enviar, barra de progresso, cancelamento e mensagem de erro.
  */
-export function FileUpload({
-  uso,
-  label = 'Enviar arquivo',
-  disabled,
-  onUploaded,
-}: FileUploadProps) {
+export function FileUpload({ uso, label: labelInformado, disabled, onUploaded }: FileUploadProps) {
   const id = useId();
+  const { t } = useTranslation();
+  const label = labelInformado ?? t('upload.enviarArquivo');
   const [estado, setEstado] = useState<Estado>({ tipo: 'ocioso' });
   const [arrastando, setArrastando] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -48,7 +46,10 @@ export function FileUpload({
 
   const enviando = estado.tipo === 'enviando';
   const bloqueado = disabled || enviando;
-  const dica = `${descreverFormatos(uso)}. Máximo ${formatarTamanho(ARQUIVO_USOS[uso].maxBytes)}.`;
+  const dica = t('upload.dica', {
+    formatos: descreverFormatos(uso),
+    tamanho: formatarTamanho(ARQUIVO_USOS[uso].maxBytes),
+  });
 
   async function enviar(arquivo: File) {
     const erro = validarArquivo(
@@ -117,7 +118,7 @@ export function FileUpload({
         onDrop={onDrop}
       >
         <span className="font-semibold">{label}</span>
-        <span>Arraste o arquivo aqui ou clique para escolher</span>
+        <span>{t('upload.arraste')}</span>
         <span className="text-sm text-muted-foreground" id={`${id}-dica`}>
           {dica}
         </span>
@@ -136,21 +137,25 @@ export function FileUpload({
 
       {estado.tipo === 'enviando' && (
         <div className="flex items-center gap-2">
-          <span>Enviando {estado.nome}…</span>
-          <progress max={100} value={estado.progresso} aria-label={`Enviando ${estado.nome}`} />
+          <span>{t('upload.enviando', { nome: estado.nome })}</span>
+          <progress
+            max={100}
+            value={estado.progresso}
+            aria-label={t('upload.enviandoRotulo', { nome: estado.nome })}
+          />
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => envioRef.current?.abort()}
           >
-            Cancelar
+            {t('comum.cancelar')}
           </Button>
         </div>
       )}
       {estado.tipo === 'enviado' && (
         <p className="m-0 flex items-center gap-2" role="status">
-          Arquivo enviado: {estado.nome}
+          {t('upload.enviado', { nome: estado.nome })}
         </p>
       )}
       {estado.tipo === 'erro' && (

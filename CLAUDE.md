@@ -199,8 +199,32 @@ Se faltar algo, evolua o componente compartilhado no mesmo PR, com teste.
 - **Regras que dependem do banco** (unicidade, saldo, status permitido) ficam no service e retornam `BusinessException`.
 - **Mensagens de validação** em português, iguais ou equivalentes às do inventário.
 - **Campo obrigatório vazio:** mensagem padrão "<Campo> é obrigatório." (feminino: "obrigatória."), com o
-  helper `textoObrigatorio`/`mensagemObrigatoria` de `packages/shared`. Telas já entregues adotam o
+  helper `textoObrigatorio`/`erroObrigatorio` de `packages/shared` (`mensagemObrigatoria` só dentro
+  de `refine`/`superRefine`, que rodam na validação). Telas já entregues adotam o
   padrão quando forem alteradas; se o inventário trouxer outro texto, confirme com o dev.
+
+### Idiomas da interface (i18n)
+O sistema tem português (padrão), inglês e espanhol (issues #30 e #205). O idioma é preferência do
+usuário; a API, os logs e as exportações Excel/PDF continuam em português.
+- **Textos de tela:** nada de texto fixo em JSX. Use `t('<chave>')` (`useTranslation` do
+  `react-i18next`; fora de componente, `i18next.t` de `@/lib/i18n`), com a chave em `pt-BR`, `en` e
+  `es` (`apps/web/src/lib/i18n/locales/pt-BR.json`, `en.json` e `es.json`; em JSON para o Sonar
+  não contar como código duplicado). O teste `locales.test.ts` confere as mesmas chaves nos três.
+  Textos comuns (Salvar, Cancelar, Ações, Ativo…) já estão em `comum`, `grid`, `selecao`, `upload` e
+  `relatorio`: reaproveite.
+- **Validação:** a mensagem é chave + parâmetros, calculada na hora da validação. Use os helpers
+  (`textoObrigatorio`, `erroObrigatorio`) ou `traduzirValidacao('validacao.<chave>', params)` dentro
+  de uma função (`{ error: () => traduzirValidacao(...) }`), nunca texto fixo no schema. O português
+  fica em `VALIDACAO_PT_BR` (`packages/shared/src/i18n/validacao.ts`); inglês e espanhol, em
+  `locales/validacao.<idioma>.json`. Rótulos de campo usados nas mensagens ("Nome") vão em
+  `locales/rotulos.<idioma>.json`.
+- **Erros de negócio:** o front traduz pelo `code` (`locales/erros-api.<idioma>.json`); sem tradução, mostra
+  a mensagem do servidor. Todo `BusinessException` novo ganha a tradução do seu código.
+- **Datas e números** seguem o idioma (`formatarData`, `formatarMoeda`, `formatoData`/`formatoNumero`
+  de `@/lib/i18n`); a moeda é sempre R$. Não crie `Intl.*Format('pt-BR')` fixo.
+- **Testes:** o idioma padrão dos testes é pt-BR. Cada tela tem ao menos um teste com
+  `aplicarIdioma('en')` (ou `es`) conferindo os textos traduzidos.
+- As telas entregues antes da #205 são traduzidas nas issues com a label `i18n` (#206 a #215).
 
 ## 4. Auditoria (obrigatória em todo módulo)
 
@@ -378,7 +402,8 @@ Antes de mover o card para **"Em revisão"**:
    2. Model e migration Prisma
    3. Service e controller com `@Audit` e `@RequirePermission`
    4. Testes da API
-   5. Página em `features/<modulo>/<tela>` usando `DataGrid`, `Form` e `Modal`
+   5. Página em `features/<modulo>/<tela>` usando `DataGrid`, `Form` e `Modal`, com os textos em
+      `pt-BR`, `en` e `es` (seção 3, "Idiomas da interface")
    6. Rota e item de menu com permissão
    7. Testes do front
 6. Marque no PR cada critério de aceite atendido.

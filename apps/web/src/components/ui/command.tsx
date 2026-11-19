@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { i18next } from '@/lib/i18n';
 
 function Command({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) {
   return (
@@ -27,8 +28,8 @@ function Command({ className, ...props }: React.ComponentProps<typeof CommandPri
 }
 
 function CommandDialog({
-  title = 'Busca',
-  description = 'Digite para buscar',
+  title = i18next.t('comum.busca'),
+  description = i18next.t('comum.digiteParaBuscar'),
   children,
   className,
   showCloseButton = true,

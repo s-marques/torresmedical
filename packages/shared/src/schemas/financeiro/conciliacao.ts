@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { mensagemObrigatoria } from '../common/obrigatorio';
+import { erroObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema, paginationQuerySchema } from '../common/pagination';
 
 /**
@@ -41,8 +41,8 @@ export const CONCILIACAO_ROTULO_STATUS_LANCAMENTO: Readonly<
 
 const dataObrigatoria = (rotulo: string) =>
   z
-    .string({ error: mensagemObrigatoria(rotulo, 'f') })
-    .min(1, { error: mensagemObrigatoria(rotulo, 'f') })
+    .string({ error: erroObrigatorio(rotulo, 'f') })
+    .min(1, { error: erroObrigatorio(rotulo, 'f') })
     .pipe(z.iso.date({ error: `${rotulo} inválida` }));
 
 /** Período De/Até, obrigatório: a tela sempre abre com um período preenchido. */

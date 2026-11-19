@@ -119,9 +119,9 @@ describe('Configurações (e2e)', () => {
 
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'nome', message: 'Nome é obrigatório.' },
-          { field: 'email', message: 'E-mail é obrigatório.' },
-          { field: 'telefone', message: 'Telefone inválido' },
+          expect.objectContaining({ field: 'nome', message: 'Nome é obrigatório.' }),
+          expect.objectContaining({ field: 'email', message: 'E-mail é obrigatório.' }),
+          expect.objectContaining({ field: 'telefone', message: 'Telefone inválido' }),
         ]),
       );
       await expectNoAudit(prisma, { entity: 'Usuario' });
@@ -137,7 +137,7 @@ describe('Configurações (e2e)', () => {
 
       expect(res.body.code).toBe('DUPLICATE');
       expect(res.body.details).toEqual([
-        { field: 'email', message: 'Já existe um usuário com este email' },
+        expect.objectContaining({ field: 'email', message: 'Já existe um usuário com este email' }),
       ]);
       await expectNoAudit(prisma, { entity: 'Usuario' });
     });
@@ -254,8 +254,8 @@ describe('Configurações (e2e)', () => {
         .expect(400);
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'idioma', message: 'Opção inválida' },
-          { field: 'notificacoesPush', message: 'Valor inválido' },
+          expect.objectContaining({ field: 'idioma', message: 'Opção inválida' }),
+          expect.objectContaining({ field: 'notificacoesPush', message: 'Valor inválido' }),
         ]),
       );
       await http().patch(`${BASE}/preferencias`).send({}).expect(400);

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { listQuerySchema } from '../common/list-query';
-import { mensagemObrigatoria } from '../common/obrigatorio';
+import { erroObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 
 /**
@@ -33,11 +33,11 @@ const textoOpcional = (rotulo: string, max: number) =>
 
 export const baixaItemSchema = z.strictObject({
   produtoId: z
-    .string({ error: mensagemObrigatoria('Insumo') })
-    .min(1, { error: mensagemObrigatoria('Insumo') })
+    .string({ error: erroObrigatorio('Insumo') })
+    .min(1, { error: erroObrigatorio('Insumo') })
     .pipe(z.uuid({ error: 'Insumo inválido' })),
   quantidade: z
-    .number({ error: mensagemObrigatoria('Quantidade', 'f') })
+    .number({ error: erroObrigatorio('Quantidade', 'f') })
     .int({ error: 'A quantidade deve ser um número inteiro' })
     .positive({ error: 'A quantidade deve ser maior que zero' })
     .max(BAIXA_QUANTIDADE_MAX, { error: 'Quantidade inválida' }),

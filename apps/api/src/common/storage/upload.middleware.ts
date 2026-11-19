@@ -10,7 +10,7 @@ import {
 import type { NextFunction, Request, Response } from 'express';
 import multer, { MulterError } from 'multer';
 import { ValidationException } from '../errors/api.exception';
-import { zodIssuesToDetails } from '../validation/zod-issues';
+import { validarComCodigos, zodIssuesToDetails } from '../validation/zod-issues';
 
 /**
  * Lê o multipart de `POST /api/arquivos` com o limite de tamanho do uso (`?uso=`): um arquivo
@@ -26,7 +26,7 @@ export class UploadMiddleware implements NestMiddleware {
       next();
       return;
     }
-    const query = uploadArquivoQuerySchema.safeParse(req.query);
+    const query = validarComCodigos(uploadArquivoQuerySchema, req.query);
     if (!query.success) {
       next(new ValidationException(zodIssuesToDetails(query.error.issues)));
       return;

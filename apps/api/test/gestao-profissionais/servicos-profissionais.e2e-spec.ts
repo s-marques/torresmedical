@@ -125,11 +125,17 @@ describe('Serviços Profissionais (e2e)', () => {
 
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'profissionalId', message: 'Profissional é obrigatório.' },
-          { field: 'nome', message: 'Nome do serviço é obrigatório.' },
-          { field: 'valor', message: 'O valor não pode ser negativo' },
-          { field: 'duracaoMinutos', message: 'A duração deve ser de pelo menos 1 minuto' },
-          { field: 'extra', message: 'Campo não permitido' },
+          expect.objectContaining({
+            field: 'profissionalId',
+            message: 'Profissional é obrigatório.',
+          }),
+          expect.objectContaining({ field: 'nome', message: 'Nome do serviço é obrigatório.' }),
+          expect.objectContaining({ field: 'valor', message: 'O valor não pode ser negativo' }),
+          expect.objectContaining({
+            field: 'duracaoMinutos',
+            message: 'A duração deve ser de pelo menos 1 minuto',
+          }),
+          expect.objectContaining({ field: 'extra', message: 'Campo não permitido' }),
         ]),
       );
       await expectNoAudit(prisma, { entity: 'ServicoProfissional' });
@@ -141,7 +147,7 @@ describe('Serviços Profissionais (e2e)', () => {
         .send({ profissionalId: INEXISTENTE, nome: 'X' })
         .expect(400);
       expect(res.body.details).toEqual([
-        { field: 'profissionalId', message: 'Profissional inválido' },
+        expect.objectContaining({ field: 'profissionalId', message: 'Profissional inválido' }),
       ]);
       const leitor = await criarUsuarioTeste(app, {
         permissoes: ['gestao-profissionais.servicos-profissionais.ver'],

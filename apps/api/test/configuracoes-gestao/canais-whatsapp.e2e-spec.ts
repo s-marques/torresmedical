@@ -148,7 +148,12 @@ describe('Canais WhatsApp / Agentes IA (e2e)', () => {
         .expect(400);
       expect(invalido.body).toMatchObject({
         code: 'PROFISSIONAL_INVALIDO',
-        details: [{ field: 'profissionalId', message: 'Profissional não encontrado' }],
+        details: [
+          expect.objectContaining({
+            field: 'profissionalId',
+            message: 'Profissional não encontrado',
+          }),
+        ],
       });
       // Só o CREATE do canal válido foi auditado.
       expect(await prisma.auditLog.count({ where: { entity: ENTITY } })).toBe(1);
@@ -159,9 +164,9 @@ describe('Canais WhatsApp / Agentes IA (e2e)', () => {
 
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'nome', message: 'Nome do Canal é obrigatório.' },
-          { field: 'numero', message: 'Número WhatsApp é obrigatório.' },
-          { field: 'tipo', message: 'Campo não permitido' },
+          expect.objectContaining({ field: 'nome', message: 'Nome do Canal é obrigatório.' }),
+          expect.objectContaining({ field: 'numero', message: 'Número WhatsApp é obrigatório.' }),
+          expect.objectContaining({ field: 'tipo', message: 'Campo não permitido' }),
         ]),
       );
       await expectNoAudit(prisma, { entity: ENTITY });
@@ -177,7 +182,7 @@ describe('Canais WhatsApp / Agentes IA (e2e)', () => {
         .expect(400);
       expect(res.body).toMatchObject({
         code: 'NUMERO_DUPLICADO',
-        details: [{ field: 'numero', message: NUMERO_DUPLICADO }],
+        details: [expect.objectContaining({ field: 'numero', message: NUMERO_DUPLICADO })],
       });
       await expectNoAudit(prisma, { entity: ENTITY });
 
@@ -247,8 +252,8 @@ describe('Canais WhatsApp / Agentes IA (e2e)', () => {
         .expect(400);
       expect(vazio.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'nome', message: 'Nome do Canal é obrigatório.' },
-          { field: 'numero', message: 'Telefone é obrigatório.' },
+          expect.objectContaining({ field: 'nome', message: 'Nome do Canal é obrigatório.' }),
+          expect.objectContaining({ field: 'numero', message: 'Telefone é obrigatório.' }),
         ]),
       );
       await http()

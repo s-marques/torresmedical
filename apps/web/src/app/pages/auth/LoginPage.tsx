@@ -1,8 +1,9 @@
 import { loginSchema } from '@torres/shared';
 import { useId, useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/button';
-import { ApiRequestError, ERRO_INESPERADO_API } from '@/lib/api/api-error';
+import { ApiRequestError, erroInesperadoApi } from '@/lib/api/api-error';
 import { errosPorCampo } from '@/lib/api/tratar-erro';
 import { destinoAposLogin } from '@/lib/auth/redirect';
 import { entrar } from '@/lib/auth/sessao';
@@ -13,6 +14,7 @@ import { CampoAuth } from './CampoAuth';
 /** Login com e-mail e senha. Depois de entrar, volta para a tela que o usuário tentou abrir. */
 export function LoginPage() {
   const id = useId();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [erros, setErros] = useState<Record<string, string>>({});
@@ -38,7 +40,7 @@ export function LoginPage() {
       const porCampo = errosPorCampo(error);
       setErros(porCampo);
       if (Object.keys(porCampo).length === 0) {
-        setErroGeral(error instanceof ApiRequestError ? error.message : ERRO_INESPERADO_API);
+        setErroGeral(error instanceof ApiRequestError ? error.message : erroInesperadoApi());
       }
     } finally {
       setEnviando(false);
@@ -46,7 +48,7 @@ export function LoginPage() {
   }
 
   return (
-    <AuthLayout titulo="Torres Medical" descricao="Entre com seu e-mail e senha">
+    <AuthLayout titulo={t('auth.titulo')} descricao={t('auth.loginDescricao')}>
       <form className="grid gap-4" noValidate onSubmit={(event) => void enviar(event)}>
         {erroGeral && (
           <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
@@ -55,7 +57,7 @@ export function LoginPage() {
         )}
         <CampoAuth
           id={`${id}-email`}
-          rotulo="E-mail"
+          rotulo={t('auth.email')}
           name="email"
           type="email"
           autoComplete="email"
@@ -63,19 +65,19 @@ export function LoginPage() {
         />
         <CampoAuth
           id={`${id}-senha`}
-          rotulo="Senha"
+          rotulo={t('auth.senha')}
           name="senha"
           type="password"
           autoComplete="current-password"
           erro={erros.senha}
           extra={
             <Link to="/esqueci-senha" className="text-xs text-primary hover:underline">
-              Esqueci minha senha
+              {t('auth.esqueciSenha')}
             </Link>
           }
         />
         <Button type="submit" className="w-full" disabled={enviando}>
-          {enviando ? 'Entrando…' : 'Entrar'}
+          {t(enviando ? 'auth.entrando' : 'auth.entrar')}
         </Button>
       </form>
     </AuthLayout>

@@ -1,9 +1,10 @@
-import type { ExportFormat, Permissao } from '@torres/shared';
 import { useMutation } from '@tanstack/react-query';
+import type { ExportFormat, Permissao } from '@torres/shared';
 import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { baixarArquivo } from '@/lib/api/download';
 import { usePermissoes } from '@/lib/auth/use-sessao';
+import { i18next } from '@/lib/i18n';
 import type { ValidadorConsulta } from './tipos';
 
 export interface OpcoesExportacao {
@@ -54,7 +55,7 @@ export function useExportacao({
 
       const validacao = schema?.safeParse(query);
       if (validacao && !validacao.success) {
-        toast.error(validacao.error.issues[0]?.message ?? 'Exportação inválida');
+        toast.error(validacao.error.issues[0]?.message ?? i18next.t('grid.exportacaoInvalida'));
         return;
       }
       await baixarArquivo(url, query, `${nomeArquivo}.${format}`);

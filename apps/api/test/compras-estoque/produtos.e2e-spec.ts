@@ -206,7 +206,9 @@ describe('Produtos/Serviços (e2e)', () => {
         { precoVenda: 1 },
       ]) {
         const res = await http().post(BASE).send(body).expect(400);
-        expect(res.body.details).toEqual([{ field: 'nome', message: 'Nome é obrigatório.' }]);
+        expect(res.body.details).toEqual([
+          expect.objectContaining({ field: 'nome', message: 'Nome é obrigatório.' }),
+        ]);
       }
       await expectNoAudit(prisma, { entity: ENTITY });
     });
@@ -214,7 +216,7 @@ describe('Produtos/Serviços (e2e)', () => {
     it('400 sem preço de venda ou com valor negativo, sem auditar', async () => {
       const ausente = await http().post(BASE).send({ nome: 'X' }).expect(400);
       expect(ausente.body.details).toEqual([
-        { field: 'precoVenda', message: 'Preço de venda é obrigatório.' },
+        expect.objectContaining({ field: 'precoVenda', message: 'Preço de venda é obrigatório.' }),
       ]);
 
       const negativo = await http()
@@ -353,8 +355,8 @@ describe('Produtos/Serviços (e2e)', () => {
       const res = await http().post(BASE_UNIDADES).send({ nome: '', sigla: '' }).expect(400);
 
       expect(res.body.details).toEqual([
-        { field: 'nome', message: 'O nome é obrigatório.' },
-        { field: 'sigla', message: 'A sigla é obrigatória.' },
+        expect.objectContaining({ field: 'nome', message: 'O nome é obrigatório.' }),
+        expect.objectContaining({ field: 'sigla', message: 'A sigla é obrigatória.' }),
       ]);
       await expectNoAudit(prisma, { entity: 'UnidadeMedida' });
     });

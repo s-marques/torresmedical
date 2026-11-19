@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { normalizarTelefoneWhatsapp } from '../comercial-atendimento/conversa-whatsapp';
 import { listQuerySchema } from '../common/list-query';
-import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
+import { erroObrigatorio, textoObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 
 export const CANAL_WHATSAPP_NOME_MAX = 100;
@@ -26,7 +26,7 @@ export const CANAL_WHATSAPP_NUMERO_INVALIDO =
 
 /** Só dígitos, com DDI (`(65) 99999-0000` → `5565999990000`). */
 function numeroWhatsapp(rotulo: string) {
-  const obrigatorio = mensagemObrigatoria(rotulo);
+  const obrigatorio = erroObrigatorio(rotulo);
   return z
     .string({ error: obrigatorio })
     .trim()

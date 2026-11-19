@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { exportQuerySchema, listQuerySchema } from '../common/list-query';
-import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
+import { erroObrigatorio, textoObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema, paginationQuerySchema } from '../common/pagination';
 
 /**
@@ -157,8 +157,8 @@ export type ConfirmacaoResposta = (typeof CONFIRMACAO_RESPOSTAS)[number];
 
 const horario = (rotulo: string) =>
   z
-    .string({ error: mensagemObrigatoria(rotulo) })
-    .min(1, { error: mensagemObrigatoria(rotulo), abort: true })
+    .string({ error: erroObrigatorio(rotulo) })
+    .min(1, { error: erroObrigatorio(rotulo), abort: true })
     .regex(HORA, { error: `${rotulo} inválido (HH:MM)` });
 
 const texto = (rotulo: string) => textoObrigatorio(rotulo, { max: CONFIRMACAO_MENSAGEM_MAX });
@@ -182,7 +182,7 @@ export const CONFIRMACAO_CONFIG_PADRAO = {
 
 /** `PUT /confirmacoes/configuracao`: "Configuração Geral". */
 export const confirmacaoConfigInputSchema = z.strictObject({
-  ativo: z.boolean({ error: mensagemObrigatoria('Ativo') }),
+  ativo: z.boolean({ error: erroObrigatorio('Ativo') }),
   // `coerce`: o select do formulário entrega texto ("1" ou "2").
   antecedenciaDias: z.coerce
     .number({ error: 'Antecedência deve ser de 1 ou 2 dias' })
@@ -206,7 +206,7 @@ export type ConfirmacaoConfig = z.infer<typeof confirmacaoConfigSchema>;
 
 /** `POST /confirmacoes/modelos` e `PATCH /confirmacoes/modelos/:id`: "Novo Modelo". */
 export const confirmacaoModeloInputSchema = z.strictObject({
-  tipoAgendamentoId: z.uuid({ error: mensagemObrigatoria('Tipo de agendamento') }),
+  tipoAgendamentoId: z.uuid({ error: erroObrigatorio('Tipo de agendamento') }),
   msg1: texto('A MSG1'),
   msg2: texto('A MSG2'),
   msg3: texto('A MSG3'),

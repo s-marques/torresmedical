@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { exportQuerySchema, listQuerySchema } from '../common/list-query';
-import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
+import { erroObrigatorio, textoObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 
 /**
@@ -52,16 +52,16 @@ export function statusLote(dataVencimento: string, hoje: string): LoteStatus {
 /** `POST /api/compras-estoque/lotes`. Campos e obrigatoriedade do print do modal "Novo Lote". */
 export const loteInputSchema = z.strictObject({
   produtoId: z
-    .string({ error: mensagemObrigatoria('Produto') })
-    .min(1, { error: mensagemObrigatoria('Produto') })
+    .string({ error: erroObrigatorio('Produto') })
+    .min(1, { error: erroObrigatorio('Produto') })
     .pipe(z.uuid({ error: 'Produto inválido' })),
   numero: textoObrigatorio('Número do Lote', { max: LOTE_NUMERO_MAX }),
   dataVencimento: z
-    .string({ error: mensagemObrigatoria('Data de Vencimento', 'f') })
-    .min(1, { error: mensagemObrigatoria('Data de Vencimento', 'f') })
+    .string({ error: erroObrigatorio('Data de Vencimento', 'f') })
+    .min(1, { error: erroObrigatorio('Data de Vencimento', 'f') })
     .pipe(z.iso.date({ error: 'Data de Vencimento inválida' })),
   quantidade: z
-    .number({ error: mensagemObrigatoria('Quantidade', 'f') })
+    .number({ error: erroObrigatorio('Quantidade', 'f') })
     .positive({ error: 'A quantidade deve ser maior que zero' })
     .max(LOTE_QUANTIDADE_MAX, { error: 'Quantidade inválida' }),
 });

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { exportQuerySchema, listQuerySchema } from '../common/list-query';
-import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
+import { erroObrigatorio, textoObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 import { loteSchema } from './lote';
 
@@ -167,8 +167,8 @@ export function calcularSugestao(
 
 const idObrigatorio = (rotulo: string) =>
   z
-    .string({ error: mensagemObrigatoria(rotulo) })
-    .min(1, { error: mensagemObrigatoria(rotulo) })
+    .string({ error: erroObrigatorio(rotulo) })
+    .min(1, { error: erroObrigatorio(rotulo) })
     .pipe(z.uuid({ error: `${rotulo} inválido` }));
 
 const idOpcional = (rotulo: string) =>
@@ -186,12 +186,12 @@ const textoOpcional = (rotulo: string, max: number) =>
     .transform((valor) => valor || null);
 
 const quantidade = z
-  .number({ error: mensagemObrigatoria('Quantidade', 'f') })
+  .number({ error: erroObrigatorio('Quantidade', 'f') })
   .positive({ error: 'A quantidade deve ser maior que zero' })
   .max(ESTOQUE_QUANTIDADE_MAX, { error: 'Quantidade inválida' });
 
 const motivo = <const T extends readonly [string, ...string[]]>(valores: T) =>
-  z.enum(valores, { error: mensagemObrigatoria('Motivo') });
+  z.enum(valores, { error: erroObrigatorio('Motivo') });
 
 /** `POST /api/compras-estoque/estoque/entradas` (modal "Entrada Manual"). */
 export const entradaEstoqueSchema = z.strictObject({
@@ -231,7 +231,7 @@ export type SaidaEstoqueInput = z.output<typeof saidaEstoqueSchema>;
 export const ajusteEstoqueSchema = z.strictObject({
   produtoId: idObrigatorio('Produto'),
   quantidadeReal: z
-    .number({ error: mensagemObrigatoria('Quantidade real', 'f') })
+    .number({ error: erroObrigatorio('Quantidade real', 'f') })
     .min(0, { error: 'A quantidade real não pode ser negativa' })
     .max(ESTOQUE_QUANTIDADE_MAX, { error: 'Quantidade real inválida' }),
   motivo: textoObrigatorio('Motivo', { max: ESTOQUE_MOTIVO_AJUSTE_MAX }),

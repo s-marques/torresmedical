@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { exportQuerySchema, searchSchema } from '../common/list-query';
-import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
+import { erroObrigatorio, textoObrigatorio } from '../common/obrigatorio';
 
 export const PLANO_CONTA_CODIGO_MAX = 30;
 export const PLANO_CONTA_NOME_MAX = 150;
@@ -9,7 +9,7 @@ export const PLANO_CONTA_NOME_MAX = 150;
 export const PLANO_CONTA_TIPOS = ['receita', 'despesa', 'ativo', 'passivo'] as const;
 export type PlanoContaTipo = (typeof PLANO_CONTA_TIPOS)[number];
 
-const tipo = z.enum(PLANO_CONTA_TIPOS, { error: mensagemObrigatoria('Tipo') });
+const tipo = z.enum(PLANO_CONTA_TIPOS, { error: erroObrigatorio('Tipo') });
 
 const codigo = textoObrigatorio('Código', { max: PLANO_CONTA_CODIGO_MAX });
 const nome = textoObrigatorio('Nome', { max: PLANO_CONTA_NOME_MAX });
