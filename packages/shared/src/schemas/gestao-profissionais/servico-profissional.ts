@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ativoStatusSchema, listQuerySchema } from '../common/list-query';
-import { mensagemObrigatoria, textoObrigatorio } from '../common/obrigatorio';
+import { erroObrigatorio, textoObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 
 export const SERVICO_NOME_MAX = 150;
@@ -23,7 +23,7 @@ const textoOpcional = (max: number, rotulo: string) =>
  * Serviço" e "Editar Serviço"). O `PATCH` substitui os campos do formulário.
  */
 export const servicoProfissionalInputSchema = z.strictObject({
-  profissionalId: z.uuid({ error: mensagemObrigatoria('Profissional') }),
+  profissionalId: z.uuid({ error: erroObrigatorio('Profissional') }),
   nome: textoObrigatorio('Nome do serviço', { max: SERVICO_NOME_MAX }),
   categoria: textoOpcional(SERVICO_CATEGORIA_MAX, 'Categoria'),
   valor: z

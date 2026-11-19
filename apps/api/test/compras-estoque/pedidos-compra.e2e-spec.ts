@@ -108,7 +108,7 @@ describe('Pedidos em Trânsito (e2e)', () => {
     it('400: fornecedor é obrigatório, sem auditar', async () => {
       const res = await http().post(BASE).send({}).expect(400);
       expect(res.body.details).toEqual([
-        { field: 'fornecedorId', message: 'Fornecedor é obrigatório.' },
+        expect.objectContaining({ field: 'fornecedorId', message: 'Fornecedor é obrigatório.' }),
       ]);
       await expectNoAudit(prisma, { entity: ENTITY });
     });
@@ -118,8 +118,14 @@ describe('Pedidos em Trânsito (e2e)', () => {
       const res = await http().post(BASE).send(body).expect(400);
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'itens.0.produtoId', message: 'Produto é obrigatório.' },
-          { field: 'itens.0.quantidade', message: 'A quantidade deve ser maior que zero' },
+          expect.objectContaining({
+            field: 'itens.0.produtoId',
+            message: 'Produto é obrigatório.',
+          }),
+          expect.objectContaining({
+            field: 'itens.0.quantidade',
+            message: 'A quantidade deve ser maior que zero',
+          }),
         ]),
       );
     });

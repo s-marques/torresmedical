@@ -1,6 +1,7 @@
 import type { LookupEntidade, LookupItem } from '@torres/shared';
 import { CheckIcon, ChevronsUpDownIcon, XIcon } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -12,6 +13,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useItemLookup, useLookup, type FiltrosLookup } from '@/lib/api/lookups';
+import { i18next } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 /** Atraso da busca ao digitar, para não consultar a API a cada tecla. */
@@ -50,14 +52,17 @@ export function EntitySelect({
   value,
   onChange,
   filtros,
-  placeholder = 'Selecione',
-  placeholderBusca = 'Buscar…',
+  placeholder: placeholderInformado,
+  placeholderBusca: placeholderBuscaInformado,
   disabled = false,
   permitirLimpar = true,
   id,
   className,
   ...aria
 }: Readonly<EntitySelectProps>) {
+  const { t } = useTranslation();
+  const placeholder = placeholderInformado ?? t('comum.selecione');
+  const placeholderBusca = placeholderBuscaInformado ?? t('selecao.buscar');
   const [aberto, setAberto] = useState(false);
   const [busca, setBusca] = useState('');
   const [escolhido, setEscolhido] = useState<LookupItem | null>(null);
@@ -115,7 +120,7 @@ export function EntitySelect({
               <CommandGroup>
                 <CommandItem value={VALOR_LIMPAR} onSelect={() => selecionar(null)}>
                   <XIcon aria-hidden="true" />
-                  Limpar seleção
+                  {t('selecao.limpar')}
                 </CommandItem>
               </CommandGroup>
             )}
@@ -141,7 +146,7 @@ export function EntitySelect({
             )}
             {total > itens.length && (
               <p className="px-3 py-2 text-xs text-muted-foreground" role="status">
-                Mostrando {itens.length} de {total}. Refine a busca para encontrar outros.
+                {t('selecao.mostrando', { exibidos: itens.length, total })}
               </p>
             )}
           </CommandList>
@@ -159,7 +164,7 @@ function rotuloDoValor(
 ): string {
   if (selecionado) return selecionado.label;
   if (!value) return placeholder;
-  return erro ? 'Registro indisponível' : 'Carregando…';
+  return i18next.t(erro ? 'selecao.indisponivel' : 'comum.carregando');
 }
 
 function EstadoDaLista({
@@ -167,24 +172,25 @@ function EstadoDaLista({
   erro,
   vazio,
 }: Readonly<{ carregando: boolean; erro: boolean; vazio: boolean }>) {
+  const { t } = useTranslation();
   if (erro) {
     return (
       <p className="px-3 py-6 text-center text-sm text-destructive" role="alert">
-        Não foi possível carregar as opções.
+        {t('selecao.erroOpcoes')}
       </p>
     );
   }
   if (carregando) {
     return (
       <p className="px-3 py-6 text-center text-sm text-muted-foreground" role="status">
-        Carregando…
+        {t('comum.carregando')}
       </p>
     );
   }
   if (!vazio) return null;
   return (
     <p className="px-3 py-6 text-center text-sm text-muted-foreground" role="status">
-      Nenhum resultado encontrado.
+      {t('selecao.nenhumResultado')}
     </p>
   );
 }

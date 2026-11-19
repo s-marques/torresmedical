@@ -157,15 +157,15 @@ describe('Relatórios: infraestrutura e relatório de exemplo (e2e)', () => {
 
       expect(apiErrorSchema.parse(res.body)).toMatchObject({
         code: 'VALIDATION_ERROR',
-        details: [{ field: 'ate', message: PERIODO_INVALIDO }],
+        details: [expect.objectContaining({ field: 'ate', message: PERIODO_INVALIDO })],
       });
     });
 
     it('400 sem período, com data inválida, sort fora da whitelist ou filtro inválido', async () => {
       const semPeriodo = await http().get(EXEMPLO).expect(400);
       expect(semPeriodo.body.details).toEqual([
-        { field: 'de', message: 'Informe a data inicial' },
-        { field: 'ate', message: 'Informe a data final' },
+        expect.objectContaining({ field: 'de', message: 'Informe a data inicial' }),
+        expect.objectContaining({ field: 'ate', message: 'Informe a data final' }),
       ]);
 
       const invalidos = await http()
@@ -273,7 +273,9 @@ describe('Relatórios: infraestrutura e relatório de exemplo (e2e)', () => {
         .get(`${EXEMPLO}/export`)
         .query({ de: '2026-10-31', ate: '2026-10-01', format: 'pdf' })
         .expect(400);
-      expect(invertido.body.details).toEqual([{ field: 'ate', message: PERIODO_INVALIDO }]);
+      expect(invertido.body.details).toEqual([
+        expect.objectContaining({ field: 'ate', message: PERIODO_INVALIDO }),
+      ]);
       await expectNoAudit(prisma, { entity: ENTIDADE_RELATORIO });
     });
 

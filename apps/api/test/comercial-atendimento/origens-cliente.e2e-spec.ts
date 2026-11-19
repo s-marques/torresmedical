@@ -147,7 +147,9 @@ describe('Origens de Cliente (e2e)', () => {
     it('400 "Nome é obrigatório." com o nome vazio ou ausente, sem auditar', async () => {
       for (const body of [{ nome: '' }, { nome: '   ' }, {}]) {
         const res = await http().post(BASE).send(body).expect(400);
-        expect(res.body.details).toEqual([{ field: 'nome', message: 'Nome é obrigatório.' }]);
+        expect(res.body.details).toEqual([
+          expect.objectContaining({ field: 'nome', message: 'Nome é obrigatório.' }),
+        ]);
       }
       await expectNoAudit(prisma, { entity: ENTITY });
     });
@@ -157,7 +159,9 @@ describe('Origens de Cliente (e2e)', () => {
       expect(simbolos.body.code).toBe('ORIGEM_CLIENTE_NOME_INVALIDO');
 
       const extra = await http().post(BASE).send({ nome: 'X', codigo: 'y' }).expect(400);
-      expect(extra.body.details).toEqual([{ field: 'codigo', message: 'Campo não permitido' }]);
+      expect(extra.body.details).toEqual([
+        expect.objectContaining({ field: 'codigo', message: 'Campo não permitido' }),
+      ]);
     });
 
     it('409 "Já existe uma origem chamada \'teste\'." (sem diferenciar maiúsculas) e não audita', async () => {
@@ -205,7 +209,9 @@ describe('Origens de Cliente (e2e)', () => {
       const origem = await criarNoBanco('Google', 1);
 
       const vazio = await http().patch(`${BASE}/${origem.id}`).send({ nome: '' }).expect(400);
-      expect(vazio.body.details).toEqual([{ field: 'nome', message: 'Nome é obrigatório.' }]);
+      expect(vazio.body.details).toEqual([
+        expect.objectContaining({ field: 'nome', message: 'Nome é obrigatório.' }),
+      ]);
       await http().patch(`${BASE}/${INEXISTENTE}`).send({ nome: 'X' }).expect(404);
       await expectNoAudit(prisma, { entity: ENTITY });
     });

@@ -238,9 +238,9 @@ describe('Pacotes (e2e)', () => {
       const res = await http().post(BASE).send({}).expect(400);
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'pacienteId', message: 'Cliente é obrigatório.' },
-          { field: 'nome', message: 'Nome do Pacote é obrigatório.' },
-          { field: 'itens', message: MSG_PACOTE_SEM_ITENS },
+          expect.objectContaining({ field: 'pacienteId', message: 'Cliente é obrigatório.' }),
+          expect.objectContaining({ field: 'nome', message: 'Nome do Pacote é obrigatório.' }),
+          expect.objectContaining({ field: 'itens', message: MSG_PACOTE_SEM_ITENS }),
         ]),
       );
       await http()
@@ -431,7 +431,10 @@ describe('Pacotes (e2e)', () => {
       const res = await http().post(`${BASE}/${id}/usos`).send({}).expect(400);
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'profissionalId', message: 'Profissional é obrigatório.' },
+          expect.objectContaining({
+            field: 'profissionalId',
+            message: 'Profissional é obrigatório.',
+          }),
         ]),
       );
       await http().post(`${BASE}/${id}/usos`).send({ profissionalId, quantidade: 0 }).expect(400);

@@ -1,0 +1,59 @@
+{
+  "obrigatorio": "{{campo}} is required.",
+  "obrigatorio_f": "{{campo}} is required.",
+  "campoMax_one": "{{campo}} must have at most {{count}} character",
+  "campoMax_other": "{{campo}} must have at most {{count}} characters",
+  "campoObrigatorio": "Required field",
+  "valorInvalido": "Invalid value",
+  "opcaoInvalida": "Invalid option",
+  "formatoInvalido": "Invalid format",
+  "formato": {
+    "email": "Invalid e-mail",
+    "uuid": "Invalid identifier",
+    "guid": "Invalid identifier",
+    "url": "Invalid URL",
+    "datetime": "Invalid date/time",
+    "date": "Invalid date",
+    "time": "Invalid time"
+  },
+  "textoMin_one": "Must have at least {{count}} character",
+  "textoMin_other": "Must have at least {{count}} characters",
+  "textoMax_one": "Must have at most {{count}} character",
+  "textoMax_other": "Must have at most {{count}} characters",
+  "itensMin_one": "Must have at least {{count}} item",
+  "itensMin_other": "Must have at least {{count}} items",
+  "itensMax_one": "Must have at most {{count}} item",
+  "itensMax_other": "Must have at most {{count}} items",
+  "maiorOuIgual": "Must be greater than or equal to {{valor}}",
+  "maior": "Must be greater than {{valor}}",
+  "menorOuIgual": "Must be less than or equal to {{valor}}",
+  "menor": "Must be less than {{valor}}",
+  "multiploDe": "Must be a multiple of {{valor}}",
+  "campoNaoPermitido": "Field not allowed",
+  "camposNaoPermitidos": "Field not allowed: {{campos}}",
+  "duplicado": "A record with this value already exists",
+  "auth": {
+    "informeEmail": "Enter your e-mail",
+    "informeSenha": "Enter your password",
+    "senhaMin": "The password must have at least {{min}} characters",
+    "senhaMax": "The password must have at most {{max}} characters",
+    "senhaLetrasNumeros": "The password must contain letters and numbers",
+    "credenciaisInvalidas": "Invalid e-mail or password",
+    "linkInvalido": "Invalid reset link",
+    "senhasNaoConferem": "The passwords do not match"
+  },
+  "periodo": {
+    "informeDataInicial": "Enter the start date",
+    "informeDataFinal": "Enter the end date",
+    "dataInicialInvalida": "Invalid start date",
+    "dataFinalInvalida": "Invalid end date",
+    "invalido": "The start date must be on or before the end date"
+  },
+  "arquivo": {
+    "selecione": "Select a file",
+    "vazio": "The file is empty",
+    "tipoNaoPermitido": "File type not allowed. Send {{formatos}}",
+    "tamanhoMax": "The file must be at most {{tamanho}}",
+    "ou": "or"
+  }
+}

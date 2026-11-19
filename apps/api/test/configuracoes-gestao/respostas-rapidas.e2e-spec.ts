@@ -124,14 +124,14 @@ describe('Respostas Rápidas (e2e)', () => {
 
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'titulo', message: 'Título é obrigatório.' },
-          { field: 'mensagem', message: 'Mensagem é obrigatória.' },
+          expect.objectContaining({ field: 'titulo', message: 'Título é obrigatório.' }),
+          expect.objectContaining({ field: 'mensagem', message: 'Mensagem é obrigatória.' }),
           {
             field: 'atalho',
             message:
               'O atalho deve começar com "/" e ter só letras, números, "-" ou "_", sem espaços',
           },
-          { field: 'extra', message: 'Campo não permitido' },
+          expect.objectContaining({ field: 'extra', message: 'Campo não permitido' }),
         ]),
       );
       await expectNoAudit(prisma, { entity: ENTITY });
@@ -147,7 +147,7 @@ describe('Respostas Rápidas (e2e)', () => {
         .expect(400);
       expect(res.body).toMatchObject({
         code: 'ATALHO_DUPLICADO',
-        details: [{ field: 'atalho', message: ATALHO_DUPLICADO }],
+        details: [expect.objectContaining({ field: 'atalho', message: ATALHO_DUPLICADO })],
       });
       await expectNoAudit(prisma, { entity: ENTITY });
 

@@ -191,7 +191,9 @@ describe('Formas de Pagamento (e2e)', () => {
     it('400 "Nome é obrigatório." com o nome vazio ou ausente, sem auditar', async () => {
       for (const body of [{ nome: '' }, { nome: '   ' }, {}]) {
         const res = await http().post(BASE).send(body).expect(400);
-        expect(res.body.details).toEqual([{ field: 'nome', message: 'Nome é obrigatório.' }]);
+        expect(res.body.details).toEqual([
+          expect.objectContaining({ field: 'nome', message: 'Nome é obrigatório.' }),
+        ]);
       }
       await expectNoAudit(prisma, { entity: ENTITY });
     });
@@ -399,7 +401,9 @@ describe('Formas de Pagamento (e2e)', () => {
 
     it('POST 400 sem nome ou com ícone inválido, sem auditar', async () => {
       const semNome = await http().post(BASE_BANDEIRAS).send({ nome: '' }).expect(400);
-      expect(semNome.body.details).toEqual([{ field: 'nome', message: 'Nome é obrigatório.' }]);
+      expect(semNome.body.details).toEqual([
+        expect.objectContaining({ field: 'nome', message: 'Nome é obrigatório.' }),
+      ]);
       await http().post(BASE_BANDEIRAS).send({ nome: 'X', icone: 'fa credit' }).expect(400);
       await expectNoAudit(prisma, { entity: 'Bandeira' });
     });

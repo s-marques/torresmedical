@@ -1,6 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { aplicarIdioma } from '@/lib/i18n';
 import {
   apiFalsa,
   chamadasPara,
@@ -66,6 +67,25 @@ describe('rota protegida', () => {
 });
 
 describe('LoginPage', () => {
+  it('em espanhol: textos, validação e erro do servidor pelo code (issue #205)', async () => {
+    aplicarIdioma('es');
+    renderApp(
+      '/login',
+      apiFalsa({ usuario: null, rotas: { '/api/auth/login': () => json(ERRO_LOGIN, 401) } }),
+    );
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Ingresar' }));
+    expect(screen.getByText('Ingrese el correo electrónico')).toBeInTheDocument();
+    expect(screen.getByText('Ingrese la contraseña')).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText('Correo electrónico'), 'pessoa@example.com');
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'errada');
+    await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Correo electrónico o contraseña no válidos',
+    );
+  });
+
   it('valida e-mail e senha antes de enviar', async () => {
     const fetchMock = apiFalsa({ usuario: null });
     renderApp('/login', fetchMock);

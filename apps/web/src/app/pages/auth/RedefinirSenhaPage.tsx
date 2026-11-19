@@ -1,8 +1,9 @@
 import { redefinirSenhaFormSchema } from '@torres/shared';
 import { useId, useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/button';
-import { ApiRequestError, ERRO_INESPERADO_API } from '@/lib/api/api-error';
+import { ApiRequestError, erroInesperadoApi } from '@/lib/api/api-error';
 import { errosPorCampo } from '@/lib/api/tratar-erro';
 import { redefinirSenha } from '@/lib/auth/sessao';
 import { errosDoZod } from '@/lib/forms/erros-zod';
@@ -12,6 +13,7 @@ import { CampoAuth } from './CampoAuth';
 /** Troca a senha pelo link recebido (`/redefinir-senha?token=...`). */
 export function RedefinirSenhaPage() {
   const id = useId();
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const token = params.get('token') ?? '';
   const [erros, setErros] = useState<Record<string, string>>({});
@@ -42,7 +44,7 @@ export function RedefinirSenhaPage() {
       setErros(porCampo);
       if (erroDoLink) setErroGeral(erroDoLink);
       else if (Object.keys(porCampo).length === 0) {
-        setErroGeral(error instanceof ApiRequestError ? error.message : ERRO_INESPERADO_API);
+        setErroGeral(error instanceof ApiRequestError ? error.message : erroInesperadoApi());
       }
     } finally {
       setEnviando(false);
@@ -52,23 +54,21 @@ export function RedefinirSenhaPage() {
   if (!token || concluido) {
     return (
       <AuthLayout
-        titulo="Redefinir senha"
-        descricao={concluido ? 'Senha alterada' : 'Link de redefinição inválido ou expirado'}
+        titulo={t('auth.redefinirSenha')}
+        descricao={t(concluido ? 'auth.senhaAlterada' : 'auth.linkInvalido')}
       >
         <p role="status" className="text-center text-sm">
-          {concluido
-            ? 'Sua senha foi alterada. Entre com a senha nova.'
-            : 'Peça um novo link em "Esqueci minha senha".'}
+          {t(concluido ? 'auth.senhaAlteradaDescricao' : 'auth.pecaNovoLink')}
         </p>
         <Link to="/login" className="mt-4 block text-center text-sm text-primary hover:underline">
-          Ir para o login
+          {t('auth.irLogin')}
         </Link>
       </AuthLayout>
     );
   }
 
   return (
-    <AuthLayout titulo="Redefinir senha" descricao="Crie uma senha com letras e números">
+    <AuthLayout titulo={t('auth.redefinirSenha')} descricao={t('auth.redefinirDescricao')}>
       <form className="grid gap-4" noValidate onSubmit={(event) => void enviar(event)}>
         {erroGeral && (
           <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
@@ -77,7 +77,7 @@ export function RedefinirSenhaPage() {
         )}
         <CampoAuth
           id={`${id}-senha`}
-          rotulo="Senha nova"
+          rotulo={t('auth.senhaNova')}
           name="senha"
           type="password"
           autoComplete="new-password"
@@ -85,14 +85,14 @@ export function RedefinirSenhaPage() {
         />
         <CampoAuth
           id={`${id}-confirmacao`}
-          rotulo="Confirme a senha"
+          rotulo={t('auth.confirmeSenha')}
           name="confirmacao"
           type="password"
           autoComplete="new-password"
           erro={erros.confirmacao}
         />
         <Button type="submit" className="w-full" disabled={enviando}>
-          Alterar senha
+          {t('auth.alterarSenha')}
         </Button>
       </form>
     </AuthLayout>

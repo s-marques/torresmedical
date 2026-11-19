@@ -239,8 +239,11 @@ describe('Agenda (e2e)', () => {
       expect(res.body.code).toBe('VALIDATION_ERROR');
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'pacienteId', message: 'Selecione o paciente.' },
-          { field: 'profissionalId', message: 'Selecione o profissional.' },
+          expect.objectContaining({ field: 'pacienteId', message: 'Selecione o paciente.' }),
+          expect.objectContaining({
+            field: 'profissionalId',
+            message: 'Selecione o profissional.',
+          }),
         ]),
       );
       expect(await prisma.agendamento.count()).toBe(0);

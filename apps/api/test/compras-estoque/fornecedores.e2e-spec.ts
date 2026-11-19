@@ -191,7 +191,9 @@ describe('Fornecedores (e2e)', () => {
     it(`400 "${MSG_NOME}" com o nome vazio ou ausente, sem auditar`, async () => {
       for (const body of [{ nome: '' }, { nome: '   ' }, {}]) {
         const res = await http().post(BASE).send(body).expect(400);
-        expect(res.body.details).toEqual([{ field: 'nome', message: MSG_NOME }]);
+        expect(res.body.details).toEqual([
+          expect.objectContaining({ field: 'nome', message: MSG_NOME }),
+        ]);
       }
       await expectNoAudit(prisma, { entity: ENTITY });
     });

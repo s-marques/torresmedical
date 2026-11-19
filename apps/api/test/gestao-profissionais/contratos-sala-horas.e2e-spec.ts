@@ -149,10 +149,10 @@ describe('Horas utilizadas dos contratos de salas (e2e)', () => {
         .expect(400);
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'data', message: 'Data é obrigatória.' },
-          { field: 'entrada', message: 'Hora de entrada inválida' },
-          { field: 'saida', message: 'Hora de saída é obrigatória.' },
-          { field: 'extra', message: 'Campo não permitido' },
+          expect.objectContaining({ field: 'data', message: 'Data é obrigatória.' }),
+          expect.objectContaining({ field: 'entrada', message: 'Hora de entrada inválida' }),
+          expect.objectContaining({ field: 'saida', message: 'Hora de saída é obrigatória.' }),
+          expect.objectContaining({ field: 'extra', message: 'Campo não permitido' }),
         ]),
       );
       const ordem = await http()
@@ -160,7 +160,7 @@ describe('Horas utilizadas dos contratos de salas (e2e)', () => {
         .send({ data: '2026-10-21', entrada: '10:00', saida: '09:00' })
         .expect(400);
       expect(ordem.body.details).toEqual([
-        { field: 'saida', message: 'A saída deve ser depois da entrada' },
+        expect.objectContaining({ field: 'saida', message: 'A saída deve ser depois da entrada' }),
       ]);
       await expectNoAudit(prisma, { entity: ENTITY });
     });

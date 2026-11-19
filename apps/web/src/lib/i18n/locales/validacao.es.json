@@ -1,0 +1,59 @@
+{
+  "obrigatorio": "{{campo}} es obligatorio.",
+  "obrigatorio_f": "{{campo}} es obligatoria.",
+  "campoMax_one": "{{campo}} debe tener como máximo {{count}} carácter",
+  "campoMax_other": "{{campo}} debe tener como máximo {{count}} caracteres",
+  "campoObrigatorio": "Campo obligatorio",
+  "valorInvalido": "Valor no válido",
+  "opcaoInvalida": "Opción no válida",
+  "formatoInvalido": "Formato no válido",
+  "formato": {
+    "email": "Correo electrónico no válido",
+    "uuid": "Identificador no válido",
+    "guid": "Identificador no válido",
+    "url": "URL no válida",
+    "datetime": "Fecha/hora no válida",
+    "date": "Fecha no válida",
+    "time": "Hora no válida"
+  },
+  "textoMin_one": "Debe tener como mínimo {{count}} carácter",
+  "textoMin_other": "Debe tener como mínimo {{count}} caracteres",
+  "textoMax_one": "Debe tener como máximo {{count}} carácter",
+  "textoMax_other": "Debe tener como máximo {{count}} caracteres",
+  "itensMin_one": "Debe tener como mínimo {{count}} elemento",
+  "itensMin_other": "Debe tener como mínimo {{count}} elementos",
+  "itensMax_one": "Debe tener como máximo {{count}} elemento",
+  "itensMax_other": "Debe tener como máximo {{count}} elementos",
+  "maiorOuIgual": "Debe ser mayor o igual a {{valor}}",
+  "maior": "Debe ser mayor que {{valor}}",
+  "menorOuIgual": "Debe ser menor o igual a {{valor}}",
+  "menor": "Debe ser menor que {{valor}}",
+  "multiploDe": "Debe ser múltiplo de {{valor}}",
+  "campoNaoPermitido": "Campo no permitido",
+  "camposNaoPermitidos": "Campo no permitido: {{campos}}",
+  "duplicado": "Ya existe un registro con este valor",
+  "auth": {
+    "informeEmail": "Ingrese el correo electrónico",
+    "informeSenha": "Ingrese la contraseña",
+    "senhaMin": "La contraseña debe tener como mínimo {{min}} caracteres",
+    "senhaMax": "La contraseña debe tener como máximo {{max}} caracteres",
+    "senhaLetrasNumeros": "La contraseña debe tener letras y números",
+    "credenciaisInvalidas": "Correo electrónico o contraseña no válidos",
+    "linkInvalido": "Enlace de restablecimiento no válido",
+    "senhasNaoConferem": "Las contraseñas no coinciden"
+  },
+  "periodo": {
+    "informeDataInicial": "Ingrese la fecha inicial",
+    "informeDataFinal": "Ingrese la fecha final",
+    "dataInicialInvalida": "Fecha inicial no válida",
+    "dataFinalInvalida": "Fecha final no válida",
+    "invalido": "La fecha inicial debe ser anterior o igual a la final"
+  },
+  "arquivo": {
+    "selecione": "Seleccione un archivo",
+    "vazio": "El archivo está vacío",
+    "tipoNaoPermitido": "Tipo de archivo no permitido. Envíe {{formatos}}",
+    "tamanhoMax": "El archivo debe tener como máximo {{tamanho}}",
+    "ou": "o"
+  }
+}

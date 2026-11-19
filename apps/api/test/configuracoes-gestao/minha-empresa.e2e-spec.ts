@@ -109,9 +109,9 @@ describe('Minha Empresa (e2e)', () => {
 
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'nome', message: 'Nome da Empresa é obrigatório.' },
-          { field: 'documento', message: 'CNPJ / CPF inválido' },
-          { field: 'email', message: 'E-mail inválido' },
+          expect.objectContaining({ field: 'nome', message: 'Nome da Empresa é obrigatório.' }),
+          expect.objectContaining({ field: 'documento', message: 'CNPJ / CPF inválido' }),
+          expect.objectContaining({ field: 'email', message: 'E-mail inválido' }),
         ]),
       );
       await expectNoAudit(prisma, { entity: 'Empresa' });
@@ -235,8 +235,14 @@ describe('Minha Empresa (e2e)', () => {
 
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'dias.1.abre', message: 'Informe o horário de abertura' },
-          { field: 'dias.1.fecha', message: 'Informe o horário de fechamento' },
+          expect.objectContaining({
+            field: 'dias.1.abre',
+            message: 'Informe o horário de abertura',
+          }),
+          expect.objectContaining({
+            field: 'dias.1.fecha',
+            message: 'Informe o horário de fechamento',
+          }),
         ]),
       );
     });

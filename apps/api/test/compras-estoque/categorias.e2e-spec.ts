@@ -145,7 +145,7 @@ describe('Categorias (e2e)', () => {
       for (const body of [{ nome: '' }, { nome: '   ' }, {}]) {
         const res = await http().post(BASE).send(body).expect(400);
         expect(res.body.details).toEqual([
-          { field: 'nome', message: 'O nome da categoria é obrigatório.' },
+          expect.objectContaining({ field: 'nome', message: 'O nome da categoria é obrigatório.' }),
         ]);
       }
       await expectNoAudit(prisma, { entity: ENTITY });

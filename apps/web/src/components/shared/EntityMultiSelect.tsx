@@ -1,8 +1,9 @@
 import type { LookupEntidade } from '@torres/shared';
 import { XIcon } from 'lucide-react';
 import { useState } from 'react';
-import type { FiltrosLookup } from '@/lib/api/lookups';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
+import type { FiltrosLookup } from '@/lib/api/lookups';
 import { EntitySelect } from './EntitySelect';
 
 /** Item já selecionado, com o rótulo para o chip. */
@@ -40,11 +41,14 @@ export function EntityMultiSelect({
   onChange,
   iniciais = [],
   filtros,
-  placeholder = 'Adicionar',
-  vazio = 'Nenhum item selecionado.',
+  placeholder: placeholderInformado,
+  vazio: vazioInformado,
   disabled,
   ...aria
 }: Readonly<EntityMultiSelectProps>) {
+  const { t } = useTranslation();
+  const placeholder = placeholderInformado ?? t('selecao.adicionar');
+  const vazio = vazioInformado ?? t('selecao.nenhumSelecionado');
   const [rotulos, setRotulos] = useState<ReadonlyMap<string, string>>(
     () => new Map(iniciais.map((item) => [item.id, item.nome])),
   );
@@ -68,7 +72,7 @@ export function EntityMultiSelect({
       {value.length === 0 ? (
         <p className="text-sm text-muted-foreground">{vazio}</p>
       ) : (
-        <ul className="flex flex-wrap gap-2" aria-label="Selecionados">
+        <ul className="flex flex-wrap gap-2" aria-label={t('selecao.selecionados')}>
           {value.map((id) => {
             const rotulo = rotulos.get(id) ?? id;
             return (
@@ -78,7 +82,7 @@ export function EntityMultiSelect({
                   <button
                     type="button"
                     className="rounded-sm p-0.5 hover:bg-muted-foreground/20 disabled:opacity-50"
-                    aria-label={`Remover ${rotulo}`}
+                    aria-label={t('selecao.remover', { rotulo })}
                     disabled={disabled}
                     onClick={() => onChange(value.filter((atual) => atual !== id))}
                   >

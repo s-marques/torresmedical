@@ -129,8 +129,8 @@ describe('Protocolos (e2e)', () => {
       const res = await http().post(BASE).send({ nome: '  ', extra: 1 }).expect(400);
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'nome', message: 'Nome é obrigatório.' },
-          { field: 'extra', message: 'Campo não permitido' },
+          expect.objectContaining({ field: 'nome', message: 'Nome é obrigatório.' }),
+          expect.objectContaining({ field: 'extra', message: 'Campo não permitido' }),
         ]),
       );
       await http().post(BASE).send({}).expect(400);
@@ -143,7 +143,12 @@ describe('Protocolos (e2e)', () => {
       expect(res.body).toMatchObject({
         code: 'PROTOCOLO_DUPLICADO',
         message: 'Já existe um protocolo com este nome.',
-        details: [{ field: 'nome', message: 'Já existe um protocolo com este nome.' }],
+        details: [
+          expect.objectContaining({
+            field: 'nome',
+            message: 'Já existe um protocolo com este nome.',
+          }),
+        ],
       });
       await expectNoAudit(prisma, { entity: 'Protocolo' });
 
@@ -157,14 +162,17 @@ describe('Protocolos (e2e)', () => {
         .send({ nome: 'X', profissionalId: INEXISTENTE })
         .expect(400);
       expect(prof.body.details).toEqual([
-        { field: 'profissionalId', message: 'Profissional inválido' },
+        expect.objectContaining({ field: 'profissionalId', message: 'Profissional inválido' }),
       ]);
       const prod = await http()
         .post(BASE)
         .send({ nome: 'X', itens: [{ produtoId: INEXISTENTE, quantidade: 1 }] })
         .expect(400);
       expect(prod.body.details).toEqual([
-        { field: 'itens.0.produtoId', message: 'Produto/Serviço inválido' },
+        expect.objectContaining({
+          field: 'itens.0.produtoId',
+          message: 'Produto/Serviço inválido',
+        }),
       ]);
       const leitor = await criarUsuarioTeste(app, {
         permissoes: ['gestao-profissionais.protocolos.ver'],
@@ -325,7 +333,9 @@ describe('Protocolos (e2e)', () => {
     it('400 sem nome, semana fora do total ou protocolo inexistente; 409 para nome repetido', async () => {
       const res = await http().post(BASE_MAE).send({ nome: '' }).expect(400);
       expect(res.body.details).toEqual(
-        expect.arrayContaining([{ field: 'nome', message: 'Nome é obrigatório.' }]),
+        expect.arrayContaining([
+          expect.objectContaining({ field: 'nome', message: 'Nome é obrigatório.' }),
+        ]),
       );
       await http()
         .post(BASE_MAE)
@@ -336,7 +346,7 @@ describe('Protocolos (e2e)', () => {
         .send({ nome: 'X', semanas: [{ semana: 1, protocoloId: INEXISTENTE }] })
         .expect(400);
       expect(inexistente.body.details).toEqual([
-        { field: 'semanas.0.protocoloId', message: 'Protocolo inválido' },
+        expect.objectContaining({ field: 'semanas.0.protocoloId', message: 'Protocolo inválido' }),
       ]);
 
       await http().post(BASE_MAE).send({ nome: 'Facial' }).expect(201);

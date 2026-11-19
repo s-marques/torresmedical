@@ -121,10 +121,13 @@ describe('Tipos de Agendamento (e2e)', () => {
 
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'nome', message: 'Nome é obrigatório.' },
-          { field: 'duracaoMinutos', message: 'A duração deve ser de pelo menos 1 minuto' },
-          { field: 'cor', message: 'Cor inválida. Use o formato #RRGGBB' },
-          { field: 'extra', message: 'Campo não permitido' },
+          expect.objectContaining({ field: 'nome', message: 'Nome é obrigatório.' }),
+          expect.objectContaining({
+            field: 'duracaoMinutos',
+            message: 'A duração deve ser de pelo menos 1 minuto',
+          }),
+          expect.objectContaining({ field: 'cor', message: 'Cor inválida. Use o formato #RRGGBB' }),
+          expect.objectContaining({ field: 'extra', message: 'Campo não permitido' }),
         ]),
       );
       await expectNoAudit(prisma, { entity: 'TipoAgendamento' });

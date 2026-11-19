@@ -192,11 +192,17 @@ describe('Mensalidades (e2e)', () => {
       const res = await http().post(BASE).send({}).expect(400);
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'pacienteId', message: 'Cliente é obrigatório.' },
-          { field: 'descricao', message: 'Descrição é obrigatória.' },
-          { field: 'valor', message: 'Valor é obrigatório.' },
-          { field: 'diaVencimento', message: 'Dia de vencimento é obrigatório.' },
-          { field: 'dataInicio', message: 'Data de início é obrigatória.' },
+          expect.objectContaining({ field: 'pacienteId', message: 'Cliente é obrigatório.' }),
+          expect.objectContaining({ field: 'descricao', message: 'Descrição é obrigatória.' }),
+          expect.objectContaining({ field: 'valor', message: 'Valor é obrigatório.' }),
+          expect.objectContaining({
+            field: 'diaVencimento',
+            message: 'Dia de vencimento é obrigatório.',
+          }),
+          expect.objectContaining({
+            field: 'dataInicio',
+            message: 'Data de início é obrigatória.',
+          }),
         ]),
       );
       await expectNoAudit(prisma, { entity: ENTITY });
@@ -224,7 +230,7 @@ describe('Mensalidades (e2e)', () => {
         .send(corpo({ pacienteId: INEXISTENTE }))
         .expect(400);
       expect(semCliente.body.details).toEqual([
-        { field: 'pacienteId', message: 'Cliente inválido' },
+        expect.objectContaining({ field: 'pacienteId', message: 'Cliente inválido' }),
       ]);
       const pagar = await prisma.formaPagamento.create({
         data: { nome: 'Boleto a pagar', finalidade: 'PAGAR', tipo: 'BOLETO' },
@@ -238,7 +244,10 @@ describe('Mensalidades (e2e)', () => {
           .send(corpo({ formaPagamentoId: id }))
           .expect(400);
         expect(res.body.details).toEqual([
-          { field: 'formaPagamentoId', message: 'Forma de pagamento inválida' },
+          expect.objectContaining({
+            field: 'formaPagamentoId',
+            message: 'Forma de pagamento inválida',
+          }),
         ]);
       }
       await expectNoAudit(prisma, { entity: ENTITY });

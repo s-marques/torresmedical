@@ -97,7 +97,9 @@ describe('Cargos (e2e)', () => {
 
     it(`400 "${MSG_NOME}" com o nome vazio, sem auditar`, async () => {
       const res = await http().post(BASE).send({ nome: '' }).expect(400);
-      expect(res.body.details).toEqual([{ field: 'nome', message: MSG_NOME }]);
+      expect(res.body.details).toEqual([
+        expect.objectContaining({ field: 'nome', message: MSG_NOME }),
+      ]);
       await expectNoAudit(prisma, { entity: ENTITY });
     });
   });

@@ -167,7 +167,9 @@ describe('Pipeline / CRM (e2e)', () => {
         .post(`${BASE}/negocios`)
         .send({ estagioId: contatoInicial })
         .expect(400);
-      expect(res.body.details).toEqual([{ field: 'titulo', message: 'Título é obrigatório.' }]);
+      expect(res.body.details).toEqual([
+        expect.objectContaining({ field: 'titulo', message: 'Título é obrigatório.' }),
+      ]);
       await expectNoAudit(prisma, { entity: 'Negocio' });
     });
 
@@ -281,7 +283,10 @@ describe('Pipeline / CRM (e2e)', () => {
       });
       const vazio = await http().patch(`${BASE}/negocios/${id}/perdido`).send({}).expect(400);
       expect(vazio.body.details).toEqual([
-        { field: 'motivoPerdaId', message: 'Motivo da perda é obrigatório.' },
+        expect.objectContaining({
+          field: 'motivoPerdaId',
+          message: 'Motivo da perda é obrigatório.',
+        }),
       ]);
       await http()
         .patch(`${BASE}/negocios/${id}/perdido`)

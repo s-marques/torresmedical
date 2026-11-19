@@ -121,10 +121,13 @@ describe('Salas (e2e)', () => {
 
       expect(res.body.details).toEqual(
         expect.arrayContaining([
-          { field: 'nome', message: 'Nome é obrigatório.' },
-          { field: 'tipo', message: 'Tipo inválido' },
-          { field: 'valorMensal', message: 'Valor mensal não pode ser negativo' },
-          { field: 'extra', message: 'Campo não permitido' },
+          expect.objectContaining({ field: 'nome', message: 'Nome é obrigatório.' }),
+          expect.objectContaining({ field: 'tipo', message: 'Tipo inválido' }),
+          expect.objectContaining({
+            field: 'valorMensal',
+            message: 'Valor mensal não pode ser negativo',
+          }),
+          expect.objectContaining({ field: 'extra', message: 'Campo não permitido' }),
         ]),
       );
       await expectNoAudit(prisma, { entity: ENTITY });

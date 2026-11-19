@@ -236,7 +236,7 @@ describe('Pacientes (e2e)', () => {
       for (const body of [{ nome: '' }, { nome: '   ' }, {}]) {
         const res = await http().post(BASE).send(body).expect(400);
         expect(res.body.details).toEqual([
-          { field: 'nome', message: 'O nome do paciente é obrigatório.' },
+          expect.objectContaining({ field: 'nome', message: 'O nome do paciente é obrigatório.' }),
         ]);
       }
       await expectNoAudit(prisma, { entity: ENTITY });
@@ -269,7 +269,9 @@ describe('Pacientes (e2e)', () => {
       const res = await http().post(BASE).send({ nome: 'Outra', documento: CPF_A }).expect(409);
 
       expect(res.body).toMatchObject({ code: 'PACIENTE_DOCUMENTO_DUPLICADO' });
-      expect(res.body.details).toEqual([{ field: 'documento', message: 'CPF já cadastrado' }]);
+      expect(res.body.details).toEqual([
+        expect.objectContaining({ field: 'documento', message: 'CPF já cadastrado' }),
+      ]);
       await http().post(BASE).send({ nome: 'Nova', documento: CPF_B }).expect(201);
     });
 

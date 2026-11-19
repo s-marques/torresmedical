@@ -1,0 +1,11 @@
+{
+  "Nome": "Name",
+  "E-mail": "E-mail",
+  "Telefone": "Phone",
+  "Cargo": "Job title",
+  "Senha": "Password",
+  "Data": "Date",
+  "Hora": "Time",
+  "Descrição": "Description",
+  "Observação": "Note"
+}
