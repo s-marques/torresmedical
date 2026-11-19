@@ -101,6 +101,9 @@ const QUERY: ListPrescricoesQuery = {
   page: 1,
   pageSize: 10,
   sort: { field: 'dataPrescricao', direction: 'desc' },
+  search: undefined,
+  de: undefined,
+  ate: undefined,
 };
 
 describe('PrescricoesService', () => {

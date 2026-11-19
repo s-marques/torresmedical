@@ -76,6 +76,7 @@ const QUERY: ListReceituarioBlocosQuery = {
   page: 1,
   pageSize: 10,
   sort: { field: 'createdAt', direction: 'desc' },
+  search: undefined,
 };
 
 describe('ReceituarioBlocosService', () => {
