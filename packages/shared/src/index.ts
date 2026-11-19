@@ -43,6 +43,7 @@ export * from './schemas/configuracoes-gestao/empresa';
 export * from './schemas/configuracoes-gestao/horario-funcionamento';
 export * from './schemas/configuracoes-gestao/perfil';
 export * from './schemas/configuracoes-gestao/resposta-rapida';
+export * from './schemas/configuracoes-gestao/documento-conhecimento';
 export * from './schemas/configuracoes-gestao/tipo-agendamento';
 export * from './schemas/configuracoes-gestao/unidade';
 export * from './schemas/configuracoes-gestao/usuario';
