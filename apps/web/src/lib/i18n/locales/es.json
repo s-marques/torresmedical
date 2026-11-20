@@ -868,5 +868,44 @@
     "painel": "Panel",
     "modulo": "Gestión",
     "relatorios": "Informes"
+  },
+  "treinamentos": {
+    "titulo": "Capacitaciones",
+    "descricao": "Control de capacitaciones y certificaciones de los empleados.",
+    "novo": "Nueva Capacitación",
+    "novoTitulo": "Nueva Capacitación",
+    "novoTipo": "Nuevo Tipo",
+    "novoTipoTitulo": "Nuevo Tipo de Capacitación",
+    "criarTipo": "Crear Tipo",
+    "tipoCriado": "Tipo de capacitación creado.",
+    "cadastrar": "Registrar",
+    "cadastrado": "Capacitación registrada.",
+    "todos": "Todas",
+    "buscar": "Buscar capacitaciones...",
+    "vazio": "No se encontraron capacitaciones.",
+    "status": {
+      "valido": "Vigente",
+      "vencido": "Vencida"
+    },
+    "colunas": {
+      "funcionario": "Empleado",
+      "tipo": "Tipo",
+      "dataRealizacao": "Realización",
+      "dataVencimento": "Vencimiento",
+      "instituicao": "Institución",
+      "status": "Estado"
+    },
+    "campos": {
+      "funcionario": "Empleado",
+      "tipo": "Tipo",
+      "descricao": "Descripción",
+      "dataRealizacao": "Fecha de Realización",
+      "dataVencimento": "Fecha de Vencimiento",
+      "cargaHoraria": "Carga Horaria (h)",
+      "instituicao": "Institución",
+      "observacoes": "Observaciones",
+      "nomeTipo": "Nombre",
+      "nomeTipoPlaceholder": "Ej.: Bioseguridad"
+    }
   }
 }
