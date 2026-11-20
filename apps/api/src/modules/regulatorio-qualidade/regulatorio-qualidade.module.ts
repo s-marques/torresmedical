@@ -9,6 +9,8 @@ import { ComissoesController } from './comissoes/comissoes.controller';
 import { ComissoesService } from './comissoes/comissoes.service';
 import { FuncionariosController } from './funcionarios/funcionarios.controller';
 import { FuncionariosService } from './funcionarios/funcionarios.service';
+import { NaoConformidadesController } from './nao-conformidades/nao-conformidades.controller';
+import { NaoConformidadesService } from './nao-conformidades/nao-conformidades.service';
 
 /** Módulo REGULATÓRIO / QUALIDADE do inventário. Dono das entidades Funcionário e Cargo. */
 @Module({
@@ -20,8 +22,15 @@ import { FuncionariosService } from './funcionarios/funcionarios.service';
     CargosController,
     ComissoesController,
     AlvarasLicencasController,
+    NaoConformidadesController,
   ],
-  providers: [FuncionariosService, CargosService, ComissoesService, AlvarasLicencasService],
+  providers: [
+    FuncionariosService,
+    CargosService,
+    ComissoesService,
+    AlvarasLicencasService,
+    NaoConformidadesService,
+  ],
   exports: [FuncionariosService, CargosService],
 })
 export class RegulatorioQualidadeModule {}
