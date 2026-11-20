@@ -46,6 +46,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
   controllers: [
     criarLookupController('profissionais', ProfissionaisService),
     criarLookupController('especialidades', EspecialidadesService),
+    criarLookupController('salas', SalasService),
     ProfissionaisController,
     EspecialidadesController,
     ServicosProfissionaisController,
@@ -89,8 +90,9 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ProtocolosService,
     ProtocolosMaeService,
     SalasService,
-    // Bloqueios de sala: a Agenda (#136) consulta antes de agendar.
+    // Bloqueios de sala e horários do profissional: a Agenda (#136) consulta antes de agendar.
     SalasBloqueiosService,
+    ProfissionalAgendaService,
     // Receita recorrente dos Indicadores do Financeiro.
     ContratosSalaCobrancaService,
   ],

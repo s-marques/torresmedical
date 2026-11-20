@@ -2,18 +2,22 @@ import { escopoFalso } from '../../../../test/utils/escopo-falso';
 import { txHostFalso } from '../../../../test/utils/tx-host-falso';
 import type { TiposAgendamentoService } from '../../configuracoes-gestao/tipos-agendamento/tipos-agendamento.service';
 import type { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
+import type { SalasService } from '../../gestao-profissionais/salas/salas.service';
 import type { PacientesService } from '../pacientes/pacientes.service';
+import type { AgendaConflitosService } from './agenda-conflitos.service';
 import { AgendaService, instanteDeInicio, toAgendamentoDto } from './agenda.service';
 
 const ID = '0b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 const ID_PROF = '1b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 const ID_TIPO = '2b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
+const ID_SALA = '4b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 
 const REGISTRO = {
   id: ID,
   numero: 1224,
   pacienteId: ID,
   profissionalId: ID_PROF,
+  salaId: ID_SALA,
   tipoAgendamentoId: null,
   inicio: new Date('2026-10-21T11:40:00Z'),
   duracaoMinutos: 30,
@@ -24,25 +28,45 @@ const REGISTRO = {
   paciente: { nome: 'Paciente Fictício' },
   profissional: { nome: 'Profissional Fictício', corCalendario: 'verde' },
   tipoAgendamento: null,
+  sala: { nome: 'Sala Fictícia' },
 };
 
-function criar(profissionaisDoEscopo?: string[]) {
-  const { txHost, delegate } = txHostFalso('agendamento', [REGISTRO]);
+function criar(profissionaisDoEscopo?: string[], registro: Record<string, unknown> = REGISTRO) {
+  const { txHost, delegate } = txHostFalso('agendamento', [registro]);
   const pacientes = { findById: jest.fn().mockResolvedValue({}) };
   const profissionais = {
     garantirExiste: jest.fn().mockResolvedValue(undefined),
     listarParaAgenda: jest.fn().mockResolvedValue([{ id: ID_PROF }]),
   };
   const tipos = { findById: jest.fn().mockResolvedValue({}) };
+  const salas = {
+    sugerirDoProfissional: jest.fn().mockResolvedValue({ id: ID_SALA, nome: 'Sala Fictícia' }),
+  };
+  const conflitos = { garantirLivre: jest.fn().mockResolvedValue(undefined) };
   const service = new AgendaService(
     txHost,
     pacientes as unknown as PacientesService,
     profissionais as unknown as ProfissionaisService,
     tipos as unknown as TiposAgendamentoService,
     escopoFalso(profissionaisDoEscopo),
+    salas as unknown as SalasService,
+    conflitos as unknown as AgendaConflitosService,
   );
-  return { service, delegate, pacientes, profissionais, tipos };
+  return { service, delegate, pacientes, profissionais, tipos, salas, conflitos };
 }
+
+const ENTRADA = {
+  pacienteId: ID,
+  profissionalId: ID_PROF,
+  salaId: ID_SALA,
+  tipoAgendamentoId: null,
+  data: '2026-10-22',
+  hora: '16:00',
+  duracaoMinutos: 30,
+  valor: null,
+  convenio: false,
+  observacoes: null,
+};
 
 describe('AgendaService', () => {
   it('instanteDeInicio: 16:00 no fuso da clínica (UTC-3) é 19:00 UTC', () => {
@@ -58,6 +82,15 @@ describe('AgendaService', () => {
       pacienteNome: 'Paciente Fictício',
       profissionalCor: 'verde',
       tipoNome: null,
+      salaId: ID_SALA,
+      salaNome: 'Sala Fictícia',
+    });
+  });
+
+  it('toAgendamentoDto: agendamento antigo sem sala devolve sala nula', () => {
+    expect(toAgendamentoDto({ ...REGISTRO, salaId: null, sala: null } as never)).toMatchObject({
+      salaId: null,
+      salaNome: null,
     });
   });
 
@@ -86,26 +119,31 @@ describe('AgendaService', () => {
     expect(delegate.findFirst).not.toHaveBeenCalled();
   });
 
-  it('create: valida as entidades, grava como Agendado e devolve o detalhe', async () => {
-    const { service, delegate, pacientes, profissionais, tipos } = criar();
+  it('create: valida as entidades, confere a ocupação, grava como Agendado e devolve o detalhe', async () => {
+    const { service, delegate, pacientes, profissionais, tipos, conflitos } = criar();
 
     await service.create({
-      pacienteId: ID,
-      profissionalId: ID_PROF,
+      ...ENTRADA,
       tipoAgendamentoId: ID_TIPO,
-      data: '2026-10-22',
-      hora: '16:00',
       duracaoMinutos: 45,
       valor: 100,
       convenio: true,
-      observacoes: null,
     });
 
     expect(pacientes.findById).toHaveBeenCalledWith(ID);
     expect(profissionais.garantirExiste).toHaveBeenCalledWith(ID_PROF);
     expect(tipos.findById).toHaveBeenCalledWith(ID_TIPO);
+    expect(conflitos.garantirLivre).toHaveBeenCalledWith(
+      expect.objectContaining({
+        salaId: ID_SALA,
+        profissionalId: ID_PROF,
+        data: '2026-10-22',
+        hora: '16:00',
+        duracaoMinutos: 45,
+      }),
+    );
     const { data } = delegate.create.mock.calls[0][0];
-    expect(data).toMatchObject({ duracaoMinutos: 45, valor: 100, convenio: true });
+    expect(data).toMatchObject({ duracaoMinutos: 45, valor: 100, convenio: true, salaId: ID_SALA });
     expect(data).not.toHaveProperty('status');
     expect(data.inicio.toISOString()).toBe('2026-10-22T19:00:00.000Z');
   });
@@ -113,24 +151,113 @@ describe('AgendaService', () => {
   it('create: sem tipo, não consulta Tipo de Agendamento', async () => {
     const { service, tipos } = criar();
 
-    await service.create({
-      pacienteId: ID,
-      profissionalId: ID_PROF,
-      tipoAgendamentoId: null,
-      data: '2026-10-22',
-      hora: '09:00',
-      duracaoMinutos: 30,
-      valor: null,
-      convenio: false,
-      observacoes: null,
-    });
+    await service.create({ ...ENTRADA, hora: '09:00' });
 
     expect(tipos.findById).not.toHaveBeenCalled();
+  });
+
+  it('create: conflito de ocupação interrompe antes de gravar', async () => {
+    const { service, delegate, conflitos } = criar();
+    conflitos.garantirLivre.mockRejectedValue(new Error('conflito'));
+
+    await expect(service.create(ENTRADA)).rejects.toThrow('conflito');
+    expect(delegate.create).not.toHaveBeenCalled();
   });
 
   it('listarProfissionais delega ao módulo dono', async () => {
     const { service } = criar();
     await expect(service.listarProfissionais()).resolves.toEqual([{ id: ID_PROF }]);
+  });
+
+  describe('update (reagendamento)', () => {
+    const ATUAL = { ...REGISTRO, status: 'AGENDADO' };
+
+    it('mantém o que não veio e confere a ocupação ignorando o próprio agendamento', async () => {
+      const { service, delegate, conflitos } = criar(undefined, ATUAL);
+
+      await service.update(ID, { hora: '10:00' });
+
+      // 2026-10-21T11:40Z = 08:40 em São Paulo; só a hora muda.
+      expect(conflitos.garantirLivre).toHaveBeenCalledWith(
+        expect.objectContaining({
+          salaId: ID_SALA,
+          profissionalId: ID_PROF,
+          data: '2026-10-21',
+          hora: '10:00',
+          duracaoMinutos: 30,
+          ignorarId: ID,
+        }),
+      );
+      const { data, where } = delegate.update.mock.calls[0][0];
+      expect(where).toEqual({ id: ID });
+      expect(data.salaId).toBe(ID_SALA);
+      expect(data.duracaoMinutos).toBe(30);
+      expect(data.inicio.toISOString()).toBe('2026-10-21T13:00:00.000Z');
+    });
+
+    it('troca de sala e duração', async () => {
+      const OUTRA = '5b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
+      const { service, delegate, conflitos } = criar(undefined, ATUAL);
+
+      await service.update(ID, { salaId: OUTRA, duracaoMinutos: 60 });
+
+      expect(conflitos.garantirLivre).toHaveBeenCalledWith(
+        expect.objectContaining({ salaId: OUTRA, duracaoMinutos: 60, hora: '08:40' }),
+      );
+      expect(delegate.update.mock.calls[0][0].data).toMatchObject({
+        salaId: OUTRA,
+        duracaoMinutos: 60,
+      });
+    });
+
+    it('agendamento antigo sem sala exige a sala (400)', async () => {
+      const { service, delegate, conflitos } = criar(undefined, { ...ATUAL, salaId: null });
+
+      await expect(service.update(ID, { hora: '10:00' })).rejects.toMatchObject({
+        status: 400,
+        message: 'Sala é obrigatória.',
+      });
+      expect(conflitos.garantirLivre).not.toHaveBeenCalled();
+      expect(delegate.update).not.toHaveBeenCalled();
+    });
+
+    it('cancelado não ocupa sala nem horário: grava sem conferir', async () => {
+      const { service, delegate, conflitos } = criar(undefined, { ...ATUAL, status: 'CANCELADO' });
+
+      await service.update(ID, { hora: '10:00' });
+
+      expect(conflitos.garantirLivre).not.toHaveBeenCalled();
+      expect(delegate.update).toHaveBeenCalled();
+    });
+
+    it('404 para id inválido ou inexistente, sem gravar', async () => {
+      const { service, delegate } = criar(undefined, ATUAL);
+      delegate.findFirst.mockResolvedValue(null);
+
+      await expect(service.update('abc', { hora: '10:00' })).rejects.toMatchObject({ status: 404 });
+      await expect(service.update(ID, { hora: '10:00' })).rejects.toMatchObject({ status: 404 });
+      expect(delegate.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('sugerirSala', () => {
+    it('devolve a sala do contrato do profissional', async () => {
+      const { service, salas } = criar();
+
+      await expect(
+        service.sugerirSala({ profissionalId: ID_PROF, data: '2026-10-22', hora: '14:00' }),
+      ).resolves.toEqual({ salaId: ID_SALA, salaNome: 'Sala Fictícia' });
+      expect(salas.sugerirDoProfissional).toHaveBeenCalledWith(ID_PROF, '2026-10-22', '14:00');
+    });
+
+    it('sem contrato que cubra o horário, devolve nulos', async () => {
+      const { service, salas } = criar();
+      salas.sugerirDoProfissional.mockResolvedValue(null);
+
+      await expect(
+        service.sugerirSala({ profissionalId: ID_PROF, data: '2026-10-22', hora: '14:00' }),
+      ).resolves.toEqual({ salaId: null, salaNome: null });
+    });
   });
 
   describe('escopo de dados (issue #153)', () => {
@@ -167,20 +294,26 @@ describe('AgendaService', () => {
     });
 
     it('create: restrito só agenda para os vinculados', async () => {
-      const { service, delegate } = criar([OUTRO]);
-      const entrada = {
-        pacienteId: ID,
-        profissionalId: ID_PROF,
-        tipoAgendamentoId: null,
-        data: '2026-10-22',
-        hora: '16:00',
-        duracaoMinutos: 30,
-        valor: null,
-        convenio: false,
-        observacoes: null,
-      };
-      expect(await status(service.create(entrada))).toBe(403);
+      const { service, delegate, conflitos } = criar([OUTRO]);
+      expect(await status(service.create(ENTRADA))).toBe(403);
       expect(delegate.create).not.toHaveBeenCalled();
+      expect(conflitos.garantirLivre).not.toHaveBeenCalled();
+    });
+
+    it('update: agendamento de outro profissional dá 403 sem gravar', async () => {
+      const { service, delegate } = criar([OUTRO]);
+      expect(await status(service.update(ID, { hora: '10:00' }))).toBe(403);
+      expect(delegate.update).not.toHaveBeenCalled();
+    });
+
+    it('sugerirSala: profissional fora do escopo dá 403', async () => {
+      const { service, salas } = criar([OUTRO]);
+      expect(
+        await status(
+          service.sugerirSala({ profissionalId: ID_PROF, data: '2026-10-22', hora: '14:00' }),
+        ),
+      ).toBe(403);
+      expect(salas.sugerirDoProfissional).not.toHaveBeenCalled();
     });
 
     it('listarProfissionais: só os do escopo', async () => {

@@ -1,10 +1,33 @@
 import { describe, expect, it } from 'vitest';
-import { createAgendamentoSchema, listAgendamentosQuerySchema } from './agendamento';
+import {
+  createAgendamentoSchema,
+  listAgendamentosQuerySchema,
+  salaSugeridaQuerySchema,
+  updateAgendamentoSchema,
+} from './agendamento';
 
 const ID = '00000000-0000-4000-8000-000000000001';
 
 describe('createAgendamentoSchema', () => {
-  const base = { pacienteId: ID, profissionalId: ID, data: '2026-10-22', hora: '16:00' };
+  const base = {
+    pacienteId: ID,
+    profissionalId: ID,
+    salaId: ID,
+    data: '2026-10-22',
+    hora: '16:00',
+  };
+
+  it('a sala é obrigatória (issue #136)', () => {
+    const semSala: Record<string, unknown> = { ...base };
+    delete semSala.salaId;
+    for (const entrada of [semSala, { ...base, salaId: '' }, { ...base, salaId: null }]) {
+      const r = createAgendamentoSchema.safeParse(entrada);
+      expect(r.success).toBe(false);
+      expect(r.error?.issues.map((i) => [i.path.join('.'), i.message])).toEqual([
+        ['salaId', 'Sala é obrigatória.'],
+      ]);
+    }
+  });
 
   it('aplica os padrões do modal (30 min, sem convênio, sem valor)', () => {
     expect(createAgendamentoSchema.parse(base)).toEqual({
@@ -36,6 +59,58 @@ describe('createAgendamentoSchema', () => {
     expect(createAgendamentoSchema.safeParse({ ...base, status: 'CONFIRMADO' }).success).toBe(
       false,
     );
+  });
+});
+
+describe('updateAgendamentoSchema', () => {
+  it('aceita qualquer combinação de sala, data, hora e duração', () => {
+    expect(updateAgendamentoSchema.parse({ salaId: ID })).toEqual({ salaId: ID });
+    expect(
+      updateAgendamentoSchema.parse({
+        salaId: ID,
+        data: '2026-10-22',
+        hora: '10:30',
+        duracaoMinutos: 45,
+      }),
+    ).toEqual({ salaId: ID, data: '2026-10-22', hora: '10:30', duracaoMinutos: 45 });
+  });
+
+  it('exige ao menos um campo', () => {
+    const r = updateAgendamentoSchema.safeParse({});
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0]?.message).toBe('Informe ao menos um campo para alterar');
+  });
+
+  it('valida cada campo e rejeita o que a edição não altera', () => {
+    expect(updateAgendamentoSchema.safeParse({ hora: '25:00' }).success).toBe(false);
+    expect(updateAgendamentoSchema.safeParse({ duracaoMinutos: 0 }).success).toBe(false);
+    expect(updateAgendamentoSchema.safeParse({ data: '22/10/2026' }).success).toBe(false);
+    expect(updateAgendamentoSchema.safeParse({ salaId: '' }).success).toBe(false);
+    expect(updateAgendamentoSchema.safeParse({ status: 'CANCELADO' }).success).toBe(false);
+    expect(updateAgendamentoSchema.safeParse({ pacienteId: ID, hora: '10:00' }).success).toBe(
+      false,
+    );
+  });
+});
+
+describe('salaSugeridaQuerySchema', () => {
+  it('aceita profissional, data e hora', () => {
+    expect(
+      salaSugeridaQuerySchema.safeParse({ profissionalId: ID, data: '2026-11-20', hora: '14:00' })
+        .success,
+    ).toBe(true);
+  });
+
+  it('exige os três e valida o formato', () => {
+    expect(salaSugeridaQuerySchema.safeParse({}).success).toBe(false);
+    expect(
+      salaSugeridaQuerySchema.safeParse({ profissionalId: 'x', data: '2026-11-20', hora: '14:00' })
+        .success,
+    ).toBe(false);
+    expect(
+      salaSugeridaQuerySchema.safeParse({ profissionalId: ID, data: '2026-11-20', hora: '24:00' })
+        .success,
+    ).toBe(false);
   });
 });
 

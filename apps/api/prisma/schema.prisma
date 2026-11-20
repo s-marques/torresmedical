@@ -1276,6 +1276,8 @@ model Agendamento {
   numero            Int               @unique @default(autoincrement())
   pacienteId        String            @map("paciente_id") @db.Uuid
   profissionalId    String            @map("profissional_id") @db.Uuid
+  /// Sala ocupada no intervalo (issue #136). Obrigatória na API; nula só nos agendamentos antigos.
+  salaId            String?           @map("sala_id") @db.Uuid
   tipoAgendamentoId String?           @map("tipo_agendamento_id") @db.Uuid
   /// Instante de início (UTC); o dia e a hora exibidos seguem o fuso da clínica.
   inicio            DateTime          @db.Timestamptz(3)
@@ -1296,11 +1298,13 @@ model Agendamento {
   paciente          Paciente                 @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
   profissional      Profissional             @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
   tipoAgendamento   TipoAgendamento?         @relation(fields: [tipoAgendamentoId], references: [id], onDelete: Restrict)
+  sala              Sala?                    @relation(fields: [salaId], references: [id], onDelete: Restrict)
   formaPagamento    FormaPagamento?          @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
   recebimentos      AgendamentoRecebimento[]
   enviosConfirmacao EnvioConfirmacao[]
 
   @@index([profissionalId, inicio])
+  @@index([salaId, inicio])
   @@index([inicio])
   @@index([pacienteId])
   @@index([formaPagamentoId])
@@ -1458,6 +1462,7 @@ model Sala {
 
   contratos ContratoSala[]
   bloqueios SalaBloqueio[]
+  agendamentos Agendamento[]
 
   @@map("salas")
 }

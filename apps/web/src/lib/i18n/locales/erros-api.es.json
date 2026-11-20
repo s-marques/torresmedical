@@ -20,5 +20,12 @@
   "RECEITA_NAO_RECEBIDA": "Solo se puede revertir el cobro de un ingreso recibido",
   "SALA_BLOQUEIO_CONFLITO": "La sala ya tiene otro bloqueo o reserva en este horario",
   "SALA_BLOQUEIO_CANCELADO": "Este bloqueo ya fue cancelado y no puede modificarse",
-  "SALA_BLOQUEIO_INVALIDO": "Datos del bloqueo de sala inválidos"
+  "SALA_BLOQUEIO_INVALIDO": "Datos del bloqueo de sala inválidos",
+  "AGENDA_SALA_CONFLITO": "La sala ya tiene una cita en este horario",
+  "AGENDA_PROFISSIONAL_CONFLITO": "El profesional ya tiene una cita en este horario",
+  "AGENDA_SALA_BLOQUEADA": "La sala está bloqueada o en mantenimiento en este horario y no puede recibir citas",
+  "AGENDA_FORA_DO_HORARIO": "El horario está fuera del horario de atención del profesional",
+  "AGENDA_PROFISSIONAL_BLOQUEADO": "El profesional tiene un bloqueo de agenda en este horario",
+  "AGENDA_SEM_HORARIO": "El profesional no tiene horario de atención registrado",
+  "SALA_INATIVA": "La sala está inactiva"
 }

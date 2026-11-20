@@ -11,6 +11,10 @@ import { isUuid } from '../../../common/auth/tokens';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
+import {
+  avaliarDisponibilidade,
+  type ResultadoDisponibilidade,
+} from './disponibilidade-profissional';
 import { ProfissionaisService } from './profissionais.service';
 
 function paraData(valor: string): Date {
@@ -67,6 +71,33 @@ export class ProfissionalAgendaService {
       orderBy: [{ tipo: 'asc' }, { diaSemana: 'asc' }, { data: 'asc' }, { inicio: 'asc' }],
     });
     return horarios.map(toHorarioDto);
+  }
+
+  /**
+   * Se o profissional atende em `[inicioMin, fimMin)` (minutos desde as 00:00) do dia `data`
+   * (`AAAA-MM-DD`), pelos horários de atendimento e bloqueios dele. `null` = disponível.
+   * Regra da Agenda (issue #136); o profissional já deve existir.
+   */
+  async disponibilidade(
+    profissionalId: string,
+    data: string,
+    inicioMin: number,
+    fimMin: number,
+  ): Promise<ResultadoDisponibilidade> {
+    const dia = paraData(data);
+    const horarios = await this.txHost.tx.horarioAtendimento.findMany({
+      where: { profissionalId },
+    });
+    const bloqueios = await this.txHost.tx.bloqueioAgenda.findMany({
+      where: { profissionalId, deletedAt: null, dataInicio: { lte: dia }, dataFim: { gte: dia } },
+    });
+    return avaliarDisponibilidade(
+      horarios.map(toHorarioDto),
+      bloqueios.map(toBloqueioDto),
+      data,
+      inicioMin,
+      fimMin,
+    );
   }
 
   /** "Salvar Horários": substitui a lista inteira do profissional. */

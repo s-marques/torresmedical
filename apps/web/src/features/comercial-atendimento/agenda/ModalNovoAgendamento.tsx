@@ -1,11 +1,14 @@
 import { createAgendamentoSchema, type AgendamentoFormulario } from '@torres/shared';
+import { useEffect, useRef } from 'react';
+import { useWatch } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { FormAcoes } from '@/components/shared/form/FormAcoes';
 import { FormField } from '@/components/shared/form/FormField';
 import { FormLayout } from '@/components/shared/form/FormLayout';
 import { useFormulario } from '@/components/shared/form/use-formulario';
 import { Modal } from '@/components/shared/Modal';
 import { hojeISO } from '@/lib/datas';
-import { useCriarAgendamento } from './use-agenda';
+import { useCriarAgendamento, useSalaSugerida } from './use-agenda';
 
 const ID_FORMULARIO = 'form-novo-agendamento';
 
@@ -22,11 +25,13 @@ function horaCheia(agora = new Date()): string {
 
 /** Modal "Novo Agendamento" (campos e padrões do print do inventário). */
 export function ModalNovoAgendamento({ data, onFechar }: Readonly<ModalNovoAgendamentoProps>) {
+  const { t } = useTranslation();
   const criar = useCriarAgendamento();
   const form = useFormulario(createAgendamentoSchema, {
     defaultValues: {
       pacienteId: null,
       profissionalId: null,
+      salaId: null,
       data: data ?? hojeISO(),
       hora: horaCheia(),
       duracaoMinutos: 30,
@@ -36,6 +41,23 @@ export function ModalNovoAgendamento({ data, onFechar }: Readonly<ModalNovoAgend
       observacoes: '',
     } as unknown as AgendamentoFormulario,
   });
+
+  const [profissionalId, dia, hora] = useWatch({
+    control: form.control,
+    name: ['profissionalId', 'data', 'hora'],
+  }) as [string | null, string, string];
+  const salaAtual = useWatch({ control: form.control, name: 'salaId' }) as string | null;
+  const sugerida = useSalaSugerida(profissionalId, dia, hora).data?.salaId ?? null;
+  const ultimaSugestao = useRef<string | null>(null);
+
+  // A sala do contrato do profissional vem preenchida, mas uma sala escolhida à mão não é trocada.
+  useEffect(() => {
+    if (!sugerida) return;
+    const atual = form.getValues('salaId') as string | null;
+    if (atual && atual !== ultimaSugestao.current) return;
+    form.setValue('salaId', sugerida, { shouldValidate: form.formState.isSubmitted });
+    ultimaSugestao.current = sugerida;
+  }, [sugerida, form]);
 
   return (
     <Modal
@@ -75,6 +97,16 @@ export function ModalNovoAgendamento({ data, onFechar }: Readonly<ModalNovoAgend
           label="Profissional"
           tipo="entidade"
           entidade="profissionais"
+          obrigatorio
+          className="sm:col-span-2"
+        />
+        <FormField
+          name="salaId"
+          label={t('agenda.campos.sala')}
+          tipo="entidade"
+          entidade="salas"
+          placeholder={t('agenda.sala.placeholder')}
+          descricao={sugerida && salaAtual === sugerida ? t('agenda.sala.sugerida') : undefined}
           obrigatorio
           className="sm:col-span-2"
         />

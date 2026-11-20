@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   agendaProfissionaisSchema,
@@ -6,10 +6,16 @@ import {
   agendamentoSchema,
   createAgendamentoSchema,
   listAgendamentosQuerySchema,
+  salaSugeridaQuerySchema,
+  salaSugeridaSchema,
+  updateAgendamentoSchema,
   type Agendamento,
   type AgendamentoLista,
   type CreateAgendamentoInput,
   type ListAgendamentosQuery,
+  type SalaSugerida,
+  type SalaSugeridaQuery,
+  type UpdateAgendamentoInput,
 } from '@torres/shared';
 import { Audit } from '../../../common/audit/audit.decorator';
 import { RequirePermission } from '../../../common/auth/auth.decorators';
@@ -53,6 +59,19 @@ export class AgendaController {
     return { data: await this.agenda.listarProfissionais() };
   }
 
+  /** Antes de `:id` para não ser lido como id. */
+  @Get('sala-sugerida')
+  @RequirePermission('comercial-atendimento.agenda.criar')
+  @ApiOperation({ summary: 'Sala do contrato do profissional para o dia e a hora (sugestão)' })
+  @ApiZodQuery(salaSugeridaQuerySchema)
+  @ApiZodResponse(200, salaSugeridaSchema)
+  @ApiErrorResponses(400, 401, 403)
+  salaSugerida(
+    @Query(new ZodValidationPipe(salaSugeridaQuerySchema)) query: SalaSugeridaQuery,
+  ): Promise<SalaSugerida> {
+    return this.agenda.sugerirSala(query);
+  }
+
   @Get(':id')
   @RequirePermission('comercial-atendimento.agenda.ver')
   @ApiOperation({ summary: 'Detalhe do agendamento' })
@@ -68,10 +87,24 @@ export class AgendaController {
   @ApiOperation({ summary: 'Cria um agendamento (status Agendado)' })
   @ApiZodBody(createAgendamentoSchema)
   @ApiZodResponse(201, agendamentoSchema)
-  @ApiErrorResponses(400, 401, 403, 404)
+  @ApiErrorResponses(400, 401, 403, 404, 409)
   create(
     @Body(new ZodValidationPipe(createAgendamentoSchema)) body: CreateAgendamentoInput,
   ): Promise<Agendamento> {
     return this.agenda.create(body);
+  }
+
+  @Patch(':id')
+  @RequirePermission('comercial-atendimento.agenda.editar')
+  @Audit({ entity: ENTITY })
+  @ApiOperation({ summary: 'Reagenda: altera sala, data, hora e/ou duração' })
+  @ApiZodBody(updateAgendamentoSchema)
+  @ApiZodResponse(200, agendamentoSchema)
+  @ApiErrorResponses(400, 401, 403, 404, 409)
+  update(
+    @IdParam() id: string,
+    @Body(new ZodValidationPipe(updateAgendamentoSchema)) body: UpdateAgendamentoInput,
+  ): Promise<Agendamento> {
+    return this.agenda.update(id, body);
   }
 }

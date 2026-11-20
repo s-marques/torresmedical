@@ -6,6 +6,7 @@ import { ConfiguracoesGestaoModule } from '../configuracoes-gestao/configuracoes
 import { ConsultorioAssistencialModule } from '../consultorio-assistencial/consultorio-assistencial.module';
 import { FinanceiroModule } from '../financeiro/financeiro.module';
 import { GestaoProfissionaisModule } from '../gestao-profissionais/gestao-profissionais.module';
+import { AgendaConflitosService } from './agenda/agenda-conflitos.service';
 import { AgendaController } from './agenda/agenda.controller';
 import { AtividadesController } from './atividades/atividades.controller';
 import { AtividadesService } from './atividades/atividades.service';
@@ -105,6 +106,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     PacientesService,
     OrigensClienteService,
     AgendaService,
+    AgendaConflitosService,
     AgendamentosAtendimentoService,
     OrcamentosService,
     ConsultasRealizadasService,

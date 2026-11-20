@@ -707,5 +707,26 @@
         "SUSPENSO": "Suspended"
       }
     }
+  },
+  "agenda": {
+    "campos": {
+      "sala": "Room",
+      "data": "Date",
+      "hora": "Time",
+      "duracao": "Duration (min)"
+    },
+    "sala": {
+      "placeholder": "Search room…",
+      "sugerida": "Room suggested by the professional's contract.",
+      "semSala": "No room"
+    },
+    "detalhe": {
+      "editar": "Edit"
+    },
+    "editar": {
+      "titulo": "Edit Appointment #{{numero}}",
+      "sucesso": "Appointment updated.",
+      "semSalaAviso": "This appointment predates room registration. Choose the room to save."
+    }
   }
 }
