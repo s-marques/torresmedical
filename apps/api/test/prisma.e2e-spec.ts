@@ -145,6 +145,8 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'tags_atendimento',
       'tipos_agendamento',
       'tipos_licenca',
+      'tipos_treinamento',
+      'treinamentos',
       'unidades',
       'unidades_medida',
       'usuarios',
