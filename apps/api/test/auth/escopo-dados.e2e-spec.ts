@@ -127,12 +127,14 @@ describe('Escopo de dados por profissional (e2e)', () => {
     it('não agenda para outro profissional (403, sem auditar)', async () => {
       const c = await cenario();
       const medico = await restrito([c.medico.id]);
+      const sala = await prisma.sala.create({ data: { nome: 'Sala do teste' } });
 
       await comUsuario(app, medico)
         .post(AGENDA)
         .send({
           pacienteId: c.pacienteDoOutro.id,
           profissionalId: c.outro.id,
+          salaId: sala.id,
           data: DIA,
           hora: '11:00',
         })

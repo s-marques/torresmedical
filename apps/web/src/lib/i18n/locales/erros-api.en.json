@@ -20,5 +20,12 @@
   "RECEITA_NAO_RECEBIDA": "The payment can only be reversed on a received revenue",
   "SALA_BLOQUEIO_CONFLITO": "The room already has another block or booking at this time",
   "SALA_BLOQUEIO_CANCELADO": "This block has already been canceled and cannot be changed",
-  "SALA_BLOQUEIO_INVALIDO": "Invalid room block data"
+  "SALA_BLOQUEIO_INVALIDO": "Invalid room block data",
+  "AGENDA_SALA_CONFLITO": "The room already has an appointment at this time",
+  "AGENDA_PROFISSIONAL_CONFLITO": "The professional already has an appointment at this time",
+  "AGENDA_SALA_BLOQUEADA": "The room is blocked or under maintenance at this time and cannot receive appointments",
+  "AGENDA_FORA_DO_HORARIO": "The time is outside the professional's working hours",
+  "AGENDA_PROFISSIONAL_BLOQUEADO": "The professional has a schedule block at this time",
+  "AGENDA_SEM_HORARIO": "The professional has no working hours registered",
+  "SALA_INATIVA": "The room is inactive"
 }

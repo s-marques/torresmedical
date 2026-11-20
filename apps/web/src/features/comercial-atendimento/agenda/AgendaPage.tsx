@@ -31,6 +31,7 @@ import { COR_STATUS } from './agenda-status';
 import { CalendarioAgenda } from './CalendarioAgenda';
 import { colunasDaSemana, colunasDoDia } from './colunas-agenda';
 import { ModalDetalheAgendamento } from './ModalDetalheAgendamento';
+import { ModalEditarAgendamento } from './ModalEditarAgendamento';
 import { ModalNovoAgendamento } from './ModalNovoAgendamento';
 import { useAgendamentos, useProfissionaisAgenda } from './use-agenda';
 
@@ -47,6 +48,7 @@ export default function AgendaPage() {
   const [profissionalId, setProfissionalId] = useState<string | null>(null);
   const [criando, setCriando] = useState(false);
   const [selecionado, setSelecionado] = useState<Agendamento | null>(null);
+  const [editando, setEditando] = useState<Agendamento | null>(null);
 
   const periodo = periodoDaVisao(dataBase, visao);
   const agendamentos = useAgendamentos(periodo, profissionalId);
@@ -182,7 +184,17 @@ export default function AgendaPage() {
         />
       )}
       {selecionado && (
-        <ModalDetalheAgendamento agendamento={selecionado} onFechar={() => setSelecionado(null)} />
+        <ModalDetalheAgendamento
+          agendamento={selecionado}
+          onFechar={() => setSelecionado(null)}
+          onEditar={(agendamento) => {
+            setSelecionado(null);
+            setEditando(agendamento);
+          }}
+        />
+      )}
+      {editando && (
+        <ModalEditarAgendamento agendamento={editando} onFechar={() => setEditando(null)} />
       )}
     </div>
   );

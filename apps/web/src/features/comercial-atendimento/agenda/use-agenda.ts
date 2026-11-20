@@ -3,10 +3,14 @@ import {
   agendaProfissionaisSchema,
   agendamentoListaSchema,
   agendamentoSchema,
+  salaSugeridaSchema,
   type AgendaProfissional,
   type Agendamento,
   type CreateAgendamentoInput,
+  type SalaSugerida,
+  type UpdateAgendamentoInput,
 } from '@torres/shared';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api/client';
 import { META_FORMULARIO } from '@/lib/api/query-client';
@@ -59,6 +63,50 @@ export function useCriarAgendamento() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: agendaKeys.todas });
       toast.success('Agendamento criado.');
+    },
+  });
+}
+
+const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
+const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/**
+ * Sala do contrato do profissional para o dia e a hora (issue #136). Só consulta com os três
+ * valores válidos; o resultado é uma sugestão, a sala pode ser outra.
+ */
+export function useSalaSugerida(
+  profissionalId: string | null | undefined,
+  data: string | null | undefined,
+  hora: string | null | undefined,
+) {
+  const completo = Boolean(profissionalId) && DATA_ISO.test(data ?? '') && HORA.test(hora ?? '');
+  return useQuery({
+    queryKey: ['agenda', 'sala-sugerida', profissionalId, data, hora] as const,
+    enabled: completo,
+    queryFn: ({ signal }): Promise<SalaSugerida> =>
+      apiFetch(`${URL_AGENDAMENTOS}/sala-sugerida`, {
+        query: { profissionalId, data, hora },
+        schema: salaSugeridaSchema,
+        signal,
+      }),
+  });
+}
+
+/** Reagenda: troca sala, data, hora e/ou duração. Conflitos (409) voltam como erro do formulário. */
+export function useAlterarAgendamento(id: string) {
+  const queryClient = useQueryClient();
+  const { t } = useTranslation();
+  return useMutation({
+    mutationFn: (dados: UpdateAgendamentoInput) =>
+      apiFetch(`${URL_AGENDAMENTOS}/${id}`, {
+        method: 'PATCH',
+        body: dados,
+        schema: agendamentoSchema,
+      }),
+    meta: META_FORMULARIO,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: agendaKeys.todas });
+      toast.success(t('agenda.editar.sucesso'));
     },
   });
 }

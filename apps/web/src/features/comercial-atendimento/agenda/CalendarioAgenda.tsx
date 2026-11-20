@@ -134,7 +134,7 @@ function CartaoAgendamento({
       </span>
       <span className="block truncate font-semibold">{a.pacienteNome}</span>
       <span className="block truncate opacity-80">
-        {[a.tipoNome, a.profissionalNome.split(' ')[0]].filter(Boolean).join(' • ')} •{' '}
+        {[a.tipoNome, a.profissionalNome.split(' ')[0], a.salaNome].filter(Boolean).join(' • ')} •{' '}
         {a.duracaoMinutos}min
       </span>
     </button>

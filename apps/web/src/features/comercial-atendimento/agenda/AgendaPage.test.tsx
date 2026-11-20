@@ -1,5 +1,5 @@
 import type { AgendaProfissional, Agendamento } from '@torres/shared';
-import { PERMISSOES } from '@torres/shared';
+import { PERMISSOES, PREFERENCIAS_PADRAO } from '@torres/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -12,6 +12,9 @@ const ID_AG_2 = '00000000-0000-4000-8000-0000000000a2';
 const ID_PACIENTE = '00000000-0000-4000-8000-0000000000b1';
 const ID_PROF_A = '00000000-0000-4000-8000-0000000000c1';
 const ID_PROF_B = '00000000-0000-4000-8000-0000000000c2';
+const ID_SALA_A = '00000000-0000-4000-8000-0000000000d1';
+const ID_SALA_B = '00000000-0000-4000-8000-0000000000d2';
+const SALA_SUGERIDA = `${API}/sala-sugerida`;
 
 /** Instante ISO de um horário local de outubro/2026 (os testes não dependem do fuso da máquina). */
 const em = (dia: number, hora: number, minuto = 0) =>
@@ -26,6 +29,8 @@ function agendamento(parcial: Partial<Agendamento>): Agendamento {
     profissionalId: ID_PROF_A,
     profissionalNome: 'Dr. Bruno Teste',
     profissionalCor: 'verde',
+    salaId: ID_SALA_A,
+    salaNome: 'Sala Azul',
     tipoAgendamentoId: null,
     tipoNome: 'Retorno',
     inicio: em(21, 8, 40),
@@ -82,6 +87,10 @@ function api(rotas: Parameters<typeof apiFalsa>[0] = {}) {
       '/api/lookups/pacientes': () => lookup([ID_PACIENTE, 'Ana Paciente Teste']),
       '/api/lookups/profissionais': () => lookup([ID_PROF_A, 'Dr. Bruno Teste']),
       '/api/lookups/tipos-agendamento': () => lookup(),
+      '/api/lookups/salas': () => lookup([ID_SALA_A, 'Sala Azul'], [ID_SALA_B, 'Sala Verde']),
+      [`/api/lookups/salas/${ID_SALA_A}`]: () =>
+        json({ id: ID_SALA_A, label: 'Sala Azul', descricao: null }),
+      [SALA_SUGERIDA]: () => json({ salaId: null, salaNome: null }),
       ...rotas.rotas,
     },
   });
@@ -243,6 +252,8 @@ describe('Agenda: detalhe do agendamento', () => {
     expect(within(modal).getByText('21/10/2026')).toBeVisible();
     expect(within(modal).getByText('08:40')).toBeVisible();
     expect(within(modal).getByText('30 min')).toBeVisible();
+    expect(within(modal).getByText('Sala')).toBeVisible();
+    expect(within(modal).getByText('Sala Azul')).toBeVisible();
     expect(within(modal).getByText('Reagendar')).toBeVisible();
     expect(within(modal).getByText('Retorno')).toBeVisible();
     expect(within(modal).getByText(/820,00/)).toBeVisible();
@@ -278,7 +289,7 @@ describe('Agenda: Novo Agendamento', () => {
     expect(within(modal).getByRole('button', { name: 'Agendar' })).toBeVisible();
   });
 
-  it('Agendar com paciente e profissional vazios mostra as mensagens e não envia', async () => {
+  it('Agendar com paciente, profissional e sala vazios mostra as mensagens e não envia', async () => {
     const fetchMock = api();
     const { user } = renderTela(fetchMock);
     await user.click(await screen.findByRole('button', { name: 'Novo Agendamento' }));
@@ -288,6 +299,7 @@ describe('Agenda: Novo Agendamento', () => {
 
     expect(await within(modal).findByText('Selecione o paciente.')).toBeVisible();
     expect(within(modal).getByText('Selecione o profissional.')).toBeVisible();
+    expect(within(modal).getByText('Sala é obrigatória.')).toBeVisible();
     expect(chamadasPara(fetchMock, API).filter(([, i]) => i?.method === 'POST')).toHaveLength(0);
   });
 
@@ -311,6 +323,8 @@ describe('Agenda: Novo Agendamento', () => {
     await user.click(await screen.findByRole('option', { name: /Ana Paciente Teste/ }));
     await user.click(within(modal).getByRole('combobox', { name: /Profissional/ }));
     await user.click(await screen.findByRole('option', { name: /Dr. Bruno Teste/ }));
+    await user.click(within(modal).getByRole('combobox', { name: /Sala/ }));
+    await user.click(await screen.findByRole('option', { name: /Sala Verde/ }));
     await user.clear(within(modal).getByLabelText('Duração (min)'));
     await user.type(within(modal).getByLabelText('Duração (min)'), '45');
     await user.click(within(modal).getByLabelText('Convênio'));
@@ -321,6 +335,7 @@ describe('Agenda: Novo Agendamento', () => {
     expect(corpo).toMatchObject({
       pacienteId: ID_PACIENTE,
       profissionalId: ID_PROF_A,
+      salaId: ID_SALA_B,
       data: '2026-10-22',
       hora: '10:00',
       duracaoMinutos: 45,
@@ -350,5 +365,266 @@ describe('Agenda: Novo Agendamento', () => {
 
     await screen.findByRole('heading', { name: /19 de out\./ });
     expect(screen.queryByRole('button', { name: 'Novo Agendamento' })).not.toBeInTheDocument();
+  });
+});
+
+describe('Agenda: sala no agendamento (issue #136)', () => {
+  const ID_SALA_C = '00000000-0000-4000-8000-0000000000d3';
+  const SUGESTAO = 'Sala sugerida pelo contrato do profissional.';
+
+  it('o cartão do calendário mostra a sala', async () => {
+    renderTela();
+
+    const cartao = await screen.findByRole('button', { name: /Ana Paciente Teste/ });
+
+    expect(cartao).toHaveTextContent('Retorno • Dr. • Sala Azul • 30min');
+  });
+
+  it('agendamento antigo, sem sala, aparece como "Sem sala" no detalhe', async () => {
+    const { user } = renderTela(
+      api({
+        rotas: {
+          [API]: () => json({ data: [agendamento({ salaId: null, salaNome: null })] }),
+        },
+      }),
+    );
+
+    await user.click(await screen.findByRole('button', { name: /Ana Paciente Teste/ }));
+
+    const modal = await screen.findByRole('dialog', { name: 'Agendamento #1224' });
+    expect(within(modal).getByText('Sem sala')).toBeVisible();
+  });
+
+  describe('Novo Agendamento', () => {
+    async function abrirNovo(fetchMock = api()) {
+      const { user } = renderTela(fetchMock);
+      await user.click(await screen.findByRole('button', { name: 'Novo Agendamento' }));
+      const modal = await screen.findByRole('dialog', { name: 'Novo Agendamento' });
+      return { user, modal, fetchMock };
+    }
+
+    async function escolherProfissional(
+      user: ReturnType<typeof userEvent.setup>,
+      modal: HTMLElement,
+    ) {
+      await user.click(within(modal).getByRole('combobox', { name: /Profissional/ }));
+      await user.click(await screen.findByRole('option', { name: /Dr. Bruno Teste/ }));
+    }
+
+    it('preenche a sala do contrato do profissional e avisa que é uma sugestão', async () => {
+      const fetchMock = api({
+        rotas: {
+          [SALA_SUGERIDA]: () => json({ salaId: ID_SALA_A, salaNome: 'Sala Azul' }),
+        },
+      });
+      const { user, modal } = await abrirNovo(fetchMock);
+
+      // Sem profissional não há o que sugerir.
+      expect(chamadasPara(fetchMock, SALA_SUGERIDA)).toHaveLength(0);
+      await escolherProfissional(user, modal);
+
+      expect(await within(modal).findByText(SUGESTAO)).toBeVisible();
+      await waitFor(() =>
+        expect(within(modal).getByRole('combobox', { name: /Sala/ })).toHaveTextContent(
+          'Sala Azul',
+        ),
+      );
+      const [url] = chamadasPara(fetchMock, SALA_SUGERIDA)[0] as [string];
+      expect(url).toContain(`profissionalId=${ID_PROF_A}`);
+      expect(url).toContain('data=2026-10-22');
+      expect(url).toContain('hora=10%3A00');
+    });
+
+    it('a sala sugerida pode ser trocada e a escolha manual não é sobrescrita', async () => {
+      const fetchMock = api({
+        rotas: {
+          [SALA_SUGERIDA]: (_init, url) =>
+            url.includes('hora=14')
+              ? json({ salaId: ID_SALA_C, salaNome: 'Sala Roxa' })
+              : json({ salaId: ID_SALA_A, salaNome: 'Sala Azul' }),
+          [`/api/lookups/salas/${ID_SALA_C}`]: () =>
+            json({ id: ID_SALA_C, label: 'Sala Roxa', descricao: null }),
+        },
+      });
+      const { user, modal } = await abrirNovo(fetchMock);
+      await escolherProfissional(user, modal);
+      expect(await within(modal).findByText(SUGESTAO)).toBeVisible();
+
+      await user.click(within(modal).getByRole('combobox', { name: /Sala/ }));
+      await user.click(await screen.findByRole('option', { name: /Sala Verde/ }));
+      expect(within(modal).queryByText(SUGESTAO)).not.toBeInTheDocument();
+      await user.clear(within(modal).getByLabelText('Hora'));
+      await user.type(within(modal).getByLabelText('Hora'), '14:00');
+
+      await waitFor(() =>
+        expect(String(chamadasPara(fetchMock, SALA_SUGERIDA).at(-1)?.[0])).toContain('hora=14'),
+      );
+      expect(within(modal).getByRole('combobox', { name: /Sala/ })).toHaveTextContent('Sala Verde');
+    });
+
+    it('conflito (409) fica no topo do formulário, com o horário, e o modal continua aberto', async () => {
+      const mensagem = 'A sala Sala Azul já tem agendamento em 22/10/2026, das 10:00 às 10:30.';
+      const fetchMock = api({
+        rotas: {
+          [API]: (init) =>
+            init?.method === 'POST'
+              ? json({ statusCode: 409, code: 'AGENDA_SALA_CONFLITO', message: mensagem }, 409)
+              : json({ data: AGENDAMENTOS }),
+        },
+      });
+      const { user, modal } = await abrirNovo(fetchMock);
+      await user.click(within(modal).getByRole('combobox', { name: /Paciente/ }));
+      await user.click(await screen.findByRole('option', { name: /Ana Paciente Teste/ }));
+      await escolherProfissional(user, modal);
+      await user.click(within(modal).getByRole('combobox', { name: /Sala/ }));
+      await user.click(await screen.findByRole('option', { name: /Sala Azul/ }));
+
+      await user.click(within(modal).getByRole('button', { name: 'Agendar' }));
+
+      expect(await within(modal).findByText(mensagem)).toBeVisible();
+      expect(screen.getByRole('dialog', { name: 'Novo Agendamento' })).toBeVisible();
+    });
+  });
+
+  describe('Editar Agendamento', () => {
+    const ROTA_AG = `${API}/${ID_AG}`;
+
+    async function abrirEdicao(fetchMock = api()) {
+      const { user } = renderTela(fetchMock);
+      await user.click(await screen.findByRole('button', { name: /Ana Paciente Teste/ }));
+      const detalhe = await screen.findByRole('dialog', { name: 'Agendamento #1224' });
+      await user.click(within(detalhe).getByRole('button', { name: 'Editar' }));
+      const modal = await screen.findByRole('dialog', { name: 'Editar Agendamento #1224' });
+      return { user, modal, fetchMock };
+    }
+
+    it('abre com a sala, a data, a hora e a duração atuais e substitui o detalhe', async () => {
+      const { modal } = await abrirEdicao();
+
+      expect(within(modal).getByRole('combobox', { name: /Sala/ })).toHaveTextContent('Sala Azul');
+      expect(within(modal).getByLabelText('Data')).toHaveValue('2026-10-21');
+      expect(within(modal).getByLabelText('Hora')).toHaveValue('08:40');
+      expect(within(modal).getByLabelText('Duração (min)')).toHaveValue(30);
+      expect(screen.queryByRole('dialog', { name: 'Agendamento #1224' })).not.toBeInTheDocument();
+    });
+
+    it('envia sala, data, hora e duração, fecha e recarrega o calendário', async () => {
+      let corpo: Record<string, unknown> | null = null;
+      const fetchMock = api({
+        rotas: {
+          [ROTA_AG]: (init) => {
+            corpo = corpoDe(init);
+            return json(agendamento({ salaId: ID_SALA_B, salaNome: 'Sala Verde' }));
+          },
+        },
+      });
+      const { user, modal } = await abrirEdicao(fetchMock);
+      const leiturasAntes = consultas(fetchMock).length;
+
+      await user.click(within(modal).getByRole('combobox', { name: /Sala/ }));
+      await user.click(await screen.findByRole('option', { name: /Sala Verde/ }));
+      await user.clear(within(modal).getByLabelText('Duração (min)'));
+      await user.type(within(modal).getByLabelText('Duração (min)'), '60');
+      await user.click(within(modal).getByRole('button', { name: 'Salvar' }));
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(corpo).toEqual({
+        salaId: ID_SALA_B,
+        data: '2026-10-21',
+        hora: '08:40',
+        duracaoMinutos: 60,
+      });
+      expect(chamadasPara(fetchMock, ROTA_AG)[0]?.[1]?.method).toBe('PATCH');
+      await waitFor(() => expect(consultas(fetchMock).length).toBeGreaterThan(leiturasAntes));
+    });
+
+    it('conflito (409) aparece no formulário e nada fecha', async () => {
+      const mensagem = 'Dr. Bruno Teste já tem agendamento em 21/10/2026, das 09:00 às 09:30.';
+      const fetchMock = api({
+        rotas: {
+          [ROTA_AG]: () =>
+            json({ statusCode: 409, code: 'AGENDA_PROFISSIONAL_CONFLITO', message: mensagem }, 409),
+        },
+      });
+      const { user, modal } = await abrirEdicao(fetchMock);
+
+      await user.click(within(modal).getByRole('button', { name: 'Salvar' }));
+
+      expect(await within(modal).findByText(mensagem)).toBeVisible();
+      expect(screen.getByRole('dialog', { name: 'Editar Agendamento #1224' })).toBeVisible();
+    });
+
+    it('agendamento antigo, sem sala: avisa e exige a sala antes de salvar', async () => {
+      const fetchMock = api({
+        rotas: {
+          [API]: () => json({ data: [agendamento({ salaId: null, salaNome: null })] }),
+        },
+      });
+      const { user, modal } = await abrirEdicao(fetchMock);
+
+      expect(
+        within(modal).getByText(
+          'Este agendamento é anterior ao cadastro de salas. Escolha a sala para salvar.',
+        ),
+      ).toBeVisible();
+      await user.click(within(modal).getByRole('button', { name: 'Salvar' }));
+
+      expect(await within(modal).findByText('Sala é obrigatória.')).toBeVisible();
+      expect(chamadasPara(fetchMock, ROTA_AG)).toHaveLength(0);
+    });
+
+    it('Cancelar fecha sem enviar', async () => {
+      const { user, modal, fetchMock } = await abrirEdicao();
+
+      await user.click(within(modal).getByRole('button', { name: 'Cancelar' }));
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(chamadasPara(fetchMock, ROTA_AG)).toHaveLength(0);
+    });
+
+    it('sem a permissão editar, o detalhe não tem o botão Editar', async () => {
+      const semEditar = PERMISSOES.filter((p) => p !== 'comercial-atendimento.agenda.editar');
+      const { user } = renderTela(api({ usuario: { ...USUARIO_TESTE, permissoes: semEditar } }));
+
+      await user.click(await screen.findByRole('button', { name: /Ana Paciente Teste/ }));
+
+      const detalhe = await screen.findByRole('dialog', { name: 'Agendamento #1224' });
+      expect(within(detalhe).queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('em inglês', () => {
+    it('detalhe, edição e erro de conflito usam os textos traduzidos', async () => {
+      const fetchMock = api({
+        usuario: { ...USUARIO_TESTE, preferencias: { ...PREFERENCIAS_PADRAO, idioma: 'en' } },
+        rotas: {
+          [`${API}/${ID_AG}`]: () =>
+            json(
+              {
+                statusCode: 409,
+                code: 'AGENDA_SALA_CONFLITO',
+                message: 'A sala Sala Azul já tem agendamento em 21/10/2026, das 09:00 às 09:30.',
+              },
+              409,
+            ),
+        },
+      });
+      const { user } = renderTela(fetchMock);
+
+      await user.click(await screen.findByRole('button', { name: /Ana Paciente Teste/ }));
+      const detalhe = await screen.findByRole('dialog', { name: 'Agendamento #1224' });
+      expect(within(detalhe).getByText('Room')).toBeVisible();
+      await user.click(within(detalhe).getByRole('button', { name: 'Edit' }));
+
+      const modal = await screen.findByRole('dialog', { name: 'Edit Appointment #1224' });
+      expect(within(modal).getByRole('combobox', { name: /Room/ })).toBeVisible();
+      expect(within(modal).getByLabelText('Date')).toBeVisible();
+      expect(within(modal).getByLabelText('Time')).toBeVisible();
+      expect(within(modal).getByLabelText('Duration (min)')).toBeVisible();
+      await user.click(within(modal).getByRole('button', { name: 'Save' }));
+      expect(
+        await within(modal).findByText('The room already has an appointment at this time'),
+      ).toBeVisible();
+    });
   });
 });

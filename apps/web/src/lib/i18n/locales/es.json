@@ -637,5 +637,26 @@
       "5": "Vie",
       "6": "Sáb"
     }
+  },
+  "agenda": {
+    "campos": {
+      "sala": "Sala",
+      "data": "Fecha",
+      "hora": "Hora",
+      "duracao": "Duración (min)"
+    },
+    "sala": {
+      "placeholder": "Buscar sala…",
+      "sugerida": "Sala sugerida por el contrato del profesional.",
+      "semSala": "Sin sala"
+    },
+    "detalhe": {
+      "editar": "Editar"
+    },
+    "editar": {
+      "titulo": "Editar Cita #{{numero}}",
+      "sucesso": "Cita actualizada.",
+      "semSalaAviso": "Esta cita es anterior al registro de salas. Elija la sala para guardar."
+    }
   }
 }

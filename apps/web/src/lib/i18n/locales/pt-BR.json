@@ -534,5 +534,26 @@
       "5": "Sex",
       "6": "Sáb"
     }
+  },
+  "agenda": {
+    "campos": {
+      "sala": "Sala",
+      "data": "Data",
+      "hora": "Hora",
+      "duracao": "Duração (min)"
+    },
+    "sala": {
+      "placeholder": "Buscar sala…",
+      "sugerida": "Sala sugerida pelo contrato do profissional.",
+      "semSala": "Sem sala"
+    },
+    "detalhe": {
+      "editar": "Editar"
+    },
+    "editar": {
+      "titulo": "Editar Agendamento #{{numero}}",
+      "sucesso": "Agendamento atualizado.",
+      "semSalaAviso": "Este agendamento é anterior ao cadastro de salas. Escolha a sala para salvar."
+    }
   }
 }
