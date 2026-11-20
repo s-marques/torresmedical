@@ -534,5 +534,49 @@
       "5": "Sex",
       "6": "Sáb"
     }
+  },
+  "soroterapia": {
+    "titulo": "Soroterapia",
+    "descricao": "Checklists de infusao e soroterapia.",
+    "abas": {
+      "rotulo": "Seções da Soroterapia",
+      "filaDia": "Fila do Dia",
+      "pacotes": "Pacotes",
+      "emAndamento": "Em Andamento",
+      "historico": "Historico"
+    },
+    "filaDia": {
+      "vazio": "Nenhum agendamento de soroterapia para hoje.",
+      "erro": "Não foi possível carregar a fila do dia.",
+      "lista": "Agendamentos de soroterapia de hoje"
+    },
+    "pacotes": {
+      "vazio": "Nenhum pacote de protocolo aprovado.",
+      "dica": "Crie orçamentos com protocolo no atendimento médico.",
+      "erro": "Não foi possível carregar os pacotes.",
+      "lista": "Pacotes de protocolo aprovados",
+      "orcamento": "Orçamento #{{numero}}",
+      "quantidade": "Qtd: {{quantidade}}",
+      "semPaciente": "Sem paciente"
+    },
+    "checklists": {
+      "buscar": "Buscar por paciente ou protocolo...",
+      "vazio": "Nenhum checklist encontrado.",
+      "duracaoMinutos": "{{minutos}} min",
+      "colunas": {
+        "data": "Data",
+        "paciente": "Paciente",
+        "profissional": "Profissional",
+        "protocolo": "Protocolo",
+        "sinaisVitaisInicio": "Sinais Vitais Inicio",
+        "status": "Status",
+        "duracao": "Duracao"
+      },
+      "status": {
+        "EM_ANDAMENTO": "Em andamento",
+        "FINALIZADO": "Finalizado",
+        "SUSPENSO": "Suspenso"
+      }
+    }
   }
 }

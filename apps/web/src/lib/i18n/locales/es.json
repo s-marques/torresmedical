@@ -637,5 +637,49 @@
       "5": "Vie",
       "6": "Sáb"
     }
+  },
+  "soroterapia": {
+    "titulo": "Sueroterapia",
+    "descricao": "Listas de verificación de infusión y sueroterapia.",
+    "abas": {
+      "rotulo": "Secciones de Sueroterapia",
+      "filaDia": "Cola del Día",
+      "pacotes": "Paquetes",
+      "emAndamento": "En Curso",
+      "historico": "Historial"
+    },
+    "filaDia": {
+      "vazio": "No hay citas de sueroterapia para hoy.",
+      "erro": "No se pudo cargar la cola del día.",
+      "lista": "Citas de sueroterapia de hoy"
+    },
+    "pacotes": {
+      "vazio": "Ningún paquete de protocolo aprobado.",
+      "dica": "Cree presupuestos con protocolo en la atención médica.",
+      "erro": "No se pudieron cargar los paquetes.",
+      "lista": "Paquetes de protocolo aprobados",
+      "orcamento": "Presupuesto #{{numero}}",
+      "quantidade": "Cant.: {{quantidade}}",
+      "semPaciente": "Sin paciente"
+    },
+    "checklists": {
+      "buscar": "Buscar por paciente o protocolo...",
+      "vazio": "No se encontró ninguna lista.",
+      "duracaoMinutos": "{{minutos}} min",
+      "colunas": {
+        "data": "Fecha",
+        "paciente": "Paciente",
+        "profissional": "Profesional",
+        "protocolo": "Protocolo",
+        "sinaisVitaisInicio": "Signos Vitales al Inicio",
+        "status": "Estado",
+        "duracao": "Duración"
+      },
+      "status": {
+        "EM_ANDAMENTO": "En curso",
+        "FINALIZADO": "Finalizado",
+        "SUSPENSO": "Suspendido"
+      }
+    }
   }
 }

@@ -637,5 +637,49 @@
       "5": "Fri",
       "6": "Sat"
     }
+  },
+  "soroterapia": {
+    "titulo": "Serotherapy",
+    "descricao": "Infusion and serotherapy checklists.",
+    "abas": {
+      "rotulo": "Serotherapy sections",
+      "filaDia": "Today's Queue",
+      "pacotes": "Packages",
+      "emAndamento": "In Progress",
+      "historico": "History"
+    },
+    "filaDia": {
+      "vazio": "No serotherapy appointments for today.",
+      "erro": "Could not load today's queue.",
+      "lista": "Today's serotherapy appointments"
+    },
+    "pacotes": {
+      "vazio": "No approved protocol packages.",
+      "dica": "Create quotes with a protocol in the medical appointment.",
+      "erro": "Could not load the packages.",
+      "lista": "Approved protocol packages",
+      "orcamento": "Quote #{{numero}}",
+      "quantidade": "Qty: {{quantidade}}",
+      "semPaciente": "No patient"
+    },
+    "checklists": {
+      "buscar": "Search by patient or protocol...",
+      "vazio": "No checklist found.",
+      "duracaoMinutos": "{{minutos}} min",
+      "colunas": {
+        "data": "Date",
+        "paciente": "Patient",
+        "profissional": "Professional",
+        "protocolo": "Protocol",
+        "sinaisVitaisInicio": "Vital Signs at Start",
+        "status": "Status",
+        "duracao": "Duration"
+      },
+      "status": {
+        "EM_ANDAMENTO": "In progress",
+        "FINALIZADO": "Completed",
+        "SUSPENSO": "Suspended"
+      }
+    }
   }
 }
