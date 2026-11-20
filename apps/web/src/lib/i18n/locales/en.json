@@ -310,6 +310,32 @@
       }
     }
   },
+  "indicadoresFinanceiros": {
+    "titulo": "Financial Indicators",
+    "descricao": "Consolidated view of the month's main indicators",
+    "mes": "Month",
+    "atualizar": "Refresh",
+    "anterior": "Previous: {{valor}}",
+    "variacao": "Change from the previous month: {{valor}}",
+    "erroCarregar": "Could not load the indicators.",
+    "secoes": {
+      "receitas": "Revenue",
+      "ocupacao-salas": "Room occupancy",
+      "clientes": "Clients"
+    },
+    "cards": {
+      "faturamento-total": "Total Billing",
+      "receita-recorrente": "Recurring Revenue",
+      "receita-avulsa": "One-off Revenue",
+      "resultado-operacional": "Operating Result",
+      "taxa-ocupacao": "Occupancy Rate",
+      "vacancia": "Vacancy",
+      "permutas": "Barter",
+      "novos-clientes": "New Clients",
+      "contratos-cancelados": "Cancelled contracts",
+      "despesas-pagas": "Expenses Paid"
+    }
+  },
   "aiGrowth": {
     "titulo": "AI Growth",
     "descricao": "Business attention points: what deserves attention in the clinic right now.",
