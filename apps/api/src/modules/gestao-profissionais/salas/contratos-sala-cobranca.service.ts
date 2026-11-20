@@ -130,6 +130,18 @@ export class ContratosSalaCobrancaService {
     });
   }
 
+  /**
+   * Ids das contas a receber geradas por cobrança de contrato (receita recorrente) nas
+   * competências `AAAA-MM` de `de` a `ate`. Usado pelos Indicadores do Financeiro.
+   */
+  async idsContasReceberDasCobrancas(de: string, ate: string): Promise<string[]> {
+    const linhas = await this.txHost.tx.contratoSalaCobranca.findMany({
+      where: { competencia: { gte: de, lte: ate }, contaReceberId: { not: null } },
+      select: { contaReceberId: true },
+    });
+    return linhas.flatMap((l) => (l.contaReceberId ? [l.contaReceberId] : []));
+  }
+
   private async garantirSemCobranca(contratoSalaId: string, competencia: string): Promise<void> {
     if (await this.buscarCobranca(contratoSalaId, competencia)) {
       throw new BusinessException(

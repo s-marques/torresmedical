@@ -1,6 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { ComprasEstoqueModule } from '../compras-estoque/compras-estoque.module';
+import { GestaoProfissionaisModule } from '../gestao-profissionais/gestao-profissionais.module';
 import { RegulatorioQualidadeModule } from '../regulatorio-qualidade/regulatorio-qualidade.module';
 import { BandeirasController } from './bandeiras/bandeiras.controller';
 import { BandeirasService } from './bandeiras/bandeiras.service';
@@ -14,6 +15,8 @@ import { ContasPagarController } from './contas-pagar/contas-pagar.controller';
 import { ContasPagarService } from './contas-pagar/contas-pagar.service';
 import { ContasReceberController } from './contas-receber/contas-receber.controller';
 import { ContasReceberService } from './contas-receber/contas-receber.service';
+import { IndicadoresFinanceirosController } from './indicadores/indicadores.controller';
+import { IndicadoresFinanceirosService } from './indicadores/indicadores.service';
 import { FormasPagamentoController } from './formas-pagamento/formas-pagamento.controller';
 import { FormasPagamentoService } from './formas-pagamento/formas-pagamento.service';
 import { PlanoContasController } from './plano-contas/plano-contas.controller';
@@ -21,7 +24,11 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
 
 /** Módulo FINANCEIRO do inventário. Dono das entidades Forma de Pagamento e Bandeira. */
 @Module({
-  imports: [forwardRef(() => ComprasEstoqueModule), RegulatorioQualidadeModule],
+  imports: [
+    forwardRef(() => ComprasEstoqueModule),
+    forwardRef(() => GestaoProfissionaisModule),
+    RegulatorioQualidadeModule,
+  ],
   controllers: [
     FormasPagamentoController,
     BandeirasController,
@@ -31,6 +38,7 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
     ContasPagarController,
     ContasReceberController,
     ConciliacaoController,
+    IndicadoresFinanceirosController,
     criarLookupController('formas-pagamento', FormasPagamentoService),
   ],
   providers: [
@@ -42,7 +50,13 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
     ContasPagarService,
     ContasReceberService,
     ConciliacaoService,
+    IndicadoresFinanceirosService,
   ],
-  exports: [FormasPagamentoService, PlanoContasService, ContasReceberService],
+  exports: [
+    FormasPagamentoService,
+    PlanoContasService,
+    ContasReceberService,
+    IndicadoresFinanceirosService,
+  ],
 })
 export class FinanceiroModule {}

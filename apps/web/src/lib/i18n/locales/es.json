@@ -310,6 +310,32 @@
       }
     }
   },
+  "indicadoresFinanceiros": {
+    "titulo": "Indicadores Financieros",
+    "descricao": "Visión consolidada de los principales indicadores del mes",
+    "mes": "Mes",
+    "atualizar": "Actualizar",
+    "anterior": "Anterior: {{valor}}",
+    "variacao": "Variación sobre el mes anterior: {{valor}}",
+    "erroCarregar": "No se pudieron cargar los indicadores.",
+    "secoes": {
+      "receitas": "Ingresos",
+      "ocupacao-salas": "Ocupación de salas",
+      "clientes": "Clientes"
+    },
+    "cards": {
+      "faturamento-total": "Facturación Total",
+      "receita-recorrente": "Ingreso Recurrente",
+      "receita-avulsa": "Ingreso Avulso",
+      "resultado-operacional": "Resultado Operativo",
+      "taxa-ocupacao": "Tasa de Ocupación",
+      "vacancia": "Vacancia",
+      "permutas": "Permutas",
+      "novos-clientes": "Nuevos Clientes",
+      "contratos-cancelados": "Contratos cancelados",
+      "despesas-pagas": "Gastos Pagados"
+    }
+  },
   "aiGrowth": {
     "titulo": "AI Growth",
     "descricao": "Puntos de atención del negocio: lo que merece atención en la clínica ahora.",
