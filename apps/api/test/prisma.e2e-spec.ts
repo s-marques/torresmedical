@@ -140,6 +140,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'servicos_profissionais',
       'sessoes',
       'soroterapia_checklists',
+      'soroterapia_checklists',
       'tags_atendimento',
       'tipos_agendamento',
       'unidades',
