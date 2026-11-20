@@ -135,6 +135,15 @@ export class UnidadesService extends EntidadeLookupService<
     });
   }
 
+  /** Ids das unidades ativas e não excluídas (ex.: regra de paridade dos tipos de licença). */
+  async idsAtivas(): Promise<string[]> {
+    const unidades = await this.txHost.tx.unidade.findMany({
+      where: SELECIONAVEIS,
+      select: { id: true },
+    });
+    return unidades.map((unidade) => unidade.id);
+  }
+
   contarCadastradasNoPeriodo(filtro: FiltroCadastradas): Promise<number> {
     return this.txHost.tx.unidade.count({ where: this.whereCadastradas(filtro) });
   }

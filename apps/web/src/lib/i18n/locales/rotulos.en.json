@@ -18,5 +18,7 @@
   "Data final": "End date",
   "Hora inicial": "Start time",
   "Hora final": "End time",
-  "Motivo": "Reason"
+  "Motivo": "Reason",
+  "Unidade": "Unit",
+  "Tipo de Licença": "License Type"
 }

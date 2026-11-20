@@ -728,5 +728,86 @@
       "sucesso": "Appointment updated.",
       "semSalaAviso": "This appointment predates room registration. Choose the room to save."
     }
+  },
+  "alvarasLicencas": {
+    "titulo": "Permits and Licenses",
+    "descricao": "Control of permits, licenses and certificates by unit.",
+    "novoTipo": "New Type",
+    "novaLicenca": "New License",
+    "unidade": "Unit:",
+    "todasUnidades": "All Units",
+    "buscar": "Search licenses...",
+    "vazio": "No licenses found.",
+    "semAlertas": "No licenses expired or expiring within 60 days.",
+    "erroCarregar": "Could not load the licenses.",
+    "editar": "Edit",
+    "cadastrar": "Register",
+    "criarTipo": "Create Type",
+    "novoTipoTitulo": "New License Type",
+    "novaLicencaTitulo": "New License",
+    "editarLicencaTitulo": "Edit License",
+    "regraParidade": "When a new type is created, the system automatically creates a \"Not applicable\" license for each existing unit (parity rule).",
+    "tipoCriado": "License type created.",
+    "licencaCriada": "License registered.",
+    "licencaAtualizada": "License updated.",
+    "abas": {
+      "licencas": "Licenses",
+      "alertas": "Alerts",
+      "ordemRenovacao": "Renewal Order"
+    },
+    "resumo": {
+      "total": "Total",
+      "ok": "OK",
+      "alerta": "Alert",
+      "vencido": "Expired",
+      "na": "N/A"
+    },
+    "status": {
+      "ok": "OK",
+      "alerta-60": "Alert 60 days",
+      "alerta-30": "Alert 30 days",
+      "vencido": "Expired",
+      "na": "N/A"
+    },
+    "colunas": {
+      "tipoLicenca": "License Type",
+      "unidade": "Unit",
+      "numeroDocumento": "Document No.",
+      "orgaoEmissor": "Issuing Agency",
+      "vencimento": "Expiration",
+      "dias": "Days",
+      "status": "Status",
+      "responsavel": "Responsible"
+    },
+    "secoes": {
+      "documento": "Document Details",
+      "contato": "Contact and Department",
+      "renovacao": "Renewal"
+    },
+    "campos": {
+      "nome": "Name",
+      "nomePlaceholder": "E.g.: Fire Department Permit",
+      "descricao": "Description",
+      "descricaoPlaceholder": "Optional description",
+      "unidade": "Unit",
+      "tipoLicenca": "License Type",
+      "naoSeAplica": "Not applicable to this unit",
+      "numeroDocumento": "Document Number",
+      "orgaoEmissor": "Issuing Agency",
+      "titular": "Holder",
+      "dataEmissao": "Issue Date",
+      "dataVencimento": "Expiration Date",
+      "telefone": "Phone",
+      "email": "Email",
+      "departamento": "Department",
+      "plataformaOnline": "Online Platform",
+      "comoRenovar": "How to Renew",
+      "documentosObrigatorios": "Required Documents",
+      "enderecoPresencial": "In-person Address",
+      "horarioAtendimento": "Service Hours",
+      "prazoAnalise": "Review Time",
+      "responsavel": "Responsible",
+      "observacoes": "Notes"
+    }
   }
 }

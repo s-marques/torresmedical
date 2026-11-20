@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
+import { ConfiguracoesGestaoModule } from '../configuracoes-gestao/configuracoes-gestao.module';
+import { AlvarasLicencasController } from './alvaras-licencas/alvaras-licencas.controller';
+import { AlvarasLicencasService } from './alvaras-licencas/alvaras-licencas.service';
 import { CargosController } from './cargos/cargos.controller';
 import { CargosService } from './cargos/cargos.service';
 import { ComissoesController } from './comissoes/comissoes.controller';
@@ -9,14 +12,16 @@ import { FuncionariosService } from './funcionarios/funcionarios.service';
 
 /** Módulo REGULATÓRIO / QUALIDADE do inventário. Dono das entidades Funcionário e Cargo. */
 @Module({
+  imports: [ConfiguracoesGestaoModule],
   controllers: [
     criarLookupController('funcionarios', FuncionariosService),
     criarLookupController('cargos', CargosService),
     FuncionariosController,
     CargosController,
     ComissoesController,
+    AlvarasLicencasController,
   ],
-  providers: [FuncionariosService, CargosService, ComissoesService],
+  providers: [FuncionariosService, CargosService, ComissoesService, AlvarasLicencasService],
   exports: [FuncionariosService, CargosService],
 })
 export class RegulatorioQualidadeModule {}

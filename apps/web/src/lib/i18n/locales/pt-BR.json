@@ -625,5 +625,86 @@
       "sucesso": "Agendamento atualizado.",
       "semSalaAviso": "Este agendamento é anterior ao cadastro de salas. Escolha a sala para salvar."
     }
+  },
+  "alvarasLicencas": {
+    "titulo": "Alvarás e Licenças",
+    "descricao": "Controle de alvarás, licenças e certidões por unidade.",
+    "novoTipo": "Novo Tipo",
+    "novaLicenca": "Nova Licença",
+    "unidade": "Unidade:",
+    "todasUnidades": "Todas as Unidades",
+    "buscar": "Buscar licenças...",
+    "vazio": "Nenhuma licença encontrada.",
+    "semAlertas": "Nenhuma licença vencida ou a vencer em até 60 dias.",
+    "erroCarregar": "Não foi possível carregar as licenças.",
+    "editar": "Editar",
+    "cadastrar": "Cadastrar",
+    "criarTipo": "Criar Tipo",
+    "novoTipoTitulo": "Novo Tipo de Licença",
+    "novaLicencaTitulo": "Nova Licença",
+    "editarLicencaTitulo": "Editar Licença",
+    "regraParidade": "Ao criar um novo tipo, o sistema cria automaticamente uma licença \"Não se aplica\" para cada unidade existente (regra de paridade).",
+    "tipoCriado": "Tipo de licença criado.",
+    "licencaCriada": "Licença cadastrada.",
+    "licencaAtualizada": "Licença atualizada.",
+    "abas": {
+      "licencas": "Licenças",
+      "alertas": "Alertas",
+      "ordemRenovacao": "Ordem Renovação"
+    },
+    "resumo": {
+      "total": "Total",
+      "ok": "OK",
+      "alerta": "Alerta",
+      "vencido": "Vencido",
+      "na": "N/A"
+    },
+    "status": {
+      "ok": "OK",
+      "alerta-60": "Alerta 60 dias",
+      "alerta-30": "Alerta 30 dias",
+      "vencido": "Vencido",
+      "na": "N/A"
+    },
+    "colunas": {
+      "tipoLicenca": "Tipo Licença",
+      "unidade": "Unidade",
+      "numeroDocumento": "Nº Documento",
+      "orgaoEmissor": "Órgão Emissor",
+      "vencimento": "Vencimento",
+      "dias": "Dias",
+      "status": "Status",
+      "responsavel": "Responsável"
+    },
+    "secoes": {
+      "documento": "Dados do Documento",
+      "contato": "Contato e Departamento",
+      "renovacao": "Renovação"
+    },
+    "campos": {
+      "nome": "Nome",
+      "nomePlaceholder": "Ex: Alvará Bombeiro",
+      "descricao": "Descrição",
+      "descricaoPlaceholder": "Descrição opcional",
+      "unidade": "Unidade",
+      "tipoLicenca": "Tipo de Licença",
+      "naoSeAplica": "Não se aplica a esta unidade",
+      "numeroDocumento": "Número do Documento",
+      "orgaoEmissor": "Órgão Emissor",
+      "titular": "Titular",
+      "dataEmissao": "Data Emissão",
+      "dataVencimento": "Data Vencimento",
+      "telefone": "Telefone",
+      "email": "Email",
+      "departamento": "Departamento",
+      "plataformaOnline": "Plataforma Online",
+      "comoRenovar": "Como Renovar",
+      "documentosObrigatorios": "Documentos Obrigatórios",
+      "enderecoPresencial": "Endereço Presencial",
+      "horarioAtendimento": "Horário Atendimento",
+      "prazoAnalise": "Prazo de Análise",
+      "responsavel": "Responsável",
+      "observacoes": "Observações"
+    }
   }
 }

@@ -130,6 +130,9 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   'regulatorio-qualidade.funcionarios': lazy(
     () => import('@/features/regulatorio-qualidade/funcionarios/FuncionariosPage'),
   ),
+  'regulatorio-qualidade.alvaras-licencas': lazy(
+    () => import('@/features/regulatorio-qualidade/alvaras-licencas/AlvarasLicencasPage'),
+  ),
   'configuracoes-gestao.perfis-acesso': lazy(
     () => import('@/features/configuracoes-gestao/perfis-acesso/PerfisAcessoPage'),
   ),
