@@ -942,6 +942,47 @@ model Licenca {
   @@map("licencas")
 }
 
+/// Dono: regulatorio-qualidade. Não conformidade da tela Não Conformidades (modal "Nova Nao-Conformidade").
+model NaoConformidade {
+  id                 String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  titulo             String
+  descricao          String?
+  setor              String?
+  tipo               NaoConformidadeTipo
+  dataOcorrencia     DateTime?             @map("data_ocorrencia") @db.Date
+  dataLimiteCorrecao DateTime?             @map("data_limite_correcao") @db.Date
+  responsavel        String?
+  acaoCorretiva      String?               @map("acao_corretiva")
+  observacoes        String?
+  status             NaoConformidadeStatus @default(ABERTA)
+  createdAt          DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt          DateTime?             @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([status])
+  @@index([dataOcorrencia])
+  @@map("nao_conformidades")
+}
+
+enum NaoConformidadeTipo {
+  PROCESSO
+  PRODUTO
+  SERVICO
+  DOCUMENTAL
+  SEGURANCA
+
+  @@map("nao_conformidade_tipo")
+}
+
+enum NaoConformidadeStatus {
+  ABERTA
+  EM_TRATAMENTO
+  CORRIGIDA
+  FECHADA
+
+  @@map("nao_conformidade_status")
+}
+
 enum FinalidadePagamento {
   RECEBER
   PAGAR

@@ -809,5 +809,50 @@
       "responsavel": "Responsible",
       "observacoes": "Notes"
     }
+  },
+  "naoConformidades": {
+    "titulo": "Nonconformities",
+    "descricao": "Record and track nonconformities and corrective actions.",
+    "nova": "New NC",
+    "novaTitulo": "New Nonconformity",
+    "registrar": "Register",
+    "registrada": "Nonconformity registered.",
+    "todas": "All",
+    "buscar": "Search nonconformities...",
+    "vazio": "No nonconformities found.",
+    "status": {
+      "aberta": "Open",
+      "em-tratamento": "In Treatment",
+      "corrigida": "Corrected",
+      "fechada": "Closed"
+    },
+    "tipos": {
+      "processo": "Process",
+      "produto": "Product",
+      "servico": "Service",
+      "documental": "Documentary",
+      "seguranca": "Safety"
+    },
+    "colunas": {
+      "titulo": "Title",
+      "setor": "Department",
+      "tipo": "Type",
+      "dataOcorrencia": "Occurrence Date",
+      "responsavel": "Owner",
+      "status": "Status"
+    },
+    "campos": {
+      "titulo": "Title",
+      "tituloPlaceholder": "Nonconformity title",
+      "descricao": "Description",
+      "setor": "Department",
+      "tipo": "Type",
+      "dataOcorrencia": "Occurrence Date",
+      "dataLimiteCorrecao": "Correction Deadline",
+      "responsavel": "Owner",
+      "acaoCorretiva": "Corrective Action",
+      "acaoCorretivaPlaceholder": "Describe the corrective action taken or planned...",
+      "observacoes": "Notes"
+    }
   }
 }
