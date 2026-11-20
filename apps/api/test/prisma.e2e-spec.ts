@@ -105,6 +105,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'modelos_confirmacao',
       'motivos_perda',
       'movimentacoes_estoque',
+      'nao_conformidades',
       'negocios',
       'orcamento_itens',
       'orcamentos',
