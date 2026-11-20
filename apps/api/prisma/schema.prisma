@@ -859,7 +859,8 @@ model Funcionario {
   deletedAt      DateTime?     @map("deleted_at") @db.Timestamptz(3)
 
   cargo     Cargo?     @relation(fields: [cargoId], references: [id], onDelete: Restrict)
-  comissoes Comissao[]
+  comissoes    Comissao[]
+  treinamentos Treinamento[]
 
   @@index([cargoId])
   @@map("funcionarios")
@@ -962,6 +963,44 @@ model NaoConformidade {
   @@index([status])
   @@index([dataOcorrencia])
   @@map("nao_conformidades")
+}
+
+/// Dono: regulatorio-qualidade. Tipo do combo "Tipo" do modal "Novo Treinamento".
+model TipoTreinamento {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  treinamentos Treinamento[]
+
+  @@map("tipos_treinamento")
+}
+
+/// Dono: regulatorio-qualidade. Treinamento ou certificação de um funcionário (modal "Novo Treinamento").
+/// O status (Válido, Vencido) é calculado na leitura a partir de `dataVencimento`.
+model Treinamento {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  funcionarioId     String    @map("funcionario_id") @db.Uuid
+  tipoTreinamentoId String    @map("tipo_treinamento_id") @db.Uuid
+  descricao         String?
+  dataRealizacao    DateTime? @map("data_realizacao") @db.Date
+  dataVencimento    DateTime? @map("data_vencimento") @db.Date
+  cargaHoraria      Int?      @map("carga_horaria")
+  instituicao       String?
+  observacoes       String?
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  funcionario     Funcionario     @relation(fields: [funcionarioId], references: [id], onDelete: Restrict)
+  tipoTreinamento TipoTreinamento @relation(fields: [tipoTreinamentoId], references: [id], onDelete: Restrict)
+
+  @@index([funcionarioId])
+  @@index([tipoTreinamentoId])
+  @@index([dataVencimento])
+  @@map("treinamentos")
 }
 
 enum NaoConformidadeTipo {
