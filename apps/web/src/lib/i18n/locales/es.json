@@ -809,5 +809,50 @@
       "responsavel": "Responsable",
       "observacoes": "Observaciones"
     }
+  },
+  "naoConformidades": {
+    "titulo": "No Conformidades",
+    "descricao": "Registro y seguimiento de no conformidades y acciones correctivas.",
+    "nova": "Nueva NC",
+    "novaTitulo": "Nueva No Conformidad",
+    "registrar": "Registrar",
+    "registrada": "No conformidad registrada.",
+    "todas": "Todas",
+    "buscar": "Buscar no conformidades...",
+    "vazio": "No se encontraron no conformidades.",
+    "status": {
+      "aberta": "Abierta",
+      "em-tratamento": "En Tratamiento",
+      "corrigida": "Corregida",
+      "fechada": "Cerrada"
+    },
+    "tipos": {
+      "processo": "Proceso",
+      "produto": "Producto",
+      "servico": "Servicio",
+      "documental": "Documental",
+      "seguranca": "Seguridad"
+    },
+    "colunas": {
+      "titulo": "Título",
+      "setor": "Sector",
+      "tipo": "Tipo",
+      "dataOcorrencia": "Fecha de Ocurrencia",
+      "responsavel": "Responsable",
+      "status": "Estado"
+    },
+    "campos": {
+      "titulo": "Título",
+      "tituloPlaceholder": "Título de la no conformidad",
+      "descricao": "Descripción",
+      "setor": "Sector",
+      "tipo": "Tipo",
+      "dataOcorrencia": "Fecha de Ocurrencia",
+      "dataLimiteCorrecao": "Fecha Límite de Corrección",
+      "responsavel": "Responsable",
+      "acaoCorretiva": "Acción Correctiva",
+      "acaoCorretivaPlaceholder": "Describa la acción correctiva adoptada o planificada...",
+      "observacoes": "Observaciones"
+    }
   }
 }
