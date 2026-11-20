@@ -144,6 +144,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     PacientesService,
     OrigensClienteService,
     AgendamentosAtendimentoService,
+    OrcamentosService,
     PesquisaNpsService,
   ],
 })

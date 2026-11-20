@@ -8,6 +8,7 @@ import type {
   TabelaPainel,
   VisualizacaoPainel,
 } from '@torres/shared';
+import type { ReceitasEDespesas } from '../../financeiro/indicadores/indicadores.service';
 
 /** Dados reais já disponíveis para o painel. O que depende de módulos ainda não criados vem vazio. */
 export interface DadosPainel {
@@ -15,6 +16,8 @@ export interface DadosPainel {
   profissionaisAtivos: number;
   /** Pacientes não excluídos (módulo Comercial / Atendimento). */
   totalPacientes: number;
+  /** Receita e despesa do período (módulo Financeiro); só carregado para a aba Financeiro. */
+  financeiro: ReceitasEDespesas | null;
 }
 
 export type ConstrutorAba = (dados: DadosPainel) => SecaoPainel[];

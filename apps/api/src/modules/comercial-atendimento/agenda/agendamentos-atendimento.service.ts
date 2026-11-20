@@ -16,6 +16,7 @@ import { EscopoDadosService } from '../../../common/auth/escopo-dados.service';
 import { isUuid } from '../../../common/auth/tokens';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
+import { toLocalWallClock } from '../../../common/export/export-values';
 import { paginate, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { intervaloDoPeriodo } from '../../../common/relatorios/periodo';
@@ -209,6 +210,28 @@ export class AgendamentosAtendimentoService {
       count: () => this.txHost.tx.agendamento.count({ where }),
     });
     return { ...pagina, data: pagina.data.map(toEvolucaoVozAgendamento) };
+  }
+
+  /**
+   * Aba "Fila do Dia" da tela Soroterapia (#44): agendamentos de hoje (dia da clínica) cujo tipo é
+   * "É soroterapia (agenda separada)", menos os cancelados, por horário. Só os profissionais do
+   * escopo do usuário (issue #153).
+   */
+  async listarFilaSoroterapia(): Promise<AtendimentoMedicoItem[]> {
+    const hoje = toLocalWallClock(new Date()).toISOString().slice(0, 10);
+    const { gte, lt } = intervaloDoPeriodo(hoje, hoje);
+    const agendamentos = await this.txHost.tx.agendamento.findMany({
+      where: {
+        deletedAt: null,
+        inicio: { gte, lt },
+        status: { not: 'CANCELADO' },
+        tipoAgendamento: { soroterapia: true },
+        profissionalId: this.escopo.filtroProfissional(),
+      },
+      orderBy: [{ inicio: 'asc' }, { id: 'asc' }],
+      include: INCLUDE,
+    });
+    return agendamentos.map(toAtendimentoMedicoItem);
   }
 
   /** Cabeçalho da sessão de gravação, com o número do agendamento. 404/403 como `resumo`. */

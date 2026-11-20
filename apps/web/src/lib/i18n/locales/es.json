@@ -310,6 +310,32 @@
       }
     }
   },
+  "indicadoresFinanceiros": {
+    "titulo": "Indicadores Financieros",
+    "descricao": "Visión consolidada de los principales indicadores del mes",
+    "mes": "Mes",
+    "atualizar": "Actualizar",
+    "anterior": "Anterior: {{valor}}",
+    "variacao": "Variación sobre el mes anterior: {{valor}}",
+    "erroCarregar": "No se pudieron cargar los indicadores.",
+    "secoes": {
+      "receitas": "Ingresos",
+      "ocupacao-salas": "Ocupación de salas",
+      "clientes": "Clientes"
+    },
+    "cards": {
+      "faturamento-total": "Facturación Total",
+      "receita-recorrente": "Ingreso Recurrente",
+      "receita-avulsa": "Ingreso Avulso",
+      "resultado-operacional": "Resultado Operativo",
+      "taxa-ocupacao": "Tasa de Ocupación",
+      "vacancia": "Vacancia",
+      "permutas": "Permutas",
+      "novos-clientes": "Nuevos Clientes",
+      "contratos-cancelados": "Contratos cancelados",
+      "despesas-pagas": "Gastos Pagados"
+    }
+  },
   "aiGrowth": {
     "titulo": "AI Growth",
     "descricao": "Puntos de atención del negocio: lo que merece atención en la clínica ahora.",
@@ -636,6 +662,50 @@
       "4": "Jue",
       "5": "Vie",
       "6": "Sáb"
+    }
+  },
+  "soroterapia": {
+    "titulo": "Sueroterapia",
+    "descricao": "Listas de verificación de infusión y sueroterapia.",
+    "abas": {
+      "rotulo": "Secciones de Sueroterapia",
+      "filaDia": "Cola del Día",
+      "pacotes": "Paquetes",
+      "emAndamento": "En Curso",
+      "historico": "Historial"
+    },
+    "filaDia": {
+      "vazio": "No hay citas de sueroterapia para hoy.",
+      "erro": "No se pudo cargar la cola del día.",
+      "lista": "Citas de sueroterapia de hoy"
+    },
+    "pacotes": {
+      "vazio": "Ningún paquete de protocolo aprobado.",
+      "dica": "Cree presupuestos con protocolo en la atención médica.",
+      "erro": "No se pudieron cargar los paquetes.",
+      "lista": "Paquetes de protocolo aprobados",
+      "orcamento": "Presupuesto #{{numero}}",
+      "quantidade": "Cant.: {{quantidade}}",
+      "semPaciente": "Sin paciente"
+    },
+    "checklists": {
+      "buscar": "Buscar por paciente o protocolo...",
+      "vazio": "No se encontró ninguna lista.",
+      "duracaoMinutos": "{{minutos}} min",
+      "colunas": {
+        "data": "Fecha",
+        "paciente": "Paciente",
+        "profissional": "Profesional",
+        "protocolo": "Protocolo",
+        "sinaisVitaisInicio": "Signos Vitales al Inicio",
+        "status": "Estado",
+        "duracao": "Duración"
+      },
+      "status": {
+        "EM_ANDAMENTO": "En curso",
+        "FINALIZADO": "Finalizado",
+        "SUSPENSO": "Suspendido"
+      }
     }
   },
   "agenda": {

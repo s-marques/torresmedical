@@ -67,6 +67,9 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   'consultorio-assistencial.receituarios': lazy(
     () => import('@/features/consultorio-assistencial/receituarios/ReceituariosPage'),
   ),
+  'consultorio-assistencial.soroterapia': lazy(
+    () => import('@/features/consultorio-assistencial/soroterapia/SoroterapiaPage'),
+  ),
   'patrimonio-pessoal.imoveis': lazy(
     () => import('@/features/patrimonio-pessoal/imoveis/ImoveisPage'),
   ),
@@ -94,6 +97,7 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   ),
   'financeiro.caixas': lazy(() => import('@/features/financeiro/caixas/CaixasPage')),
   'financeiro.conciliacao': lazy(() => import('@/features/financeiro/conciliacao/ConciliacaoPage')),
+  'financeiro.indicadores': lazy(() => import('@/features/financeiro/indicadores/IndicadoresPage')),
   'financeiro.contas-pagar': lazy(
     () => import('@/features/financeiro/contas-pagar/ContasPagarPage'),
   ),

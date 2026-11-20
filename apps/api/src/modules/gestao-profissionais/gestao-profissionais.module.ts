@@ -39,7 +39,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
 @Module({
   imports: [
     forwardRef(() => ComercialAtendimentoModule),
-    FinanceiroModule,
+    forwardRef(() => FinanceiroModule),
     ConfiguracoesGestaoModule,
     forwardRef(() => ComprasEstoqueModule),
   ],
@@ -93,6 +93,8 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     // Bloqueios de sala e horários do profissional: a Agenda (#136) consulta antes de agendar.
     SalasBloqueiosService,
     ProfissionalAgendaService,
+    // Receita recorrente dos Indicadores do Financeiro.
+    ContratosSalaCobrancaService,
   ],
 })
 export class GestaoProfissionaisModule {}
