@@ -8,6 +8,17 @@
   "Hora": "Hora",
   "Descrição": "Descripción",
   "Observação": "Observación",
+  "Endereço": "Dirección",
+  "Matrícula": "Matrícula",
+  "Banco": "Banco",
+  "Observações": "Observaciones",
+  "Sala": "Sala",
+  "Tipo": "Tipo",
+  "Data inicial": "Fecha inicial",
+  "Data final": "Fecha final",
+  "Hora inicial": "Hora inicial",
+  "Hora final": "Hora final",
+  "Motivo": "Motivo",
   "Unidade": "Unidad",
   "Tipo de Licença": "Tipo de Licencia"
 }

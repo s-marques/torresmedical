@@ -17,6 +17,7 @@ const AGENDAMENTO = {
   numero: 1,
   pacienteId: ID,
   profissionalId: ID,
+  salaId: null,
   tipoAgendamentoId: ID,
   inicio: INICIO,
   duracaoMinutos: 30,

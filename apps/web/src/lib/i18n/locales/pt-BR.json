@@ -207,6 +207,32 @@
       }
     }
   },
+  "indicadoresFinanceiros": {
+    "titulo": "Indicadores Financeiros",
+    "descricao": "Visão consolidada dos principais indicadores do mês",
+    "mes": "Mês",
+    "atualizar": "Atualizar",
+    "anterior": "Anterior: {{valor}}",
+    "variacao": "Variação sobre o mês anterior: {{valor}}",
+    "erroCarregar": "Não foi possível carregar os indicadores.",
+    "secoes": {
+      "receitas": "Receitas",
+      "ocupacao-salas": "Ocupação de salas",
+      "clientes": "Clientes"
+    },
+    "cards": {
+      "faturamento-total": "Faturamento Total",
+      "receita-recorrente": "Receita Recorrente",
+      "receita-avulsa": "Receita Avulsa",
+      "resultado-operacional": "Resultado Operacional",
+      "taxa-ocupacao": "Taxa de Ocupação",
+      "vacancia": "Vacância",
+      "permutas": "Permutas",
+      "novos-clientes": "Novos Clientes",
+      "contratos-cancelados": "Contratos cancelados",
+      "despesas-pagas": "Despesas Pagas"
+    }
+  },
   "aiGrowth": {
     "titulo": "AI Growth",
     "descricao": "Pontos de atenção do negócio: o que merece atenção na clínica agora.",
@@ -313,6 +339,291 @@
         "acaoVazio": "Continue incentivando a relação direta entre pacientes e seus profissionais habituais.",
         "acao": "Peça aos profissionais que retomem o contato com seus pacientes e ofereçam um retorno."
       }
+    }
+  },
+  "receitaProfissionais": {
+    "titulo": "Receita Profissionais",
+    "totais": "Totais",
+    "totalRecebido": "Total Recebido",
+    "totalPendente": "Total Pendente",
+    "registros": "Registros",
+    "resumoPorProfissional": "Resumo por Profissional",
+    "registrosAbreviado": "{{total}} reg.",
+    "colunas": {
+      "data": "Data",
+      "profissional": "Profissional",
+      "paciente": "Paciente",
+      "descricao": "Descrição",
+      "formaPagamento": "Forma Pgto",
+      "valor": "Valor",
+      "status": "Status"
+    },
+    "profissional": "Profissional",
+    "paciente": "Paciente",
+    "formaPagamento": "Forma de Pagamento",
+    "todasFormas": "Todas",
+    "periodo": "Vencimento",
+    "contaBancaria": "Conta Bancária",
+    "dataRecebimento": "Data de Recebimento",
+    "status": {
+      "pendente": "Pendente",
+      "recebido": "Recebido",
+      "cancelado": "Cancelado",
+      "vencido": "Vencido"
+    },
+    "acoes": {
+      "detalhar": "Detalhar",
+      "estornarBaixa": "Estornar Baixa",
+      "editar": "Editar",
+      "excluir": "Excluir"
+    },
+    "buscar": "Buscar receitas...",
+    "vazio": "Nenhuma receita encontrada.",
+    "editarTitulo": "Editar Receita",
+    "editada": "Receita atualizada.",
+    "baixaEstornada": "Baixa estornada.",
+    "excluida": "Receita excluída.",
+    "estornarTitulo": "Estornar Baixa",
+    "estornarDescricao": "Estornar a baixa da receita \"{{descricao}}\"? Ela volta para Pendente.",
+    "excluirTitulo": "Excluir Receita",
+    "excluirDescricao": "Tem certeza que deseja excluir a receita \"{{descricao}}\"? Esta ação não pode ser desfeita."
+  },
+  "imoveis": {
+    "titulo": "Imóveis",
+    "descricao": "Gerencie os imóveis cadastrados.",
+    "novo": "Novo Imóvel",
+    "editar": "Editar Imóvel",
+    "buscar": "Buscar imóveis...",
+    "vazio": "Nenhum imóvel encontrado.",
+    "cadastrar": "Cadastrar",
+    "acoes": {
+      "editar": "Editar",
+      "excluir": "Excluir"
+    },
+    "colunas": {
+      "descricao": "Descrição",
+      "tipo": "Tipo",
+      "endereco": "Endereço",
+      "valorCompra": "Valor Compra",
+      "financiamentoParcela": "Financ. Parcela",
+      "despesaMensal": "Desp. Mensal"
+    },
+    "secoes": {
+      "dados": "Dados do Imóvel",
+      "financiamento": "Financiamento",
+      "despesas": "Despesas Mensais Vinculadas"
+    },
+    "campos": {
+      "descricao": "Descrição",
+      "tipo": "Tipo",
+      "endereco": "Endereço",
+      "matricula": "Matrícula",
+      "valorCompra": "Valor Compra (R$)",
+      "dataCompra": "Data Compra",
+      "iptuAnual": "IPTU Anual (R$)",
+      "itbiPago": "ITBI Pago (R$)",
+      "banco": "Banco",
+      "financiamentoParcela": "Parcela (R$)",
+      "saldoDevedor": "Saldo Devedor (R$)",
+      "vencimentoFinanciamento": "Vencimento Financiamento",
+      "condominio": "Condomínio (R$)",
+      "contaLuz": "Conta Luz (R$)",
+      "contaAgua": "Conta Água (R$)",
+      "internet": "Internet (R$)",
+      "seguro": "Seguro (R$)",
+      "observacoes": "Observações"
+    },
+    "placeholders": {
+      "descricao": "Ex: Apto 302 Ed. Solar",
+      "endereco": "Rua, número, bairro, cidade",
+      "banco": "Ex: Caixa, Itaú",
+      "observacoes": "Anotações gerais sobre o imóvel"
+    },
+    "tipos": {
+      "APARTAMENTO": "Apartamento",
+      "SALA_COMERCIAL": "Sala Comercial",
+      "TERRENO": "Terreno",
+      "CASA": "Casa",
+      "GALPAO": "Galpão"
+    },
+    "sucesso": {
+      "criado": "Imóvel cadastrado.",
+      "atualizado": "Imóvel atualizado.",
+      "excluido": "Imóvel excluído."
+    },
+    "excluir": {
+      "titulo": "Excluir Imóvel",
+      "descricao": "Tem certeza que deseja excluir o imóvel \"{{descricao}}\"? Esta ação não pode ser desfeita.",
+      "confirmar": "Excluir"
+    }
+  },
+  "salasBloqueios": {
+    "aba": "Bloqueios",
+    "novo": "Novo Bloqueio",
+    "editar": "Editar Bloqueio",
+    "vazio": "Nenhum bloqueio ou reserva cadastrado.",
+    "tipos": {
+      "BLOQUEIO": "Bloqueio",
+      "MANUTENCAO": "Manutenção",
+      "RESERVA": "Reserva",
+      "CORTESIA": "Cortesia",
+      "USO_AVULSO": "Uso avulso"
+    },
+    "status": {
+      "ATIVO": "Ativo",
+      "CANCELADO": "Cancelado"
+    },
+    "colunas": {
+      "sala": "Sala",
+      "tipo": "Tipo",
+      "periodo": "Período",
+      "horario": "Horário",
+      "profissional": "Profissional",
+      "motivo": "Motivo",
+      "responsavel": "Responsável",
+      "status": "Status",
+      "acoes": "Ações"
+    },
+    "filtros": {
+      "tipo": "Tipo",
+      "todosTipos": "Todos os tipos",
+      "sala": "Sala",
+      "todasSalas": "Todas as salas",
+      "periodo": "Período"
+    },
+    "ocupado": "Ocupado",
+    "diaInteiro": "Dia inteiro",
+    "ate": "a",
+    "canceladoPor": "Cancelado em {{data}} por {{nome}}",
+    "canceladoEm": "Cancelado em {{data}}",
+    "acoes": {
+      "editar": "Editar bloqueio de {{sala}}",
+      "cancelar": "Cancelar bloqueio de {{sala}}",
+      "tituloEditar": "Editar",
+      "tituloCancelar": "Cancelar bloqueio"
+    },
+    "campos": {
+      "salaId": "Sala",
+      "tipo": "Tipo",
+      "profissionalId": "Profissional (opcional)",
+      "recorrente": "Repetir nos dias da semana",
+      "dataInicio": "Data inicial",
+      "dataFim": "Data final",
+      "horaInicio": "Hora inicial",
+      "horaFim": "Hora final",
+      "dias": "Dias da semana",
+      "motivo": "Motivo (opcional)",
+      "horaInicialDe": "{{dia}}: hora inicial",
+      "horaFinalDe": "{{dia}}: hora final",
+      "as": "às"
+    },
+    "placeholders": {
+      "sala": "Selecione a sala...",
+      "tipo": "Selecione o tipo...",
+      "profissional": "Selecione profissional...",
+      "motivo": "Ex.: troca do ar-condicionado"
+    },
+    "ajudaPeriodo": "Período contínuo: do dia e hora inicial até o dia e hora final.",
+    "ajudaRecorrente": "Vale nos dias marcados, entre a data inicial e a final.",
+    "cancelar": {
+      "titulo": "Cancelar bloqueio",
+      "descricao": "{{tipo}} da {{sala}} em {{periodo}}. O registro não é excluído: fica como cancelado, com quem, quando e o motivo.",
+      "motivo": "Motivo do cancelamento",
+      "placeholder": "Por que o bloqueio foi cancelado?",
+      "voltar": "Voltar",
+      "confirmar": "Cancelar bloqueio"
+    },
+    "sucesso": {
+      "criado": "Bloqueio criado.",
+      "atualizado": "Bloqueio atualizado.",
+      "cancelado": "Bloqueio cancelado."
+    },
+    "mapa": {
+      "legenda": "Legenda",
+      "contratado": "Contratado"
+    },
+    "diasSemana": {
+      "0": "Domingo",
+      "1": "Segunda",
+      "2": "Terça",
+      "3": "Quarta",
+      "4": "Quinta",
+      "5": "Sexta",
+      "6": "Sábado"
+    },
+    "diasAbrev": {
+      "0": "Dom",
+      "1": "Seg",
+      "2": "Ter",
+      "3": "Qua",
+      "4": "Qui",
+      "5": "Sex",
+      "6": "Sáb"
+    }
+  },
+  "soroterapia": {
+    "titulo": "Soroterapia",
+    "descricao": "Checklists de infusao e soroterapia.",
+    "abas": {
+      "rotulo": "Seções da Soroterapia",
+      "filaDia": "Fila do Dia",
+      "pacotes": "Pacotes",
+      "emAndamento": "Em Andamento",
+      "historico": "Historico"
+    },
+    "filaDia": {
+      "vazio": "Nenhum agendamento de soroterapia para hoje.",
+      "erro": "Não foi possível carregar a fila do dia.",
+      "lista": "Agendamentos de soroterapia de hoje"
+    },
+    "pacotes": {
+      "vazio": "Nenhum pacote de protocolo aprovado.",
+      "dica": "Crie orçamentos com protocolo no atendimento médico.",
+      "erro": "Não foi possível carregar os pacotes.",
+      "lista": "Pacotes de protocolo aprovados",
+      "orcamento": "Orçamento #{{numero}}",
+      "quantidade": "Qtd: {{quantidade}}",
+      "semPaciente": "Sem paciente"
+    },
+    "checklists": {
+      "buscar": "Buscar por paciente ou protocolo...",
+      "vazio": "Nenhum checklist encontrado.",
+      "duracaoMinutos": "{{minutos}} min",
+      "colunas": {
+        "data": "Data",
+        "paciente": "Paciente",
+        "profissional": "Profissional",
+        "protocolo": "Protocolo",
+        "sinaisVitaisInicio": "Sinais Vitais Inicio",
+        "status": "Status",
+        "duracao": "Duracao"
+      },
+      "status": {
+        "EM_ANDAMENTO": "Em andamento",
+        "FINALIZADO": "Finalizado",
+        "SUSPENSO": "Suspenso"
+      }
+    }
+  },
+  "agenda": {
+    "campos": {
+      "sala": "Sala",
+      "data": "Data",
+      "hora": "Hora",
+      "duracao": "Duração (min)"
+    },
+    "sala": {
+      "placeholder": "Buscar sala…",
+      "sugerida": "Sala sugerida pelo contrato do profissional.",
+      "semSala": "Sem sala"
+    },
+    "detalhe": {
+      "editar": "Editar"
+    },
+    "editar": {
+      "titulo": "Editar Agendamento #{{numero}}",
+      "sucesso": "Agendamento atualizado.",
+      "semSalaAviso": "Este agendamento é anterior ao cadastro de salas. Escolha a sala para salvar."
     }
   },
   "alvarasLicencas": {

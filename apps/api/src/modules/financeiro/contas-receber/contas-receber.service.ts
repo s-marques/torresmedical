@@ -8,11 +8,19 @@ import {
   type ContaReceberStatus,
   type CreateContaReceberInput,
   type ExportContasReceberQuery,
+  type ExportReceitaProfissionaisQuery,
   type ListContasReceberQuery,
+  type ListReceitaProfissionaisQuery,
+  type ReceitaProfissional,
+  type ResumoReceitaProfissionais,
+  type ResumoReceitaProfissionaisQuery,
   type UpdateContaReceberInput,
+  type UpdateReceitaProfissionalInput,
 } from '@torres/shared';
-import type { Prisma } from '../../../generated/prisma/client';
+import { Prisma } from '../../../generated/prisma/client';
 import { AuditService } from '../../../common/audit/audit.service';
+import type { FiltroProfissional } from '../../../common/auth/escopo-dados.service';
+import { BusinessException } from '../../../common/errors/api.exception';
 import { ExportService, selectColumns } from '../../../common/export/export.service';
 import type { ExportFile } from '../../../common/export/export.types';
 import { paginate, type Page } from '../../../common/pagination/paginate';
@@ -22,16 +30,24 @@ import {
   camposContaFinanceira,
   colunasExportContaFinanceira,
   contaNaoEncontrada,
+  DO_TORRES,
   INCLUDE_CONTA_FINANCEIRA,
   NAO_EXCLUIDAS,
   orderByContaFinanceira,
   whereContaFinanceira,
 } from '../conta-financeira';
+import {
+  orderByReceitas,
+  RECEITA_PROFISSIONAL_EXPORT_DEFINITIONS,
+  whereReceitaPorId,
+  whereReceitas,
+} from './receitas-profissionais';
 
 const INCLUDE = {
   ...INCLUDE_CONTA_FINANCEIRA,
   paciente: { select: { nome: true } },
   contaBancaria: { select: { nome: true } },
+  profissional: { select: { nome: true } },
 } as const;
 
 type ContaReceberComRelacoes = Prisma.ContaReceberGetPayload<{ include: typeof INCLUDE }>;
@@ -41,7 +57,10 @@ type ContaReceberComRelacoes = Prisma.ContaReceberGetPayload<{ include: typeof I
  * tela (ex.: cobrança de contrato de sala).
  */
 type DadosContaReceber = Omit<CreateContaReceberInput, 'contaBancariaId' | 'dataRecebimento'> &
-  Partial<Pick<CreateContaReceberInput, 'contaBancariaId' | 'dataRecebimento'>>;
+  Partial<Pick<CreateContaReceberInput, 'contaBancariaId' | 'dataRecebimento'>> & {
+    /** Só a tela Receita Profissionais informa (receita do profissional). */
+    profissionalId?: string;
+  };
 
 const hoje = () => new Date().toISOString().slice(0, 10);
 
@@ -54,6 +73,14 @@ export function toContaReceber(conta: ContaReceberComRelacoes): ContaReceber {
     contaBancariaId: conta.contaBancariaId,
     contaBancariaNome: conta.contaBancaria?.nome ?? null,
     dataRecebimento: conta.dataRecebimento?.toISOString().slice(0, 10) ?? null,
+  };
+}
+
+export function toReceita(conta: ContaReceberComRelacoes): ReceitaProfissional {
+  return {
+    ...toContaReceber(conta),
+    profissionalId: conta.profissionalId ?? '',
+    profissionalNome: conta.profissional?.nome ?? '',
   };
 }
 
@@ -89,7 +116,7 @@ export class ContasReceberService {
 
   async findById(id: string): Promise<ContaReceber> {
     const conta = await this.txHost.tx.contaReceber.findFirst({
-      where: { id, ...NAO_EXCLUIDAS },
+      where: { id, ...DO_TORRES },
       include: INCLUDE,
     });
     if (!conta) throw contaNaoEncontrada('Conta a receber não encontrada');
@@ -130,6 +157,129 @@ export class ContasReceberService {
       columns: selectColumns(CONTA_RECEBER_EXPORT_DEFINITIONS, query.columns),
       rows: rows.map(toContaReceber),
     });
+  }
+
+  /** Receitas dos profissionais (tela Receita Profissionais); `profissional` é o escopo do usuário. */
+  async listarReceitas(
+    query: ListReceitaProfissionaisQuery,
+    profissional: FiltroProfissional,
+  ): Promise<Page<ReceitaProfissional>> {
+    const where = whereReceitas(query, profissional);
+    const orderBy = orderByReceitas(query.sort);
+    const page = await paginate(query, {
+      findMany: (p) =>
+        this.txHost.tx.contaReceber.findMany({ where, orderBy, include: INCLUDE, ...p }),
+      count: () => this.txHost.tx.contaReceber.count({ where }),
+    });
+    return { ...page, data: page.data.map(toReceita) };
+  }
+
+  /** Cards de totais e "Resumo por Profissional", sobre todas as páginas da consulta filtrada. */
+  async resumirReceitas(
+    query: ResumoReceitaProfissionaisQuery,
+    profissional: FiltroProfissional,
+  ): Promise<ResumoReceitaProfissionais> {
+    const where = whereReceitas(query, profissional);
+    const [grupos, nomes] = await Promise.all([
+      this.txHost.tx.contaReceber.groupBy({
+        by: ['profissionalId', 'status'],
+        where,
+        _sum: { valor: true },
+        _count: { _all: true },
+      }),
+      this.txHost.tx.contaReceber.findMany({
+        where,
+        distinct: ['profissionalId'],
+        select: { profissionalId: true, profissional: { select: { nome: true } } },
+      }),
+    ]);
+    const zero = new Prisma.Decimal(0);
+    const somar = (status: ContaReceberStatus) =>
+      grupos
+        .filter((g) => g.status === status)
+        .reduce((total, g) => total.add(g._sum.valor ?? zero), zero);
+    const porProfissional = nomes
+      .map(({ profissionalId, profissional: dono }) => {
+        const meus = grupos.filter((g) => g.profissionalId === profissionalId);
+        return {
+          profissionalId: profissionalId ?? '',
+          profissionalNome: dono?.nome ?? '',
+          totalRecebido: meus
+            .filter((g) => g.status === 'RECEBIDO')
+            .reduce((total, g) => total.add(g._sum.valor ?? zero), zero)
+            .toFixed(2),
+          registros: meus.reduce((total, g) => total + g._count._all, 0),
+        };
+      })
+      .sort((a, b) => a.profissionalNome.localeCompare(b.profissionalNome, 'pt-BR'));
+    return {
+      totalRecebido: somar('RECEBIDO').toFixed(2),
+      totalPendente: somar('PENDENTE').toFixed(2),
+      registros: grupos.reduce((total, g) => total + g._count._all, 0),
+      porProfissional,
+    };
+  }
+
+  async exportarReceitas(
+    query: ExportReceitaProfissionaisQuery,
+    profissional: FiltroProfissional,
+  ): Promise<ExportFile> {
+    const where = whereReceitas(query, profissional);
+    this.exportService.ensureWithinLimit(await this.txHost.tx.contaReceber.count({ where }));
+    const rows = await this.txHost.tx.contaReceber.findMany({
+      where,
+      orderBy: orderByReceitas(query.sort),
+      include: INCLUDE,
+    });
+    return this.exportService.export({
+      format: query.format,
+      title: 'Receita Profissionais',
+      filename: 'receita-profissionais',
+      columns: selectColumns(RECEITA_PROFISSIONAL_EXPORT_DEFINITIONS, query.columns),
+      rows: rows.map(toReceita),
+    });
+  }
+
+  /** Receita de um profissional (404 se a conta não existe ou não é de profissional). */
+  async buscarReceita(id: string): Promise<ReceitaProfissional> {
+    const conta = await this.txHost.tx.contaReceber.findFirst({
+      where: whereReceitaPorId(id),
+      include: INCLUDE,
+    });
+    if (!conta) throw contaNaoEncontrada('Receita não encontrada');
+    return toReceita(conta);
+  }
+
+  async atualizarReceita(
+    id: string,
+    input: UpdateReceitaProfissionalInput,
+  ): Promise<ReceitaProfissional> {
+    const atual = await this.buscarReceita(id);
+    const conta = await this.gravar(id, await this.dados(input, atual.dataRecebimento));
+    return toReceita(conta);
+  }
+
+  /** Volta uma receita recebida para Pendente, limpando conta bancária e data do recebimento. */
+  async estornarBaixaReceita(id: string): Promise<ReceitaProfissional> {
+    const atual = await this.buscarReceita(id);
+    if (atual.status !== 'RECEBIDO') {
+      throw new BusinessException(
+        'RECEITA_NAO_RECEBIDA',
+        'Só é possível estornar a baixa de uma receita recebida',
+      );
+    }
+    const conta = await this.gravar(id, {
+      status: 'PENDENTE',
+      contaBancariaId: null,
+      dataRecebimento: null,
+    });
+    return toReceita(conta);
+  }
+
+  /** Exclusão lógica: histórico financeiro. */
+  async removerReceita(id: string): Promise<ReceitaProfissional> {
+    await this.buscarReceita(id);
+    return toReceita(await this.gravar(id, { deletedAt: new Date() }));
   }
 
   /**
@@ -185,12 +335,14 @@ export class ContasReceberService {
     id: string,
     data: Prisma.ContaReceberUncheckedUpdateInput,
   ): Promise<ContaReceber> {
-    const conta = await this.txHost.tx.contaReceber.update({
-      where: { id },
-      data,
-      include: INCLUDE,
-    });
-    return toContaReceber(conta);
+    return toContaReceber(await this.gravar(id, data));
+  }
+
+  private gravar(
+    id: string,
+    data: Prisma.ContaReceberUncheckedUpdateInput,
+  ): Promise<ContaReceberComRelacoes> {
+    return this.txHost.tx.contaReceber.update({ where: { id }, data, include: INCLUDE });
   }
 
   /**
@@ -227,8 +379,11 @@ export class ContasReceberService {
   private where(
     query: Pick<ListContasReceberQuery, 'search' | 'status' | 'vencimentoDe' | 'vencimentoAte'>,
   ): Prisma.ContaReceberWhereInput {
-    return whereContaFinanceira<ContaReceberStatus, Prisma.ContaReceberWhereInput>(query, [
-      { paciente: { nome: { contains: query.search, mode: 'insensitive' } } },
-    ]);
+    return {
+      ...whereContaFinanceira<ContaReceberStatus, Prisma.ContaReceberWhereInput>(query, [
+        { paciente: { nome: { contains: query.search, mode: 'insensitive' } } },
+      ]),
+      ...DO_TORRES,
+    };
   }
 }

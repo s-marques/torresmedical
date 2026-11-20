@@ -8,6 +8,17 @@
   "Hora": "Time",
   "Descrição": "Description",
   "Observação": "Note",
+  "Endereço": "Address",
+  "Matrícula": "Registry Number",
+  "Banco": "Bank",
+  "Observações": "Notes",
+  "Sala": "Room",
+  "Tipo": "Type",
+  "Data inicial": "Start date",
+  "Data final": "End date",
+  "Hora inicial": "Start time",
+  "Hora final": "End time",
+  "Motivo": "Reason",
   "Unidade": "Unit",
   "Tipo de Licença": "License Type"
 }

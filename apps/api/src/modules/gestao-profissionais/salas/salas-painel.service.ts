@@ -4,18 +4,21 @@ import {
   adicionarDias,
   compararNomesSala,
   diaDaSemana,
+  SALA_BLOQUEIO_TIPOS_OCUPAM,
   segundaDaSemana,
   type ContratoSala,
   type SalaDashboard,
   type SalaDashboardQuery,
   type SalaOcupacao,
   type SalaOcupacaoBloco,
+  type SalaOcupacaoBloqueio,
   type SalaOcupacaoQuery,
 } from '@torres/shared';
 import { EscopoDadosService, semPermissao } from '../../../common/auth/escopo-dados.service';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { ContratosSalaService } from './contratos-sala.service';
 import { hojeEmSaoPaulo } from './data-local';
+import { SalasBloqueiosService, type OcorrenciaBloqueioSala } from './salas-bloqueios.service';
 
 const DIAS_DA_SEMANA = 7;
 
@@ -43,12 +46,26 @@ function blocosDoContrato(contrato: ContratoSala, segunda: string): SalaOcupacao
   return blocos;
 }
 
+/** Dia de bloqueio no Mapa; o DTO já vem `oculto` para o restrito (issue #153). */
+function paraBloqueioDoMapa(o: OcorrenciaBloqueioSala): SalaOcupacaoBloqueio {
+  return {
+    bloqueioId: o.bloqueio.id,
+    tipo: o.bloqueio.tipo,
+    data: o.data,
+    inicio: o.inicio,
+    fim: o.fim,
+    profissionalNome: o.bloqueio.profissionalNome,
+    oculto: o.bloqueio.oculto,
+  };
+}
+
 /** Mapa de Ocupação e Dashboard da tela Gestão de Salas. */
 @Injectable()
 export class SalasPainelService {
   constructor(
     private readonly txHost: TransactionHost<PrismaAdapter>,
     private readonly contratos: ContratosSalaService,
+    private readonly bloqueios: SalasBloqueiosService,
     private readonly escopo: EscopoDadosService,
   ) {}
 
@@ -60,14 +77,22 @@ export class SalasPainelService {
   async ocupacao(query: SalaOcupacaoQuery): Promise<SalaOcupacao> {
     const segunda = segundaDaSemana(query.inicio ?? hojeEmSaoPaulo());
     const domingo = adicionarDias(segunda, DIAS_DA_SEMANA - 1);
-    const [salas, contratos] = await Promise.all([
+    const [salas, contratos, bloqueios] = await Promise.all([
       this.salas(),
       this.contratos.ativosNoPeriodo(segunda, domingo),
+      this.bloqueios.ocorrenciasNoPeriodo(segunda, domingo),
     ]);
     const proprio = (c: ContratoSala) =>
       this.escopo.permite(c.locatarioTipo === 'PROFISSIONAL' ? c.locatarioId : null);
+    const bloqueioProprio = (o: OcorrenciaBloqueioSala) =>
+      o.bloqueio.profissionalId !== null && this.escopo.permite(o.bloqueio.profissionalId);
+    // Restrito também vê a sala em que um profissional seu tem reserva/uso na semana (#138).
     const visiveis = this.escopo.restrito()
-      ? salas.filter((sala) => contratos.some((c) => c.salaId === sala.id && proprio(c)))
+      ? salas.filter(
+          (sala) =>
+            contratos.some((c) => c.salaId === sala.id && proprio(c)) ||
+            bloqueios.some((o) => o.bloqueio.salaId === sala.id && bloqueioProprio(o)),
+        )
       : salas;
     return {
       inicio: segunda,
@@ -85,23 +110,42 @@ export class SalasPainelService {
               a.inicio.localeCompare(b.inicio) ||
               a.contratoId.localeCompare(b.contratoId),
           ),
+        bloqueios: bloqueios
+          .filter((o) => o.bloqueio.salaId === sala.id)
+          .map(paraBloqueioDoMapa)
+          .sort(
+            (a, b) =>
+              a.data.localeCompare(b.data) ||
+              a.inicio.localeCompare(b.inicio) ||
+              a.bloqueioId.localeCompare(b.bloqueioId),
+          ),
       })),
     };
   }
 
   /**
-   * Total, ocupadas (contrato ativo e vigente na data), disponíveis, taxa e receita mensal
+   * Total, ocupadas (contrato ativo e vigente na data, ou reserva/uso avulso ativo no dia: issue
+   * #138; cortesia não conta e bloqueio/manutenção não mudam o total), disponíveis, taxa e receita mensal
    * contratada por sala (valor total mensal dos contratos, sem os de permuta).
    */
   async dashboard(query: SalaDashboardQuery): Promise<SalaDashboard> {
     // Ocupação e receita de todas as salas são dados da administração (R §37): 403 para restrito.
     if (this.escopo.restrito()) throw semPermissao();
     const data = query.data ?? hojeEmSaoPaulo();
-    const [salas, contratos] = await Promise.all([
+    const [salas, contratos, bloqueios] = await Promise.all([
       this.salas(),
       this.contratos.ativosNoPeriodo(data, data),
+      this.bloqueios.ocorrenciasNoPeriodo(data, data),
     ]);
-    const ocupadas = new Set(contratos.map((c) => c.salaId));
+    const existentes = new Set(salas.map((sala) => sala.id));
+    const ocupadas = new Set(
+      [
+        ...contratos.map((c) => c.salaId),
+        ...bloqueios
+          .filter((o) => SALA_BLOQUEIO_TIPOS_OCUPAM.includes(o.bloqueio.tipo))
+          .map((o) => o.bloqueio.salaId),
+      ].filter((id) => existentes.has(id)),
+    );
     const receita = new Map<string, number>();
     for (const contrato of contratos) {
       if (contrato.permuta) continue;

@@ -23,6 +23,7 @@ export const LOOKUP_ENTIDADES = [
   'cargos',
   'formas-pagamento',
   'tipos-agendamento',
+  'salas',
   'origens-cliente',
   'perfis',
   'canais-whatsapp',
@@ -85,6 +86,7 @@ export const lookupQuerySchemas = {
       .optional(),
   }),
   'tipos-agendamento': lookupQuerySchema({}),
+  salas: lookupQuerySchema({}),
   'origens-cliente': lookupQuerySchema({}),
   perfis: lookupQuerySchema({}),
   'canais-whatsapp': lookupQuerySchema({}),
@@ -197,6 +199,8 @@ export const LOOKUP_PERMISSOES: Readonly<Record<LookupEntidade, PermissoesLookup
     'comercial-atendimento.agenda',
     'gestao-profissionais.profissionais',
   ),
+  /** Sala do agendamento (issue #136): o seletor da Agenda lista as salas ativas. */
+  salas: telas('gestao-profissionais.salas', 'comercial-atendimento.agenda'),
   'origens-cliente': telas(
     'comercial-atendimento.origens-cliente',
     'comercial-atendimento.pacientes',

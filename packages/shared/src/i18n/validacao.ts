@@ -80,6 +80,12 @@ export const VALIDACAO_PT_BR = {
     tamanhoMax: 'O arquivo deve ter no máximo {{tamanho}}',
     ou: 'ou',
   },
+  salaBloqueio: {
+    horaFimAposInicio: 'A hora final deve ser depois da inicial',
+    diasObrigatorio: 'Selecione ao menos um dia da semana',
+    diaDuplicado: 'Dia da semana repetido',
+    diaInvalido: 'Dia da semana inválido',
+  },
 };
 
 /** Formato que os outros idiomas precisam seguir (mesmas chaves). */

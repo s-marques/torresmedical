@@ -10,6 +10,8 @@ import { Prisma } from '../../../generated/prisma/client';
 import { paginate, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 
+import { DO_TORRES } from '../conta-financeira';
+
 const NAO_EXCLUIDAS = { deletedAt: null } as const;
 
 const dia = (data: Date) => data.toISOString().slice(0, 10);
@@ -89,7 +91,7 @@ export class ConciliacaoService {
     const [recebido, pago] = await Promise.all([
       this.txHost.tx.contaReceber.aggregate({
         _sum: { valor: true },
-        where: { ...NAO_EXCLUIDAS, status: 'RECEBIDO', dataRecebimento: periodo },
+        where: { ...DO_TORRES, status: 'RECEBIDO', dataRecebimento: periodo },
       }),
       this.txHost.tx.contaPagarBaixa.aggregate({
         _sum: { valorPago: true },
@@ -137,7 +139,7 @@ export class ConciliacaoService {
   ): Promise<Page<LancamentoConciliacao>> {
     const periodo = intervalo(query);
     const where: Prisma.ContaReceberWhereInput = {
-      ...NAO_EXCLUIDAS,
+      ...DO_TORRES,
       OR: [
         { status: 'RECEBIDO', dataRecebimento: periodo },
         { status: { not: 'RECEBIDO' }, dataVencimento: periodo },

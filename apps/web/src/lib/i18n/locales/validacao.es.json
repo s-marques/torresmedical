@@ -55,5 +55,11 @@
     "tipoNaoPermitido": "Tipo de archivo no permitido. Envíe {{formatos}}",
     "tamanhoMax": "El archivo debe tener como máximo {{tamanho}}",
     "ou": "o"
+  },
+  "salaBloqueio": {
+    "horaFimAposInicio": "La hora final debe ser posterior a la inicial",
+    "diasObrigatorio": "Seleccione al menos un día de la semana",
+    "diaDuplicado": "Día de la semana repetido",
+    "diaInvalido": "Día de la semana inválido"
   }
 }

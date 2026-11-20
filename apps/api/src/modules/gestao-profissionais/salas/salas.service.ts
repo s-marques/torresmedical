@@ -1,15 +1,25 @@
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { Inject, Injectable } from '@nestjs/common';
-import type {
-  CreateSalaInput,
-  SalaLocatario,
-  ListSalasQuery,
-  Sala as SalaDto,
-  UpdateSalaInput,
+import {
+  diaDaSemana,
+  type CreateSalaInput,
+  type SalaLocatario,
+  type ListSalasQuery,
+  type LookupItem,
+  type LookupQuery,
+  type Sala as SalaDto,
+  type UpdateSalaInput,
 } from '@torres/shared';
 import { isUuid } from '../../../common/auth/tokens';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
+import {
+  buscarPorId,
+  juntarDescricao,
+  listarLookup,
+  SELECIONAVEIS,
+  type FonteLookup,
+} from '../../../common/lookups/lookup-query';
 import { paginate, searchWhere, toOrderBy, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import type { Prisma, Sala } from '../../../generated/prisma/client';
@@ -44,6 +54,10 @@ function toDto(sala: Sala, emUso: boolean, locatarios: SalaLocatario[]): SalaDto
   };
 }
 
+function toItemLookup(sala: Sala): LookupItem {
+  return { id: sala.id, label: sala.nome, descricao: juntarDescricao(sala.numero, sala.andar) };
+}
+
 /** Salas alugadas a profissionais (aba Salas da tela Gestão de Salas). */
 @Injectable()
 export class SalasService {
@@ -73,6 +87,26 @@ export class SalasService {
       data: page.data.map((s) => toDto(s, usadas.has(s.id), locatarios.get(s.id) ?? [])),
     };
   }
+
+  /** Salas ativas e não excluídas para o combobox (Agenda, issue #136). */
+  lookup(query: LookupQuery<'salas'>): Promise<Page<LookupItem>> {
+    const where: Prisma.SalaWhereInput = {
+      ...SELECIONAVEIS,
+      ...searchWhere(query.search, ['nome', 'numero', 'andar']),
+    };
+    return listarLookup(query, this.fonteLookup, where, toItemLookup);
+  }
+
+  /** Item pelo id (inclusive sala inativa), para exibir o valor já gravado. */
+  async findLookupById(id: string): Promise<LookupItem> {
+    return toItemLookup(await buscarPorId(this.fonteLookup, id, 'Sala não encontrada'));
+  }
+
+  private readonly fonteLookup: FonteLookup<Prisma.SalaWhereInput, Sala> = {
+    findMany: (args) => this.txHost.tx.sala.findMany(args),
+    count: (args) => this.txHost.tx.sala.count(args),
+    findFirst: (args) => this.txHost.tx.sala.findFirst(args),
+  };
 
   async findById(id: string): Promise<SalaDto> {
     const sala = await this.buscar(id);
@@ -133,6 +167,50 @@ export class SalasService {
       porSala.set(contrato.salaId, lista);
     }
     return porSala;
+  }
+
+  /**
+   * Trava a sala (`FOR UPDATE`) na transação em curso e confere que ela existe e está ativa.
+   * A Agenda (#136) chama antes de checar a ocupação: duas gravações na mesma sala passam uma de
+   * cada vez e a segunda enxerga a primeira (a mesma trava dos bloqueios de sala, #138).
+   */
+  async travarParaAgendamento(id: string): Promise<{ id: string; nome: string }> {
+    const linhas = isUuid(id)
+      ? await this.txHost.tx.$queryRaw<Array<{ id: string; nome: string; ativo: boolean }>>`
+          SELECT id, nome, ativo FROM salas
+          WHERE id = ${id}::uuid AND deleted_at IS NULL
+          FOR UPDATE`
+      : [];
+    const sala = linhas[0];
+    if (!sala) {
+      throw new BusinessException(ErrorCode.NOT_FOUND, 'Sala não encontrada', { status: 404 });
+    }
+    if (!sala.ativo) {
+      throw new BusinessException('SALA_INATIVA', `A sala ${sala.nome} está inativa.`, {
+        status: 409,
+      });
+    }
+    return { id: sala.id, nome: sala.nome };
+  }
+
+  /**
+   * Sala do contrato ativo do profissional que cobre o dia e o horário (`ContratoSalaDia`), para
+   * sugerir no agendamento. `null` quando nenhum contrato cobre. Só sugere: a sala pode ser outra.
+   */
+  async sugerirDoProfissional(
+    profissionalId: string,
+    data: string,
+    hora: string,
+  ): Promise<{ id: string; nome: string } | null> {
+    const dia = diaDaSemana(data);
+    const contratos = await this.contratos.ativosNoPeriodo(data, data);
+    const contrato = contratos.find(
+      (c) =>
+        c.locatarioTipo === 'PROFISSIONAL' &&
+        c.locatarioId === profissionalId &&
+        c.dias.some((d) => d.diaSemana === dia && d.inicio <= hora && hora < d.fim),
+    );
+    return contrato ? { id: contrato.salaId, nome: contrato.salaNome } : null;
   }
 
   private async idsEmUso(ids: readonly string[]): Promise<ReadonlySet<string>> {

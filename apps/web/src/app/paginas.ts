@@ -67,6 +67,12 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   'consultorio-assistencial.receituarios': lazy(
     () => import('@/features/consultorio-assistencial/receituarios/ReceituariosPage'),
   ),
+  'consultorio-assistencial.soroterapia': lazy(
+    () => import('@/features/consultorio-assistencial/soroterapia/SoroterapiaPage'),
+  ),
+  'patrimonio-pessoal.imoveis': lazy(
+    () => import('@/features/patrimonio-pessoal/imoveis/ImoveisPage'),
+  ),
   'compras-estoque.baixa-insumos': lazy(
     () => import('@/features/compras-estoque/baixa-insumos/BaixasInsumosPage'),
   ),
@@ -91,6 +97,7 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   ),
   'financeiro.caixas': lazy(() => import('@/features/financeiro/caixas/CaixasPage')),
   'financeiro.conciliacao': lazy(() => import('@/features/financeiro/conciliacao/ConciliacaoPage')),
+  'financeiro.indicadores': lazy(() => import('@/features/financeiro/indicadores/IndicadoresPage')),
   'financeiro.contas-pagar': lazy(
     () => import('@/features/financeiro/contas-pagar/ContasPagarPage'),
   ),
@@ -115,6 +122,9 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   ),
   'gestao-profissionais.protocolos': lazy(
     () => import('@/features/gestao-profissionais/protocolos/ProtocolosPage'),
+  ),
+  'gestao-profissionais.receita-profissionais': lazy(
+    () => import('@/features/gestao-profissionais/receita-profissionais/ReceitaProfissionaisPage'),
   ),
   'painel.painel': lazy(() => import('@/features/painel/painel/PainelPage')),
   'regulatorio-qualidade.funcionarios': lazy(

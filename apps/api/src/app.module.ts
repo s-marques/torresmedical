@@ -20,6 +20,7 @@ import { ConsultorioAssistencialModule } from './modules/consultorio-assistencia
 import { FinanceiroModule } from './modules/financeiro/financeiro.module';
 import { GestaoProfissionaisModule } from './modules/gestao-profissionais/gestao-profissionais.module';
 import { PainelModule } from './modules/painel/painel.module';
+import { PatrimonioPessoalModule } from './modules/patrimonio-pessoal/patrimonio-pessoal.module';
 import { RegulatorioQualidadeModule } from './modules/regulatorio-qualidade/regulatorio-qualidade.module';
 
 @Module({
@@ -42,6 +43,7 @@ import { RegulatorioQualidadeModule } from './modules/regulatorio-qualidade/regu
     ConsultorioAssistencialModule,
     GestaoProfissionaisModule,
     FinanceiroModule,
+    PatrimonioPessoalModule,
     ComprasEstoqueModule,
     RegulatorioQualidadeModule,
     ConfiguracoesGestaoModule,

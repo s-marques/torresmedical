@@ -4,12 +4,17 @@ import { META_FORMULARIO } from '@/lib/api/query-client';
 
 /**
  * Mutations de Contas a Pagar e Contas a Receber: ao concluir, a listagem do `DataGrid` da `url`
- * é buscada de novo e, se houver, a mensagem de sucesso aparece em toast.
+ * é buscada de novo (e as consultas de `invalidar`, ex.: totais da tela) e, se houver, a
+ * mensagem de sucesso aparece em toast.
  */
 export function useMutationContaFinanceira<TVariaveis>(
   url: string,
   mutationFn: (variaveis: TVariaveis) => Promise<unknown>,
-  { formulario = false, sucesso }: { formulario?: boolean; sucesso?: string },
+  {
+    formulario = false,
+    sucesso,
+    invalidar,
+  }: { formulario?: boolean; sucesso?: string; invalidar?: readonly unknown[] },
 ) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -17,6 +22,7 @@ export function useMutationContaFinanceira<TVariaveis>(
     meta: formulario ? META_FORMULARIO : undefined,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['data-grid', url] });
+      if (invalidar) await queryClient.invalidateQueries({ queryKey: invalidar });
       if (sucesso) toast.success(sucesso);
     },
   });

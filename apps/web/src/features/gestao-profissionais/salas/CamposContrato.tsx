@@ -102,11 +102,37 @@ export function SeletorLocatario() {
   );
 }
 
-/** "Dias da semana": um botão por dia e, nos dias marcados, o horário de início e de fim. */
-export function SeletorDias() {
-  const { control, register, formState } = useFormContext<ContratoSalaFormulario>();
+/** Textos do `SeletorDias`; o padrão é o português do contrato (a tela Salas ainda não é traduzida). */
+export interface TextosSeletorDias {
+  legenda: string;
+  as: string;
+  nomeDia: (diaSemana: number) => string;
+  abreviacao: (diaSemana: number) => string;
+  horaInicial: (nomeDia: string) => string;
+  horaFinal: (nomeDia: string) => string;
+}
+
+const TEXTOS_PADRAO: TextosSeletorDias = {
+  legenda: 'Dias da semana',
+  as: 'às',
+  nomeDia: (diaSemana) => DIAS_SEMANA[diaSemana] ?? '',
+  abreviacao: abreviarDiaSemana,
+  horaInicial: (nome) => `${nome}: hora inicial`,
+  horaFinal: (nome) => `${nome}: hora final`,
+};
+
+type FormularioComDias = Pick<ContratoSalaFormulario, 'dias'>;
+
+/**
+ * "Dias da semana": um botão por dia e, nos dias marcados, o horário de início e de fim. Serve a
+ * qualquer formulário com o campo `dias` (contrato e bloqueio de sala, issue #138).
+ */
+export function SeletorDias({ textos = TEXTOS_PADRAO }: Readonly<{ textos?: TextosSeletorDias }>) {
+  const { control, register, formState } = useFormContext<FormularioComDias>();
   const { fields, append, remove } = useFieldArray({ control, name: 'dias' });
   const erros = formState.errors.dias;
+  // Erro da lista toda (ex.: nenhum dia marcado), não de uma linha.
+  const erroLista = erros?.message ?? erros?.root?.message;
 
   function alternar(diaSemana: number) {
     const indice = fields.findIndex((campo) => campo.diaSemana === diaSemana);
@@ -117,10 +143,11 @@ export function SeletorDias() {
   return (
     <fieldset className="grid gap-3">
       <legend className="mb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-        Dias da semana
+        {textos.legenda}
       </legend>
       <div className="flex flex-wrap gap-2">
-        {DIAS_SEMANA.map((nome, diaSemana) => {
+        {DIAS_SEMANA.map((_, diaSemana) => {
+          const nome = textos.nomeDia(diaSemana);
           const marcado = fields.some((campo) => campo.diaSemana === diaSemana);
           return (
             <button
@@ -135,24 +162,29 @@ export function SeletorDias() {
               )}
               onClick={() => alternar(diaSemana)}
             >
-              {abreviarDiaSemana(diaSemana)}
+              {textos.abreviacao(diaSemana)}
             </button>
           );
         })}
       </div>
+      {erroLista && (
+        <p role="alert" className="text-sm text-destructive">
+          {erroLista}
+        </p>
+      )}
       {[...fields.keys()]
         .sort((a, b) => (fields[a]?.diaSemana ?? 0) - (fields[b]?.diaSemana ?? 0))
         .map((indice) => {
           const campo = fields[indice];
           if (!campo) return null;
-          const nome = DIAS_SEMANA[campo.diaSemana] ?? '';
+          const nome = textos.nomeDia(campo.diaSemana);
           const erro = erros?.[indice]?.fim?.message ?? erros?.[indice]?.inicio?.message;
           return (
             <div key={campo.id} className="grid gap-1">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="w-20 text-sm">{nome}</span>
                 <Label htmlFor={`dia-${campo.id}-inicio`} className="sr-only">
-                  {`${nome}: hora inicial`}
+                  {textos.horaInicial(nome)}
                 </Label>
                 <Input
                   id={`dia-${campo.id}-inicio`}
@@ -161,9 +193,9 @@ export function SeletorDias() {
                   aria-invalid={Boolean(erro)}
                   {...register(`dias.${indice}.inicio`)}
                 />
-                <span className="text-sm text-muted-foreground">às</span>
+                <span className="text-sm text-muted-foreground">{textos.as}</span>
                 <Label htmlFor={`dia-${campo.id}-fim`} className="sr-only">
-                  {`${nome}: hora final`}
+                  {textos.horaFinal(nome)}
                 </Label>
                 <Input
                   id={`dia-${campo.id}-fim`}

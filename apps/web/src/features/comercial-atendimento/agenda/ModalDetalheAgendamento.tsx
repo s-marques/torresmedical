@@ -1,7 +1,10 @@
 import { AGENDAMENTO_STATUS_ROTULOS, type Agendamento } from '@torres/shared';
-import { UserIcon } from 'lucide-react';
+import { PencilIcon, UserIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal } from '@/components/shared/Modal';
+import { SePermitido } from '@/components/shared/SePermitido';
+import { Button } from '@/components/ui/button';
 import { formatarData } from '@/lib/formatar';
 import { cn } from '@/lib/utils';
 import { diaLocal, horaLocal } from './agenda-datas';
@@ -12,6 +15,8 @@ const MOEDA = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL
 export interface ModalDetalheAgendamentoProps {
   agendamento: Agendamento;
   onFechar: () => void;
+  /** Abre a edição (sala, data, hora e duração); só aparece com a permissão editar. */
+  onEditar: (agendamento: Agendamento) => void;
 }
 
 function Campo({ rotulo, children }: Readonly<{ rotulo: string; children: ReactNode }>) {
@@ -25,18 +30,29 @@ function Campo({ rotulo, children }: Readonly<{ rotulo: string; children: ReactN
 
 /**
  * Modal "Agendamento #N" aberto ao clicar num cartão da agenda (somente leitura).
- * Confirmar, Check-in, Faltou, Cancelar, Registrar Recebimento e Editar ficam para outras issues.
+ * Confirmar, Check-in, Faltou, Cancelar e Registrar Recebimento ficam para outras issues; o Editar
+ * troca sala, data, hora e duração (issue #136).
  */
 export function ModalDetalheAgendamento({
   agendamento: a,
   onFechar,
+  onEditar,
 }: Readonly<ModalDetalheAgendamentoProps>) {
+  const { t } = useTranslation();
   const valor = a.valor ?? 0;
   return (
     <Modal
       aberto
       onAbertoChange={(aberto) => aberto || onFechar()}
       titulo={`Agendamento #${a.numero}`}
+      rodape={
+        <SePermitido permissao="comercial-atendimento.agenda.editar">
+          <Button type="button" variant="outline" onClick={() => onEditar(a)}>
+            <PencilIcon aria-hidden />
+            {t('agenda.detalhe.editar')}
+          </Button>
+        </SePermitido>
+      }
     >
       <div className="grid gap-4 pb-2">
         <div className="flex items-center gap-3">
@@ -53,6 +69,7 @@ export function ModalDetalheAgendamento({
           <Campo rotulo="Data">{formatarData(diaLocal(a.inicio))}</Campo>
           <Campo rotulo="Horário">{horaLocal(a.inicio)}</Campo>
           <Campo rotulo="Duração">{a.duracaoMinutos} min</Campo>
+          <Campo rotulo={t('agenda.campos.sala')}>{a.salaNome ?? t('agenda.sala.semSala')}</Campo>
           <Campo rotulo="Status">
             <span
               className={cn(

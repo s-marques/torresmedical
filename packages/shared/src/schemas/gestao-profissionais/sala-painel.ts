@@ -26,6 +26,21 @@ export const salaOcupacaoBlocoSchema = z.object({
 });
 export type SalaOcupacaoBloco = z.infer<typeof salaOcupacaoBlocoSchema>;
 
+/**
+ * Um dia de bloqueio ou reserva da sala no Mapa (issue #138). `fim` pode ser "24:00". Para o
+ * usuário restrito, o bloqueio de outro profissional vem `oculto`, sem o nome do profissional.
+ */
+export const salaOcupacaoBloqueioSchema = z.object({
+  bloqueioId: z.uuid(),
+  tipo: z.enum(['BLOQUEIO', 'MANUTENCAO', 'RESERVA', 'CORTESIA', 'USO_AVULSO']),
+  data: z.iso.date(),
+  inicio: hhmm,
+  fim: z.string().regex(/^(([01]\d|2[0-3]):[0-5]\d|24:00)$/),
+  profissionalNome: z.string().nullable(),
+  oculto: z.boolean(),
+});
+export type SalaOcupacaoBloqueio = z.infer<typeof salaOcupacaoBloqueioSchema>;
+
 export const salaOcupacaoSchema = z.object({
   /** Segunda-feira da semana. */
   inicio: z.iso.date(),
@@ -36,6 +51,8 @@ export const salaOcupacaoSchema = z.object({
       salaId: z.uuid(),
       salaNome: z.string(),
       blocos: z.array(salaOcupacaoBlocoSchema),
+      /** Bloqueios e reservas ativos da sala na semana (issue #138). */
+      bloqueios: z.array(salaOcupacaoBloqueioSchema),
     }),
   ),
 });
@@ -50,7 +67,10 @@ export type SalaDashboardQuery = z.infer<typeof salaDashboardQuerySchema>;
 export const salaDashboardSchema = z.object({
   data: z.iso.date(),
   totalSalas: z.number().int(),
-  /** Salas com algum contrato ativo e vigente na data. */
+  /**
+   * Salas com algum contrato ativo e vigente na data ou com reserva/uso avulso ativo no dia
+   * (issue #138; cortesia não conta).
+   */
   ocupadas: z.number().int(),
   disponiveis: z.number().int(),
   /** Ocupadas ÷ total de salas, em %, com uma casa decimal. */

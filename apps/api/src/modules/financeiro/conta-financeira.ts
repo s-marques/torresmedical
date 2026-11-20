@@ -10,6 +10,13 @@ import type { ExportColumn } from '../../common/export/export.types';
 
 export const NAO_EXCLUIDAS = { deletedAt: null } as const;
 
+/**
+ * Contas a receber do Torres: exclui as receitas dos profissionais (`profissionalId`, tela Receita
+ * Profissionais), que não entram em Contas a Receber, Conciliação nem saldos ("sem misturar o
+ * caixa dos médicos", requisitos do cliente).
+ */
+export const DO_TORRES = { ...NAO_EXCLUIDAS, profissionalId: null } as const;
+
 /** Relações exibidas pelo nome nas duas telas. */
 export const INCLUDE_CONTA_FINANCEIRA = {
   formaPagamento: { select: { nome: true } },

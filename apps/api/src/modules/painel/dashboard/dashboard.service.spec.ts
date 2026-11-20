@@ -2,6 +2,7 @@ import type { AbaPainel, SecaoPainel } from '@torres/shared';
 import { ABAS_PAINEL, dashboardPainelSchema } from '@torres/shared';
 import type { PacientesService } from '../../comercial-atendimento/pacientes/pacientes.service';
 import type { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
+import type { IndicadoresFinanceirosService } from '../../financeiro/indicadores/indicadores.service';
 import { DashboardService } from './dashboard.service';
 
 const FILTROS = { modo: 'mes', mes: '2026-10', base: 'recebimento' } as const;
@@ -9,11 +10,21 @@ const FILTROS = { modo: 'mes', mes: '2026-10', base: 'recebimento' } as const;
 function setup() {
   const profissionais = { contarAtivos: jest.fn().mockResolvedValue(14) };
   const pacientes = { contar: jest.fn().mockResolvedValue(1284) };
+  const indicadores = {
+    calcular: jest.fn().mockResolvedValue({
+      faturamentoTotal: 9070,
+      receitaRecorrente: 7910,
+      receitaAvulsa: 1160,
+      resultadoOperacional: 2091.75,
+      despesasPagas: 6978.25,
+    }),
+  };
   const service = new DashboardService(
     profissionais as unknown as ProfissionaisService,
     pacientes as unknown as PacientesService,
+    indicadores as unknown as IndicadoresFinanceirosService,
   );
-  return { service, profissionais, pacientes };
+  return { service, profissionais, pacientes, indicadores };
 }
 
 function valorDoKpi(secoes: SecaoPainel[], id: string): number | null | undefined {
@@ -58,17 +69,35 @@ describe('DashboardService', () => {
     expect(profissionais.contarAtivos).not.toHaveBeenCalled();
   });
 
-  it.each<AbaPainel>(['executivo', 'ocupacao', 'financeiro'])(
-    'aba %s não consulta o banco',
-    async (aba) => {
-      const { service, profissionais, pacientes } = setup();
+  it.each<AbaPainel>(['executivo', 'ocupacao'])('aba %s não consulta o banco', async (aba) => {
+    const { service, profissionais, pacientes } = setup();
 
-      await service.obter(aba, FILTROS);
+    await service.obter(aba, FILTROS);
 
-      expect(profissionais.contarAtivos).not.toHaveBeenCalled();
-      expect(pacientes.contar).not.toHaveBeenCalled();
-    },
-  );
+    expect(profissionais.contarAtivos).not.toHaveBeenCalled();
+    expect(pacientes.contar).not.toHaveBeenCalled();
+  });
+
+  it('financeiro: receita e despesa vêm do service de Indicadores, com o período e a base', async () => {
+    const { service, indicadores } = setup();
+
+    const { secoes } = await service.obter('financeiro', FILTROS);
+
+    expect(indicadores.calcular).toHaveBeenCalledWith('2026-10-01', '2026-10-31', 'recebimento');
+    expect(valorDoKpi(secoes, 'faturamento-total')).toBe(9070);
+    expect(valorDoKpi(secoes, 'receita-recorrente')).toBe(7910);
+    expect(valorDoKpi(secoes, 'receita-avulsa')).toBe(1160);
+    expect(valorDoKpi(secoes, 'resultado-operacional')).toBe(2091.75);
+    expect(valorDoKpi(secoes, 'despesas')).toBe(6978.25);
+  });
+
+  it('as outras abas não calculam os indicadores financeiros', async () => {
+    const { service, indicadores } = setup();
+
+    await service.obter('executivo', FILTROS);
+
+    expect(indicadores.calcular).not.toHaveBeenCalled();
+  });
 
   it('indicadores sem módulo dono saem sem valor, nunca com número inventado', async () => {
     const { service } = setup();

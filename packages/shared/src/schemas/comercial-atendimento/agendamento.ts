@@ -69,22 +69,29 @@ const valorOpcional = z
   .nullish()
   .transform((valor) => (typeof valor === 'number' ? valor : null));
 
+const duracaoSchema = z
+  .number({ error: 'Informe a duração em minutos' })
+  .int({ error: 'A duração deve ser um número inteiro de minutos' })
+  .min(1, { error: 'A duração deve ser de pelo menos 1 minuto' })
+  .max(AGENDAMENTO_DURACAO_MAX, {
+    error: `A duração deve ser de no máximo ${AGENDAMENTO_DURACAO_MAX} minutos`,
+  });
+
+const horaSchema = z
+  .string({ error: erroObrigatorio('Hora', 'f') })
+  .regex(HORA, { error: 'Hora inválida (HH:MM)' });
+
+const salaSchema = z.uuid({ error: erroObrigatorio('Sala', 'f') });
+
 /** `POST /api/comercial-atendimento/agendamentos`: campos do modal "Novo Agendamento". */
 export const createAgendamentoSchema = z.strictObject({
   pacienteId: uuidObrigatorio(MSG_PACIENTE),
   profissionalId: uuidObrigatorio(MSG_PROFISSIONAL),
+  /** Sala obrigatória (issue #136): o agendamento ocupa uma sala no intervalo de horário. */
+  salaId: salaSchema,
   data: z.iso.date({ error: erroObrigatorio('Data', 'f') }),
-  hora: z
-    .string({ error: erroObrigatorio('Hora', 'f') })
-    .regex(HORA, { error: 'Hora inválida (HH:MM)' }),
-  duracaoMinutos: z
-    .number({ error: 'Informe a duração em minutos' })
-    .int({ error: 'A duração deve ser um número inteiro de minutos' })
-    .min(1, { error: 'A duração deve ser de pelo menos 1 minuto' })
-    .max(AGENDAMENTO_DURACAO_MAX, {
-      error: `A duração deve ser de no máximo ${AGENDAMENTO_DURACAO_MAX} minutos`,
-    })
-    .default(AGENDAMENTO_DURACAO_PADRAO),
+  hora: horaSchema,
+  duracaoMinutos: duracaoSchema.default(AGENDAMENTO_DURACAO_PADRAO),
   tipoAgendamentoId: z
     .union([z.literal(''), z.uuid({ error: 'Tipo inválido' })])
     .nullish()
@@ -103,6 +110,40 @@ export const createAgendamentoSchema = z.strictObject({
 
 export type CreateAgendamentoInput = z.infer<typeof createAgendamentoSchema>;
 export type AgendamentoFormulario = z.input<typeof createAgendamentoSchema>;
+
+/**
+ * `PATCH /api/comercial-atendimento/agendamentos/:id`: reagendamento. Decisão do dev na #136:
+ * a edição troca só sala, data, hora e duração, sempre com as mesmas validações da criação.
+ */
+export const updateAgendamentoSchema = z
+  .strictObject({
+    salaId: salaSchema.optional(),
+    data: z.iso.date({ error: erroObrigatorio('Data', 'f') }).optional(),
+    hora: horaSchema.optional(),
+    duracaoMinutos: duracaoSchema.optional(),
+  })
+  .refine((v) => Object.values(v).some((campo) => campo !== undefined), {
+    error: 'Informe ao menos um campo para alterar',
+  });
+
+export type UpdateAgendamentoInput = z.infer<typeof updateAgendamentoSchema>;
+export type UpdateAgendamentoFormulario = z.input<typeof updateAgendamentoSchema>;
+
+/** `GET /api/comercial-atendimento/agendamentos/sala-sugerida`: sala do contrato do profissional. */
+export const salaSugeridaQuerySchema = z.strictObject({
+  profissionalId: z.uuid({ error: 'Profissional inválido' }),
+  data: z.iso.date({ error: erroObrigatorio('Data', 'f') }),
+  hora: horaSchema,
+});
+
+export type SalaSugeridaQuery = z.infer<typeof salaSugeridaQuerySchema>;
+
+export const salaSugeridaSchema = z.object({
+  salaId: z.uuid().nullable(),
+  salaNome: z.string().nullable(),
+});
+
+export type SalaSugerida = z.infer<typeof salaSugeridaSchema>;
 
 /** `GET /api/comercial-atendimento/agendamentos`: intervalo do calendário (inclusive) e profissional. */
 export const listAgendamentosQuerySchema = z
@@ -139,6 +180,9 @@ export const agendamentoSchema = z.object({
   profissionalId: z.uuid(),
   profissionalNome: z.string(),
   profissionalCor: profissionalCorSchema,
+  /** Nula só nos agendamentos anteriores à #136, até alguém editar e escolher a sala. */
+  salaId: z.uuid().nullable(),
+  salaNome: z.string().nullable(),
   tipoAgendamentoId: z.uuid().nullable(),
   tipoNome: z.string().nullable(),
   /** Instante de início (ISO 8601, UTC). */

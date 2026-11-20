@@ -310,6 +310,32 @@
       }
     }
   },
+  "indicadoresFinanceiros": {
+    "titulo": "Financial Indicators",
+    "descricao": "Consolidated view of the month's main indicators",
+    "mes": "Month",
+    "atualizar": "Refresh",
+    "anterior": "Previous: {{valor}}",
+    "variacao": "Change from the previous month: {{valor}}",
+    "erroCarregar": "Could not load the indicators.",
+    "secoes": {
+      "receitas": "Revenue",
+      "ocupacao-salas": "Room occupancy",
+      "clientes": "Clients"
+    },
+    "cards": {
+      "faturamento-total": "Total Billing",
+      "receita-recorrente": "Recurring Revenue",
+      "receita-avulsa": "One-off Revenue",
+      "resultado-operacional": "Operating Result",
+      "taxa-ocupacao": "Occupancy Rate",
+      "vacancia": "Vacancy",
+      "permutas": "Barter",
+      "novos-clientes": "New Clients",
+      "contratos-cancelados": "Cancelled contracts",
+      "despesas-pagas": "Expenses Paid"
+    }
+  },
   "aiGrowth": {
     "titulo": "AI Growth",
     "descricao": "Business attention points: what deserves attention in the clinic right now.",
@@ -416,6 +442,291 @@
         "acaoVazio": "Keep encouraging the direct relationship between patients and their usual professionals.",
         "acao": "Ask the professionals to reach out to their patients and offer a follow-up."
       }
+    }
+  },
+  "receitaProfissionais": {
+    "titulo": "Professional Revenue",
+    "totais": "Totals",
+    "totalRecebido": "Total Received",
+    "totalPendente": "Total Pending",
+    "registros": "Records",
+    "resumoPorProfissional": "Summary by Professional",
+    "registrosAbreviado": "{{total}} rec.",
+    "colunas": {
+      "data": "Date",
+      "profissional": "Professional",
+      "paciente": "Patient",
+      "descricao": "Description",
+      "formaPagamento": "Payment Method",
+      "valor": "Amount",
+      "status": "Status"
+    },
+    "profissional": "Professional",
+    "paciente": "Patient",
+    "formaPagamento": "Payment Method",
+    "todasFormas": "All",
+    "periodo": "Due date",
+    "contaBancaria": "Bank Account",
+    "dataRecebimento": "Received On",
+    "status": {
+      "pendente": "Pending",
+      "recebido": "Received",
+      "cancelado": "Canceled",
+      "vencido": "Overdue"
+    },
+    "acoes": {
+      "detalhar": "View details",
+      "estornarBaixa": "Reverse Payment",
+      "editar": "Edit",
+      "excluir": "Delete"
+    },
+    "buscar": "Search revenue...",
+    "vazio": "No revenue found.",
+    "editarTitulo": "Edit Revenue",
+    "editada": "Revenue updated.",
+    "baixaEstornada": "Payment reversed.",
+    "excluida": "Revenue deleted.",
+    "estornarTitulo": "Reverse Payment",
+    "estornarDescricao": "Reverse the payment of \"{{descricao}}\"? It goes back to Pending.",
+    "excluirTitulo": "Delete Revenue",
+    "excluirDescricao": "Are you sure you want to delete the revenue \"{{descricao}}\"? This action cannot be undone."
+  },
+  "imoveis": {
+    "titulo": "Real Estate",
+    "descricao": "Manage the registered properties.",
+    "novo": "New Property",
+    "editar": "Edit Property",
+    "buscar": "Search properties...",
+    "vazio": "No properties found.",
+    "cadastrar": "Register",
+    "acoes": {
+      "editar": "Edit",
+      "excluir": "Delete"
+    },
+    "colunas": {
+      "descricao": "Description",
+      "tipo": "Type",
+      "endereco": "Address",
+      "valorCompra": "Purchase Price",
+      "financiamentoParcela": "Loan Installment",
+      "despesaMensal": "Monthly Expenses"
+    },
+    "secoes": {
+      "dados": "Property Details",
+      "financiamento": "Financing",
+      "despesas": "Linked Monthly Expenses"
+    },
+    "campos": {
+      "descricao": "Description",
+      "tipo": "Type",
+      "endereco": "Address",
+      "matricula": "Registry Number",
+      "valorCompra": "Purchase Price (R$)",
+      "dataCompra": "Purchase Date",
+      "iptuAnual": "Annual Property Tax (R$)",
+      "itbiPago": "Transfer Tax Paid (R$)",
+      "banco": "Bank",
+      "financiamentoParcela": "Installment (R$)",
+      "saldoDevedor": "Outstanding Balance (R$)",
+      "vencimentoFinanciamento": "Loan Maturity",
+      "condominio": "Condo Fee (R$)",
+      "contaLuz": "Electricity Bill (R$)",
+      "contaAgua": "Water Bill (R$)",
+      "internet": "Internet (R$)",
+      "seguro": "Insurance (R$)",
+      "observacoes": "Notes"
+    },
+    "placeholders": {
+      "descricao": "E.g.: Apt 302 Solar Bldg.",
+      "endereco": "Street, number, district, city",
+      "banco": "E.g.: Caixa, Itaú",
+      "observacoes": "General notes about the property"
+    },
+    "tipos": {
+      "APARTAMENTO": "Apartment",
+      "SALA_COMERCIAL": "Commercial Office",
+      "TERRENO": "Land",
+      "CASA": "House",
+      "GALPAO": "Warehouse"
+    },
+    "sucesso": {
+      "criado": "Property registered.",
+      "atualizado": "Property updated.",
+      "excluido": "Property deleted."
+    },
+    "excluir": {
+      "titulo": "Delete Property",
+      "descricao": "Are you sure you want to delete the property \"{{descricao}}\"? This action cannot be undone.",
+      "confirmar": "Delete"
+    }
+  },
+  "salasBloqueios": {
+    "aba": "Blocks",
+    "novo": "New Block",
+    "editar": "Edit Block",
+    "vazio": "No room blocks or bookings yet.",
+    "tipos": {
+      "BLOQUEIO": "Block",
+      "MANUTENCAO": "Maintenance",
+      "RESERVA": "Booking",
+      "CORTESIA": "Courtesy",
+      "USO_AVULSO": "Walk-in use"
+    },
+    "status": {
+      "ATIVO": "Active",
+      "CANCELADO": "Canceled"
+    },
+    "colunas": {
+      "sala": "Room",
+      "tipo": "Type",
+      "periodo": "Period",
+      "horario": "Time",
+      "profissional": "Professional",
+      "motivo": "Reason",
+      "responsavel": "Registered by",
+      "status": "Status",
+      "acoes": "Actions"
+    },
+    "filtros": {
+      "tipo": "Type",
+      "todosTipos": "All types",
+      "sala": "Room",
+      "todasSalas": "All rooms",
+      "periodo": "Period"
+    },
+    "ocupado": "Occupied",
+    "diaInteiro": "All day",
+    "ate": "to",
+    "canceladoPor": "Canceled on {{data}} by {{nome}}",
+    "canceladoEm": "Canceled on {{data}}",
+    "acoes": {
+      "editar": "Edit block of {{sala}}",
+      "cancelar": "Cancel block of {{sala}}",
+      "tituloEditar": "Edit",
+      "tituloCancelar": "Cancel block"
+    },
+    "campos": {
+      "salaId": "Room",
+      "tipo": "Type",
+      "profissionalId": "Professional (optional)",
+      "recorrente": "Repeat on weekdays",
+      "dataInicio": "Start date",
+      "dataFim": "End date",
+      "horaInicio": "Start time",
+      "horaFim": "End time",
+      "dias": "Days of the week",
+      "motivo": "Reason (optional)",
+      "horaInicialDe": "{{dia}}: start time",
+      "horaFinalDe": "{{dia}}: end time",
+      "as": "to"
+    },
+    "placeholders": {
+      "sala": "Select the room...",
+      "tipo": "Select the type...",
+      "profissional": "Select professional...",
+      "motivo": "E.g.: air conditioner replacement"
+    },
+    "ajudaPeriodo": "Continuous period: from the start date and time to the end date and time.",
+    "ajudaRecorrente": "Applies on the selected days, between the start and end dates.",
+    "cancelar": {
+      "titulo": "Cancel block",
+      "descricao": "{{tipo}} of {{sala}} on {{periodo}}. The record is not deleted: it stays as canceled, with who, when and the reason.",
+      "motivo": "Cancellation reason",
+      "placeholder": "Why was the block canceled?",
+      "voltar": "Back",
+      "confirmar": "Cancel block"
+    },
+    "sucesso": {
+      "criado": "Block created.",
+      "atualizado": "Block updated.",
+      "cancelado": "Block canceled."
+    },
+    "mapa": {
+      "legenda": "Legend",
+      "contratado": "Contracted"
+    },
+    "diasSemana": {
+      "0": "Sunday",
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday"
+    },
+    "diasAbrev": {
+      "0": "Sun",
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat"
+    }
+  },
+  "soroterapia": {
+    "titulo": "Serotherapy",
+    "descricao": "Infusion and serotherapy checklists.",
+    "abas": {
+      "rotulo": "Serotherapy sections",
+      "filaDia": "Today's Queue",
+      "pacotes": "Packages",
+      "emAndamento": "In Progress",
+      "historico": "History"
+    },
+    "filaDia": {
+      "vazio": "No serotherapy appointments for today.",
+      "erro": "Could not load today's queue.",
+      "lista": "Today's serotherapy appointments"
+    },
+    "pacotes": {
+      "vazio": "No approved protocol packages.",
+      "dica": "Create quotes with a protocol in the medical appointment.",
+      "erro": "Could not load the packages.",
+      "lista": "Approved protocol packages",
+      "orcamento": "Quote #{{numero}}",
+      "quantidade": "Qty: {{quantidade}}",
+      "semPaciente": "No patient"
+    },
+    "checklists": {
+      "buscar": "Search by patient or protocol...",
+      "vazio": "No checklist found.",
+      "duracaoMinutos": "{{minutos}} min",
+      "colunas": {
+        "data": "Date",
+        "paciente": "Patient",
+        "profissional": "Professional",
+        "protocolo": "Protocol",
+        "sinaisVitaisInicio": "Vital Signs at Start",
+        "status": "Status",
+        "duracao": "Duration"
+      },
+      "status": {
+        "EM_ANDAMENTO": "In progress",
+        "FINALIZADO": "Completed",
+        "SUSPENSO": "Suspended"
+      }
+    }
+  },
+  "agenda": {
+    "campos": {
+      "sala": "Room",
+      "data": "Date",
+      "hora": "Time",
+      "duracao": "Duration (min)"
+    },
+    "sala": {
+      "placeholder": "Search room…",
+      "sugerida": "Room suggested by the professional's contract.",
+      "semSala": "No room"
+    },
+    "detalhe": {
+      "editar": "Edit"
+    },
+    "editar": {
+      "titulo": "Edit Appointment #{{numero}}",
+      "sucesso": "Appointment updated.",
+      "semSalaAviso": "This appointment predates room registration. Choose the room to save."
     }
   },
   "alvarasLicencas": {

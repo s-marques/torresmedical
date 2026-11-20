@@ -1,6 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { ComercialAtendimentoModule } from '../comercial-atendimento/comercial-atendimento.module';
 import { ComprasEstoqueModule } from '../compras-estoque/compras-estoque.module';
+import { ConfiguracoesGestaoModule } from '../configuracoes-gestao/configuracoes-gestao.module';
 import { FinanceiroModule } from '../financeiro/financeiro.module';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { EspecialidadesController } from './especialidades/especialidades.controller';
@@ -12,6 +13,8 @@ import { ContratosSalaHorasController } from './salas/contratos-sala-horas.contr
 import { ContratosSalaHorasService } from './salas/contratos-sala-horas.service';
 import { ContratosSalaService } from './salas/contratos-sala.service';
 import { SALA_EM_USO_VERIFICADORES } from './salas/sala-em-uso';
+import { SalasBloqueiosController } from './salas/salas-bloqueios.controller';
+import { SalasBloqueiosService } from './salas/salas-bloqueios.service';
 import { SalasController } from './salas/salas.controller';
 import { SalasPainelController } from './salas/salas-painel.controller';
 import { SalasPainelService } from './salas/salas-painel.service';
@@ -26,6 +29,8 @@ import { ProtocolosController } from './protocolos/protocolos.controller';
 import { ProtocolosService } from './protocolos/protocolos.service';
 import { ProtocolosMaeController } from './protocolos-mae/protocolos-mae.controller';
 import { ProtocolosMaeService } from './protocolos-mae/protocolos-mae.service';
+import { ReceitaProfissionaisController } from './receita-profissionais/receita-profissionais.controller';
+import { ReceitaProfissionaisService } from './receita-profissionais/receita-profissionais.service';
 import { ProfissionalAgendaService } from './profissionais/profissional-agenda.service';
 import { ProfissionaisController } from './profissionais/profissionais.controller';
 import { ProfissionaisService } from './profissionais/profissionais.service';
@@ -34,12 +39,14 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
 @Module({
   imports: [
     forwardRef(() => ComercialAtendimentoModule),
-    FinanceiroModule,
+    forwardRef(() => FinanceiroModule),
+    ConfiguracoesGestaoModule,
     forwardRef(() => ComprasEstoqueModule),
   ],
   controllers: [
     criarLookupController('profissionais', ProfissionaisService),
     criarLookupController('especialidades', EspecialidadesService),
+    criarLookupController('salas', SalasService),
     ProfissionaisController,
     EspecialidadesController,
     ServicosProfissionaisController,
@@ -50,6 +57,8 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ContratosSalaController,
     ContratosSalaCobrancaController,
     ContratosSalaHorasController,
+    ReceitaProfissionaisController,
+    SalasBloqueiosController,
   ],
   providers: [
     ProfissionaisService,
@@ -63,6 +72,8 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ContratosSalaService,
     ContratosSalaCobrancaService,
     ContratosSalaHorasService,
+    ReceitaProfissionaisService,
+    SalasBloqueiosService,
     // Sala com contrato não pode ser excluída.
     {
       provide: SALA_EM_USO_VERIFICADORES,
@@ -79,6 +90,11 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ProtocolosService,
     ProtocolosMaeService,
     SalasService,
+    // Bloqueios de sala e horários do profissional: a Agenda (#136) consulta antes de agendar.
+    SalasBloqueiosService,
+    ProfissionalAgendaService,
+    // Receita recorrente dos Indicadores do Financeiro.
+    ContratosSalaCobrancaService,
   ],
 })
 export class GestaoProfissionaisModule {}
