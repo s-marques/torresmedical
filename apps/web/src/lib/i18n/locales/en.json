@@ -854,5 +854,12 @@
       "acaoCorretivaPlaceholder": "Describe the corrective action taken or planned...",
       "observacoes": "Notes"
     }
+  },
+  "relatoriosComercial": {
+    "titulo": "Commercial Reports",
+    "descricao": "Conversion rate, patients without a return visit, packages and loss reasons.",
+    "painel": "Dashboard",
+    "modulo": "Commercial",
+    "relatorios": "Reports"
   }
 }
