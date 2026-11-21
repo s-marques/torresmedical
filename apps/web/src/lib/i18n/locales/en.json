@@ -861,5 +861,12 @@
     "painel": "Dashboard",
     "modulo": "Commercial",
     "relatorios": "Reports"
+  },
+  "relatoriosEstoque": {
+    "titulo": "Inventory Reports",
+    "descricao": "Expirations, losses, stock position, movements, purchases, ABC curve, consumption and purchase forecast.",
+    "painel": "Dashboard",
+    "modulo": "Purchasing / Inventory",
+    "relatorios": "Reports"
   }
 }
