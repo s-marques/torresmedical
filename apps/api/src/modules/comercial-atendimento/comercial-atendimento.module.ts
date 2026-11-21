@@ -1,5 +1,6 @@
 import { InsightsAgendaAiGrowth } from './ai-growth/insights-agenda.fonte';
 import { forwardRef, Module } from '@nestjs/common';
+import { criarRelatoriosController } from '../../common/relatorios/relatorios.controller';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { ComprasEstoqueModule } from '../compras-estoque/compras-estoque.module';
 import { ConfiguracoesGestaoModule } from '../configuracoes-gestao/configuracoes-gestao.module';
@@ -47,6 +48,7 @@ import { MensalidadesController } from './mensalidades/mensalidades.controller';
 import { MensalidadesTitulosService } from './mensalidades/mensalidades-titulos.service';
 import { MensalidadesService } from './mensalidades/mensalidades.service';
 import { PacotesController } from './pacotes/pacotes.controller';
+import { RelatoriosComercial } from './relatorios/relatorios-comercial';
 import { PacotesService } from './pacotes/pacotes.service';
 import { CrmConfigController } from './pipeline/crm-config.controller';
 import { CrmConfigService } from './pipeline/crm-config.service';
@@ -89,6 +91,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     criarLookupController('pacientes', PacientesService),
     criarLookupController('origens-cliente', OrigensClienteService),
     criarLookupController('negocios', NegociosLookupService),
+    criarRelatoriosController('comercial-atendimento.relatorios', RelatoriosComercial),
     MensagensAutomaticasController,
     OrcamentosController,
     OrigensClienteController,
@@ -139,6 +142,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     EnvioPesquisaNpsService,
     EnviarPesquisaNpsConsumer,
     InsightsAgendaAiGrowth,
+    RelatoriosComercial,
   ],
   exports: [
     PacientesService,

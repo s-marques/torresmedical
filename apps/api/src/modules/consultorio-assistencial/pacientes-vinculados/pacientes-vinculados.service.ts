@@ -27,6 +27,32 @@ export class PacientesVinculadosService {
     return grupos.map((g) => g.pacienteId);
   }
 
+  /**
+   * Pacientes cujo último atendimento finalizado caiu em `[gte, lt)`. Respeita o escopo: só conta
+   * atendimentos dos profissionais do usuário (relatório "Pacientes sem retorno", COM-02).
+   */
+  async ultimosAtendimentos(intervalo: {
+    gte: Date;
+    lt: Date;
+  }): Promise<{ pacienteId: string; ultimoEm: Date }[]> {
+    const profissionalIds = this.escopo.profissionalIds();
+    if (profissionalIds?.length === 0) return [];
+    const grupos = await this.txHost.tx.atendimento.groupBy({
+      by: ['pacienteId'],
+      where: {
+        status: 'FINALIZADO',
+        finalizadoEm: { not: null },
+        deletedAt: null,
+        ...(profissionalIds ? { profissionalId: { in: [...profissionalIds] } } : {}),
+      },
+      _max: { finalizadoEm: true },
+      having: { finalizadoEm: { _max: intervalo } },
+    });
+    return grupos.flatMap((g) =>
+      g._max.finalizadoEm ? [{ pacienteId: g.pacienteId, ultimoEm: g._max.finalizadoEm }] : [],
+    );
+  }
+
   /** O paciente está no escopo? Sem restrição, sempre. */
   async permite(pacienteId: string): Promise<boolean> {
     const profissionalIds = this.escopo.profissionalIds();

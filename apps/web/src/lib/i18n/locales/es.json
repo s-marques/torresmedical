@@ -854,5 +854,12 @@
       "acaoCorretivaPlaceholder": "Describa la acción correctiva adoptada o planificada...",
       "observacoes": "Observaciones"
     }
+  },
+  "relatoriosComercial": {
+    "titulo": "Informes Comerciales",
+    "descricao": "Tasa de conversión, pacientes sin retorno, paquetes y motivos de pérdida.",
+    "painel": "Panel",
+    "modulo": "Comercial",
+    "relatorios": "Informes"
   }
 }
