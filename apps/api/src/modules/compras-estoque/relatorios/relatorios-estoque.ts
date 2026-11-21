@@ -217,11 +217,13 @@ export class RelatoriosEstoque implements ProvedorRelatorios {
     consulta: ConsultaRelatorio,
     hoje = hojeNaClinica(),
   ): Promise<LinhaLote[]> {
+    const inicio = diaUtc(consulta.periodo.de);
+    const hojeUtc = diaUtc(hoje);
+    const fimPeriodo = diaUtc(consulta.periodo.ate);
+    const fimJanela = diaUtc(somarDias(hoje, LOTE_DIAS_VENCENDO));
     const lotes = await this.lotes(consulta, {
-      gte: diaUtc(consulta.periodo.de) > diaUtc(hoje) ? diaUtc(consulta.periodo.de) : diaUtc(hoje),
-      lte: [diaUtc(consulta.periodo.ate), diaUtc(somarDias(hoje, LOTE_DIAS_VENCENDO))].reduce(
-        (a, b) => (a < b ? a : b),
-      ),
+      gte: inicio > hojeUtc ? inicio : hojeUtc,
+      lte: fimPeriodo < fimJanela ? fimPeriodo : fimJanela,
     });
     return lotes.map((l) => ({
       produto: l.produto.nome,
