@@ -5,12 +5,12 @@ import {
   treinamentoPageSchema,
   treinamentoSchema,
 } from '@torres/shared';
-import request from 'supertest';
 import { PrismaService } from '../../src/common/prisma/prisma.service';
 import { comUsuario, criarUsuarioTeste, type UsuarioTeste } from '../utils/auth';
 import { createE2eApp } from '../utils/create-e2e-app';
 import { truncateAll } from '../utils/database';
 import { expectAudit, expectNoAudit } from '../utils/expect-audit';
+import { respostaBinaria } from '../utils/resposta-binaria';
 
 const URL = '/api/regulatorio-qualidade/treinamentos';
 const URL_TIPOS = '/api/regulatorio-qualidade/tipos-treinamento';
@@ -276,17 +276,9 @@ describe('Treinamentos (e2e)', () => {
   });
 
   describe('GET /export', () => {
-    function binary(req: request.Test) {
-      return req.buffer(true).parse((res, callback) => {
-        const chunks: Buffer[] = [];
-        res.on('data', (chunk: Buffer) => chunks.push(chunk));
-        res.on('end', () => callback(null, Buffer.concat(chunks)));
-      });
-    }
-
     it('xlsx com filtro; audita EXPORT', async () => {
       await criarNoBanco({ dataVencimento: dias(-5) });
-      const res = await binary(
+      const res = await respostaBinaria(
         http().get(`${URL}/export`).query({ format: 'xlsx', status: 'vencido' }),
       ).expect(200);
       expect((res.body as Buffer).length).toBeGreaterThan(0);
