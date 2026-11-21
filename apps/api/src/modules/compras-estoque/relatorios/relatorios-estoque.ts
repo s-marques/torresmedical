@@ -457,16 +457,13 @@ export class RelatoriosEstoque implements ProvedorRelatorios {
       atual.valor += num(compra.valorTotal);
       porMes.set(mes, atual);
     }
-    let anterior: number | null = null;
-    return [...porMes]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([mes, total]) => {
-        const variacao: number | null = anterior
-          ? arredondar(((total.valor - anterior) / anterior) * 100, 1)
-          : null;
-        anterior = total.valor;
-        return { mes, compras: total.compras, valor: arredondar(total.valor), variacao };
-      });
+    const meses = [...porMes].sort(([a], [b]) => a.localeCompare(b));
+    return meses.map(([mes, total], i) => {
+      const anterior = meses[i - 1]?.[1].valor ?? 0;
+      const variacao =
+        anterior > 0 ? arredondar(((total.valor - anterior) / anterior) * 100, 1) : null;
+      return { mes, compras: total.compras, valor: arredondar(total.valor), variacao };
+    });
   }
 
   /** Saídas de estoque por produto no intervalo. */
