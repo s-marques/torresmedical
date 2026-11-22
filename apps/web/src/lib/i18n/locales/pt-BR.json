@@ -758,5 +758,12 @@
     "painel": "Painel",
     "modulo": "Comercial",
     "relatorios": "Relatórios"
+  },
+  "relatoriosGestao": {
+    "titulo": "Relatórios de Gestão",
+    "descricao": "Log de acesso, ticket médio, ocupação de sala e LTV.",
+    "painel": "Painel",
+    "modulo": "Gestão",
+    "relatorios": "Relatórios"
   }
 }

@@ -861,5 +861,12 @@
     "painel": "Dashboard",
     "modulo": "Commercial",
     "relatorios": "Reports"
+  },
+  "relatoriosGestao": {
+    "titulo": "Management Reports",
+    "descricao": "Access log, average ticket, room occupancy and LTV.",
+    "painel": "Dashboard",
+    "modulo": "Management",
+    "relatorios": "Reports"
   }
 }
