@@ -45,7 +45,7 @@ const SERVICES = [
     forwardRef(() => FinanceiroModule),
     forwardRef(() => ComercialAtendimentoModule),
     forwardRef(() => GestaoProfissionaisModule),
-    ConfiguracoesGestaoModule,
+    forwardRef(() => ConfiguracoesGestaoModule),
   ],
   controllers: [
     criarLookupController('fornecedores', FornecedoresService),

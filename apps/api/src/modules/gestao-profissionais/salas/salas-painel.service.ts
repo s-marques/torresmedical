@@ -59,6 +59,16 @@ function paraBloqueioDoMapa(o: OcorrenciaBloqueioSala): SalaOcupacaoBloqueio {
   };
 }
 
+/** Linha do relatório GES-03 (Ocupação por Sala). */
+export interface OcupacaoSalaPeriodo {
+  salaId: string;
+  sala: string;
+  diasNoPeriodo: number;
+  diasOcupados: number;
+  /** Dias ocupados ÷ dias do período, em % com 1 casa. */
+  taxaOcupacao: number;
+}
+
 /** Mapa de Ocupação e Dashboard da tela Gestão de Salas. */
 @Injectable()
 export class SalasPainelService {
@@ -168,6 +178,46 @@ export class SalasPainelService {
         Math.round(receitaPorSala.reduce((soma, sala) => soma + sala.valor, 0) * 100) / 100,
       receitaPorSala,
     };
+  }
+
+  /**
+   * Relatório GES-03: por sala, quantos dias do período ela esteve ocupada. A regra de "ocupada" é a
+   * do Dashboard (contrato ativo e vigente no dia, ou reserva/uso avulso; cortesia, bloqueio e
+   * manutenção não contam). Visão geral da administração: 403 para o usuário restrito.
+   */
+  async ocupacaoNoPeriodo(de: string, ate: string): Promise<OcupacaoSalaPeriodo[]> {
+    if (this.escopo.restrito()) throw semPermissao();
+    const dias: string[] = [];
+    for (let dia = de; dia <= ate; dia = adicionarDias(dia, 1)) dias.push(dia);
+    const [salas, contratos, bloqueios] = await Promise.all([
+      this.salas(),
+      this.contratos.ativosNoPeriodo(de, ate),
+      this.bloqueios.ocorrenciasNoPeriodo(de, ate),
+    ]);
+    const ocupadas = new Map<string, Set<string>>();
+    const marcar = (salaId: string, dia: string) => {
+      const conjunto = ocupadas.get(salaId) ?? new Set<string>();
+      conjunto.add(dia);
+      ocupadas.set(salaId, conjunto);
+    };
+    for (const dia of dias) {
+      for (const c of contratos) {
+        if (dia >= c.dataInicio && (c.dataFim === null || dia <= c.dataFim)) marcar(c.salaId, dia);
+      }
+    }
+    for (const o of bloqueios) {
+      if (SALA_BLOQUEIO_TIPOS_OCUPAM.includes(o.bloqueio.tipo)) marcar(o.bloqueio.salaId, o.data);
+    }
+    return salas.map((sala) => {
+      const diasOcupados = ocupadas.get(sala.id)?.size ?? 0;
+      return {
+        salaId: sala.id,
+        sala: sala.nome,
+        diasNoPeriodo: dias.length,
+        diasOcupados,
+        taxaOcupacao: Math.round((diasOcupados / dias.length) * 1000) / 10,
+      };
+    });
   }
 
   /** Salas não excluídas, em ordem natural do nome. */

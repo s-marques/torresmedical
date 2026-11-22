@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { ConfiguracoesGestaoModule } from '../configuracoes-gestao/configuracoes-gestao.module';
 import { AlvarasLicencasController } from './alvaras-licencas/alvaras-licencas.controller';
@@ -14,7 +14,7 @@ import { NaoConformidadesService } from './nao-conformidades/nao-conformidades.s
 
 /** Módulo REGULATÓRIO / QUALIDADE do inventário. Dono das entidades Funcionário e Cargo. */
 @Module({
-  imports: [ConfiguracoesGestaoModule],
+  imports: [forwardRef(() => ConfiguracoesGestaoModule)],
   controllers: [
     criarLookupController('funcionarios', FuncionariosService),
     criarLookupController('cargos', CargosService),
