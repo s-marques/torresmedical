@@ -47,6 +47,7 @@ const DEFINICAO = {
       evolucaoVoz: ['Evolução por Voz', '/evolucoes'],
       soroterapia: ['Soroterapia', '/soroterapia'],
       prestadores: ['Prestadores', '/prestadores'],
+      encaminhamentos: ['Encaminhamentos', '/encaminhamentos'],
       relatorios: ['Relatórios', '/assistencial/relatorios'],
     },
   },
@@ -158,6 +159,15 @@ export interface ModuloMenu {
   nome: string;
   telas: readonly TelaMenu[];
 }
+
+/**
+ * Telas que não estão em `docs/inventario/` (nasceram dos requisitos do cliente de 12/11/2026).
+ * O teste do menu compara o inventário com as demais.
+ */
+export const TELAS_FORA_DO_INVENTARIO: readonly TelaId[] = [
+  /** Encaminhamento de pacientes entre profissionais (issue #146, R §26). */
+  'consultorio-assistencial.encaminhamentos',
+];
 
 /** Ação de permissão que libera a tela no menu. */
 export const ACAO_VER = 'ver';

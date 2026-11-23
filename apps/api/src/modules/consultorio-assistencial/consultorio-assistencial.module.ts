@@ -3,6 +3,8 @@ import { ComercialAtendimentoModule } from '../comercial-atendimento/comercial-a
 import { GestaoProfissionaisModule } from '../gestao-profissionais/gestao-profissionais.module';
 import { AtendimentoMedicoController } from './atendimento-medico/atendimento-medico.controller';
 import { AtendimentoMedicoService } from './atendimento-medico/atendimento-medico.service';
+import { EncaminhamentosController } from './encaminhamentos/encaminhamentos.controller';
+import { EncaminhamentosService } from './encaminhamentos/encaminhamentos.service';
 import { EvolucaoVozController } from './evolucao-voz/evolucao-voz.controller';
 import { EvolucaoVozService } from './evolucao-voz/evolucao-voz.service';
 import { PacientesVinculadosService } from './pacientes-vinculados/pacientes-vinculados.service';
@@ -20,7 +22,7 @@ import { ReceituarioBlocosService } from './receituarios/receituario-blocos.serv
 /**
  * Módulo CONSULTÓRIO / ASSISTENCIAL do inventário. Dono de Prontuário, Atendimento, Evolução,
  * Anamnese, Prestador (de serviço de manutenção) e Receituários (blocos e prescrições)
- * e Soroterapia (checklists).
+ * e Soroterapia (checklists) e Encaminhamentos de pacientes entre profissionais (#146).
  */
 @Module({
   // Paciente e Agendamento (comercial-atendimento) e Profissional (gestao-profissionais) são
@@ -31,6 +33,7 @@ import { ReceituarioBlocosService } from './receituarios/receituario-blocos.serv
     ProntuariosController,
     AtendimentoMedicoController,
     EvolucaoVozController,
+    EncaminhamentosController,
     PrestadoresController,
     ReceituarioBlocosController,
     PrescricoesController,
@@ -40,6 +43,7 @@ import { ReceituarioBlocosService } from './receituarios/receituario-blocos.serv
     ProntuariosService,
     AtendimentoMedicoService,
     EvolucaoVozService,
+    EncaminhamentosService,
     PacientesVinculadosService,
     PrestadoresService,
     ReceituarioBlocosService,

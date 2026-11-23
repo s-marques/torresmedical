@@ -27,5 +27,8 @@
   "Tipo Resíduo": "Waste Type",
   "Empresa Coletora": "Collection Company",
   "Manifesto MTR": "MTR Manifest",
-  "Responsável": "Person in Charge"
+  "Responsável": "Person in Charge",
+  "Paciente": "Patient",
+  "Profissional de origem": "Referring professional",
+  "Profissional de destino": "Receiving professional"
 }

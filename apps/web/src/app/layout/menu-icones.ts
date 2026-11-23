@@ -1,5 +1,6 @@
 import type { TelaId } from '@torres/shared';
 import {
+  ArrowRightLeft,
   BadgeCheck,
   BookOpenText,
   Bot,
@@ -94,6 +95,7 @@ export const ICONES_TELA: Record<TelaId, LucideIcon> = {
   'consultorio-assistencial.prontuarios': FileHeart,
   'consultorio-assistencial.evolucao-voz': Mic,
   'consultorio-assistencial.soroterapia': Syringe,
+  'consultorio-assistencial.encaminhamentos': ArrowRightLeft,
   'consultorio-assistencial.prestadores': BriefcaseMedical,
   'consultorio-assistencial.relatorios': ChartColumn,
 
