@@ -130,6 +130,8 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'processed_events',
       'produtos',
       'profissionais',
+      'profissionais_contatos',
+      'profissionais_rqe',
       'prontuarios',
       'protocolo_itens',
       'protocolo_mae_semanas',

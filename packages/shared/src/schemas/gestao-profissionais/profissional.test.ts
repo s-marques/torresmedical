@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  PROFISSIONAL_PROFISSOES,
+  PROFISSIONAL_RQES_MAX,
   createProfissionalSchema,
   exportProfissionaisQuerySchema,
   listProfissionaisQuerySchema,
@@ -88,6 +90,121 @@ describe('createProfissionalSchema', () => {
 
   it('não aceita campos fora do formulário', () => {
     expect(createProfissionalSchema.safeParse({ nome: 'X', ativo: false }).success).toBe(false);
+  });
+});
+
+describe('cadastro completo (issue #140)', () => {
+  const ESP_A = '7a1d3c52-8d0f-4b8e-9f4c-2b2f3c4d5e6f';
+  const ESP_B = '9c1d3c52-8d0f-4b8e-9f4c-2b2f3c4d5e6f';
+
+  it('campos novos são opcionais: sem eles, profissão e CNPJ são null e as listas vazias', () => {
+    expect(createProfissionalSchema.parse({ nome: 'Ana' })).toMatchObject({
+      profissao: null,
+      subespecialidade: null,
+      cnpj: null,
+      rqes: [],
+      contatosAdministrativos: [],
+    });
+  });
+
+  it('guarda só os dígitos do CNPJ e valida os dígitos verificadores', () => {
+    expect(createProfissionalSchema.parse({ nome: 'Ana', cnpj: '11.222.333/0001-81' }).cnpj).toBe(
+      '11222333000181',
+    );
+    expect(createProfissionalSchema.parse({ nome: 'Ana', cnpj: '' }).cnpj).toBeNull();
+    expect(
+      detalhes(createProfissionalSchema.safeParse({ nome: 'Ana', cnpj: '11222333000182' })),
+    ).toEqual([['cnpj', 'CNPJ inválido']]);
+  });
+
+  it('profissão aceita a lista do cadastro e rejeita outra', () => {
+    for (const profissao of PROFISSIONAL_PROFISSOES) {
+      expect(createProfissionalSchema.parse({ nome: 'Ana', profissao }).profissao).toBe(profissao);
+    }
+    expect(createProfissionalSchema.parse({ nome: 'Ana', profissao: '' }).profissao).toBeNull();
+    expect(
+      detalhes(createProfissionalSchema.safeParse({ nome: 'Ana', profissao: 'MAGO' })),
+    ).toEqual([['profissao', 'Profissão inválida']]);
+  });
+
+  it('RQE: número obrigatório, especialidade válida e uma por especialidade', () => {
+    const dados = createProfissionalSchema.parse({
+      nome: 'Ana',
+      rqes: [
+        { numero: ' 4321 ', especialidadeId: ESP_A },
+        { numero: '99', especialidadeId: ESP_B },
+      ],
+    });
+    expect(dados.rqes).toEqual([
+      { numero: '4321', especialidadeId: ESP_A },
+      { numero: '99', especialidadeId: ESP_B },
+    ]);
+    expect(
+      detalhes(
+        createProfissionalSchema.safeParse({
+          nome: 'Ana',
+          rqes: [{ numero: ' ', especialidadeId: 'x' }],
+        }),
+      ),
+    ).toEqual([
+      ['rqes.0.numero', 'Número do RQE é obrigatório.'],
+      ['rqes.0.especialidadeId', 'Especialidade do RQE inválida'],
+    ]);
+    expect(
+      detalhes(
+        createProfissionalSchema.safeParse({
+          nome: 'Ana',
+          rqes: [
+            { numero: '1', especialidadeId: ESP_A },
+            { numero: '2', especialidadeId: ESP_A },
+          ],
+        }),
+      ),
+    ).toEqual([['rqes', 'Há mais de um RQE para a mesma especialidade']]);
+  });
+
+  it('contato administrativo: nome e função obrigatórios, telefone ou e-mail, só dígitos no telefone', () => {
+    const dados = createProfissionalSchema.parse({
+      nome: 'Ana',
+      contatosAdministrativos: [
+        { nome: 'Bia', funcao: 'Secretária', telefone: '(65) 99999-0002', email: '' },
+        { nome: 'Caio', funcao: 'Financeiro', email: 'caio@exemplo.test' },
+      ],
+    });
+    expect(dados.contatosAdministrativos).toEqual([
+      { nome: 'Bia', funcao: 'Secretária', telefone: '65999990002', email: null },
+      { nome: 'Caio', funcao: 'Financeiro', telefone: null, email: 'caio@exemplo.test' },
+    ]);
+    expect(
+      detalhes(
+        createProfissionalSchema.safeParse({
+          nome: 'Ana',
+          contatosAdministrativos: [{ nome: '', funcao: '', telefone: '123' }],
+        }),
+      ),
+    ).toEqual([
+      ['contatosAdministrativos.0.nome', 'Nome do contato é obrigatório.'],
+      ['contatosAdministrativos.0.funcao', 'Função do contato é obrigatória.'],
+      ['contatosAdministrativos.0.telefone', 'Telefone do contato inválido'],
+    ]);
+    expect(
+      detalhes(
+        createProfissionalSchema.safeParse({
+          nome: 'Ana',
+          contatosAdministrativos: [{ nome: 'Bia', funcao: 'Secretária' }],
+        }),
+      ),
+    ).toEqual([
+      ['contatosAdministrativos.0.telefone', 'Informe o telefone ou o e-mail do contato'],
+    ]);
+  });
+
+  it('limita a quantidade de RQEs e de contatos', () => {
+    const muitos = Array.from({ length: PROFISSIONAL_RQES_MAX + 1 }, (_, i) => ({
+      numero: String(i),
+      especialidadeId: ESP_A,
+    }));
+    expect(createProfissionalSchema.safeParse({ nome: 'Ana', rqes: muitos }).success).toBe(false);
   });
 });
 

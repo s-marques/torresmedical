@@ -18,6 +18,7 @@ function setup(registros: unknown[] = [PROFISSIONAL], arquivo?: { uso: string })
   const { txHost, delegate } = txHostFalso('profissional', registros);
   const especialidade = {
     findFirst: jest.fn().mockResolvedValue({ ativo: true }),
+    count: jest.fn().mockResolvedValue(1),
   };
   (txHost.tx as unknown as Record<string, unknown>).especialidade = especialidade;
   const exportService = {
@@ -44,6 +45,11 @@ function setup(registros: unknown[] = [PROFISSIONAL], arquivo?: { uso: string })
 const COMPLETO = {
   ...PROFISSIONAL,
   especialidadeId: ESPECIALIDADE_ID,
+  profissao: 'MEDICO',
+  subespecialidade: null,
+  cnpj: null,
+  rqes: [],
+  contatosAdministrativos: [],
   outrasEspecialidades: null,
   telefone: null,
   email: null,
@@ -76,6 +82,11 @@ const ENTRADA = {
   nome: 'Dra. Teste',
   especialidadeId: null,
   registro: null,
+  profissao: null,
+  subespecialidade: null,
+  cnpj: null,
+  rqes: [],
+  contatosAdministrativos: [],
   outrasEspecialidades: null,
   email: null,
   telefone: null,
@@ -170,7 +181,7 @@ describe('ProfissionaisService', () => {
           skip: 10,
           take: 10,
           orderBy: [{ valorConsulta: 'desc' }, { id: 'desc' }],
-          include: { especialidade: { select: { nome: true } } },
+          include: expect.objectContaining({ rqes: expect.anything() }),
           where: expect.objectContaining({ deletedAt: null, ativo: false }),
         }),
       );
@@ -229,6 +240,78 @@ describe('ProfissionaisService', () => {
         service.create({ ...ENTRADA, especialidadeId: ESPECIALIDADE_ID }),
       ).rejects.toMatchObject({ code: 'ESPECIALIDADE_INVALIDA', status: 400 });
       expect(delegate.create).not.toHaveBeenCalled();
+    });
+
+    it('create: grava RQEs e contatos administrativos e devolve nos DTOs', async () => {
+      const outra = '9c1d3c52-8d0f-4b8e-9f4c-2b2f3c4d5e6f';
+      const { service, delegate } = setup([
+        {
+          ...COMPLETO,
+          rqes: [
+            { id: 'r1', numero: '123', especialidadeId: outra, especialidade: { nome: 'Cardio' } },
+          ],
+          contatosAdministrativos: [
+            { id: 'c1', nome: 'Bia', funcao: 'Secretária', telefone: '11999999999', email: null },
+          ],
+        },
+      ]);
+
+      const dto = await service.create({
+        ...ENTRADA,
+        cnpj: '11222333000181',
+        rqes: [{ numero: '123', especialidadeId: outra }],
+        contatosAdministrativos: [
+          { nome: 'Bia', funcao: 'Secretária', telefone: '11999999999', email: null },
+        ],
+      });
+
+      const data = delegate.create.mock.calls[0][0].data;
+      expect(data.cnpj).toBe('11222333000181');
+      expect(data.rqes).toEqual({ create: [{ numero: '123', especialidadeId: outra }] });
+      expect(data.contatosAdministrativos.create).toHaveLength(1);
+      expect(dto.rqes).toEqual([
+        { id: 'r1', numero: '123', especialidadeId: outra, especialidadeNome: 'Cardio' },
+      ]);
+      expect(dto.contatosAdministrativos[0]).toMatchObject({ nome: 'Bia', funcao: 'Secretária' });
+      expect(dto.profissao).toBe('MEDICO');
+    });
+
+    it('create: especialidade do RQE inexistente ou inativa → 400', async () => {
+      const { service, especialidade, delegate } = setup([COMPLETO]);
+      especialidade.count.mockResolvedValueOnce(0);
+
+      await expect(
+        service.create({
+          ...ENTRADA,
+          rqes: [{ numero: '1', especialidadeId: ESPECIALIDADE_ID }],
+        }),
+      ).rejects.toMatchObject({ code: 'RQE_ESPECIALIDADE_INVALIDA', status: 400 });
+      expect(delegate.create).not.toHaveBeenCalled();
+    });
+
+    it('update: substitui as listas de RQEs e contatos', async () => {
+      const { service, delegate } = setup([COMPLETO]);
+
+      await service.update(PROFISSIONAL.id, ENTRADA);
+
+      const data = delegate.update.mock.calls[0][0].data;
+      expect(data.rqes).toEqual({ deleteMany: {}, create: [] });
+      expect(data.contatosAdministrativos).toEqual({ deleteMany: {}, create: [] });
+    });
+
+    it('list: a busca também casa o CNPJ pelos dígitos', async () => {
+      const { service, delegate } = setup([COMPLETO]);
+
+      await service.list({
+        page: 1,
+        pageSize: 10,
+        sort: { field: 'nome', direction: 'asc' },
+        search: '11.222.333/0001-81',
+      });
+
+      const where = delegate.findMany.mock.calls[0][0].where;
+      expect(where.OR).toContainEqual({ cnpj: { contains: '11222333000181' } });
+      expect(where.OR).toContainEqual({ registro: expect.anything() });
     });
 
     it('update: Secret Key em branco mantém a gravada; sem API Token apaga as duas', async () => {

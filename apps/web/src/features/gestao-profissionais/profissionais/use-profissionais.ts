@@ -3,6 +3,7 @@ import {
   arquivoLinkSchema,
   bloqueioAgendaSchema,
   bloqueiosResponseSchema,
+  contratosProfissionalResponseSchema,
   especialidadePageSchema,
   especialidadeSchema,
   horariosResponseSchema,
@@ -90,6 +91,20 @@ export function useLinkArquivo(arquivoId: string | null) {
     staleTime: 60_000,
     queryFn: ({ signal }) =>
       apiFetch(`/api/arquivos/${arquivoId}/link`, { schema: arquivoLinkSchema, signal }),
+  });
+}
+
+// ---------------------------------------------------------------------------------------------
+// Contratos de sala (somente leitura, issue #140)
+
+export function useContratosProfissional(profissionalId: string) {
+  return useQuery({
+    queryKey: ['contratos-profissional', profissionalId],
+    queryFn: ({ signal }) =>
+      apiFetch(`${URL_PROFISSIONAIS}/${profissionalId}/contratos`, {
+        schema: contratosProfissionalResponseSchema,
+        signal,
+      }),
   });
 }
 

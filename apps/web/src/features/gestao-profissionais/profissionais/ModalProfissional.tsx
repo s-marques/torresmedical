@@ -2,6 +2,8 @@ import {
   PROFISSIONAL_CORES,
   PROFISSIONAL_COR_KEYS,
   PROFISSIONAL_DURACAO_PADRAO,
+  PROFISSIONAL_PROFISSAO_ROTULOS,
+  PROFISSIONAL_PROFISSOES,
   PROFISSIONAL_ESTADO_CIVIL_ROTULOS,
   PROFISSIONAL_ESTADOS_CIVIS,
   PROFISSIONAL_LAYOUT_RECEITA_ROTULOS,
@@ -16,6 +18,7 @@ import { FormField } from '@/components/shared/form/FormField';
 import { FormLayout } from '@/components/shared/form/FormLayout';
 import { useFormulario } from '@/components/shared/form/use-formulario';
 import { Modal } from '@/components/shared/Modal';
+import { ListaContatosAdministrativos, ListaRqes } from './ListasCadastro';
 import { HorariosAtendimento } from './HorariosAtendimento';
 import { SeletorImagem } from './SeletorImagem';
 import {
@@ -29,6 +32,10 @@ const ID_FORMULARIO = 'form-profissional';
 const OPCOES_COR = PROFISSIONAL_COR_KEYS.map((valor) => ({
   valor,
   rotulo: PROFISSIONAL_CORES[valor].rotulo,
+}));
+const OPCOES_PROFISSAO = PROFISSIONAL_PROFISSOES.map((valor) => ({
+  valor,
+  rotulo: PROFISSIONAL_PROFISSAO_ROTULOS[valor],
 }));
 const OPCOES_ESTADO_CIVIL = PROFISSIONAL_ESTADOS_CIVIS.map((valor) => ({
   valor,
@@ -45,6 +52,16 @@ function valoresIniciais(p?: Profissional): ProfissionalInput {
     nome: p?.nome ?? '',
     especialidadeId: p?.especialidadeId ?? null,
     registro: p?.registro ?? '',
+    profissao: p?.profissao ?? '',
+    subespecialidade: p?.subespecialidade ?? '',
+    cnpj: p?.cnpj ?? '',
+    rqes: (p?.rqes ?? []).map((r) => ({ numero: r.numero, especialidadeId: r.especialidadeId })),
+    contatosAdministrativos: (p?.contatosAdministrativos ?? []).map((c) => ({
+      nome: c.nome,
+      funcao: c.funcao,
+      telefone: c.telefone ?? '',
+      email: c.email ?? '',
+    })),
     outrasEspecialidades: p?.outrasEspecialidades ?? '',
     email: p?.email ?? '',
     telefone: p?.telefone ?? '',
@@ -149,6 +166,10 @@ export function ModalProfissional({ profissional, onFechar }: Readonly<ModalProf
           placeholder="Selecione"
         />
         <FormField name="registro" label="Registro (CRM/CRO)" placeholder="CRM/CRO 00000" />
+        <FormField name="profissao" label="Profissão" tipo="select" opcoes={OPCOES_PROFISSAO} />
+        <FormField name="subespecialidade" label="Subespecialidade" />
+        <FormField name="cnpj" label="CNPJ" tipo="cnpj" />
+        <ListaRqes />
         <FormField
           name="outrasEspecialidades"
           label="Outras Especialidades / Áreas de Atuação"
@@ -181,6 +202,10 @@ export function ModalProfissional({ profissional, onFechar }: Readonly<ModalProf
             className="flex-1"
           />
         </div>
+
+        <Secao titulo="Contatos Administrativos" nota="Secretária, financeiro…">
+          <ListaContatosAdministrativos />
+        </Secao>
 
         <Secao titulo="Dados Pessoais" nota="Para confecção de contratos">
           <FormField name="cpf" label="CPF" tipo="cpf" />

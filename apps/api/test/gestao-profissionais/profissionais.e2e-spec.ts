@@ -3,6 +3,7 @@ import {
   bloqueioAgendaSchema,
   especialidadePageSchema,
   especialidadeSchema,
+  contratosProfissionalResponseSchema,
   profissionalPageSchema,
   profissionalSchema,
 } from '@torres/shared';
@@ -27,6 +28,8 @@ const PERMISSOES = [
   'gestao-profissionais.profissionais.exportar',
 ] as const;
 const INEXISTENTE = '00000000-0000-4000-8000-000000000000';
+// CNPJ fictício com dígitos verificadores válidos (exemplo público).
+const CNPJ = '11222333000181';
 // CPF fictício com dígitos verificadores válidos (exemplo público).
 const CPF = '52998224725';
 
@@ -707,6 +710,245 @@ describe('Profissionais (e2e)', () => {
     });
   });
 
+  describe('cadastro completo (issue #140)', () => {
+    const contato = (extra: Record<string, unknown> = {}) => ({
+      nome: 'Bia Teste',
+      funcao: 'Secretária',
+      telefone: '(65) 99999-0002',
+      ...extra,
+    });
+
+    it('201: profissão, subespecialidade, CNPJ, RQEs e contatos; audita com as listas', async () => {
+      const cardio = await criarEspecialidade('Cardiologia');
+      const clinica = await criarEspecialidade('Clínica Médica');
+
+      const res = await http()
+        .post(BASE)
+        .send({
+          nome: 'Ana Teste',
+          profissao: 'MEDICO',
+          subespecialidade: 'Arritmia',
+          cnpj: '11.222.333/0001-81',
+          especialidadeId: cardio.id,
+          rqes: [
+            { numero: '4321', especialidadeId: cardio.id },
+            { numero: '99', especialidadeId: clinica.id },
+          ],
+          contatosAdministrativos: [
+            contato(),
+            contato({
+              nome: 'Caio Teste',
+              funcao: 'Financeiro',
+              telefone: '',
+              email: 'caio@exemplo.test',
+            }),
+          ],
+        })
+        .expect(201);
+
+      const dto = profissionalSchema.parse(res.body);
+      expect(dto).toMatchObject({ profissao: 'MEDICO', subespecialidade: 'Arritmia', cnpj: CNPJ });
+      expect(dto.rqes.map((r) => [r.numero, r.especialidadeNome])).toEqual([
+        ['4321', 'Cardiologia'],
+        ['99', 'Clínica Médica'],
+      ]);
+      expect(dto.contatosAdministrativos.map((c) => [c.nome, c.telefone, c.email])).toEqual([
+        ['Bia Teste', '65999990002', null],
+        ['Caio Teste', null, 'caio@exemplo.test'],
+      ]);
+      expect(await prisma.profissionalRqe.count({ where: { profissionalId: dto.id } })).toBe(2);
+      await expectAudit(prisma, {
+        action: 'CREATE',
+        entity: ENTITY,
+        entityId: dto.id,
+        after: { cnpj: CNPJ, profissao: 'MEDICO' },
+        userId: usuario.id,
+      });
+    });
+
+    it('sem os campos novos o cadastro continua válido, com listas vazias', async () => {
+      const res = await http().post(BASE).send({ nome: 'Ana Teste' }).expect(201);
+
+      expect(res.body).toMatchObject({
+        profissao: null,
+        subespecialidade: null,
+        cnpj: null,
+        rqes: [],
+        contatosAdministrativos: [],
+      });
+    });
+
+    it('400: CNPJ inválido, profissão inválida, RQE duplicado ou sem número, contato incompleto', async () => {
+      const cardio = await criarEspecialidade('Cardiologia');
+      const campos = async (corpo: Record<string, unknown>) => {
+        const res = await http()
+          .post(BASE)
+          .send({ nome: 'X', ...corpo })
+          .expect(400);
+        return (res.body.details as { field: string }[]).map((d) => d.field);
+      };
+
+      expect(await campos({ cnpj: '11222333000182' })).toEqual(['cnpj']);
+      expect(await campos({ profissao: 'MAGO' })).toEqual(['profissao']);
+      expect(
+        await campos({
+          rqes: [
+            { numero: '1', especialidadeId: cardio.id },
+            { numero: '2', especialidadeId: cardio.id },
+          ],
+        }),
+      ).toEqual(['rqes']);
+      expect(await campos({ rqes: [{ numero: ' ', especialidadeId: cardio.id }] })).toEqual([
+        'rqes.0.numero',
+      ]);
+      expect(
+        await campos({ contatosAdministrativos: [{ nome: 'Bia', funcao: 'Secretária' }] }),
+      ).toEqual(['contatosAdministrativos.0.telefone']);
+      expect(await prisma.profissional.count()).toBe(0);
+      await expectNoAudit(prisma, { entity: ENTITY });
+    });
+
+    it('400 RQE_ESPECIALIDADE_INVALIDA para especialidade do RQE inexistente ou inativa', async () => {
+      const inativa = await criarEspecialidade('Antiga', false);
+
+      for (const especialidadeId of [INEXISTENTE, inativa.id]) {
+        const res = await http()
+          .post(BASE)
+          .send({ nome: 'X', rqes: [{ numero: '1', especialidadeId }] })
+          .expect(400);
+        expect(res.body.code).toBe('RQE_ESPECIALIDADE_INVALIDA');
+      }
+      expect(await prisma.profissional.count()).toBe(0);
+    });
+
+    it('PATCH substitui RQEs e contatos e audita before/after', async () => {
+      const cardio = await criarEspecialidade('Cardiologia');
+      const criado = await http()
+        .post(BASE)
+        .send({
+          nome: 'Ana Teste',
+          rqes: [{ numero: '1', especialidadeId: cardio.id }],
+          contatosAdministrativos: [contato()],
+        })
+        .expect(201);
+
+      const res = await http()
+        .patch(`${BASE}/${criado.body.id}`)
+        .send({
+          nome: 'Ana Teste',
+          cnpj: CNPJ,
+          rqes: [{ numero: '2', especialidadeId: cardio.id }],
+          contatosAdministrativos: [],
+        })
+        .expect(200);
+
+      expect(res.body.rqes.map((r: { numero: string }) => r.numero)).toEqual(['2']);
+      expect(res.body.contatosAdministrativos).toEqual([]);
+      expect(await prisma.profissionalRqe.count()).toBe(1);
+      expect(await prisma.profissionalContato.count()).toBe(0);
+      await expectAudit(prisma, {
+        action: 'UPDATE',
+        entity: ENTITY,
+        entityId: criado.body.id,
+        before: { cnpj: null },
+        after: { cnpj: CNPJ },
+        userId: usuario.id,
+      });
+    });
+
+    it('busca na listagem por CRM/registro e por CNPJ (com ou sem máscara)', async () => {
+      await criarNoBanco('Ana Teste', { registro: 'CRM 1111/MT', cnpj: CNPJ });
+      await criarNoBanco('Bruno Teste', { registro: 'CRM 2222/MT', cnpj: '45723174000110' });
+
+      expect(await nomes({ search: 'CRM 1111' })).toEqual(['Ana Teste']);
+      expect(await nomes({ search: CNPJ })).toEqual(['Ana Teste']);
+      expect(await nomes({ search: '11.222.333/0001-81' })).toEqual(['Ana Teste']);
+      expect(await nomes({ search: '45.723.174' })).toEqual(['Bruno Teste']);
+    });
+  });
+
+  describe('GET /:id/contratos (aba Contratos, somente leitura)', () => {
+    async function prepararContratos() {
+      const sala = await prisma.sala.create({ data: { nome: 'Sala 7', numero: '07' } });
+      const profissional = await criarNoBanco('Ana Teste');
+      const outro = await criarNoBanco('Bruno Teste');
+      const base = {
+        salaId: sala.id,
+        modalidade: 'MENSAL' as const,
+        locatarioTipo: 'PROFISSIONAL' as const,
+        valorUnitario: 1500,
+        dataInicio: new Date('2026-10-01T00:00:00Z'),
+      };
+      await prisma.contratoSala.create({
+        data: {
+          ...base,
+          profissionalId: profissional.id,
+          status: 'ENCERRADO',
+          dataInicio: new Date('2025-01-01T00:00:00Z'),
+        },
+      });
+      await prisma.contratoSala.create({
+        data: {
+          ...base,
+          profissionalId: profissional.id,
+          dias: { create: [{ diaSemana: 2, inicio: '08:00', fim: '12:00' }] },
+        },
+      });
+      await prisma.contratoSala.create({ data: { ...base, profissionalId: outro.id } });
+      await prisma.contratoSala.create({
+        data: { ...base, profissionalId: profissional.id, deletedAt: new Date() },
+      });
+      return { profissional, outro };
+    }
+
+    it('200: contratos ativos e encerrados do profissional, ativo primeiro, sem os de outros', async () => {
+      const { profissional } = await prepararContratos();
+
+      const res = await http().get(`${BASE}/${profissional.id}/contratos`).expect(200);
+
+      const { data } = contratosProfissionalResponseSchema.parse(res.body);
+      expect(data.map((c) => c.status)).toEqual(['ATIVO', 'ENCERRADO']);
+      expect(data[0]).toMatchObject({
+        salaNome: 'Sala 7',
+        modalidade: 'MENSAL',
+        valorUnitario: 1500,
+        diaVencimento: 10,
+        dataInicio: '2026-10-01',
+      });
+      expect(data[0]?.dias).toHaveLength(1);
+      await expectNoAudit(prisma, { entity: 'ContratoSala' });
+    });
+
+    it('200 com lista vazia; 404 para inexistente, excluído ou id inválido', async () => {
+      const semContrato = await criarNoBanco('Ana Teste');
+      const excluido = await criarNoBanco('Excluído', { deletedAt: new Date() });
+
+      const vazio = await http().get(`${BASE}/${semContrato.id}/contratos`).expect(200);
+      expect(vazio.body).toEqual({ data: [] });
+      await http().get(`${BASE}/${INEXISTENTE}/contratos`).expect(404);
+      await http().get(`${BASE}/${excluido.id}/contratos`).expect(404);
+      await http().get(`${BASE}/abc/contratos`).expect(400);
+    });
+
+    it('escopo: usuário restrito vê só os contratos dos profissionais vinculados; fora → 403', async () => {
+      const { profissional, outro } = await prepararContratos();
+      const restrito = await criarUsuarioTeste(app, {
+        permissoes: PERMISSOES,
+        escopoDados: 'PROFISSIONAIS_VINCULADOS',
+        profissionalIds: [profissional.id],
+      });
+
+      const ok = await comUsuario(app, restrito)
+        .get(`${BASE}/${profissional.id}/contratos`)
+        .expect(200);
+      expect(ok.body.data).toHaveLength(2);
+      const negado = await comUsuario(app, restrito)
+        .get(`${BASE}/${outro.id}/contratos`)
+        .expect(403);
+      expect(negado.body).toMatchObject({ code: 'FORBIDDEN', message: 'Sem permissão' });
+    });
+  });
+
   describe('GET /export', () => {
     function binary(req: request.Test) {
       return req.buffer(true).parse((res, callback) => {
@@ -768,6 +1010,7 @@ describe('Profissionais (e2e)', () => {
       { metodo: 'patch', caminho: `${BASE}/${INEXISTENTE}/status`, permissao: 'editar' },
       { metodo: 'put', caminho: `${BASE}/${INEXISTENTE}/arquivos/foto`, permissao: 'editar' },
       { metodo: 'delete', caminho: `${BASE}/${INEXISTENTE}`, permissao: 'excluir' },
+      { metodo: 'get', caminho: `${BASE}/${INEXISTENTE}/contratos`, permissao: 'ver' },
       { metodo: 'get', caminho: `${BASE}/${INEXISTENTE}/horarios`, permissao: 'ver' },
       { metodo: 'put', caminho: `${BASE}/${INEXISTENTE}/horarios`, permissao: 'editar' },
       { metodo: 'get', caminho: `${BASE}/${INEXISTENTE}/bloqueios`, permissao: 'ver' },
