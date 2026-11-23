@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { exportQuerySchema, listQuerySchema } from '../common/list-query';
 import { paginatedResponseSchema } from '../common/pagination';
-import { cpfValido } from '../comercial-atendimento/paciente';
+import { cnpjValido, cpfValido } from '../comercial-atendimento/paciente';
+import { textoObrigatorio } from '../common/obrigatorio';
 
 export const PROFISSIONAL_NOME_MAX = 200;
 export const PROFISSIONAL_DURACAO_PADRAO = 30;
@@ -67,6 +68,32 @@ export const PROFISSIONAL_LAYOUT_RECEITA_ROTULOS: Record<ProfissionalLayoutRecei
   PERSONALIZADO: 'Personalizado — Upload de cabecalho e rodape',
 };
 
+/** Profissão do cadastro (issue #140, requisito R §38). */
+export const PROFISSIONAL_PROFISSOES = [
+  'MEDICO',
+  'PSICOLOGO',
+  'NUTRICIONISTA',
+  'FISIOTERAPEUTA',
+  'BIOMEDICO',
+  'OUTRA',
+] as const;
+export const profissionalProfissaoSchema = z.enum(PROFISSIONAL_PROFISSOES, {
+  error: 'Profissão inválida',
+});
+export type ProfissionalProfissao = z.infer<typeof profissionalProfissaoSchema>;
+
+export const PROFISSIONAL_PROFISSAO_ROTULOS: Record<ProfissionalProfissao, string> = {
+  MEDICO: 'Médico(a)',
+  PSICOLOGO: 'Psicólogo(a)',
+  NUTRICIONISTA: 'Nutricionista',
+  FISIOTERAPEUTA: 'Fisioterapeuta',
+  BIOMEDICO: 'Biomédico(a)',
+  OUTRA: 'Outra',
+};
+
+export const PROFISSIONAL_RQES_MAX = 10;
+export const PROFISSIONAL_CONTATOS_MAX = 10;
+
 function digitos(valor: string): string {
   return valor.replaceAll(/\D/g, '');
 }
@@ -105,6 +132,30 @@ const numeroOpcional = (rotulo: string, min: number, max: number, mensagemMax: s
     .nullish()
     .transform((valor) => valor ?? null);
 
+/** RQE (Registro de Qualificação de Especialista): um número por especialidade. */
+export const profissionalRqeInputSchema = z.strictObject({
+  numero: textoObrigatorio('Número do RQE', { max: 20 }),
+  especialidadeId: z.uuid({ error: 'Especialidade do RQE inválida' }),
+});
+export type ProfissionalRqeInput = z.input<typeof profissionalRqeInputSchema>;
+
+/** Contato administrativo (secretária, financeiro…): nome, função e telefone ou e-mail. */
+export const profissionalContatoInputSchema = z
+  .strictObject({
+    nome: textoObrigatorio('Nome do contato', { max: 150 }),
+    funcao: textoObrigatorio('Função do contato', { genero: 'f', max: 100 }),
+    telefone: telefoneOpcional('Telefone do contato'),
+    email: z
+      .union([z.literal(''), z.email({ error: 'Email do contato inválido' })])
+      .nullish()
+      .transform((valor) => valor || null),
+  })
+  .refine((contato) => contato.telefone !== null || contato.email !== null, {
+    error: 'Informe o telefone ou o e-mail do contato',
+    path: ['telefone'],
+  });
+export type ProfissionalContatoInput = z.input<typeof profissionalContatoInputSchema>;
+
 const nome = z
   .string({ error: 'O nome do profissional é obrigatório.' })
   .trim()
@@ -118,56 +169,86 @@ const nome = z
  * campos do formulário. `memedSecretKey` em branco mantém a chave já gravada (ela nunca volta
  * da API). Foto e logo são enviados depois do cadastro ("Salve primeiro" no modal).
  */
-export const profissionalInputSchema = z.strictObject({
-  nome,
-  especialidadeId: idOpcional('Especialidade'),
-  registro: textoOpcional(50, 'Registro'),
-  outrasEspecialidades: textoOpcional(300, 'Outras especialidades'),
-  email: z
-    .union([z.literal(''), z.email({ error: 'Email inválido' })])
-    .nullish()
-    .transform((valor) => valor || null),
-  telefone: telefoneOpcional('Telefone'),
-  duracaoPadrao: z
-    .number({ error: 'Informe a duração em minutos' })
-    .int({ error: 'A duração deve ser um número inteiro de minutos' })
-    .min(1, { error: 'A duração deve ser de pelo menos 1 minuto' })
-    .max(PROFISSIONAL_DURACAO_MAX, {
-      error: `A duração deve ser de no máximo ${PROFISSIONAL_DURACAO_MAX} minutos`,
-    })
-    .default(PROFISSIONAL_DURACAO_PADRAO),
-  valorConsulta: numeroOpcional('Valor da consulta', 0, 9_999_999.99, 'Valor da consulta inválido'),
-  comissao: numeroOpcional('Comissão', 0, 100, 'A comissão deve ser de no máximo 100%'),
-  corCalendario: profissionalCorSchema.default(PROFISSIONAL_COR_PADRAO),
-  cpf: z
-    .string({ error: 'CPF inválido' })
-    .nullish()
-    .transform((valor) => (valor ? digitos(valor) : null))
-    .refine((valor) => valor === null || cpfValido(valor), { error: 'CPF inválido' }),
-  rg: textoOpcional(30, 'RG'),
-  dataNascimento: z
-    .union([z.literal(''), z.iso.date({ error: 'Data inválida' })])
-    .nullish()
-    .transform((valor) => valor || null),
-  naturalidade: textoOpcional(100, 'Naturalidade'),
-  estadoCivil: z
-    .union([z.literal(''), profissionalEstadoCivilSchema])
-    .nullish()
-    .transform((valor) => valor || null),
-  endereco: textoOpcional(300, 'Endereço'),
-  enderecoConsultorio: textoOpcional(300, 'Endereço do consultório'),
-  telefoneReceita: telefoneOpcional('Telefone para receita'),
-  cnes: textoOpcional(20, 'CNES'),
-  rodapeReceita: textoOpcional(500, 'Rodapé da receita'),
-  layoutReceita: profissionalLayoutReceitaSchema.default('PADRAO'),
-  memedApiToken: textoOpcional(200, 'API Token'),
-  memedSecretKey: z
-    .string({ error: 'Secret Key inválida' })
-    .trim()
-    .max(200, { error: 'Secret Key deve ter no máximo 200 caracteres' })
-    .nullish()
-    .transform((valor) => valor || null),
-});
+export const profissionalInputSchema = z
+  .strictObject({
+    nome,
+    profissao: z
+      .union([z.literal(''), profissionalProfissaoSchema], { error: 'Profissão inválida' })
+      .nullish()
+      .transform((valor) => valor || null),
+    subespecialidade: textoOpcional(150, 'Subespecialidade'),
+    cnpj: z
+      .string({ error: 'CNPJ inválido' })
+      .nullish()
+      .transform((valor) => (valor ? digitos(valor) : null))
+      .refine((valor) => valor === null || cnpjValido(valor), { error: 'CNPJ inválido' }),
+    rqes: z
+      .array(profissionalRqeInputSchema, { error: 'RQEs inválidos' })
+      .max(PROFISSIONAL_RQES_MAX, { error: `Informe no máximo ${PROFISSIONAL_RQES_MAX} RQEs` })
+      .default([]),
+    contatosAdministrativos: z
+      .array(profissionalContatoInputSchema, { error: 'Contatos inválidos' })
+      .max(PROFISSIONAL_CONTATOS_MAX, {
+        error: `Informe no máximo ${PROFISSIONAL_CONTATOS_MAX} contatos`,
+      })
+      .default([]),
+    especialidadeId: idOpcional('Especialidade'),
+    registro: textoOpcional(50, 'Registro'),
+    outrasEspecialidades: textoOpcional(300, 'Outras especialidades'),
+    email: z
+      .union([z.literal(''), z.email({ error: 'Email inválido' })])
+      .nullish()
+      .transform((valor) => valor || null),
+    telefone: telefoneOpcional('Telefone'),
+    duracaoPadrao: z
+      .number({ error: 'Informe a duração em minutos' })
+      .int({ error: 'A duração deve ser um número inteiro de minutos' })
+      .min(1, { error: 'A duração deve ser de pelo menos 1 minuto' })
+      .max(PROFISSIONAL_DURACAO_MAX, {
+        error: `A duração deve ser de no máximo ${PROFISSIONAL_DURACAO_MAX} minutos`,
+      })
+      .default(PROFISSIONAL_DURACAO_PADRAO),
+    valorConsulta: numeroOpcional(
+      'Valor da consulta',
+      0,
+      9_999_999.99,
+      'Valor da consulta inválido',
+    ),
+    comissao: numeroOpcional('Comissão', 0, 100, 'A comissão deve ser de no máximo 100%'),
+    corCalendario: profissionalCorSchema.default(PROFISSIONAL_COR_PADRAO),
+    cpf: z
+      .string({ error: 'CPF inválido' })
+      .nullish()
+      .transform((valor) => (valor ? digitos(valor) : null))
+      .refine((valor) => valor === null || cpfValido(valor), { error: 'CPF inválido' }),
+    rg: textoOpcional(30, 'RG'),
+    dataNascimento: z
+      .union([z.literal(''), z.iso.date({ error: 'Data inválida' })])
+      .nullish()
+      .transform((valor) => valor || null),
+    naturalidade: textoOpcional(100, 'Naturalidade'),
+    estadoCivil: z
+      .union([z.literal(''), profissionalEstadoCivilSchema])
+      .nullish()
+      .transform((valor) => valor || null),
+    endereco: textoOpcional(300, 'Endereço'),
+    enderecoConsultorio: textoOpcional(300, 'Endereço do consultório'),
+    telefoneReceita: telefoneOpcional('Telefone para receita'),
+    cnes: textoOpcional(20, 'CNES'),
+    rodapeReceita: textoOpcional(500, 'Rodapé da receita'),
+    layoutReceita: profissionalLayoutReceitaSchema.default('PADRAO'),
+    memedApiToken: textoOpcional(200, 'API Token'),
+    memedSecretKey: z
+      .string({ error: 'Secret Key inválida' })
+      .trim()
+      .max(200, { error: 'Secret Key deve ter no máximo 200 caracteres' })
+      .nullish()
+      .transform((valor) => valor || null),
+  })
+  .refine(({ rqes }) => new Set(rqes.map((r) => r.especialidadeId)).size === rqes.length, {
+    error: 'Há mais de um RQE para a mesma especialidade',
+    path: ['rqes'],
+  });
 
 export type ProfissionalInput = z.input<typeof profissionalInputSchema>;
 export type CreateProfissionalInput = z.output<typeof profissionalInputSchema>;
@@ -224,6 +305,23 @@ export type ExportProfissionaisQuery = z.infer<typeof exportProfissionaisQuerySc
 
 const nullableText = z.string().nullable();
 
+export const profissionalRqeSchema = z.object({
+  id: z.uuid(),
+  numero: z.string(),
+  especialidadeId: z.uuid(),
+  especialidadeNome: z.string(),
+});
+export type ProfissionalRqe = z.infer<typeof profissionalRqeSchema>;
+
+export const profissionalContatoSchema = z.object({
+  id: z.uuid(),
+  nome: z.string(),
+  funcao: z.string(),
+  telefone: nullableText,
+  email: nullableText,
+});
+export type ProfissionalContato = z.infer<typeof profissionalContatoSchema>;
+
 export const profissionalSchema = z.object({
   id: z.uuid(),
   nome: z.string(),
@@ -231,6 +329,11 @@ export const profissionalSchema = z.object({
   /** Nome da especialidade, para o detalhe. */
   especialidadeNome: nullableText,
   registro: nullableText,
+  profissao: profissionalProfissaoSchema.nullable(),
+  subespecialidade: nullableText,
+  cnpj: nullableText,
+  rqes: z.array(profissionalRqeSchema),
+  contatosAdministrativos: z.array(profissionalContatoSchema),
   outrasEspecialidades: nullableText,
   email: nullableText,
   telefone: nullableText,

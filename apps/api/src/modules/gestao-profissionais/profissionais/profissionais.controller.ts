@@ -15,6 +15,7 @@ import { ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
 import {
   bloqueiosResponseSchema,
   bloqueioAgendaSchema,
+  contratosProfissionalResponseSchema,
   createProfissionalSchema,
   criarBloqueioSchema,
   exportProfissionaisQuerySchema,
@@ -29,6 +30,7 @@ import {
   updateProfissionalSchema,
   type BloqueioAgenda,
   type CreateProfissionalInput,
+  type ContratoSala,
   type CriarBloqueioData,
   type ExportProfissionaisQuery,
   type HorarioAtendimento,
@@ -52,6 +54,7 @@ import {
 } from '../../../common/swagger/zod-openapi';
 import { IdParam } from '../../../common/validation/id-param.decorator';
 import { ZodValidationPipe } from '../../../common/validation/zod-validation.pipe';
+import { ContratosSalaService } from '../salas/contratos-sala.service';
 import { ProfissionalAgendaService } from './profissional-agenda.service';
 import { ProfissionaisService } from './profissionais.service';
 
@@ -64,6 +67,7 @@ export class ProfissionaisController {
   constructor(
     private readonly profissionais: ProfissionaisService,
     private readonly agenda: ProfissionalAgendaService,
+    private readonly contratos: ContratosSalaService,
   ) {}
 
   @Get()
@@ -178,6 +182,17 @@ export class ProfissionaisController {
   @ApiErrorResponses(400, 401, 403, 404)
   remove(@IdParam() id: string): Promise<Profissional> {
     return this.profissionais.remove(id);
+  }
+
+  @Get(':id/contratos')
+  @RequirePermission('gestao-profissionais.profissionais.ver')
+  @ApiOperation({
+    summary: 'Contratos de sala do profissional (ativos e encerrados), somente leitura',
+  })
+  @ApiZodResponse(200, contratosProfissionalResponseSchema)
+  @ApiErrorResponses(400, 401, 403, 404)
+  async listarContratos(@IdParam() id: string): Promise<{ data: ContratoSala[] }> {
+    return { data: await this.contratos.listarDoProfissional(id) };
   }
 
   // -------------------------------------------------------------------------------------------

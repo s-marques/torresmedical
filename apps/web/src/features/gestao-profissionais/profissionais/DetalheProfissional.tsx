@@ -1,5 +1,6 @@
 import {
   PROFISSIONAL_CORES,
+  PROFISSIONAL_PROFISSAO_ROTULOS,
   PROFISSIONAL_ESTADO_CIVIL_ROTULOS,
   type Profissional,
 } from '@torres/shared';
@@ -11,6 +12,7 @@ import { StatusAtivo } from '@/components/shared/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { formatarMascara } from '@/lib/forms/mascaras';
 import { AvatarProfissional } from './AvatarProfissional';
+import { ContratosProfissional } from './ContratosProfissional';
 import { corHex, formatarComissao, formatarValor } from './formatadores';
 
 function Item({
@@ -68,7 +70,15 @@ export function DetalheProfissional({
           <Item rotulo="Especialidade">{p.especialidadeNome}</Item>
           <Item rotulo="Outras Especialidades">{p.outrasEspecialidades}</Item>
           <Item rotulo="Registro (CRM/CRO)">{p.registro}</Item>
-          <span aria-hidden className="hidden sm:block" />
+          <Item rotulo="Profissão">
+            {p.profissao && PROFISSIONAL_PROFISSAO_ROTULOS[p.profissao]}
+          </Item>
+          <Item rotulo="Subespecialidade">{p.subespecialidade}</Item>
+          <Item rotulo="CNPJ">{p.cnpj && formatarMascara('cnpj', p.cnpj)}</Item>
+          <Item rotulo="RQE">
+            {p.rqes.length > 0 &&
+              p.rqes.map((r) => `${r.numero} (${r.especialidadeNome})`).join(', ')}
+          </Item>
           <Item rotulo="Email">{p.email}</Item>
           <Item rotulo="Telefone">{p.telefone && formatarMascara('telefone', p.telefone)}</Item>
         </dl>
@@ -95,6 +105,27 @@ export function DetalheProfissional({
             <Item rotulo="Estado Civil">{PROFISSIONAL_ESTADO_CIVIL_ROTULOS[p.estadoCivil]}</Item>
           )}
         </dl>
+        {p.contatosAdministrativos.length > 0 && (
+          <section
+            aria-labelledby="titulo-contatos-profissional"
+            className="grid gap-2 border-t pt-4"
+          >
+            <h3 id="titulo-contatos-profissional" className="text-sm font-semibold">
+              Contatos Administrativos
+            </h3>
+            <ul className="grid gap-1 text-sm">
+              {p.contatosAdministrativos.map((c) => (
+                <li key={c.id}>
+                  <span className="font-medium">{c.nome}</span>
+                  {` — ${c.funcao}`}
+                  {c.telefone && ` · ${formatarMascara('telefone', c.telefone)}`}
+                  {c.email && ` · ${c.email}`}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        <ContratosProfissional profissionalId={p.id} />
       </div>
     </Modal>
   );

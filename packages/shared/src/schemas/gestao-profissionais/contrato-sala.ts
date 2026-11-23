@@ -367,6 +367,10 @@ export const contratoSalaSchema = z.object({
 });
 export type ContratoSala = z.infer<typeof contratoSalaSchema>;
 
+/** `GET /api/gestao-profissionais/profissionais/:id/contratos`: contratos do profissional, sem paginação. */
+export const contratosProfissionalResponseSchema = z.object({ data: z.array(contratoSalaSchema) });
+export type ContratosProfissionalResponse = z.infer<typeof contratosProfissionalResponseSchema>;
+
 export const contratoSalaPageSchema = paginatedResponseSchema(contratoSalaSchema);
 export type ContratoSalaPage = z.infer<typeof contratoSalaPageSchema>;
 

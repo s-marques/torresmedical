@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import {
   PERMISSOES,
   type BloqueioAgenda,
+  type ContratoSala,
   type Especialidade,
   type HorarioAtendimento,
   type Profissional,
@@ -28,6 +29,11 @@ function profissional(parcial: Partial<Profissional>): Profissional {
     especialidadeId: ESP,
     especialidadeNome: 'Endocrinologia',
     registro: 'CRM 1111/MT',
+    profissao: null,
+    subespecialidade: null,
+    cnpj: null,
+    rqes: [],
+    contatosAdministrativos: [],
     outrasEspecialidades: 'Metabologia',
     email: 'ana@exemplo.test',
     telefone: '65999990001',
@@ -51,6 +57,44 @@ function profissional(parcial: Partial<Profissional>): Profissional {
     fotoArquivoId: null,
     logoReceitaArquivoId: null,
     ativo: false,
+    createdAt: AGORA,
+    updatedAt: AGORA,
+    ...parcial,
+  };
+}
+
+function contrato(parcial: Partial<ContratoSala>): ContratoSala {
+  return {
+    id: '00000000-0000-4000-8000-0000000000d1',
+    modalidade: 'MENSAL',
+    salaId: '00000000-0000-4000-8000-0000000000d2',
+    salaNome: 'Sala Azul',
+    salaNumero: '07',
+    locatarioTipo: 'PROFISSIONAL',
+    locatarioId: ID_1,
+    locatarioNome: 'Ana Teste',
+    especialidade: null,
+    valorUnitario: 1500,
+    quantidadeMensal: null,
+    valorTotalMensal: 1500,
+    permuta: false,
+    tipoReceita: 'FIXO',
+    diaVencimento: 5,
+    formaPagamentoId: null,
+    formaPagamentoNome: null,
+    indiceReajuste: 'NENHUM',
+    dataInicio: '2026-10-01',
+    dataFim: null,
+    dias: [{ diaSemana: 2, inicio: '14:00', fim: '18:00' }],
+    permiteIndicacao: true,
+    participaEventos: false,
+    observacoes: null,
+    status: 'ATIVO',
+    semCobrancaNoMes: false,
+    encerradoEm: null,
+    motivoEncerramento: null,
+    pdfArquivoId: null,
+    pdfNome: null,
     createdAt: AGORA,
     updatedAt: AGORA,
     ...parcial,
@@ -85,6 +129,7 @@ function api(rotas: Parameters<typeof apiFalsa>[0] = {}) {
     ...rotas,
     rotas: {
       [API]: () => pagina(PROFISSIONAIS),
+      [`${API}/${ID_1}/contratos`]: () => json({ data: [] }),
       '/api/lookups/especialidades': () =>
         pagina([{ id: ESP, label: 'Endocrinologia', descricao: null }]),
       ...rotas.rotas,
@@ -300,6 +345,169 @@ describe('Profissionais (/profissionais)', () => {
     await user.click(await screen.findByRole('button', { name: 'Editar' }));
 
     expect(await screen.findByRole('dialog', { name: 'Editar Profissional' })).toBeVisible();
+  });
+
+  it('detalhe: profissão, subespecialidade, CNPJ, RQEs, contatos e contratos ativos e encerrados', async () => {
+    const completo = profissional({
+      profissao: 'MEDICO',
+      subespecialidade: 'Arritmia',
+      cnpj: '11222333000181',
+      rqes: [
+        { id: ID_2, numero: '4321', especialidadeId: ESP, especialidadeNome: 'Endocrinologia' },
+      ],
+      contatosAdministrativos: [
+        { id: ID_2, nome: 'Bia Teste', funcao: 'Secretária', telefone: '65999990002', email: null },
+      ],
+    });
+    const fetchMock = api({
+      rotas: {
+        [API]: () => pagina([completo]),
+        [`${API}/${ID_1}/contratos`]: () =>
+          json({
+            data: [
+              contrato({}),
+              contrato({
+                id: '00000000-0000-4000-8000-0000000000d3',
+                salaNome: 'Sala Verde',
+                salaNumero: null,
+                status: 'ENCERRADO',
+                dataInicio: '2025-01-01',
+                dataFim: '2025-12-31',
+                dias: [],
+              }),
+            ],
+          }),
+      },
+    });
+    const { user } = renderTela(fetchMock);
+
+    await user.click(await screen.findByText('Ana Teste'));
+
+    const detalhe = await screen.findByRole('dialog', { name: 'Ana Teste' });
+    expect(within(detalhe).getByText('Médico(a)')).toBeVisible();
+    expect(within(detalhe).getByText('Arritmia')).toBeVisible();
+    expect(within(detalhe).getByText('11.222.333/0001-81')).toBeVisible();
+    expect(within(detalhe).getByText('4321 (Endocrinologia)')).toBeVisible();
+    expect(within(detalhe).getByText('Bia Teste')).toBeVisible();
+    expect(within(detalhe).getByText(/Secretária/)).toBeVisible();
+    const ativo = (await within(detalhe).findByText('Sala Azul (07)')).closest('li') as HTMLElement;
+    expect(within(ativo).getByText('ativo')).toBeVisible();
+    expect(within(ativo).getByText('Mensal (Fixo)')).toBeVisible();
+    expect(within(ativo).getByText(/R\$\s*1\.500,00\/mês/)).toBeVisible();
+    expect(within(ativo).getByText('Dia 5')).toBeVisible();
+    expect(within(ativo).getByText('01/10/2026 em diante')).toBeVisible();
+    expect(within(ativo).getByText('Ter 14:00-18:00')).toBeVisible();
+    const encerrado = within(detalhe).getByText('Sala Verde').closest('li') as HTMLElement;
+    expect(within(encerrado).getByText('encerrado')).toBeVisible();
+    expect(within(encerrado).getByText('01/01/2025 a 31/12/2025')).toBeVisible();
+    // Somente leitura: só leitura da API, sem edição de contrato.
+    expect(chamadasPara(fetchMock, `${API}/${ID_1}/contratos`)).toHaveLength(1);
+  });
+
+  it('detalhe: sem contratos mostra "Nenhum contrato de sala."', async () => {
+    const { user } = renderTela();
+
+    await user.click(await screen.findByText('Ana Teste'));
+
+    const detalhe = await screen.findByRole('dialog', { name: 'Ana Teste' });
+    expect(await within(detalhe).findByText('Nenhum contrato de sala.')).toBeVisible();
+  });
+
+  it('Novo Profissional: campos novos; CNPJ inválido e contato sem telefone/email mostram erro; envia RQE e contato', async () => {
+    let corpo: Corpo = {};
+    const fetchMock = api({
+      rotas: {
+        [API]: (init) => {
+          if (ehLeitura(init)) return pagina(PROFISSIONAIS);
+          corpo = corpoDe(init);
+          return json(profissional({ id: '00000000-0000-4000-8000-0000000000b3' }), 201);
+        },
+      },
+    });
+    const { user } = renderTela(fetchMock);
+    await screen.findByText('Ana Teste');
+
+    await user.click(screen.getByRole('button', { name: 'Novo Profissional' }));
+    const modal = await screen.findByRole('dialog', { name: 'Novo Profissional' });
+    for (const rotulo of ['Profissão', 'Subespecialidade', 'CNPJ']) {
+      expect(within(modal).getByLabelText(rotulo)).toBeVisible();
+    }
+    await user.type(within(modal).getByPlaceholderText('Nome completo'), 'Nova');
+    await user.type(within(modal).getByLabelText('CNPJ'), '11222333000182');
+    await user.click(within(modal).getByRole('button', { name: 'Adicionar RQE' }));
+    await user.click(within(modal).getByRole('button', { name: 'Adicionar contato' }));
+    await user.type(within(modal).getByLabelText('Número do RQE'), '4321');
+    await user.type(within(modal).getAllByLabelText(/^Nome/)[1] as HTMLElement, 'Bia Teste');
+    await user.type(within(modal).getByLabelText(/^Função/), 'Secretária');
+    await user.click(within(modal).getByRole('combobox', { name: 'Especialidade do RQE' }));
+    await user.click(await screen.findByRole('option', { name: /Endocrinologia/ }));
+    await user.click(within(modal).getByRole('button', { name: 'Cadastrar' }));
+
+    expect(await within(modal).findByText('CNPJ inválido')).toBeVisible();
+    expect(
+      await within(modal).findByText('Informe o telefone ou o e-mail do contato'),
+    ).toBeVisible();
+    expect(chamadasPara(fetchMock, API).filter(([, i]) => i?.method === 'POST')).toHaveLength(0);
+
+    await user.clear(within(modal).getByLabelText('CNPJ'));
+    await user.type(within(modal).getByLabelText('CNPJ'), '11222333000181');
+    await user.type(within(modal).getAllByLabelText('Telefone')[1] as HTMLElement, '65999990002');
+    await user.click(within(modal).getByRole('button', { name: 'Cadastrar' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(corpo).toMatchObject({
+      nome: 'Nova',
+      cnpj: '11222333000181',
+      rqes: [{ numero: '4321', especialidadeId: ESP }],
+      contatosAdministrativos: [
+        { nome: 'Bia Teste', funcao: 'Secretária', telefone: '65999990002' },
+      ],
+    });
+  });
+
+  it('Editar: abre com RQEs e contatos preenchidos e remove um RQE', async () => {
+    let corpo: Corpo = {};
+    const comListas = profissional({
+      rqes: [
+        { id: ID_2, numero: '4321', especialidadeId: ESP, especialidadeNome: 'Endocrinologia' },
+      ],
+      contatosAdministrativos: [
+        {
+          id: ID_2,
+          nome: 'Bia Teste',
+          funcao: 'Secretária',
+          telefone: null,
+          email: 'bia@exemplo.test',
+        },
+      ],
+    });
+    const fetchMock = api({
+      rotas: {
+        [API]: () => pagina([comListas]),
+        [`${API}/${ID_1}`]: (init) => {
+          corpo = corpoDe(init);
+          return json(comListas);
+        },
+        [`${API}/${ID_1}/horarios`]: () => json({ data: [] }),
+      },
+    });
+    const { user } = renderTela(fetchMock);
+    await screen.findByText('Ana Teste');
+
+    await abrirMenuDaLinha(user);
+    await user.click(await screen.findByRole('menuitem', { name: 'Editar' }));
+    const modal = await screen.findByRole('dialog', { name: 'Editar Profissional' });
+    expect(within(modal).getByLabelText('Número do RQE')).toHaveValue('4321');
+    expect(within(modal).getByDisplayValue('Bia Teste')).toBeVisible();
+    await user.click(within(modal).getByRole('button', { name: 'Remover RQE 1' }));
+    expect(within(modal).getByText('Nenhum RQE informado.')).toBeVisible();
+    await user.click(within(modal).getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(corpo.rqes).toEqual([]);
+    expect(corpo.contatosAdministrativos).toMatchObject([
+      { nome: 'Bia Teste', funcao: 'Secretária', email: 'bia@exemplo.test' },
+    ]);
   });
 
   describe('menu da linha', () => {
