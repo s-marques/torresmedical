@@ -861,5 +861,12 @@
     "painel": "Panel",
     "modulo": "Comercial",
     "relatorios": "Informes"
+  },
+  "relatoriosGestao": {
+    "titulo": "Informes de Gestión",
+    "descricao": "Registro de acceso, ticket promedio, ocupación de sala y LTV.",
+    "painel": "Panel",
+    "modulo": "Gestión",
+    "relatorios": "Informes"
   }
 }

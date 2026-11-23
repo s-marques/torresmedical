@@ -1,4 +1,6 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
+import { ComercialAtendimentoModule } from '../comercial-atendimento/comercial-atendimento.module';
+import { GestaoProfissionaisModule } from '../gestao-profissionais/gestao-profissionais.module';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { criarRelatoriosController } from '../../common/relatorios/relatorios.controller';
 import { AiGrowthController } from './ai-growth/ai-growth.controller';
@@ -67,6 +69,11 @@ const SERVICES = [
  * Tipo de Agendamento, Resposta Rápida, Documento de Conhecimento, Perfil de Acesso, Usuário e Canal WhatsApp.
  */
 @Module({
+  // Os relatórios GES-02 a GES-04 usam services exportados destes módulos (que usam os daqui).
+  imports: [
+    forwardRef(() => ComercialAtendimentoModule),
+    forwardRef(() => GestaoProfissionaisModule),
+  ],
   controllers: [
     MinhaEmpresaController,
     ConfiguracoesController,

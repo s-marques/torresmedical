@@ -57,6 +57,7 @@ import { NegociosListaController } from './pipeline/negocios-lista.controller';
 import { NegociosListaService } from './pipeline/negocios-lista.service';
 import { NegociosLookupService } from './pipeline/negocios-lookup.service';
 import { NegociosService } from './pipeline/negocios.service';
+import { IndicadoresGestaoService } from './indicadores-gestao/indicadores-gestao.service';
 import { PacientesController } from './pacientes/pacientes.controller';
 import { PacientesService } from './pacientes/pacientes.service';
 import { AtendimentoWhatsappController } from './whatsapp/atendimento-whatsapp.controller';
@@ -75,7 +76,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     forwardRef(() => GestaoProfissionaisModule),
     forwardRef(() => ConsultorioAssistencialModule),
     forwardRef(() => ComprasEstoqueModule),
-    ConfiguracoesGestaoModule,
+    forwardRef(() => ConfiguracoesGestaoModule),
     FinanceiroModule,
   ],
   controllers: [
@@ -143,6 +144,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     EnviarPesquisaNpsConsumer,
     InsightsAgendaAiGrowth,
     RelatoriosComercial,
+    IndicadoresGestaoService,
   ],
   exports: [
     PacientesService,
@@ -150,6 +152,8 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     AgendamentosAtendimentoService,
     OrcamentosService,
     PesquisaNpsService,
+    // Relatórios GES-02 e GES-04 de Configurações / Gestão.
+    IndicadoresGestaoService,
   ],
 })
 export class ComercialAtendimentoModule {}
