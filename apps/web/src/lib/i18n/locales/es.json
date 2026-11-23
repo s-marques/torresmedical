@@ -560,6 +560,54 @@
       "confirmar": "Eliminar"
     }
   },
+  "coletasResiduo": {
+    "titulo": "Recolecciones de Residuos",
+    "descricao": "Registro de recolecciones de residuos biológicos y manifiestos de transporte.",
+    "novo": "Nueva Recolección",
+    "novoTitulo": "Nueva Recolección de Residuos",
+    "editarTitulo": "Editar Recolección de Residuos",
+    "registrar": "Registrar",
+    "buscar": "Buscar recolecciones...",
+    "vazio": "No se encontraron recolecciones.",
+    "acoes": {
+      "editar": "Editar",
+      "excluir": "Eliminar"
+    },
+    "colunas": {
+      "dataColeta": "Fecha de Recolección",
+      "proximaColeta": "Próxima Recolección",
+      "empresaColetora": "Empresa Recolectora",
+      "manifestoMtr": "MTR",
+      "pesoKg": "Peso (kg)",
+      "tipoResiduo": "Tipo de Residuo",
+      "responsavel": "Responsable"
+    },
+    "campos": {
+      "dataColeta": "Fecha de Recolección",
+      "proximaColeta": "Próxima Recolección",
+      "empresaColetora": "Empresa Recolectora",
+      "manifestoMtr": "Manifiesto MTR",
+      "pesoKg": "Peso (kg)",
+      "tipoResiduo": "Tipo de Residuo",
+      "responsavel": "Responsable",
+      "observacoes": "Observaciones"
+    },
+    "tipos": {
+      "INFECTANTE": "Infeccioso",
+      "PERFUROCORTANTE": "Punzocortante",
+      "QUIMICO": "Químico"
+    },
+    "sucesso": {
+      "criado": "Recolección registrada.",
+      "atualizado": "Recolección actualizada.",
+      "excluido": "Recolección eliminada."
+    },
+    "excluir": {
+      "titulo": "Eliminar Recolección",
+      "descricao": "¿Está seguro de que desea eliminar la recolección del {{data}}? Esta acción no se puede deshacer.",
+      "confirmar": "Eliminar"
+    }
+  },
   "salasBloqueios": {
     "aba": "Bloqueos",
     "novo": "Nuevo Bloqueo",

@@ -22,5 +22,10 @@
   "Unidade": "Unidad",
   "Tipo de Licença": "Tipo de Licencia",
   "Título": "Título",
-  "Funcionário": "Empleado"
+  "Funcionário": "Empleado",
+  "Data Coleta": "Fecha de Recolección",
+  "Tipo Resíduo": "Tipo de Residuo",
+  "Empresa Coletora": "Empresa Recolectora",
+  "Manifesto MTR": "Manifiesto MTR",
+  "Responsável": "Responsable"
 }

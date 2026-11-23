@@ -560,6 +560,54 @@
       "confirmar": "Delete"
     }
   },
+  "coletasResiduo": {
+    "titulo": "Waste Collections",
+    "descricao": "Record of biological waste collections and transport manifests.",
+    "novo": "New Collection",
+    "novoTitulo": "New Waste Collection",
+    "editarTitulo": "Edit Waste Collection",
+    "registrar": "Register",
+    "buscar": "Search collections...",
+    "vazio": "No collections found.",
+    "acoes": {
+      "editar": "Edit",
+      "excluir": "Delete"
+    },
+    "colunas": {
+      "dataColeta": "Collection Date",
+      "proximaColeta": "Next Collection",
+      "empresaColetora": "Collection Company",
+      "manifestoMtr": "MTR",
+      "pesoKg": "Weight (kg)",
+      "tipoResiduo": "Waste Type",
+      "responsavel": "Person in Charge"
+    },
+    "campos": {
+      "dataColeta": "Collection Date",
+      "proximaColeta": "Next Collection",
+      "empresaColetora": "Collection Company",
+      "manifestoMtr": "MTR Manifest",
+      "pesoKg": "Weight (kg)",
+      "tipoResiduo": "Waste Type",
+      "responsavel": "Person in Charge",
+      "observacoes": "Notes"
+    },
+    "tipos": {
+      "INFECTANTE": "Infectious",
+      "PERFUROCORTANTE": "Sharps",
+      "QUIMICO": "Chemical"
+    },
+    "sucesso": {
+      "criado": "Collection registered.",
+      "atualizado": "Collection updated.",
+      "excluido": "Collection deleted."
+    },
+    "excluir": {
+      "titulo": "Delete Collection",
+      "descricao": "Are you sure you want to delete the collection of {{data}}? This action cannot be undone.",
+      "confirmar": "Delete"
+    }
+  },
   "salasBloqueios": {
     "aba": "Blocks",
     "novo": "New Block",
