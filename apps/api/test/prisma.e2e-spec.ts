@@ -59,6 +59,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'baixas_insumos',
       'baixas_insumos_itens',
       'bandeiras',
+      'bens',
       'bloqueios_agenda',
       'bypass_agentes',
       'caixas',
