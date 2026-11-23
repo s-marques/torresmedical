@@ -88,6 +88,7 @@ export const ICONES_TELA: Record<TelaId, LucideIcon> = {
   'comercial-atendimento.campanhas': Send,
   'comercial-atendimento.grupos-whatsapp': UsersRound,
   'comercial-atendimento.pesquisa-nps': Smile,
+  'comercial-atendimento.pesquisa-profissional': ClipboardCheck,
   'comercial-atendimento.relatorios': ChartColumn,
 
   'consultorio-assistencial.atendimento-medico': Stethoscope,

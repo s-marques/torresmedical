@@ -36,6 +36,12 @@ import { EnviarPesquisaNpsConsumer } from './pesquisa-nps/enviar-pesquisa-nps.co
 import { EnvioPesquisaNpsService } from './pesquisa-nps/envio-pesquisa-nps.service';
 import { PesquisaNpsController } from './pesquisa-nps/pesquisa-nps.controller';
 import { PesquisaNpsService } from './pesquisa-nps/pesquisa-nps.service';
+import { EnvioPesquisaProfissionalService } from './pesquisa-profissional/envio-pesquisa-profissional.service';
+import { PesquisaProfissionalAgendador } from './pesquisa-profissional/pesquisa-profissional.agendador';
+import { PesquisaProfissionalConfigService } from './pesquisa-profissional/pesquisa-profissional-config.service';
+import { PesquisaProfissionalController } from './pesquisa-profissional/pesquisa-profissional.controller';
+import { PesquisaProfissionalPublicaController } from './pesquisa-profissional/pesquisa-profissional-publica.controller';
+import { PesquisaProfissionalService } from './pesquisa-profissional/pesquisa-profissional.service';
 import { PrepararEnviosConsumer } from './campanhas/preparar-envios.consumer';
 import { AgendaService } from './agenda/agenda.service';
 import { AgendamentosAtendimentoService } from './agenda/agendamentos-atendimento.service';
@@ -90,6 +96,8 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     ConfirmacoesController,
     GruposWhatsappController,
     PesquisaNpsController,
+    PesquisaProfissionalController,
+    PesquisaProfissionalPublicaController,
     ConsultasRealizadasController,
     ConversasWhatsappController,
     CrmConfigController,
@@ -148,6 +156,10 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     PesquisaNpsService,
     EnvioPesquisaNpsService,
     EnviarPesquisaNpsConsumer,
+    PesquisaProfissionalService,
+    PesquisaProfissionalConfigService,
+    EnvioPesquisaProfissionalService,
+    PesquisaProfissionalAgendador,
     InsightsAgendaAiGrowth,
     RelatoriosComercial,
     IndicadoresGestaoService,
@@ -158,6 +170,8 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     AgendamentosAtendimentoService,
     OrcamentosService,
     PesquisaNpsService,
+    // NPS dos profissionais por mês, para o relatório mensal (issue #145).
+    PesquisaProfissionalService,
     // Agendamentos por sala: ocupação efetiva do Painel (#139).
     AgendaOcupacaoService,
     // Relatórios GES-02 e GES-04 de Configurações / Gestão.

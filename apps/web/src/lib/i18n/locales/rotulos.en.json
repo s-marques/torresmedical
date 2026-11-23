@@ -30,5 +30,13 @@
   "Responsável": "Person in Charge",
   "Paciente": "Patient",
   "Profissional de origem": "Referring professional",
-  "Profissional de destino": "Receiving professional"
+  "Profissional de destino": "Receiving professional",
+  "Nota de Estrutura": "Facilities score",
+  "Nota de Recepção": "Reception score",
+  "Nota de Agenda": "Schedule score",
+  "Nota de Atendimento": "Care score",
+  "Nota NPS": "NPS score",
+  "Ativo": "Active",
+  "Periodicidade": "Frequency",
+  "Mensagem": "Message"
 }

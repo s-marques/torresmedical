@@ -29,5 +29,8 @@
   "AGENDA_SEM_HORARIO": "El profesional no tiene horario de atención registrado",
   "SALA_INATIVA": "La sala está inactiva",
   "ORIGEM_SEM_INDICACAO": "El profesional de origen no tiene un contrato activo que permita derivar pacientes",
-  "DESTINO_SEM_INDICACAO": "El profesional de destino no tiene un contrato activo que permita derivar pacientes"
+  "DESTINO_SEM_INDICACAO": "El profesional de destino no tiene un contrato activo que permita derivar pacientes",
+  "PESQUISA_NAO_ENCONTRADA": "Encuesta no encontrada",
+  "PESQUISA_JA_RESPONDIDA": "Esta encuesta ya fue respondida",
+  "PESQUISA_EXPIRADA": "El enlace de esta encuesta expiró"
 }

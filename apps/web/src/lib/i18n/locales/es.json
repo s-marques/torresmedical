@@ -240,6 +240,7 @@
         "campanhas": "Campañas",
         "grupos-whatsapp": "Grupos de WhatsApp",
         "pesquisa-nps": "Encuesta NPS",
+        "pesquisa-profissional": "Encuesta del Profesional",
         "relatorios": "Informes"
       },
       "consultorio-assistencial": {
@@ -1111,6 +1112,94 @@
       "4": "Jueves",
       "5": "Viernes",
       "6": "Sábado"
+    }
+  },
+  "pesquisaProfissional": {
+    "titulo": "Encuesta del Profesional",
+    "descricao": "Satisfacción de los profesionales que usan Torres: Estructura, Recepción, Agenda y Atención.",
+    "abas": {
+      "resultados": "Resultados",
+      "respostas": "Respuestas",
+      "configuracao": "Configuración"
+    },
+    "filtros": {
+      "de": "Desde",
+      "ate": "Hasta",
+      "profissional": "Profesional",
+      "todosProfissionais": "Todos los profesionales",
+      "carregar": "Cargar"
+    },
+    "resultados": {
+      "score": "NPS de los profesionales",
+      "enviadas": "Enviadas",
+      "respondidas": "Respondidas",
+      "taxaResposta": "Tasa de respuesta",
+      "classes": "Promotores / Neutros / Detractores",
+      "categorias": "Promedio de estrellas por categoría"
+    },
+    "faixa": {
+      "excelente": "Excelente",
+      "muitoBom": "Muy bueno",
+      "razoavel": "Regular",
+      "critico": "Crítico"
+    },
+    "categorias": {
+      "ESTRUTURA": "Estructura",
+      "RECEPCAO": "Recepción",
+      "AGENDA": "Agenda",
+      "ATENDIMENTO": "Atención"
+    },
+    "status": {
+      "ENVIADA": "Esperando respuesta",
+      "RESPONDIDA": "Respondida",
+      "FALHA": "Fallo en el envío"
+    },
+    "tipos": {
+      "TRINTA_DIAS": "30 días",
+      "PERIODICA": "Periódica"
+    },
+    "respostas": {
+      "buscar": "Buscar profesional...",
+      "vazio": "No se encontraron encuestas en el período.",
+      "colunas": {
+        "enviadaEm": "Enviada el",
+        "profissional": "Profesional",
+        "tipo": "Encuesta",
+        "estrutura": "Estructura",
+        "recepcao": "Recepción",
+        "agenda": "Agenda",
+        "atendimento": "Atención",
+        "nps": "NPS",
+        "comentario": "Comentario",
+        "respondidaEm": "Respondida el",
+        "status": "Estado"
+      }
+    },
+    "configuracao": {
+      "descricao": "La primera encuesta se envía por WhatsApp 30 días después del inicio del contrato; las siguientes, con la periodicidad indicada abajo.",
+      "campos": {
+        "ativo": "Envío automático activo",
+        "periodicidade": "Periodicidad (meses)",
+        "mensagem": "Mensaje"
+      },
+      "ajuda": {
+        "ativo": "Apagado, no se envía ninguna encuesta nueva.",
+        "periodicidade": "Meses entre una encuesta periódica y la siguiente, de 1 a {{max}}.",
+        "mensagem": "Use {nome} para el nombre del profesional y {link} para el enlace de la encuesta (obligatorio)."
+      },
+      "sucesso": "Configuración guardada."
+    },
+    "publica": {
+      "titulo": "Encuesta de experiencia",
+      "saudacao": "¡Hola, {{nome}}! Cuéntenos cómo va su experiencia en Torres Medical.",
+      "nps": "De 0 a 10, ¿cuánto recomendaría Torres a un colega?",
+      "comentario": "Comentario (opcional)",
+      "enviar": "Enviar respuesta",
+      "carregando": "Cargando…",
+      "obrigado": "¡Gracias! Su respuesta fue registrada.",
+      "linkInvalido": "Este enlace no es válido.",
+      "jaRespondida": "Esta encuesta ya fue respondida. ¡Gracias!",
+      "expirada": "El enlace de esta encuesta expiró."
     }
   }
 }

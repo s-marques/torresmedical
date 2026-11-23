@@ -1008,5 +1008,93 @@
       "5": "Sexta",
       "6": "Sábado"
     }
+  },
+  "pesquisaProfissional": {
+    "titulo": "Pesquisa do Profissional",
+    "descricao": "Satisfação dos profissionais que usam o Torres: Estrutura, Recepção, Agenda e Atendimento.",
+    "abas": {
+      "resultados": "Resultados",
+      "respostas": "Respostas",
+      "configuracao": "Configuração"
+    },
+    "filtros": {
+      "de": "De",
+      "ate": "Até",
+      "profissional": "Profissional",
+      "todosProfissionais": "Todos os profissionais",
+      "carregar": "Carregar"
+    },
+    "resultados": {
+      "score": "NPS dos profissionais",
+      "enviadas": "Enviadas",
+      "respondidas": "Respondidas",
+      "taxaResposta": "Taxa de resposta",
+      "classes": "Promotores / Neutros / Detratores",
+      "categorias": "Média de estrelas por categoria"
+    },
+    "faixa": {
+      "excelente": "Excelente",
+      "muitoBom": "Muito bom",
+      "razoavel": "Razoável",
+      "critico": "Crítico"
+    },
+    "categorias": {
+      "ESTRUTURA": "Estrutura",
+      "RECEPCAO": "Recepção",
+      "AGENDA": "Agenda",
+      "ATENDIMENTO": "Atendimento"
+    },
+    "status": {
+      "ENVIADA": "Aguardando resposta",
+      "RESPONDIDA": "Respondida",
+      "FALHA": "Falha no envio"
+    },
+    "tipos": {
+      "TRINTA_DIAS": "30 dias",
+      "PERIODICA": "Periódica"
+    },
+    "respostas": {
+      "buscar": "Buscar profissional...",
+      "vazio": "Nenhuma pesquisa encontrada no período.",
+      "colunas": {
+        "enviadaEm": "Enviada em",
+        "profissional": "Profissional",
+        "tipo": "Pesquisa",
+        "estrutura": "Estrutura",
+        "recepcao": "Recepção",
+        "agenda": "Agenda",
+        "atendimento": "Atendimento",
+        "nps": "NPS",
+        "comentario": "Comentário",
+        "respondidaEm": "Respondida em",
+        "status": "Status"
+      }
+    },
+    "configuracao": {
+      "descricao": "A primeira pesquisa é enviada pelo WhatsApp 30 dias depois do início do contrato; as seguintes, na periodicidade abaixo.",
+      "campos": {
+        "ativo": "Envio automático ativo",
+        "periodicidade": "Periodicidade (meses)",
+        "mensagem": "Mensagem"
+      },
+      "ajuda": {
+        "ativo": "Desligado, nenhuma pesquisa nova é enviada.",
+        "periodicidade": "Meses entre uma pesquisa periódica e a próxima, de 1 a {{max}}.",
+        "mensagem": "Use {nome} para o nome do profissional e {link} para o link da pesquisa (obrigatório)."
+      },
+      "sucesso": "Configuração salva."
+    },
+    "publica": {
+      "titulo": "Pesquisa de experiência",
+      "saudacao": "Olá, {{nome}}! Conte como está sendo sua experiência no Torres Medical.",
+      "nps": "De 0 a 10, quanto você recomendaria o Torres a um colega?",
+      "comentario": "Comentário (opcional)",
+      "enviar": "Enviar resposta",
+      "carregando": "Carregando…",
+      "obrigado": "Obrigado! Sua resposta foi registrada.",
+      "linkInvalido": "Este link não é válido.",
+      "jaRespondida": "Esta pesquisa já foi respondida. Obrigado!",
+      "expirada": "O link desta pesquisa expirou."
+    }
   }
 }

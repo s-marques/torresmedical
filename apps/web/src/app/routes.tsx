@@ -9,6 +9,9 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { PageErrorPage } from './pages/PageErrorPage';
 import { PaginaDaTela } from './pages/PaginaDaTela';
 
+/** Página pública da pesquisa do profissional (link com token recebido pelo WhatsApp, sem login). */
+export const ROTA_RESPONDER_PESQUISA_PROFISSIONAL = '/pesquisa-profissional/responder';
+
 /** Página de exemplos dos componentes compartilhados: só em desenvolvimento, fora do menu. */
 export const ROTA_EXEMPLOS = '/dev/componentes';
 
@@ -32,6 +35,15 @@ export const ROTAS: RouteObject[] = [
   { path: '/login', element: <LoginPage />, errorElement: <PageErrorPage /> },
   { path: '/esqueci-senha', element: <EsqueciSenhaPage />, errorElement: <PageErrorPage /> },
   { path: '/redefinir-senha', element: <RedefinirSenhaPage />, errorElement: <PageErrorPage /> },
+  {
+    path: ROTA_RESPONDER_PESQUISA_PROFISSIONAL,
+    lazy: async () => ({
+      Component: (
+        await import('@/features/comercial-atendimento/pesquisa-profissional/ResponderPesquisaPage')
+      ).default,
+    }),
+    errorElement: <PageErrorPage />,
+  },
   {
     element: <RotaProtegida />,
     errorElement: <PageErrorPage />,

@@ -7,7 +7,8 @@ import { COMANDO_ENVIAR_MENSAGEM } from './atendimento-whatsapp.service';
 
 export interface MensagemSaida {
   canalId: string;
-  pacienteId: string;
+  /** Vazio quando o destinatário não é paciente (ex.: o profissional). */
+  pacienteId?: string;
   nome: string;
   telefone: string;
   conteudo: string;

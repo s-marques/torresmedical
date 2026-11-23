@@ -454,6 +454,7 @@ model Profissional {
   canaisWhatsapp         CanalWhatsapp[]
   usuarios               UsuarioProfissional[]
   pesquisasNps           PesquisaNps[]
+  pesquisasProfissional  PesquisaProfissional[]
   documentosConhecimento DocumentoConhecimento[]
 
   baixasInsumos BaixaInsumo[]
@@ -858,7 +859,7 @@ model Funcionario {
   updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt      DateTime?     @map("deleted_at") @db.Timestamptz(3)
 
-  cargo     Cargo?     @relation(fields: [cargoId], references: [id], onDelete: Restrict)
+  cargo        Cargo?        @relation(fields: [cargoId], references: [id], onDelete: Restrict)
   comissoes    Comissao[]
   treinamentos Treinamento[]
 
@@ -1376,13 +1377,14 @@ model MensagemWhatsapp {
   enviadaEm       DateTime                @map("enviada_em") @db.Timestamptz(3)
   createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  conversa         ConversaWhatsapp   @relation(fields: [conversaId], references: [id], onDelete: Cascade)
-  autorUsuario     Usuario?           @relation(fields: [autorUsuarioId], references: [id], onDelete: SetNull)
-  respondeA        MensagemWhatsapp?  @relation("MensagemResposta", fields: [respondeAId], references: [id], onDelete: SetNull)
-  respostas        MensagemWhatsapp[] @relation("MensagemResposta")
-  envioCampanha    EnvioCampanha?
-  envioConfirmacao EnvioConfirmacao?
-  pesquisaNps      PesquisaNps?
+  conversa             ConversaWhatsapp      @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+  autorUsuario         Usuario?              @relation(fields: [autorUsuarioId], references: [id], onDelete: SetNull)
+  respondeA            MensagemWhatsapp?     @relation("MensagemResposta", fields: [respondeAId], references: [id], onDelete: SetNull)
+  respostas            MensagemWhatsapp[]    @relation("MensagemResposta")
+  envioCampanha        EnvioCampanha?
+  envioConfirmacao     EnvioConfirmacao?
+  pesquisaNps          PesquisaNps?
+  pesquisaProfissional PesquisaProfissional?
 
   @@index([conversaId, enviadaEm])
   @@index([autorUsuarioId])
@@ -1623,8 +1625,8 @@ model Sala {
   updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
 
-  contratos ContratoSala[]
-  bloqueios SalaBloqueio[]
+  contratos    ContratoSala[]
+  bloqueios    SalaBloqueio[]
   agendamentos Agendamento[]
 
   @@map("salas")
@@ -3437,4 +3439,69 @@ model Encaminhamento {
   @@index([destinoProfissionalId])
   @@index([data])
   @@map("encaminhamentos")
+}
+
+enum PesquisaProfissionalStatus {
+  ENVIADA
+  RESPONDIDA
+  FALHA
+
+  @@map("pesquisa_profissional_status")
+}
+
+enum PesquisaProfissionalTipo {
+  TRINTA_DIAS
+  PERIODICA
+
+  @@map("pesquisa_profissional_tipo")
+}
+
+/// Dono: comercial-atendimento. Pesquisa de experiência do profissional (issue #145, R §36): sai aos
+/// 30 dias do início do contrato de sala (`ciclo` 0) e depois na periodicidade configurada
+/// (`ciclo` 1 em diante). `(profissional, ciclo)` único garante que o envio não se repete. O
+/// profissional responde por um link com token; só o hash do token fica no banco.
+model PesquisaProfissional {
+  id                 String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profissionalId     String                     @map("profissional_id") @db.Uuid
+  ciclo              Int
+  tipo               PesquisaProfissionalTipo
+  status             PesquisaProfissionalStatus
+  /// Motivo da falha (sem dados pessoais), ex.: SEM_CANAL, SEM_TELEFONE.
+  erro               String?
+  /// SHA-256 do token do link de resposta.
+  tokenHash          String                     @unique @map("token_hash")
+  expiraEm           DateTime                   @map("expira_em") @db.Timestamptz(3)
+  /// Estrelas de 1 a 5; vazias até o profissional responder.
+  notaEstrutura      Int?                       @map("nota_estrutura")
+  notaRecepcao       Int?                       @map("nota_recepcao")
+  notaAgenda         Int?                       @map("nota_agenda")
+  notaAtendimento    Int?                       @map("nota_atendimento")
+  /// NPS de 0 a 10.
+  nps                Int?
+  comentario         String?
+  mensagemWhatsappId String?                    @unique @map("mensagem_whatsapp_id") @db.Uuid
+  enviadaEm          DateTime                   @default(now()) @map("enviada_em") @db.Timestamptz(3)
+  respondidaEm       DateTime?                  @map("respondida_em") @db.Timestamptz(3)
+  createdAt          DateTime                   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  profissional     Profissional      @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+  mensagemWhatsapp MensagemWhatsapp? @relation(fields: [mensagemWhatsappId], references: [id], onDelete: SetNull)
+
+  @@unique([profissionalId, ciclo])
+  @@index([enviadaEm])
+  @@map("pesquisas_profissional")
+}
+
+/// Dono: comercial-atendimento. Configuração da pesquisa do profissional: uma única linha (`id = 1`).
+model ConfiguracaoPesquisaProfissional {
+  id                 Int      @id @default(1)
+  ativo              Boolean  @default(true)
+  /// Meses entre uma pesquisa periódica e a próxima (a primeira sai aos 30 dias do contrato).
+  periodicidadeMeses Int      @default(6) @map("periodicidade_meses")
+  /// Variáveis `{nome}` e `{link}`.
+  mensagem           String
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("configuracao_pesquisa_profissional")
 }
