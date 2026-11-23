@@ -27,5 +27,7 @@
   "AGENDA_FORA_DO_HORARIO": "El horario está fuera del horario de atención del profesional",
   "AGENDA_PROFISSIONAL_BLOQUEADO": "El profesional tiene un bloqueo de agenda en este horario",
   "AGENDA_SEM_HORARIO": "El profesional no tiene horario de atención registrado",
-  "SALA_INATIVA": "La sala está inactiva"
+  "SALA_INATIVA": "La sala está inactiva",
+  "ORIGEM_SEM_INDICACAO": "El profesional de origen no tiene un contrato activo que permita derivar pacientes",
+  "DESTINO_SEM_INDICACAO": "El profesional de destino no tiene un contrato activo que permita derivar pacientes"
 }

@@ -85,6 +85,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'conversas_whatsapp',
       'documentos_conhecimento',
       'empresas',
+      'encaminhamentos',
       'envios_campanha',
       'envios_confirmacao',
       'especialidades',

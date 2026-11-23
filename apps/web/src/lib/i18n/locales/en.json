@@ -249,6 +249,7 @@
         "evolucao-voz": "Voice Notes",
         "soroterapia": "IV Therapy",
         "prestadores": "Providers",
+        "encaminhamentos": "Referrals",
         "relatorios": "Reports"
       },
       "gestao-profissionais": {
@@ -606,6 +607,70 @@
       "titulo": "Delete Collection",
       "descricao": "Are you sure you want to delete the collection of {{data}}? This action cannot be undone.",
       "confirmar": "Delete"
+    }
+  },
+  "encaminhamentos": {
+    "titulo": "Referrals",
+    "descricao": "Patients referred between professionals of the Torres ecosystem.",
+    "novo": "New Referral",
+    "novoTitulo": "New Referral",
+    "editarTitulo": "Edit Referral",
+    "aviso": "Only professionals with an active contract that allows patient referrals are listed. The receiving professional does not see clinical content.",
+    "registrar": "Register",
+    "buscar": "Search referrals...",
+    "vazio": "No referrals found.",
+    "periodo": "Period",
+    "abas": {
+      "lista": "Referrals",
+      "relatorio": "Report by Professional"
+    },
+    "acoes": {
+      "editar": "Edit",
+      "excluir": "Delete"
+    },
+    "colunas": {
+      "data": "Date",
+      "paciente": "Patient",
+      "origem": "Referred by",
+      "destino": "Referred to",
+      "especialidade": "Specialty",
+      "situacao": "Status"
+    },
+    "campos": {
+      "paciente": "Patient",
+      "origem": "Referring professional",
+      "destino": "Receiving professional",
+      "especialidade": "Specialty",
+      "data": "Date",
+      "motivo": "Reason"
+    },
+    "situacoes": {
+      "ENCAMINHADO": "Referred",
+      "AGENDADO": "Scheduled",
+      "ATENDIDO": "Seen"
+    },
+    "sucesso": {
+      "criado": "Referral registered.",
+      "atualizado": "Referral updated.",
+      "excluido": "Referral deleted."
+    },
+    "excluir": {
+      "titulo": "Delete Referral",
+      "descricao": "Are you sure you want to delete the referral of \"{{paciente}}\"? This cannot be undone.",
+      "confirmar": "Delete"
+    },
+    "relatorio": {
+      "periodo": "Period",
+      "vazio": "No referrals in the period.",
+      "colunas": {
+        "profissional": "Professional",
+        "enviados": "Sent",
+        "enviadosAtendidos": "Sent and seen",
+        "taxaEnviados": "Conversion (sent)",
+        "recebidos": "Received",
+        "recebidosAtendidos": "Received and seen",
+        "taxaRecebidos": "Conversion (received)"
+      }
     }
   },
   "salasBloqueios": {

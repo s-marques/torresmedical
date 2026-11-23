@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { encontrarTelaPorRota, filtrarMenu, MENU, TELAS } from './menu';
+import { encontrarTelaPorRota, filtrarMenu, MENU, TELAS, TELAS_FORA_DO_INVENTARIO } from './menu';
 
 interface ModuloInventario {
   nome: string;
@@ -30,14 +30,22 @@ function lerInventario(): ModuloInventario[] {
 describe('MENU', () => {
   it('tem os 9 módulos e as 70 telas do inventário, com os mesmos nomes, URLs e ordem', () => {
     const inventario = lerInventario();
+    const foraDoInventario = new Set<string>(TELAS_FORA_DO_INVENTARIO);
     const menu = MENU.map((modulo) => ({
       nome: modulo.nome,
-      telas: modulo.telas.map(({ nome, rota }) => ({ nome, rota })),
+      telas: modulo.telas
+        .filter((tela) => !foraDoInventario.has(tela.id))
+        .map(({ nome, rota }) => ({ nome, rota })),
     }));
 
     expect(MENU).toHaveLength(9);
-    expect(TELAS).toHaveLength(70);
+    expect(TELAS).toHaveLength(70 + TELAS_FORA_DO_INVENTARIO.length);
     expect(menu).toEqual(inventario);
+  });
+
+  it('as telas fora do inventário existem no menu', () => {
+    const ids = new Set(TELAS.map((tela) => tela.id));
+    for (const id of TELAS_FORA_DO_INVENTARIO) expect(ids.has(id)).toBe(true);
   });
 
   it('não repete rota, id nem permissão', () => {

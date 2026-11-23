@@ -152,6 +152,28 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
     return contratos.map((c) => this.toDto(c, nomes, semCobranca));
   }
 
+  /**
+   * Profissionais com contrato ativo, vigente em `dia` (`AAAA-MM-DD`), que permite indicação de
+   * pacientes. Só eles entram em encaminhamentos (issue #146). Não aplica o escopo: quem chama
+   * já aplicou o seu.
+   */
+  async profissionaisQuePermitemIndicacao(dia: string): Promise<ReadonlySet<string>> {
+    const contratos = await this.txHost.tx.contratoSala.findMany({
+      where: {
+        ...NAO_EXCLUIDOS,
+        status: 'ATIVO',
+        permiteIndicacao: true,
+        profissionalId: { not: null },
+        sala: { deletedAt: null },
+        dataInicio: { lte: paraData(dia) },
+        OR: [{ dataFim: null }, { dataFim: { gte: paraData(dia) } }],
+      },
+      select: { profissionalId: true },
+      distinct: ['profissionalId'],
+    });
+    return new Set(contratos.flatMap((c) => (c.profissionalId ? [c.profissionalId] : [])));
+  }
+
   async findById(id: string): Promise<ContratoSalaDto> {
     const contrato = await this.buscar(id);
     const [nomes, semCobranca] = await Promise.all([

@@ -27,5 +27,7 @@
   "AGENDA_FORA_DO_HORARIO": "The time is outside the professional's working hours",
   "AGENDA_PROFISSIONAL_BLOQUEADO": "The professional has a schedule block at this time",
   "AGENDA_SEM_HORARIO": "The professional has no working hours registered",
-  "SALA_INATIVA": "The room is inactive"
+  "SALA_INATIVA": "The room is inactive",
+  "ORIGEM_SEM_INDICACAO": "The referring professional has no active contract that allows patient referrals",
+  "DESTINO_SEM_INDICACAO": "The receiving professional has no active contract that allows patient referrals"
 }

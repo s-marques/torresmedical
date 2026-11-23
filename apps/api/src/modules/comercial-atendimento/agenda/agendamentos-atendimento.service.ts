@@ -245,6 +245,32 @@ export class AgendamentosAtendimentoService {
   }
 
   /** Muda o status (ex.: `EM_ATENDIMENTO` no "Atender") e grava o audit_log do agendamento. */
+  /**
+   * Agendamentos dos pacientes com os profissionais, sem os cancelados, reagendados e faltas.
+   * Base da situação dos encaminhamentos (#146). Não aplica o escopo: quem chama já aplicou o seu.
+   */
+  async agendamentosDosPares(
+    pacienteIds: readonly string[],
+    profissionalIds: readonly string[],
+  ): Promise<{ pacienteId: string; profissionalId: string; inicio: Date; atendido: boolean }[]> {
+    if (pacienteIds.length === 0 || profissionalIds.length === 0) return [];
+    const agendamentos = await this.txHost.tx.agendamento.findMany({
+      where: {
+        deletedAt: null,
+        pacienteId: { in: [...pacienteIds] },
+        profissionalId: { in: [...profissionalIds] },
+        status: { notIn: ['CANCELADO', 'REAGENDAR', 'FALTOU'] },
+      },
+      select: { pacienteId: true, profissionalId: true, inicio: true, status: true },
+    });
+    return agendamentos.map((a) => ({
+      pacienteId: a.pacienteId,
+      profissionalId: a.profissionalId,
+      inicio: a.inicio,
+      atendido: a.status === 'ATENDIDO',
+    }));
+  }
+
   async alterarStatus(id: string, status: AgendamentoStatus): Promise<AtendimentoMedicoItem> {
     const antes = await this.buscar(id);
     if (antes.status === status) return toAtendimentoMedicoItem(antes);

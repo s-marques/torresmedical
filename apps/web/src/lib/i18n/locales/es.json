@@ -249,6 +249,7 @@
         "evolucao-voz": "Evolución por Voz",
         "soroterapia": "Sueroterapia",
         "prestadores": "Prestadores",
+        "encaminhamentos": "Derivaciones",
         "relatorios": "Informes"
       },
       "gestao-profissionais": {
@@ -606,6 +607,70 @@
       "titulo": "Eliminar Recolección",
       "descricao": "¿Está seguro de que desea eliminar la recolección del {{data}}? Esta acción no se puede deshacer.",
       "confirmar": "Eliminar"
+    }
+  },
+  "encaminhamentos": {
+    "titulo": "Derivaciones",
+    "descricao": "Pacientes derivados entre profesionales del ecosistema Torres.",
+    "novo": "Nueva Derivación",
+    "novoTitulo": "Nueva Derivación",
+    "editarTitulo": "Editar Derivación",
+    "aviso": "Solo aparecen profesionales con contrato activo que permite derivar pacientes. El profesional de destino no ve contenido clínico.",
+    "registrar": "Registrar",
+    "buscar": "Buscar derivaciones...",
+    "vazio": "No se encontraron derivaciones.",
+    "periodo": "Período",
+    "abas": {
+      "lista": "Derivaciones",
+      "relatorio": "Informe por Profesional"
+    },
+    "acoes": {
+      "editar": "Editar",
+      "excluir": "Eliminar"
+    },
+    "colunas": {
+      "data": "Fecha",
+      "paciente": "Paciente",
+      "origem": "Derivado por",
+      "destino": "Derivado a",
+      "especialidade": "Especialidad",
+      "situacao": "Estado"
+    },
+    "campos": {
+      "paciente": "Paciente",
+      "origem": "Profesional de origen",
+      "destino": "Profesional de destino",
+      "especialidade": "Especialidad",
+      "data": "Fecha",
+      "motivo": "Motivo"
+    },
+    "situacoes": {
+      "ENCAMINHADO": "Derivado",
+      "AGENDADO": "Agendado",
+      "ATENDIDO": "Atendido"
+    },
+    "sucesso": {
+      "criado": "Derivación registrada.",
+      "atualizado": "Derivación actualizada.",
+      "excluido": "Derivación eliminada."
+    },
+    "excluir": {
+      "titulo": "Eliminar Derivación",
+      "descricao": "¿Seguro que desea eliminar la derivación de \"{{paciente}}\"? Esta acción no se puede deshacer.",
+      "confirmar": "Eliminar"
+    },
+    "relatorio": {
+      "periodo": "Período",
+      "vazio": "No hay derivaciones en el período.",
+      "colunas": {
+        "profissional": "Profesional",
+        "enviados": "Enviadas",
+        "enviadosAtendidos": "Enviadas atendidas",
+        "taxaEnviados": "Conversión (enviadas)",
+        "recebidos": "Recibidas",
+        "recebidosAtendidos": "Recibidas atendidas",
+        "taxaRecebidos": "Conversión (recibidas)"
+      }
     }
   },
   "salasBloqueios": {
