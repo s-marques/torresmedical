@@ -29,5 +29,8 @@
   "AGENDA_SEM_HORARIO": "The professional has no working hours registered",
   "SALA_INATIVA": "The room is inactive",
   "ORIGEM_SEM_INDICACAO": "The referring professional has no active contract that allows patient referrals",
-  "DESTINO_SEM_INDICACAO": "The receiving professional has no active contract that allows patient referrals"
+  "DESTINO_SEM_INDICACAO": "The receiving professional has no active contract that allows patient referrals",
+  "PESQUISA_NAO_ENCONTRADA": "Survey not found",
+  "PESQUISA_JA_RESPONDIDA": "This survey was already answered",
+  "PESQUISA_EXPIRADA": "The link for this survey has expired"
 }

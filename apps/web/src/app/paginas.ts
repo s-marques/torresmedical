@@ -37,6 +37,9 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   'comercial-atendimento.pesquisa-nps': lazy(
     () => import('@/features/comercial-atendimento/pesquisa-nps/PesquisaNpsPage'),
   ),
+  'comercial-atendimento.pesquisa-profissional': lazy(
+    () => import('@/features/comercial-atendimento/pesquisa-profissional/PesquisaProfissionalPage'),
+  ),
   'comercial-atendimento.atividades': lazy(
     () => import('@/features/comercial-atendimento/atividades/AtividadesPage'),
   ),

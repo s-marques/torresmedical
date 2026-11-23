@@ -35,6 +35,7 @@ const DEFINICAO = {
       campanhas: ['Campanhas', '/campanhas'],
       gruposWhatsapp: ['Grupos WhatsApp', '/grupos-whatsapp'],
       pesquisaNps: ['Pesquisa NPS', '/pesquisa-satisfacao'],
+      pesquisaProfissional: ['Pesquisa do Profissional', '/pesquisa-profissional'],
       relatorios: ['Relatórios', '/crm/relatorios'],
     },
   },
@@ -167,6 +168,8 @@ export interface ModuloMenu {
 export const TELAS_FORA_DO_INVENTARIO: readonly TelaId[] = [
   /** Encaminhamento de pacientes entre profissionais (issue #146, R §26). */
   'consultorio-assistencial.encaminhamentos',
+  /** Pesquisa de experiência do profissional (issue #145, R §36). */
+  'comercial-atendimento.pesquisa-profissional',
 ];
 
 /** Ação de permissão que libera a tela no menu. */

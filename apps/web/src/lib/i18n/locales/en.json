@@ -240,6 +240,7 @@
         "campanhas": "Campaigns",
         "grupos-whatsapp": "WhatsApp Groups",
         "pesquisa-nps": "NPS Survey",
+        "pesquisa-profissional": "Professional Survey",
         "relatorios": "Reports"
       },
       "consultorio-assistencial": {
@@ -1111,6 +1112,94 @@
       "4": "Thursday",
       "5": "Friday",
       "6": "Saturday"
+    }
+  },
+  "pesquisaProfissional": {
+    "titulo": "Professional Survey",
+    "descricao": "Satisfaction of the professionals who use Torres: Facilities, Reception, Schedule and Care.",
+    "abas": {
+      "resultados": "Results",
+      "respostas": "Responses",
+      "configuracao": "Settings"
+    },
+    "filtros": {
+      "de": "From",
+      "ate": "To",
+      "profissional": "Professional",
+      "todosProfissionais": "All professionals",
+      "carregar": "Load"
+    },
+    "resultados": {
+      "score": "Professionals NPS",
+      "enviadas": "Sent",
+      "respondidas": "Answered",
+      "taxaResposta": "Response rate",
+      "classes": "Promoters / Passives / Detractors",
+      "categorias": "Average stars by category"
+    },
+    "faixa": {
+      "excelente": "Excellent",
+      "muitoBom": "Very good",
+      "razoavel": "Fair",
+      "critico": "Critical"
+    },
+    "categorias": {
+      "ESTRUTURA": "Facilities",
+      "RECEPCAO": "Reception",
+      "AGENDA": "Schedule",
+      "ATENDIMENTO": "Care"
+    },
+    "status": {
+      "ENVIADA": "Awaiting response",
+      "RESPONDIDA": "Answered",
+      "FALHA": "Send failed"
+    },
+    "tipos": {
+      "TRINTA_DIAS": "30 days",
+      "PERIODICA": "Periodic"
+    },
+    "respostas": {
+      "buscar": "Search professional...",
+      "vazio": "No surveys found in the period.",
+      "colunas": {
+        "enviadaEm": "Sent on",
+        "profissional": "Professional",
+        "tipo": "Survey",
+        "estrutura": "Facilities",
+        "recepcao": "Reception",
+        "agenda": "Schedule",
+        "atendimento": "Care",
+        "nps": "NPS",
+        "comentario": "Comment",
+        "respondidaEm": "Answered on",
+        "status": "Status"
+      }
+    },
+    "configuracao": {
+      "descricao": "The first survey is sent by WhatsApp 30 days after the contract starts; the next ones follow the frequency below.",
+      "campos": {
+        "ativo": "Automatic sending on",
+        "periodicidade": "Frequency (months)",
+        "mensagem": "Message"
+      },
+      "ajuda": {
+        "ativo": "When off, no new survey is sent.",
+        "periodicidade": "Months between one periodic survey and the next, from 1 to {{max}}.",
+        "mensagem": "Use {nome} for the professional name and {link} for the survey link (required)."
+      },
+      "sucesso": "Settings saved."
+    },
+    "publica": {
+      "titulo": "Experience survey",
+      "saudacao": "Hello, {{nome}}! Tell us how your experience at Torres Medical is going.",
+      "nps": "From 0 to 10, how likely are you to recommend Torres to a colleague?",
+      "comentario": "Comment (optional)",
+      "enviar": "Submit answer",
+      "carregando": "Loading…",
+      "obrigado": "Thank you! Your answer was recorded.",
+      "linkInvalido": "This link is not valid.",
+      "jaRespondida": "This survey was already answered. Thank you!",
+      "expirada": "The link for this survey has expired."
     }
   }
 }

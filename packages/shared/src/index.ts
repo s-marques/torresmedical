@@ -29,6 +29,7 @@ export * from './schemas/comercial-atendimento/campanha';
 export * from './schemas/comercial-atendimento/confirmacao';
 export * from './schemas/comercial-atendimento/grupo-whatsapp';
 export * from './schemas/comercial-atendimento/pesquisa-nps';
+export * from './schemas/comercial-atendimento/pesquisa-profissional';
 export * from './schemas/comercial-atendimento/tag-atendimento';
 export * from './schemas/consultorio-assistencial/atendimento-medico';
 export * from './schemas/consultorio-assistencial/prestador';
