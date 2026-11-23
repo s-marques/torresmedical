@@ -3414,3 +3414,27 @@ model SoroterapiaChecklist {
   @@index([agendamentoId])
   @@map("soroterapia_checklists")
 }
+
+/// Dono: consultorio-assistencial. Encaminhamento de paciente entre profissionais (issue #146,
+/// R §26). Paciente, profissionais e especialidade são de outros módulos, sem FK. Não guarda dado
+/// clínico: o profissional de destino só vê quem foi encaminhado e o motivo. A situação
+/// (encaminhado, agendado, atendido) é derivada de Agendamento e Atendimento, não é coluna.
+/// Exclusão lógica.
+model Encaminhamento {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pacienteId            String    @map("paciente_id") @db.Uuid
+  origemProfissionalId  String    @map("origem_profissional_id") @db.Uuid
+  destinoProfissionalId String    @map("destino_profissional_id") @db.Uuid
+  especialidadeId       String?   @map("especialidade_id") @db.Uuid
+  data                  DateTime  @db.Date
+  motivo                String?
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt             DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([pacienteId])
+  @@index([origemProfissionalId])
+  @@index([destinoProfissionalId])
+  @@index([data])
+  @@map("encaminhamentos")
+}

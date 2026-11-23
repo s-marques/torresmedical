@@ -505,6 +505,70 @@
       "confirmar": "Excluir"
     }
   },
+  "encaminhamentos": {
+    "titulo": "Encaminhamentos",
+    "descricao": "Pacientes encaminhados entre profissionais do ecossistema Torres.",
+    "novo": "Novo Encaminhamento",
+    "novoTitulo": "Novo Encaminhamento",
+    "editarTitulo": "Editar Encaminhamento",
+    "aviso": "Só aparecem profissionais com contrato ativo que permite indicação de pacientes. O profissional de destino não vê conteúdo clínico.",
+    "registrar": "Registrar",
+    "buscar": "Buscar encaminhamentos...",
+    "vazio": "Nenhum encaminhamento encontrado.",
+    "periodo": "Período",
+    "abas": {
+      "lista": "Encaminhamentos",
+      "relatorio": "Relatório por Profissional"
+    },
+    "acoes": {
+      "editar": "Editar",
+      "excluir": "Excluir"
+    },
+    "colunas": {
+      "data": "Data",
+      "paciente": "Paciente",
+      "origem": "Encaminhado por",
+      "destino": "Encaminhado para",
+      "especialidade": "Especialidade",
+      "situacao": "Situação"
+    },
+    "campos": {
+      "paciente": "Paciente",
+      "origem": "Profissional de origem",
+      "destino": "Profissional de destino",
+      "especialidade": "Especialidade",
+      "data": "Data",
+      "motivo": "Motivo"
+    },
+    "situacoes": {
+      "ENCAMINHADO": "Encaminhado",
+      "AGENDADO": "Agendado",
+      "ATENDIDO": "Atendido"
+    },
+    "sucesso": {
+      "criado": "Encaminhamento registrado.",
+      "atualizado": "Encaminhamento atualizado.",
+      "excluido": "Encaminhamento excluído."
+    },
+    "excluir": {
+      "titulo": "Excluir Encaminhamento",
+      "descricao": "Tem certeza que deseja excluir o encaminhamento de \"{{paciente}}\"? Esta ação não pode ser desfeita.",
+      "confirmar": "Excluir"
+    },
+    "relatorio": {
+      "periodo": "Período",
+      "vazio": "Nenhum encaminhamento no período.",
+      "colunas": {
+        "profissional": "Profissional",
+        "enviados": "Enviados",
+        "enviadosAtendidos": "Enviados atendidos",
+        "taxaEnviados": "Conversão (enviados)",
+        "recebidos": "Recebidos",
+        "recebidosAtendidos": "Recebidos atendidos",
+        "taxaRecebidos": "Conversão (recebidos)"
+      }
+    }
+  },
   "salasBloqueios": {
     "aba": "Bloqueios",
     "novo": "Novo Bloqueio",

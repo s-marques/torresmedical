@@ -257,6 +257,30 @@ período contratado (contratos de sala), os agendamentos e os bloqueios e reserv
 - **Escopo (#153):** usuário restrito vê só as salas com contrato, reserva ou agendamento de um
   profissional seu; o que é de outros vem `oculto`, sem nome nem valor.
 
+## Encaminhamentos (`/encaminhamentos`)
+
+Encaminhamento de pacientes entre profissionais (issue #146, R §26), para medir o ecossistema
+Torres. Tela fora do inventário, criada a partir dos requisitos do cliente (`TELAS_FORA_DO_INVENTARIO`
+em `packages/shared/src/menu/menu.ts`).
+
+- **API:** `/api/consultorio-assistencial/encaminhamentos` (listagem paginada, `export`, `POST`,
+  `PATCH /:id`, `DELETE /:id` lógico), mais `GET .../profissionais` (selects de origem e destino) e
+  `GET .../relatorio?de=&ate=` (por profissional). Permissões `consultorio-assistencial.encaminhamentos.*`.
+- **Quem registra:** o profissional de origem ou a recepção (decisão do dev). O usuário restrito
+  (#153) só registra pela própria origem, para paciente vinculado, e só altera ou exclui os de que
+  é origem. Ele **vê** os encaminhamentos em que um dos seus profissionais é origem ou destino.
+- **Contrato:** origem e destino precisam de contrato de sala ativo e vigente com "Permite
+  indicação" (`ContratosSalaService.profissionaisQuePermitemIndicacao`). Ao alterar, só o
+  profissional que mudou é revalidado. Erros: `ORIGEM_SEM_INDICACAO` e `DESTINO_SEM_INDICACAO` (422).
+- **Situação derivada:** não é coluna. `ATENDIDO` quando há atendimento finalizado (ou agendamento
+  atendido) do paciente com o destino a partir do dia do encaminhamento; `AGENDADO` com agendamento
+  ativo (sem cancelado, reagendar ou falta); senão `ENCAMINHADO`. Por isso o filtro, a ordenação e a
+  paginação por situação acontecem em memória, depois do filtro de banco.
+- **Privacidade (R §14):** o encaminhamento guarda só paciente, profissionais, especialidade, data e
+  motivo. O destino vê o nome do paciente, nunca prontuário ou dado clínico.
+- **Relatório:** por profissional, enviados, recebidos e conversão (atendidos ÷ total, em %). Usuário
+  restrito vê só as linhas dos próprios profissionais.
+
 ## Relatórios (`ReportPage` + `common/relatorios`)
 
 As 7 telas de Relatórios usam a mesma estrutura: seletor de relatório, período De/Até e o
