@@ -87,6 +87,7 @@ export * from './schemas/regulatorio-qualidade/cargo';
 export * from './schemas/regulatorio-qualidade/comissao';
 export * from './schemas/regulatorio-qualidade/funcionario';
 export * from './schemas/regulatorio-qualidade/nao-conformidade';
+export * from './schemas/regulatorio-qualidade/treinamento';
 export * from './schemas/relatorios/relatorio';
 export * from './schemas/health';
 export { zodErrorPtBr } from './zod-pt-br';
