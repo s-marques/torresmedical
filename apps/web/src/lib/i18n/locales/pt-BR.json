@@ -759,6 +759,13 @@
     "modulo": "Comercial",
     "relatorios": "Relatórios"
   },
+  "relatoriosEstoque": {
+    "titulo": "Relatórios de Estoque",
+    "descricao": "Vencimentos, perdas, posição, movimentação, compras, curva ABC, consumo e previsão de compras.",
+    "painel": "Painel",
+    "modulo": "Compras / Estoque",
+    "relatorios": "Relatórios"
+  },
   "relatoriosGestao": {
     "titulo": "Relatórios de Gestão",
     "descricao": "Log de acesso, ticket médio, ocupação de sala e LTV.",

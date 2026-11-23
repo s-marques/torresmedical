@@ -862,6 +862,13 @@
     "modulo": "Comercial",
     "relatorios": "Informes"
   },
+  "relatoriosEstoque": {
+    "titulo": "Informes de Inventario",
+    "descricao": "Vencimientos, pérdidas, posición, movimientos, compras, curva ABC, consumo y previsión de compras.",
+    "painel": "Panel",
+    "modulo": "Compras / Inventario",
+    "relatorios": "Informes"
+  },
   "relatoriosGestao": {
     "titulo": "Informes de Gestión",
     "descricao": "Registro de acceso, ticket promedio, ocupación de sala y LTV.",

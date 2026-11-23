@@ -1,5 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
+import { criarRelatoriosController } from '../../common/relatorios/relatorios.controller';
 import { ComercialAtendimentoModule } from '../comercial-atendimento/comercial-atendimento.module';
 import { ConfiguracoesGestaoModule } from '../configuracoes-gestao/configuracoes-gestao.module';
 import { FinanceiroModule } from '../financeiro/financeiro.module';
@@ -20,6 +21,7 @@ import { PedidosCompraController } from './pedidos-compra/pedidos-compra.control
 import { PedidosCompraService } from './pedidos-compra/pedidos-compra.service';
 import { ProdutosController } from './produtos/produtos.controller';
 import { ProdutosService } from './produtos/produtos.service';
+import { RelatoriosEstoque } from './relatorios/relatorios-estoque';
 import { UnidadesMedidaController } from './unidades-medida/unidades-medida.controller';
 import { UnidadesMedidaService } from './unidades-medida/unidades-medida.service';
 
@@ -33,6 +35,7 @@ const SERVICES = [
   EstoqueService,
   PedidosCompraService,
   BaixasInsumosService,
+  RelatoriosEstoque,
 ];
 
 /**
@@ -61,6 +64,7 @@ const SERVICES = [
     LotesController,
     PedidosCompraController,
     BaixasInsumosController,
+    criarRelatoriosController('compras-estoque.relatorios', RelatoriosEstoque),
   ],
   providers: SERVICES,
   exports: SERVICES,
