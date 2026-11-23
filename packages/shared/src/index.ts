@@ -10,6 +10,7 @@ export * from './schemas/common/api-error';
 export * from './schemas/common/list-query';
 export * from './schemas/common/obrigatorio';
 export * from './schemas/common/pagination';
+export * from './schemas/comercial-atendimento/agenda-matriz';
 export * from './schemas/comercial-atendimento/agendamento';
 export * from './schemas/comercial-atendimento/orcamento';
 export * from './schemas/comercial-atendimento/pacote';

@@ -93,6 +93,8 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     // Bloqueios de sala e horários do profissional: a Agenda (#136) consulta antes de agendar.
     SalasBloqueiosService,
     ProfissionalAgendaService,
+    // Contratos ativos no período: Agenda matricial (#137).
+    ContratosSalaService,
     // Receita recorrente dos Indicadores do Financeiro.
     ContratosSalaCobrancaService,
     // Relatório GES-03 (Ocupação por Sala) de Configurações / Gestão.

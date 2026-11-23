@@ -1,6 +1,7 @@
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { Inject, Injectable } from '@nestjs/common';
 import {
+  compararNomesSala,
   diaDaSemana,
   type CreateSalaInput,
   type SalaLocatario,
@@ -167,6 +168,15 @@ export class SalasService {
       porSala.set(contrato.salaId, lista);
     }
     return porSala;
+  }
+
+  /** Salas não excluídas (ou só a pedida), em ordem natural do nome: linhas da Agenda matricial (#137). */
+  async listarParaMatriz(salaId?: string): Promise<Array<{ id: string; nome: string }>> {
+    const salas = await this.txHost.tx.sala.findMany({
+      where: { ...NAO_EXCLUIDAS, id: salaId },
+      select: { id: true, nome: true },
+    });
+    return salas.sort((a, b) => compararNomesSala(a.nome, b.nome));
   }
 
   /**

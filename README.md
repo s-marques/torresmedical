@@ -239,6 +239,24 @@ seção 3). Exemplos funcionando em **`/dev/componentes`**: a página existe só
 - **Testes de grid** usam MSW: `usarMsw()` e `servidorMsw.use(http.get('/api/...', …))`
   (`src/test/msw.ts`). Não misture com `apiFalsa`/`renderApp` no mesmo arquivo.
 
+## Agenda matricial (`/agenda?modo=matriz`)
+
+Visão **Matriz** da Agenda (issue #137): Sala × Dia × Horário × Profissional, só leitura. Junta o
+período contratado (contratos de sala), os agendamentos e os bloqueios e reservas da sala.
+
+- **API:** `GET /api/comercial-atendimento/agenda-matriz?visao=dia|semana|mes&data=&profissionalId=&especialidadeId=&salaId=&turno=&situacao=`
+  (permissão `comercial-atendimento.agenda.ver`). Dia: colunas de 1 h (07h às 20h, ampliando para
+  caber o que houver fora). Semana e mês: colunas por turno (manhã até 12h, tarde das 12h às 18h,
+  noite depois das 18h).
+- **Estado da célula** (do mais forte ao mais fraco): manutenção, bloqueio, reserva, uso avulso,
+  cortesia, agendado, contratado, disponível. Contratado sem nenhum agendamento na sala vem com
+  `semUso` e aparece destacado. Agendamento cancelado libera o horário.
+- **Filtros** (todos na URL): profissional, especialidade, sala, turno, visão/data e situação
+  (contratado, sem uso, disponível, agendado, reservado, bloqueado). Profissional e especialidade
+  escondem o que é de outros; o "disponível" vem sempre da sala inteira.
+- **Escopo (#153):** usuário restrito vê só as salas com contrato, reserva ou agendamento de um
+  profissional seu; o que é de outros vem `oculto`, sem nome nem valor.
+
 ## Relatórios (`ReportPage` + `common/relatorios`)
 
 As 7 telas de Relatórios usam a mesma estrutura: seletor de relatório, período De/Até e o

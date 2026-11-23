@@ -775,6 +775,67 @@
       "titulo": "Editar Cita #{{numero}}",
       "sucesso": "Cita actualizada.",
       "semSalaAviso": "Esta cita es anterior al registro de salas. Elija la sala para guardar."
+    },
+    "matriz": {
+      "modoRotulo": "Modo de la agenda",
+      "modoCalendario": "Calendario",
+      "modoMatriz": "Matriz",
+      "visaoRotulo": "Vista",
+      "visoes": {
+        "dia": "Día",
+        "semana": "Semana",
+        "mes": "Mes"
+      },
+      "anterior": "Anterior",
+      "proximo": "Siguiente",
+      "hoje": "Hoy",
+      "filtros": {
+        "profissional": "Profesional",
+        "especialidade": "Especialidad",
+        "sala": "Sala",
+        "turno": "Turno",
+        "todosTurnos": "Todos los turnos",
+        "situacao": "Situación",
+        "todasSituacoes": "Todas las situaciones"
+      },
+      "turnos": {
+        "MANHA": "Mañana",
+        "TARDE": "Tarde",
+        "NOITE": "Noche"
+      },
+      "turnosCurto": {
+        "MANHA": "M",
+        "TARDE": "T",
+        "NOITE": "N"
+      },
+      "status": {
+        "DISPONIVEL": "Disponible",
+        "CONTRATADO": "Contratado",
+        "AGENDADO": "Agendado"
+      },
+      "situacoes": {
+        "CONTRATADO": "Período contratado",
+        "SEM_USO": "Contratado sin uso",
+        "DISPONIVEL": "Disponible",
+        "AGENDADO": "Agendado",
+        "RESERVADO": "Reservado",
+        "BLOQUEADO": "Bloqueado"
+      },
+      "legenda": "Leyenda",
+      "semUso": "Contratado sin uso",
+      "semUsoAviso": "Período contratado sin ninguna cita en la sala.",
+      "erro": "No se pudo cargar la matriz de la agenda.",
+      "tentarDeNovo": "Intentar de nuevo",
+      "vazio": "No se encontraron salas.",
+      "itens": {
+        "CONTRATO": "Contrato",
+        "AGENDAMENTO": "Cita",
+        "BLOQUEIO": "Bloqueo"
+      },
+      "itensDaCelula": "Ocupación del horario",
+      "valorMensal": "Valor mensual del contrato: {{valor}}",
+      "livre": "Horario libre: nada contratado, agendado ni bloqueado.",
+      "agendar": "Agendar en este horario"
     }
   },
   "alvarasLicencas": {

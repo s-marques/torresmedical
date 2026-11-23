@@ -267,6 +267,15 @@ export class ProfissionaisService extends EntidadeLookupService<
     }));
   }
 
+  /** Ids dos profissionais não excluídos da especialidade (filtro da Agenda matricial, #137). */
+  async idsDaEspecialidade(especialidadeId: string): Promise<string[]> {
+    const profissionais = await this.txHost.tx.profissional.findMany({
+      where: { especialidadeId, ...NAO_EXCLUIDOS },
+      select: { id: true },
+    });
+    return profissionais.map((p) => p.id);
+  }
+
   /** Profissional não excluído (ativo ou inativo), para as telas de agenda do cadastro. */
   async garantirExiste(id: string): Promise<void> {
     await this.buscar(id);

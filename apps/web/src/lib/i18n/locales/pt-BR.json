@@ -672,6 +672,67 @@
       "titulo": "Editar Agendamento #{{numero}}",
       "sucesso": "Agendamento atualizado.",
       "semSalaAviso": "Este agendamento é anterior ao cadastro de salas. Escolha a sala para salvar."
+    },
+    "matriz": {
+      "modoRotulo": "Modo da agenda",
+      "modoCalendario": "Calendário",
+      "modoMatriz": "Matriz",
+      "visaoRotulo": "Visão",
+      "visoes": {
+        "dia": "Dia",
+        "semana": "Semana",
+        "mes": "Mês"
+      },
+      "anterior": "Anterior",
+      "proximo": "Próximo",
+      "hoje": "Hoje",
+      "filtros": {
+        "profissional": "Profissional",
+        "especialidade": "Especialidade",
+        "sala": "Sala",
+        "turno": "Turno",
+        "todosTurnos": "Todos os turnos",
+        "situacao": "Situação",
+        "todasSituacoes": "Todas as situações"
+      },
+      "turnos": {
+        "MANHA": "Manhã",
+        "TARDE": "Tarde",
+        "NOITE": "Noite"
+      },
+      "turnosCurto": {
+        "MANHA": "M",
+        "TARDE": "T",
+        "NOITE": "N"
+      },
+      "status": {
+        "DISPONIVEL": "Disponível",
+        "CONTRATADO": "Contratado",
+        "AGENDADO": "Agendado"
+      },
+      "situacoes": {
+        "CONTRATADO": "Período contratado",
+        "SEM_USO": "Contratado sem uso",
+        "DISPONIVEL": "Disponível",
+        "AGENDADO": "Agendado",
+        "RESERVADO": "Reservado",
+        "BLOQUEADO": "Bloqueado"
+      },
+      "legenda": "Legenda",
+      "semUso": "Contratado sem uso",
+      "semUsoAviso": "Período contratado sem nenhum agendamento na sala.",
+      "erro": "Não foi possível carregar a agenda matricial.",
+      "tentarDeNovo": "Tentar de novo",
+      "vazio": "Nenhuma sala encontrada.",
+      "itens": {
+        "CONTRATO": "Contrato",
+        "AGENDAMENTO": "Agendamento",
+        "BLOQUEIO": "Bloqueio"
+      },
+      "itensDaCelula": "Ocupação do horário",
+      "valorMensal": "Valor mensal do contrato: {{valor}}",
+      "livre": "Horário livre: nada contratado, agendado ou bloqueado.",
+      "agendar": "Agendar neste horário"
     }
   },
   "alvarasLicencas": {

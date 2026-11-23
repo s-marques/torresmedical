@@ -5,7 +5,9 @@ import {
   type Agendamento,
 } from '@torres/shared';
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { SePermitido } from '@/components/shared/SePermitido';
@@ -28,6 +30,8 @@ import {
   type VisaoAgenda,
 } from './agenda-datas';
 import { COR_STATUS } from './agenda-status';
+import { MatrizAgenda } from './MatrizAgenda';
+import { MODO_MATRIZ } from './matriz-filtros';
 import { CalendarioAgenda } from './CalendarioAgenda';
 import { colunasDaSemana, colunasDoDia } from './colunas-agenda';
 import { ModalDetalheAgendamento } from './ModalDetalheAgendamento';
@@ -37,11 +41,8 @@ import { useAgendamentos, useProfissionaisAgenda } from './use-agenda';
 
 const TODOS = 'todos';
 
-/**
- * Agenda (`/agenda`, docs/inventario/telas/comercial-atendimento-agenda.md): calendário semanal
- * ou diário dos agendamentos, com filtro de profissional, "Novo Agendamento" e detalhe.
- */
-export default function AgendaPage() {
+/** Calendário semanal ou diário dos agendamentos, com filtro de profissional e detalhe. */
+function AgendaCalendario({ seletor }: Readonly<{ seletor: ReactNode }>) {
   const [hoje] = useState(() => hojeISO());
   const [dataBase, setDataBase] = useState(hoje);
   const [visao, setVisao] = useState<VisaoAgenda>('semana');
@@ -81,6 +82,8 @@ export default function AgendaPage() {
           </SePermitido>
         }
       />
+
+      {seletor}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -196,6 +199,50 @@ export default function AgendaPage() {
       {editando && (
         <ModalEditarAgendamento agendamento={editando} onFechar={() => setEditando(null)} />
       )}
+    </div>
+  );
+}
+
+/**
+ * Agenda (`/agenda`, docs/inventario/telas/comercial-atendimento-agenda.md): o calendário dos
+ * agendamentos e a visão Matriz Sala × Dia × Horário × Profissional (issue #137, `?modo=matriz`).
+ */
+export default function AgendaPage() {
+  const { t } = useTranslation();
+  const [params, setParams] = useSearchParams();
+  const matriz = params.get('modo') === MODO_MATRIZ;
+  const abrir = (destino: boolean) => {
+    if (destino === matriz) return;
+    setParams(destino ? new URLSearchParams({ modo: MODO_MATRIZ }) : new URLSearchParams(), {
+      replace: true,
+    });
+  };
+  const seletor = (
+    <div
+      role="group"
+      aria-label={t('agenda.matriz.modoRotulo')}
+      className="bg-muted flex w-fit rounded-lg p-1"
+    >
+      {([false, true] as const).map((opcao) => (
+        <Button
+          key={String(opcao)}
+          type="button"
+          size="sm"
+          variant={matriz === opcao ? 'outline' : 'ghost'}
+          aria-pressed={matriz === opcao}
+          onClick={() => abrir(opcao)}
+        >
+          {t(opcao ? 'agenda.matriz.modoMatriz' : 'agenda.matriz.modoCalendario')}
+        </Button>
+      ))}
+    </div>
+  );
+  if (!matriz) return <AgendaCalendario seletor={seletor} />;
+  return (
+    <div className="grid gap-4">
+      <PageHeader titulo="Agenda" descricao="Gerencie os agendamentos da clínica." />
+      {seletor}
+      <MatrizAgenda />
     </div>
   );
 }
