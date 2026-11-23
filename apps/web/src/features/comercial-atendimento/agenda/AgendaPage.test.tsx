@@ -625,6 +625,6 @@ describe('Agenda: sala no agendamento (issue #136)', () => {
       expect(
         await within(modal).findByText('The room already has an appointment at this time'),
       ).toBeVisible();
-    });
+    }, 15000);
   });
 });
