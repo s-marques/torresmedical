@@ -38,5 +38,9 @@
   "Nota NPS": "NPS score",
   "Ativo": "Active",
   "Periodicidade": "Frequency",
-  "Mensagem": "Message"
+  "Mensagem": "Message",
+  "Marca": "Brand",
+  "Modelo": "Model",
+  "Placa": "License Plate",
+  "RENAVAM": "RENAVAM"
 }

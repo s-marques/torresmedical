@@ -184,7 +184,13 @@ describe('Patrimônio (e2e)', () => {
     it('201: nos outros tipos os Dados do Veículo são descartados', async () => {
       const res = await http()
         .post(BASE)
-        .send({ descricao: 'Terreno', tipo: 'IMOVEL_RURAL', marca: 'X', placa: 'Y', financiado: true })
+        .send({
+          descricao: 'Terreno',
+          tipo: 'IMOVEL_RURAL',
+          marca: 'X',
+          placa: 'Y',
+          financiado: true,
+        })
         .expect(201);
 
       expect(res.body).toMatchObject({ marca: null, placa: null, financiado: false });
@@ -231,7 +237,11 @@ describe('Patrimônio (e2e)', () => {
         .send({ descricao: 'Carro novo', tipo: 'BEM_MOVEL', valorCompra: 150 })
         .expect(200);
 
-      expect(res.body).toMatchObject({ descricao: 'Carro novo', tipo: 'BEM_MOVEL', valorCompra: 150 });
+      expect(res.body).toMatchObject({
+        descricao: 'Carro novo',
+        tipo: 'BEM_MOVEL',
+        valorCompra: 150,
+      });
       await expectAudit(prisma, {
         action: 'UPDATE',
         entity: ENTITY,
@@ -269,7 +279,9 @@ describe('Patrimônio (e2e)', () => {
         after: null,
         userId: usuario.id,
       });
-      expect((await prisma.bem.findUniqueOrThrow({ where: { id: bem.id } })).deletedAt).not.toBeNull();
+      expect(
+        (await prisma.bem.findUniqueOrThrow({ where: { id: bem.id } })).deletedAt,
+      ).not.toBeNull();
       await http().get(`${BASE}/${bem.id}`).expect(404);
       expect(descricoes((await http().get(BASE).expect(200)).body)).toEqual([]);
     });

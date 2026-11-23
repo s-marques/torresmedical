@@ -103,9 +103,7 @@ export class PatrimonioController {
   @ApiZodBody(createBemSchema)
   @ApiZodResponse(201, bemSchema)
   @ApiErrorResponses(400, 401, 403)
-  create(
-    @Body(new ZodValidationPipe(createBemSchema)) body: CreateBemInput,
-  ): Promise<Bem> {
+  create(@Body(new ZodValidationPipe(createBemSchema)) body: CreateBemInput): Promise<Bem> {
     return this.patrimonio.create(body);
   }
 

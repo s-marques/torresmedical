@@ -457,6 +457,86 @@
       "confirmar": "Excluir"
     }
   },
+  "patrimonio": {
+    "titulo": "Patrimônio",
+    "descricao": "Gerencie veículos, imóveis e bens do cliente.",
+    "novo": "Novo Bem",
+    "editar": "Editar Bem",
+    "buscar": "Buscar bens...",
+    "vazio": "Nenhum bem encontrado.",
+    "cadastrar": "Cadastrar",
+    "abas": {
+      "bens": "Bens",
+      "impostos": "Impostos/Taxas",
+      "alertas": "Alertas"
+    },
+    "resumo": {
+      "valorTotal": "Valor Total Patrimônio",
+      "impostosPendentes": "Impostos Pendentes",
+      "alertasProximos": "Alertas Próximos"
+    },
+    "filtroTipo": "Tipo",
+    "todos": "Todos",
+    "acoes": {
+      "editar": "Editar",
+      "excluir": "Excluir"
+    },
+    "colunas": {
+      "descricao": "Descrição",
+      "tipo": "Tipo",
+      "valorCompra": "Valor Compra",
+      "valorAtual": "Valor Atual",
+      "dataAquisicao": "Data Aquisição",
+      "impostosPendentes": "Impostos Pend."
+    },
+    "secoes": {
+      "veiculo": "Dados do Veículo"
+    },
+    "campos": {
+      "produtoId": "Vincular a Produto (opcional)",
+      "descricao": "Descrição",
+      "tipo": "Tipo",
+      "valorCompra": "Valor Compra (R$)",
+      "dataAquisicao": "Data Aquisição",
+      "marca": "Marca",
+      "modelo": "Modelo",
+      "ano": "Ano",
+      "placa": "Placa",
+      "renavam": "RENAVAM",
+      "financiado": "Financiado",
+      "possuiSeguro": "Possui Seguro"
+    },
+    "ajudas": {
+      "produtoId": "Vincule a um produto cadastrado para rastrear via notas de compra"
+    },
+    "placeholders": {
+      "descricao": "Ex: Corolla 2024",
+      "placa": "ABC-1D23"
+    },
+    "tipos": {
+      "AUTOMOVEL": "Automóvel",
+      "IMOVEL_URBANO": "Imóvel Urbano",
+      "IMOVEL_RURAL": "Imóvel Rural",
+      "BEM_MOVEL": "Bem Móvel"
+    },
+    "impostos": {
+      "vazio": "Selecione um bem na aba \"Bens\" para ver seus impostos e taxas.",
+      "irParaBens": "Ir para Bens"
+    },
+    "alertas": {
+      "vazio": "Nenhum alerta nos próximos 30 dias."
+    },
+    "sucesso": {
+      "criado": "Bem cadastrado.",
+      "atualizado": "Bem atualizado.",
+      "excluido": "Bem excluído."
+    },
+    "excluir": {
+      "titulo": "Excluir Bem",
+      "descricao": "Tem certeza que deseja excluir o bem \"{{descricao}}\"? Esta ação não pode ser desfeita.",
+      "confirmar": "Excluir"
+    }
+  },
   "coletasResiduo": {
     "titulo": "Coletas de Resíduo",
     "descricao": "Registro de coletas de resíduos biológicos e manifestos de transporte.",
