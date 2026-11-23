@@ -3,7 +3,27 @@ import { ABAS_PAINEL, dashboardPainelSchema } from '@torres/shared';
 import type { PacientesService } from '../../comercial-atendimento/pacientes/pacientes.service';
 import type { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
 import type { IndicadoresFinanceirosService } from '../../financeiro/indicadores/indicadores.service';
+import { calcularOcupacao } from '../ocupacao/calculo-ocupacao';
+import type { OcupacaoPainel, OcupacaoService } from '../ocupacao/ocupacao.service';
 import { DashboardService } from './dashboard.service';
+
+const SEM_DADOS = calcularOcupacao({
+  salas: [],
+  dias: [],
+  turnos: ['MANHA', 'TARDE', 'NOITE'],
+  contratos: [],
+  bloqueios: [],
+  agendamentos: [],
+  profissionalIds: [],
+});
+const OCUPACAO: OcupacaoPainel = {
+  atual: SEM_DADOS,
+  anterior: SEM_DADOS,
+  periodoAnterior: { de: '2026-09-01', ate: '2026-09-30' },
+  rotuloAnterior: 'mês anterior',
+  previsao: null,
+  profissionais: {},
+};
 
 const FILTROS = { modo: 'mes', mes: '2026-10', base: 'recebimento' } as const;
 
@@ -19,12 +39,14 @@ function setup() {
       despesasPagas: 6978.25,
     }),
   };
+  const ocupacao = { calcular: jest.fn().mockResolvedValue(OCUPACAO) };
   const service = new DashboardService(
     profissionais as unknown as ProfissionaisService,
     pacientes as unknown as PacientesService,
     indicadores as unknown as IndicadoresFinanceirosService,
+    ocupacao as unknown as OcupacaoService,
   );
-  return { service, profissionais, pacientes, indicadores };
+  return { service, profissionais, pacientes, indicadores, ocupacao };
 }
 
 function valorDoKpi(secoes: SecaoPainel[], id: string): number | null | undefined {
@@ -76,6 +98,23 @@ describe('DashboardService', () => {
 
     expect(profissionais.contarAtivos).not.toHaveBeenCalled();
     expect(pacientes.contar).not.toHaveBeenCalled();
+  });
+
+  it('ocupação: calcula com os filtros, o período e a empresa; as outras abas não calculam', async () => {
+    const { service, ocupacao } = setup();
+    const filtros = { ...FILTROS, salaId: '11111111-1111-4111-8111-111111111111' };
+
+    const { secoes } = await service.obter('ocupacao', filtros, 'empresa-1');
+
+    expect(ocupacao.calcular).toHaveBeenCalledWith(
+      filtros,
+      { de: '2026-10-01', ate: '2026-10-31' },
+      'empresa-1',
+    );
+    expect(valorDoKpi(secoes, 'total-periodos')).toBe(0);
+    expect(valorDoKpi(secoes, 'taxa-uso')).toBeNull();
+    await service.obter('executivo', FILTROS);
+    expect(ocupacao.calcular).toHaveBeenCalledTimes(1);
   });
 
   it('financeiro: receita e despesa vêm do service de Indicadores, com o período e a base', async () => {

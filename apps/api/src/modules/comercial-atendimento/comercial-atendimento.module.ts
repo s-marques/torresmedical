@@ -11,6 +11,7 @@ import { AgendaConflitosService } from './agenda/agenda-conflitos.service';
 import { AgendaController } from './agenda/agenda.controller';
 import { AgendaMatrizController } from './agenda/agenda-matriz.controller';
 import { AgendaMatrizService } from './agenda/agenda-matriz.service';
+import { AgendaOcupacaoService } from './agenda/agenda-ocupacao.service';
 import { AtividadesController } from './atividades/atividades.controller';
 import { AtividadesService } from './atividades/atividades.service';
 import { CampanhasAgendador } from './campanhas/campanhas.agendador';
@@ -114,6 +115,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     OrigensClienteService,
     AgendaService,
     AgendaMatrizService,
+    AgendaOcupacaoService,
     AgendaConflitosService,
     AgendamentosAtendimentoService,
     OrcamentosService,
@@ -156,6 +158,8 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     AgendamentosAtendimentoService,
     OrcamentosService,
     PesquisaNpsService,
+    // Agendamentos por sala: ocupação efetiva do Painel (#139).
+    AgendaOcupacaoService,
     // Relatórios GES-02 e GES-04 de Configurações / Gestão.
     IndicadoresGestaoService,
   ],

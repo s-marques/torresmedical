@@ -23,6 +23,20 @@ describe('filtrosPainelSchema', () => {
     expect(erros({ base: 'caixa' }).base).toBe('Base inválida');
   });
 
+  it('filtros da aba Ocupação (#139): sala, profissional, turno e dia da semana', () => {
+    const id = '11111111-1111-4111-8111-111111111111';
+    expect(
+      filtrosPainelSchema.parse({ salaId: id, profissionalId: id, turno: 'TARDE', diaSemana: '4' }),
+    ).toMatchObject({ salaId: id, profissionalId: id, turno: 'TARDE', diaSemana: 4 });
+    expect(filtrosPainelSchema.parse({ diaSemana: '0' }).diaSemana).toBe(0);
+    expect(filtrosPainelSchema.parse({}).diaSemana).toBeUndefined();
+    expect(erros({ salaId: 'x' }).salaId).toBe('Sala inválida');
+    expect(erros({ profissionalId: 'x' }).profissionalId).toBe('Profissional inválido');
+    expect(erros({ turno: 'MADRUGADA' }).turno).toBe('Turno inválido');
+    expect(erros({ diaSemana: '7' }).diaSemana).toBe('Dia da semana inválido');
+    expect(erros({ diaSemana: '1.5' }).diaSemana).toBe('Dia da semana inválido');
+  });
+
   it('por período exige De e Até', () => {
     expect(erros({ modo: 'periodo' })).toEqual({
       de: 'Informe a data inicial',

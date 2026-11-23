@@ -257,6 +257,34 @@ período contratado (contratos de sala), os agendamentos e os bloqueios e reserv
 - **Escopo (#153):** usuário restrito vê só as salas com contrato, reserva ou agendamento de um
   profissional seu; o que é de outros vem `oculto`, sem nome nem valor.
 
+## Ocupação efetiva (Painel, aba Ocupação)
+
+Mede capacidade, contratado, utilizado e vago por sala, dia, turno e profissional (issue #139).
+`GET /api/painel/dashboard/ocupacao` aceita, além do período, `salaId`, `profissionalId`, `turno`
+(`MANHA`, `TARDE`, `NOITE`) e `diaSemana` (0 = domingo a 6 = sábado). Todos ficam na URL da tela.
+
+- **Período** é a célula Sala × Dia × Turno (turnos da Agenda matricial, #137).
+- **Capacidade:** períodos das salas nos dias de funcionamento (Minha Empresa > Horários; sem horário
+  cadastrado, vale a semana toda), sem os bloqueados (bloqueio e manutenção).
+- **Contratado:** contrato ativo e vigente cobre o turno. **Utilizado:** agendamento `ATENDIDO` ou
+  `EM_ATENDIMENTO` na sala. Agendado, confirmado, faltou e cancelado não contam.
+- **Contratado sem uso:** contratado e sem atendimento realizado.
+- **Vago:** capacidade menos ocupados (contratado, utilizado ou reservado: reserva, cortesia e uso
+  avulso). Vem sempre da sala inteira, mesmo com filtro de profissional.
+- **Taxa de uso** = utilizados ÷ capacidade. **Taxa de contratação** = contratados ÷ capacidade.
+  Por profissional, "uso do contratado" = períodos contratados em que ele atendeu ÷ contratados
+  (0% com contrato e sem atendimento; sem contrato, "—").
+- **Comparação** com o mês anterior (ou a janela anterior de mesmo tamanho, em "Por período") no
+  detalhe dos indicadores. **Previsão de uso:** projeção linear (a taxa até hoje mantida até o fim);
+  período encerrado mostra o realizado e período futuro, "—".
+- **Horários de maior demanda:** agendamentos não cancelados por hora do dia.
+- Todas as salas e profissionais ativos aparecem, inclusive os sem uso.
+- **Escopo (#153):** usuário restrito vê só as salas com contrato, reserva ou agendamento de um
+  profissional seu e só os profissionais do vínculo; filtrar por profissional de fora dá 403.
+- A consulta usa services exportados (`AgendaOcupacaoService`, salas, contratos, bloqueios e
+  `MinhaEmpresaService`). Os KPIs Taxa de Ocupação e Vacância das telas Executivo e Financeiro >
+  Indicadores seguem sem valor até serem ligados a este cálculo.
+
 ## Encaminhamentos (`/encaminhamentos`)
 
 Encaminhamento de pacientes entre profissionais (issue #146, R §26), para medir o ecossistema

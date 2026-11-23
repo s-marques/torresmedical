@@ -8,7 +8,8 @@ import {
   type DashboardPainel,
   type FiltrosPainel,
 } from '@torres/shared';
-import { RequirePermission } from '../../../common/auth/auth.decorators';
+import { CurrentUser, RequirePermission } from '../../../common/auth/auth.decorators';
+import type { UsuarioAutenticado } from '../../../common/auth/usuario-autenticado';
 import {
   ApiErrorResponses,
   ApiZodQuery,
@@ -33,7 +34,8 @@ export class DashboardController {
   obter(
     @Param('aba', new ZodValidationPipe(abaPainelSchema)) aba: AbaPainel,
     @Query(new ZodValidationPipe(filtrosPainelSchema)) filtros: FiltrosPainel,
+    @CurrentUser() usuario: UsuarioAutenticado,
   ): Promise<DashboardPainel> {
-    return this.dashboard.obter(aba, filtros);
+    return this.dashboard.obter(aba, filtros, usuario.empresaId);
   }
 }
