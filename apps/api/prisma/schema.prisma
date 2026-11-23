@@ -965,6 +965,37 @@ model NaoConformidade {
   @@map("nao_conformidades")
 }
 
+/// Dono: regulatorio-qualidade. Tipo do select "Tipo Residuo" do modal "Nova Coleta de Residuo"
+/// (lista do print do dev na #65).
+enum ColetaResiduoTipo {
+  INFECTANTE
+  PERFUROCORTANTE
+  QUIMICO
+
+  @@map("coleta_residuo_tipo")
+}
+
+/// Dono: regulatorio-qualidade. Coleta de resíduos biológicos e manifesto de transporte (tela Coleta
+/// Resíduos, `/coletas-residuo`, issue #65). Obrigatórios: Data Coleta e Tipo Resíduo. Responsável é
+/// texto livre (confirmado pelo dev). Exclusão lógica.
+model ColetaResiduo {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  dataColeta      DateTime          @map("data_coleta") @db.Date
+  proximaColeta   DateTime?         @map("proxima_coleta") @db.Date
+  empresaColetora String?           @map("empresa_coletora")
+  manifestoMtr    String?           @map("manifesto_mtr")
+  pesoKg          Decimal?          @map("peso_kg") @db.Decimal(10, 2)
+  tipoResiduo     ColetaResiduoTipo @map("tipo_residuo")
+  responsavel     String?
+  observacoes     String?
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt       DateTime?         @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([dataColeta])
+  @@map("coletas_residuo")
+}
+
 /// Dono: regulatorio-qualidade. Tipo do combo "Tipo" do modal "Novo Treinamento".
 model TipoTreinamento {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid

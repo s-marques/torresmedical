@@ -457,6 +457,54 @@
       "confirmar": "Excluir"
     }
   },
+  "coletasResiduo": {
+    "titulo": "Coletas de Resíduo",
+    "descricao": "Registro de coletas de resíduos biológicos e manifestos de transporte.",
+    "novo": "Nova Coleta",
+    "novoTitulo": "Nova Coleta de Resíduo",
+    "editarTitulo": "Editar Coleta de Resíduo",
+    "registrar": "Registrar",
+    "buscar": "Buscar coletas...",
+    "vazio": "Nenhuma coleta encontrada.",
+    "acoes": {
+      "editar": "Editar",
+      "excluir": "Excluir"
+    },
+    "colunas": {
+      "dataColeta": "Data Coleta",
+      "proximaColeta": "Próxima Coleta",
+      "empresaColetora": "Empresa Coletora",
+      "manifestoMtr": "MTR",
+      "pesoKg": "Peso (kg)",
+      "tipoResiduo": "Tipo Resíduo",
+      "responsavel": "Responsável"
+    },
+    "campos": {
+      "dataColeta": "Data Coleta",
+      "proximaColeta": "Próxima Coleta",
+      "empresaColetora": "Empresa Coletora",
+      "manifestoMtr": "Manifesto MTR",
+      "pesoKg": "Peso (kg)",
+      "tipoResiduo": "Tipo Resíduo",
+      "responsavel": "Responsável",
+      "observacoes": "Observações"
+    },
+    "tipos": {
+      "INFECTANTE": "Infectante",
+      "PERFUROCORTANTE": "Perfurocortante",
+      "QUIMICO": "Químico"
+    },
+    "sucesso": {
+      "criado": "Coleta registrada.",
+      "atualizado": "Coleta atualizada.",
+      "excluido": "Coleta excluída."
+    },
+    "excluir": {
+      "titulo": "Excluir Coleta",
+      "descricao": "Tem certeza que deseja excluir a coleta de {{data}}? Esta ação não pode ser desfeita.",
+      "confirmar": "Excluir"
+    }
+  },
   "salasBloqueios": {
     "aba": "Bloqueios",
     "novo": "Novo Bloqueio",

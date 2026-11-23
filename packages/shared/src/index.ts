@@ -84,6 +84,7 @@ export * from './schemas/lookups/lookup';
 export * from './schemas/painel/dashboard';
 export * from './schemas/regulatorio-qualidade/alvara-licenca';
 export * from './schemas/regulatorio-qualidade/cargo';
+export * from './schemas/regulatorio-qualidade/coleta-residuo';
 export * from './schemas/regulatorio-qualidade/comissao';
 export * from './schemas/regulatorio-qualidade/funcionario';
 export * from './schemas/regulatorio-qualidade/nao-conformidade';

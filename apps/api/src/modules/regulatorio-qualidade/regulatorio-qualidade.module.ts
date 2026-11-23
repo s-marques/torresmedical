@@ -5,6 +5,8 @@ import { AlvarasLicencasController } from './alvaras-licencas/alvaras-licencas.c
 import { AlvarasLicencasService } from './alvaras-licencas/alvaras-licencas.service';
 import { CargosController } from './cargos/cargos.controller';
 import { CargosService } from './cargos/cargos.service';
+import { ColetasResiduoController } from './coletas-residuo/coletas-residuo.controller';
+import { ColetasResiduoService } from './coletas-residuo/coletas-residuo.service';
 import { ComissoesController } from './comissoes/comissoes.controller';
 import { ComissoesService } from './comissoes/comissoes.service';
 import { FuncionariosController } from './funcionarios/funcionarios.controller';
@@ -26,6 +28,7 @@ import { TreinamentosService } from './treinamentos/treinamentos.service';
     AlvarasLicencasController,
     NaoConformidadesController,
     TreinamentosController,
+    ColetasResiduoController,
   ],
   providers: [
     FuncionariosService,
@@ -34,6 +37,7 @@ import { TreinamentosService } from './treinamentos/treinamentos.service';
     AlvarasLicencasService,
     NaoConformidadesService,
     TreinamentosService,
+    ColetasResiduoService,
   ],
   exports: [FuncionariosService, CargosService],
 })

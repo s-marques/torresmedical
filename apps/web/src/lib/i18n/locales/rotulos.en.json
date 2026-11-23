@@ -22,5 +22,10 @@
   "Unidade": "Unit",
   "Tipo de Licença": "License Type",
   "Título": "Title",
-  "Funcionário": "Employee"
+  "Funcionário": "Employee",
+  "Data Coleta": "Collection Date",
+  "Tipo Resíduo": "Waste Type",
+  "Empresa Coletora": "Collection Company",
+  "Manifesto MTR": "MTR Manifest",
+  "Responsável": "Person in Charge"
 }
