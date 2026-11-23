@@ -15,6 +15,9 @@ const ID_FORMULARIO = 'form-novo-agendamento';
 export interface ModalNovoAgendamentoProps {
   /** Data inicial do campo Data (padrão: hoje). */
   data?: string;
+  /** Hora e sala iniciais (padrão: a hora cheia atual e nenhuma sala). Vêm da Agenda matricial (#137). */
+  hora?: string;
+  salaId?: string;
   onFechar: () => void;
 }
 
@@ -24,16 +27,21 @@ function horaCheia(agora = new Date()): string {
 }
 
 /** Modal "Novo Agendamento" (campos e padrões do print do inventário). */
-export function ModalNovoAgendamento({ data, onFechar }: Readonly<ModalNovoAgendamentoProps>) {
+export function ModalNovoAgendamento({
+  data,
+  hora: horaInicial,
+  salaId,
+  onFechar,
+}: Readonly<ModalNovoAgendamentoProps>) {
   const { t } = useTranslation();
   const criar = useCriarAgendamento();
   const form = useFormulario(createAgendamentoSchema, {
     defaultValues: {
       pacienteId: null,
       profissionalId: null,
-      salaId: null,
+      salaId: salaId ?? null,
       data: data ?? hojeISO(),
-      hora: horaCheia(),
+      hora: horaInicial ?? horaCheia(),
       duracaoMinutos: 30,
       tipoAgendamentoId: null,
       valor: null,

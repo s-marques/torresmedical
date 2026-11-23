@@ -775,6 +775,67 @@
       "titulo": "Edit Appointment #{{numero}}",
       "sucesso": "Appointment updated.",
       "semSalaAviso": "This appointment predates room registration. Choose the room to save."
+    },
+    "matriz": {
+      "modoRotulo": "Schedule mode",
+      "modoCalendario": "Calendar",
+      "modoMatriz": "Matrix",
+      "visaoRotulo": "View",
+      "visoes": {
+        "dia": "Day",
+        "semana": "Week",
+        "mes": "Month"
+      },
+      "anterior": "Previous",
+      "proximo": "Next",
+      "hoje": "Today",
+      "filtros": {
+        "profissional": "Professional",
+        "especialidade": "Specialty",
+        "sala": "Room",
+        "turno": "Shift",
+        "todosTurnos": "All shifts",
+        "situacao": "Status",
+        "todasSituacoes": "All statuses"
+      },
+      "turnos": {
+        "MANHA": "Morning",
+        "TARDE": "Afternoon",
+        "NOITE": "Evening"
+      },
+      "turnosCurto": {
+        "MANHA": "M",
+        "TARDE": "A",
+        "NOITE": "E"
+      },
+      "status": {
+        "DISPONIVEL": "Available",
+        "CONTRATADO": "Contracted",
+        "AGENDADO": "Scheduled"
+      },
+      "situacoes": {
+        "CONTRATADO": "Contracted period",
+        "SEM_USO": "Contracted, unused",
+        "DISPONIVEL": "Available",
+        "AGENDADO": "Scheduled",
+        "RESERVADO": "Reserved",
+        "BLOQUEADO": "Blocked"
+      },
+      "legenda": "Legend",
+      "semUso": "Contracted, unused",
+      "semUsoAviso": "Contracted period with no appointment in the room.",
+      "erro": "Could not load the room matrix.",
+      "tentarDeNovo": "Try again",
+      "vazio": "No rooms found.",
+      "itens": {
+        "CONTRATO": "Contract",
+        "AGENDAMENTO": "Appointment",
+        "BLOQUEIO": "Block"
+      },
+      "itensDaCelula": "Time slot occupancy",
+      "valorMensal": "Monthly contract value: {{valor}}",
+      "livre": "Free slot: nothing contracted, scheduled or blocked.",
+      "agendar": "Schedule at this time"
     }
   },
   "alvarasLicencas": {

@@ -9,6 +9,8 @@ import { FinanceiroModule } from '../financeiro/financeiro.module';
 import { GestaoProfissionaisModule } from '../gestao-profissionais/gestao-profissionais.module';
 import { AgendaConflitosService } from './agenda/agenda-conflitos.service';
 import { AgendaController } from './agenda/agenda.controller';
+import { AgendaMatrizController } from './agenda/agenda-matriz.controller';
+import { AgendaMatrizService } from './agenda/agenda-matriz.service';
 import { AtividadesController } from './atividades/atividades.controller';
 import { AtividadesService } from './atividades/atividades.service';
 import { CampanhasAgendador } from './campanhas/campanhas.agendador';
@@ -81,6 +83,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
   ],
   controllers: [
     AgendaController,
+    AgendaMatrizController,
     AtividadesController,
     CampanhasController,
     ConfirmacoesController,
@@ -110,6 +113,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     PacientesService,
     OrigensClienteService,
     AgendaService,
+    AgendaMatrizService,
     AgendaConflitosService,
     AgendamentosAtendimentoService,
     OrcamentosService,
