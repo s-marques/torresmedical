@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { ConfiguracoesGestaoModule } from '../configuracoes-gestao/configuracoes-gestao.module';
 import { AlvarasLicencasController } from './alvaras-licencas/alvaras-licencas.controller';
@@ -11,10 +11,12 @@ import { FuncionariosController } from './funcionarios/funcionarios.controller';
 import { FuncionariosService } from './funcionarios/funcionarios.service';
 import { NaoConformidadesController } from './nao-conformidades/nao-conformidades.controller';
 import { NaoConformidadesService } from './nao-conformidades/nao-conformidades.service';
+import { TreinamentosController } from './treinamentos/treinamentos.controller';
+import { TreinamentosService } from './treinamentos/treinamentos.service';
 
 /** Módulo REGULATÓRIO / QUALIDADE do inventário. Dono das entidades Funcionário e Cargo. */
 @Module({
-  imports: [ConfiguracoesGestaoModule],
+  imports: [forwardRef(() => ConfiguracoesGestaoModule)],
   controllers: [
     criarLookupController('funcionarios', FuncionariosService),
     criarLookupController('cargos', CargosService),
@@ -23,6 +25,7 @@ import { NaoConformidadesService } from './nao-conformidades/nao-conformidades.s
     ComissoesController,
     AlvarasLicencasController,
     NaoConformidadesController,
+    TreinamentosController,
   ],
   providers: [
     FuncionariosService,
@@ -30,6 +33,7 @@ import { NaoConformidadesService } from './nao-conformidades/nao-conformidades.s
     ComissoesService,
     AlvarasLicencasService,
     NaoConformidadesService,
+    TreinamentosService,
   ],
   exports: [FuncionariosService, CargosService],
 })

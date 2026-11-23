@@ -40,7 +40,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
   imports: [
     forwardRef(() => ComercialAtendimentoModule),
     forwardRef(() => FinanceiroModule),
-    ConfiguracoesGestaoModule,
+    forwardRef(() => ConfiguracoesGestaoModule),
     forwardRef(() => ComprasEstoqueModule),
   ],
   controllers: [
@@ -95,6 +95,8 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ProfissionalAgendaService,
     // Receita recorrente dos Indicadores do Financeiro.
     ContratosSalaCobrancaService,
+    // Relatório GES-03 (Ocupação por Sala) de Configurações / Gestão.
+    SalasPainelService,
   ],
 })
 export class GestaoProfissionaisModule {}

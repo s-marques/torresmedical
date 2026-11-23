@@ -868,5 +868,51 @@
     "painel": "Dashboard",
     "modulo": "Purchasing / Inventory",
     "relatorios": "Reports"
+  },
+  "relatoriosGestao": {
+    "titulo": "Management Reports",
+    "descricao": "Access log, average ticket, room occupancy and LTV.",
+    "painel": "Dashboard",
+    "modulo": "Management",
+    "relatorios": "Reports"
+  },
+  "treinamentos": {
+    "titulo": "Training",
+    "descricao": "Track employee training and certifications.",
+    "novo": "New Training",
+    "novoTitulo": "New Training",
+    "novoTipo": "New Type",
+    "novoTipoTitulo": "New Training Type",
+    "criarTipo": "Create Type",
+    "tipoCriado": "Training type created.",
+    "cadastrar": "Register",
+    "cadastrado": "Training registered.",
+    "todos": "All",
+    "buscar": "Search training...",
+    "vazio": "No training found.",
+    "status": {
+      "valido": "Valid",
+      "vencido": "Expired"
+    },
+    "colunas": {
+      "funcionario": "Employee",
+      "tipo": "Type",
+      "dataRealizacao": "Completed",
+      "dataVencimento": "Expires",
+      "instituicao": "Institution",
+      "status": "Status"
+    },
+    "campos": {
+      "funcionario": "Employee",
+      "tipo": "Type",
+      "descricao": "Description",
+      "dataRealizacao": "Completion Date",
+      "dataVencimento": "Expiration Date",
+      "cargaHoraria": "Workload (h)",
+      "instituicao": "Institution",
+      "observacoes": "Notes",
+      "nomeTipo": "Name",
+      "nomeTipoPlaceholder": "E.g.: Biosafety"
+    }
   }
 }

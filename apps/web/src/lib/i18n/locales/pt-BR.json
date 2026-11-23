@@ -765,5 +765,51 @@
     "painel": "Painel",
     "modulo": "Compras / Estoque",
     "relatorios": "Relatórios"
+  },
+  "relatoriosGestao": {
+    "titulo": "Relatórios de Gestão",
+    "descricao": "Log de acesso, ticket médio, ocupação de sala e LTV.",
+    "painel": "Painel",
+    "modulo": "Gestão",
+    "relatorios": "Relatórios"
+  },
+  "treinamentos": {
+    "titulo": "Treinamentos",
+    "descricao": "Controle de treinamentos e certificações dos funcionários.",
+    "novo": "Novo Treinamento",
+    "novoTitulo": "Novo Treinamento",
+    "novoTipo": "Novo Tipo",
+    "novoTipoTitulo": "Novo Tipo de Treinamento",
+    "criarTipo": "Criar Tipo",
+    "tipoCriado": "Tipo de treinamento criado.",
+    "cadastrar": "Cadastrar",
+    "cadastrado": "Treinamento cadastrado.",
+    "todos": "Todos",
+    "buscar": "Buscar treinamentos...",
+    "vazio": "Nenhum treinamento encontrado.",
+    "status": {
+      "valido": "Válido",
+      "vencido": "Vencido"
+    },
+    "colunas": {
+      "funcionario": "Funcionário",
+      "tipo": "Tipo",
+      "dataRealizacao": "Realização",
+      "dataVencimento": "Vencimento",
+      "instituicao": "Instituição",
+      "status": "Status"
+    },
+    "campos": {
+      "funcionario": "Funcionário",
+      "tipo": "Tipo",
+      "descricao": "Descrição",
+      "dataRealizacao": "Data Realização",
+      "dataVencimento": "Data Vencimento",
+      "cargaHoraria": "Carga Horária (h)",
+      "instituicao": "Instituição",
+      "observacoes": "Observações",
+      "nomeTipo": "Nome",
+      "nomeTipoPlaceholder": "Ex.: Biossegurança"
+    }
   }
 }
