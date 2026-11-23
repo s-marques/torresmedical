@@ -355,6 +355,7 @@ model Especialidade {
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
 
   profissionais Profissional[]
+  rqes          ProfissionalRqe[]
 
   @@map("especialidades")
 }
@@ -406,56 +407,62 @@ enum BloqueioMotivo {
 
 /// Dono: gestao-profissionais.
 model Profissional {
-  id                   String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   nome                 String
   /// Registro no conselho (CRM, CRN, CRBM…), texto livre.
   registro             String?
-  especialidadeId      String?       @map("especialidade_id") @db.Uuid
+  profissao            ProfissionalProfissao?
+  subespecialidade     String?
+  /// Só dígitos (14).
+  cnpj                 String?
+  especialidadeId      String?                @map("especialidade_id") @db.Uuid
   /// Especialidades adicionais separadas por vírgula (usadas pelo agente de IA).
-  outrasEspecialidades String?       @map("outras_especialidades")
+  outrasEspecialidades String?                @map("outras_especialidades")
   telefone             String?
   email                String?
-  duracaoPadrao        Int           @default(30) @map("duracao_padrao")
-  valorConsulta        Decimal?      @map("valor_consulta") @db.Decimal(12, 2)
-  comissao             Decimal?      @db.Decimal(5, 2)
+  duracaoPadrao        Int                    @default(30) @map("duracao_padrao")
+  valorConsulta        Decimal?               @map("valor_consulta") @db.Decimal(12, 2)
+  comissao             Decimal?               @db.Decimal(5, 2)
   /// Chave da cor no calendário (catálogo em `packages/shared`).
-  corCalendario        String        @default("azul") @map("cor_calendario")
+  corCalendario        String                 @default("azul") @map("cor_calendario")
   cpf                  String?
   rg                   String?
-  dataNascimento       DateTime?     @map("data_nascimento") @db.Date
+  dataNascimento       DateTime?              @map("data_nascimento") @db.Date
   naturalidade         String?
-  estadoCivil          EstadoCivil?  @map("estado_civil")
+  estadoCivil          EstadoCivil?           @map("estado_civil")
   endereco             String?
-  enderecoConsultorio  String?       @map("endereco_consultorio")
-  telefoneReceita      String?       @map("telefone_receita")
+  enderecoConsultorio  String?                @map("endereco_consultorio")
+  telefoneReceita      String?                @map("telefone_receita")
   cnes                 String?
-  rodapeReceita        String?       @map("rodape_receita")
-  layoutReceita        LayoutReceita @default(PADRAO) @map("layout_receita")
+  rodapeReceita        String?                @map("rodape_receita")
+  layoutReceita        LayoutReceita          @default(PADRAO) @map("layout_receita")
   /// Credenciais da Memed, cifradas (AES-256-GCM) antes de gravar. A Secret Key nunca sai da API.
-  memedApiToken        String?       @map("memed_api_token")
-  memedSecretKey       String?       @map("memed_secret_key")
+  memedApiToken        String?                @map("memed_api_token")
+  memedSecretKey       String?                @map("memed_secret_key")
   /// Arquivos enviados em `/api/arquivos` (usos `foto-profissional` e `logo-receita`).
-  fotoArquivoId        String?       @map("foto_arquivo_id") @db.Uuid
-  logoReceitaArquivoId String?       @map("logo_receita_arquivo_id") @db.Uuid
-  ativo                Boolean       @default(true)
-  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt            DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt            DateTime?     @map("deleted_at") @db.Timestamptz(3)
+  fotoArquivoId        String?                @map("foto_arquivo_id") @db.Uuid
+  logoReceitaArquivoId String?                @map("logo_receita_arquivo_id") @db.Uuid
+  ativo                Boolean                @default(true)
+  createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt            DateTime?              @map("deleted_at") @db.Timestamptz(3)
 
-  especialidade          Especialidade?          @relation(fields: [especialidadeId], references: [id], onDelete: Restrict)
-  horarios               HorarioAtendimento[]
-  bloqueios              BloqueioAgenda[]
-  servicos               ServicoProfissional[]
-  contratosSala          ContratoSala[]
-  agendamentos           Agendamento[]
-  protocolos             Protocolo[]
-  pacotes                Pacote[]
-  usosPacote             PacoteUso[]
-  canaisWhatsapp         CanalWhatsapp[]
-  usuarios               UsuarioProfissional[]
-  pesquisasNps           PesquisaNps[]
-  pesquisasProfissional  PesquisaProfissional[]
-  documentosConhecimento DocumentoConhecimento[]
+  especialidade           Especialidade?          @relation(fields: [especialidadeId], references: [id], onDelete: Restrict)
+  horarios                HorarioAtendimento[]
+  rqes                    ProfissionalRqe[]
+  contatosAdministrativos ProfissionalContato[]
+  bloqueios               BloqueioAgenda[]
+  servicos                ServicoProfissional[]
+  contratosSala           ContratoSala[]
+  agendamentos            Agendamento[]
+  protocolos              Protocolo[]
+  pacotes                 Pacote[]
+  usosPacote              PacoteUso[]
+  canaisWhatsapp          CanalWhatsapp[]
+  usuarios                UsuarioProfissional[]
+  pesquisasNps            PesquisaNps[]
+  pesquisasProfissional   PesquisaProfissional[]
+  documentosConhecimento  DocumentoConhecimento[]
 
   baixasInsumos BaixaInsumo[]
   receitas      ContaReceber[]
@@ -466,6 +473,50 @@ model Profissional {
 }
 
 /// Dono: gestao-profissionais. Horário semanal (`dia_semana`, 0 = domingo) ou de uma data.
+/// Profissão do cadastro do profissional (issue #140).
+enum ProfissionalProfissao {
+  MEDICO
+  PSICOLOGO
+  NUTRICIONISTA
+  FISIOTERAPEUTA
+  BIOMEDICO
+  OUTRA
+
+  @@map("profissional_profissao")
+}
+
+/// RQE do profissional: um número por especialidade.
+model ProfissionalRqe {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profissionalId  String   @map("profissional_id") @db.Uuid
+  especialidadeId String   @map("especialidade_id") @db.Uuid
+  numero          String
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  profissional  Profissional  @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
+  especialidade Especialidade @relation(fields: [especialidadeId], references: [id], onDelete: Restrict)
+
+  @@unique([profissionalId, especialidadeId])
+  @@index([especialidadeId])
+  @@map("profissionais_rqe")
+}
+
+/// Contato administrativo do profissional (secretária, financeiro…).
+model ProfissionalContato {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profissionalId String   @map("profissional_id") @db.Uuid
+  nome           String
+  funcao         String
+  telefone       String?
+  email          String?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
+
+  @@index([profissionalId])
+  @@map("profissionais_contatos")
+}
+
 model HorarioAtendimento {
   id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   profissionalId String      @map("profissional_id") @db.Uuid

@@ -174,6 +174,25 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
     return new Set(contratos.flatMap((c) => (c.profissionalId ? [c.profissionalId] : [])));
   }
 
+  /**
+   * Contratos (ativos, encerrados e cancelados) do profissional, para o detalhe do cadastro
+   * (issue #140). Somente leitura; vale o escopo de dados do usuário.
+   */
+  async listarDoProfissional(profissionalId: string): Promise<ContratoSalaDto[]> {
+    await this.profissionais.garantirExiste(profissionalId);
+    this.escopo.garantirProfissional(profissionalId);
+    const contratos = await this.txHost.tx.contratoSala.findMany({
+      where: { ...NAO_EXCLUIDOS, sala: { deletedAt: null }, profissionalId },
+      orderBy: [{ status: 'asc' }, { dataInicio: 'desc' }, { id: 'asc' }],
+      include: INCLUDE,
+    });
+    const [nomes, semCobranca] = await Promise.all([
+      this.resolverNomes(contratos),
+      this.semCobrancaIds(contratos),
+    ]);
+    return contratos.map((c) => this.toDto(c, nomes, semCobranca));
+  }
+
   async findById(id: string): Promise<ContratoSalaDto> {
     const contrato = await this.buscar(id);
     const [nomes, semCobranca] = await Promise.all([

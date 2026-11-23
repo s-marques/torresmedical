@@ -33,6 +33,18 @@ import { ArquivosService } from '../../../common/storage/arquivos.service';
 const COM_ESPECIALIDADE = { especialidade: { select: { nome: true } } } as const;
 const NAO_EXCLUIDOS = { deletedAt: null } as const;
 
+/** Include da tela Profissionais: especialidade, RQEs (com a especialidade de cada um) e contatos. */
+const DETALHE = {
+  especialidade: { select: { nome: true } },
+  rqes: {
+    include: { especialidade: { select: { nome: true } } },
+    orderBy: { especialidade: { nome: 'asc' } },
+  },
+  contatosAdministrativos: { orderBy: [{ nome: 'asc' }, { id: 'asc' }] },
+} satisfies Prisma.ProfissionalInclude;
+
+type ProfissionalCompleto = Prisma.ProfissionalGetPayload<{ include: typeof DETALHE }>;
+
 /** Profissional com o nome da especialidade. */
 export type ProfissionalComEspecialidade = Prisma.ProfissionalGetPayload<{
   include: typeof COM_ESPECIALIDADE;
@@ -129,14 +141,30 @@ export class ProfissionaisService extends EntidadeLookupService<
     especialidade,
     memedApiToken,
     memedSecretKey,
+    rqes,
+    contatosAdministrativos,
     valorConsulta,
     comissao,
     dataNascimento,
     ...resto
-  }: ProfissionalComEspecialidade): ProfissionalDto {
+  }: ProfissionalCompleto): ProfissionalDto {
     return {
       ...resto,
       especialidadeNome: especialidade?.nome ?? null,
+      profissao: resto.profissao,
+      rqes: rqes.map((r) => ({
+        id: r.id,
+        numero: r.numero,
+        especialidadeId: r.especialidadeId,
+        especialidadeNome: r.especialidade.nome,
+      })),
+      contatosAdministrativos: contatosAdministrativos.map((c) => ({
+        id: c.id,
+        nome: c.nome,
+        funcao: c.funcao,
+        telefone: c.telefone,
+        email: c.email,
+      })),
       corCalendario: resto.corCalendario as ProfissionalCor,
       valorConsulta: valorConsulta === null ? null : Number(valorConsulta),
       comissao: comissao === null ? null : Number(comissao),
@@ -157,7 +185,7 @@ export class ProfissionaisService extends EntidadeLookupService<
           await this.txHost.tx.profissional.findMany({
             where,
             orderBy,
-            include: COM_ESPECIALIDADE,
+            include: DETALHE,
             ...page,
           })
         ).map((p) => this.toDto(p)),
@@ -171,9 +199,14 @@ export class ProfissionaisService extends EntidadeLookupService<
 
   async create(input: CreateProfissionalInput): Promise<ProfissionalDto> {
     await this.validar(input);
+    const { rqes, contatosAdministrativos, ...dados } = this.dados(input, null);
     const criado = await this.txHost.tx.profissional.create({
-      data: this.dados(input, null),
-      include: COM_ESPECIALIDADE,
+      data: {
+        ...dados,
+        rqes: { create: rqes },
+        contatosAdministrativos: { create: contatosAdministrativos },
+      },
+      include: DETALHE,
     });
     return this.toDto(criado);
   }
@@ -181,10 +214,15 @@ export class ProfissionaisService extends EntidadeLookupService<
   async update(id: string, input: UpdateProfissionalInput): Promise<ProfissionalDto> {
     const atual = await this.buscar(id);
     await this.validar(input);
+    const { rqes, contatosAdministrativos, ...dados } = this.dados(input, atual);
     const alterado = await this.txHost.tx.profissional.update({
       where: { id },
-      data: this.dados(input, atual),
-      include: COM_ESPECIALIDADE,
+      data: {
+        ...dados,
+        rqes: { deleteMany: {}, create: rqes },
+        contatosAdministrativos: { deleteMany: {}, create: contatosAdministrativos },
+      },
+      include: DETALHE,
     });
     return this.toDto(alterado);
   }
@@ -195,7 +233,7 @@ export class ProfissionaisService extends EntidadeLookupService<
     const alterado = await this.txHost.tx.profissional.update({
       where: { id },
       data: { ativo },
-      include: COM_ESPECIALIDADE,
+      include: DETALHE,
     });
     return this.toDto(alterado);
   }
@@ -220,7 +258,7 @@ export class ProfissionaisService extends EntidadeLookupService<
     const alterado = await this.txHost.tx.profissional.update({
       where: { id },
       data: { [coluna]: arquivoId },
-      include: COM_ESPECIALIDADE,
+      include: DETALHE,
     });
     return this.toDto(alterado);
   }
@@ -231,7 +269,7 @@ export class ProfissionaisService extends EntidadeLookupService<
     const excluido = await this.txHost.tx.profissional.update({
       where: { id },
       data: { deletedAt: new Date() },
-      include: COM_ESPECIALIDADE,
+      include: DETALHE,
     });
     return this.toDto(excluido);
   }
@@ -314,15 +352,23 @@ export class ProfissionaisService extends EntidadeLookupService<
     return {
       ...NAO_EXCLUIDOS,
       ativo: query.status ? query.status === 'ativo' : undefined,
-      ...searchWhere(query.search, ['nome', 'registro', 'email', 'telefone']),
+      ...this.busca(query.search),
     };
   }
 
-  private async buscar(id: string): Promise<ProfissionalComEspecialidade> {
+  /** Busca por nome, registro, e-mail, telefone ou CNPJ (só dígitos, com ou sem máscara). */
+  private busca(search: string | undefined): Prisma.ProfissionalWhereInput {
+    const texto = searchWhere(search, ['nome', 'registro', 'email', 'telefone']);
+    if (!texto) return {};
+    const digitos = search?.replaceAll(/\D/g, '') ?? '';
+    return { OR: [...texto.OR, ...(digitos ? [{ cnpj: { contains: digitos } }] : [])] };
+  }
+
+  private async buscar(id: string): Promise<ProfissionalCompleto> {
     const profissional = isUuid(id)
       ? await this.txHost.tx.profissional.findFirst({
           where: { id, ...NAO_EXCLUIDOS },
-          include: COM_ESPECIALIDADE,
+          include: DETALHE,
         })
       : null;
     if (!profissional) {
@@ -331,13 +377,12 @@ export class ProfissionaisService extends EntidadeLookupService<
     return profissional;
   }
 
-  private dados(
-    input: CreateProfissionalInput,
-    atual: Profissional | null,
-  ): Prisma.ProfissionalUncheckedCreateInput {
-    const { memedSecretKey, memedApiToken, ...resto } = input;
+  private dados(input: CreateProfissionalInput, atual: Profissional | null) {
+    const { memedSecretKey, memedApiToken, rqes, contatosAdministrativos, ...resto } = input;
     return {
       ...resto,
+      rqes: rqes.map(({ numero, especialidadeId }) => ({ numero, especialidadeId })),
+      contatosAdministrativos,
       dataNascimento: input.dataNascimento
         ? new Date(`${input.dataNascimento}T00:00:00.000Z`)
         : null,
@@ -351,17 +396,29 @@ export class ProfissionaisService extends EntidadeLookupService<
     };
   }
 
-  /** Regras que dependem do banco: a especialidade precisa existir e estar ativa. */
+  /** Regras que dependem do banco: a especialidade e as dos RQEs precisam existir e estar ativas. */
   private async validar(input: CreateProfissionalInput): Promise<void> {
-    if (!input.especialidadeId) return;
-    const especialidade = await this.txHost.tx.especialidade.findFirst({
-      where: { id: input.especialidadeId, ...NAO_EXCLUIDOS },
-      select: { ativo: true },
+    if (input.especialidadeId) {
+      const especialidade = await this.txHost.tx.especialidade.findFirst({
+        where: { id: input.especialidadeId, ...NAO_EXCLUIDOS },
+        select: { ativo: true },
+      });
+      if (!especialidade?.ativo) {
+        throw new BusinessException('ESPECIALIDADE_INVALIDA', 'Especialidade inválida', {
+          status: 400,
+          details: [{ field: 'especialidadeId', message: 'Especialidade inexistente ou inativa' }],
+        });
+      }
+    }
+    const ids = [...new Set(input.rqes.map((r) => r.especialidadeId))];
+    if (ids.length === 0) return;
+    const ativas = await this.txHost.tx.especialidade.count({
+      where: { id: { in: ids }, ativo: true, ...NAO_EXCLUIDOS },
     });
-    if (!especialidade?.ativo) {
-      throw new BusinessException('ESPECIALIDADE_INVALIDA', 'Especialidade inválida', {
+    if (ativas !== ids.length) {
+      throw new BusinessException('RQE_ESPECIALIDADE_INVALIDA', 'Especialidade do RQE inválida', {
         status: 400,
-        details: [{ field: 'especialidadeId', message: 'Especialidade inexistente ou inativa' }],
+        details: [{ field: 'rqes', message: 'Especialidade do RQE inexistente ou inativa' }],
       });
     }
   }
