@@ -1023,5 +1023,29 @@
       "nomeTipo": "Name",
       "nomeTipoPlaceholder": "E.g.: Biosafety"
     }
+  },
+  "painelOcupacao": {
+    "filtrosRotulo": "Occupancy filters",
+    "sala": "Room",
+    "profissional": "Professional",
+    "turno": "Shift",
+    "todosTurnos": "All shifts",
+    "diaSemana": "Day of the week",
+    "todosDias": "All days",
+    "limpar": "Clear filters",
+    "turnos": {
+      "MANHA": "Morning",
+      "TARDE": "Afternoon",
+      "NOITE": "Evening"
+    },
+    "dias": {
+      "0": "Sunday",
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday"
+    }
   }
 }

@@ -1,4 +1,9 @@
-import { PERMISSOES, type AbaPainel, type DashboardPainel } from '@torres/shared';
+import {
+  PERMISSOES,
+  PREFERENCIAS_PADRAO,
+  type AbaPainel,
+  type DashboardPainel,
+} from '@torres/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -127,6 +132,23 @@ const COMERCIAL = dashboard('comercial', [
         valor: 14,
         formato: 'inteiro',
         detalhe: 'profissionais ativos',
+      },
+    ],
+  },
+]);
+
+const OCUPACAO = dashboard('ocupacao', [
+  {
+    id: 'indicadores',
+    titulo: null,
+    blocos: [
+      {
+        tipo: 'kpi',
+        id: 'taxa-uso',
+        rotulo: 'Taxa de Uso',
+        valor: 18.2,
+        formato: 'percentual',
+        detalhe: 'mês anterior: 10%',
       },
     ],
   },
@@ -273,6 +295,65 @@ describe('Painel (/)', () => {
       base: 'competencia',
     });
     expect(screen.getByLabelText('Data inicial')).toHaveValue('2026-09-01');
+  });
+
+  describe('aba Ocupação (#139)', () => {
+    it('mostra os filtros só nessa aba e manda sala, turno e dia da semana na consulta', async () => {
+      const fetchMock = api({ ocupacao: OCUPACAO });
+      const user = userEvent.setup();
+      const { router } = renderApp('/?aba=comercial', fetchMock);
+      await screen.findByTestId('kpi-medicos-ativos');
+      expect(screen.queryByRole('group', { name: 'Filtros da ocupação' })).toBeNull();
+
+      await user.click(screen.getByRole('tab', { name: 'Ocupação' }));
+      expect(await screen.findByTestId('kpi-taxa-uso')).toHaveTextContent('18,2%');
+      expect(screen.getByText('mês anterior: 10%')).toBeVisible();
+      expect(screen.getByRole('group', { name: 'Filtros da ocupação' })).toBeVisible();
+
+      await user.click(screen.getByRole('combobox', { name: 'Turno' }));
+      await user.click(await screen.findByRole('option', { name: 'Tarde' }));
+      await user.click(screen.getByRole('combobox', { name: 'Dia da semana' }));
+      await user.click(await screen.findByRole('option', { name: 'Quinta' }));
+
+      expect(router.state.location.search).toContain('turno=TARDE');
+      expect(router.state.location.search).toContain('diaSemana=4');
+      await waitFor(() =>
+        expect(consulta(fetchMock, 'ocupacao')).toMatchObject({ turno: 'TARDE', diaSemana: '4' }),
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Limpar filtros' }));
+      await waitFor(() => expect(router.state.location.search).not.toContain('turno='));
+      expect(screen.getByRole('combobox', { name: 'Turno' })).toHaveTextContent('Todos os turnos');
+      expect(screen.queryByRole('button', { name: 'Limpar filtros' })).toBeNull();
+    }, 15000);
+
+    it('abre direto nos filtros da URL e os mantém ao buscar outro mês', async () => {
+      const fetchMock = api({ ocupacao: OCUPACAO });
+      renderApp('/?aba=ocupacao&turno=NOITE&diaSemana=6', fetchMock);
+
+      expect(await screen.findByTestId('kpi-taxa-uso')).toBeVisible();
+      expect(consulta(fetchMock, 'ocupacao')).toMatchObject({ turno: 'NOITE', diaSemana: '6' });
+      expect(screen.getByRole('combobox', { name: 'Turno' })).toHaveTextContent('Noite');
+      expect(screen.getByRole('combobox', { name: 'Dia da semana' })).toHaveTextContent('Sábado');
+    });
+
+    it('em inglês, os filtros saem traduzidos', async () => {
+      const usuario = {
+        ...USUARIO_TESTE,
+        preferencias: { ...PREFERENCIAS_PADRAO, idioma: 'en' as const },
+      };
+      const fetchMock = apiFalsa({
+        usuario,
+        rotas: { [API('ocupacao')]: () => json(OCUPACAO) },
+      });
+      renderApp('/?aba=ocupacao', fetchMock);
+
+      expect(await screen.findByRole('group', { name: 'Occupancy filters' })).toBeVisible();
+      expect(screen.getByRole('combobox', { name: 'Shift' })).toHaveTextContent('All shifts');
+      expect(screen.getByRole('combobox', { name: 'Day of the week' })).toHaveTextContent(
+        'All days',
+      );
+    }, 15000);
   });
 
   describe('tabela com alternância de visualização', () => {

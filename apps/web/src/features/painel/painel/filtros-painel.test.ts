@@ -75,3 +75,73 @@ describe('filtros na URL', () => {
     });
   });
 });
+
+describe('filtros da aba Ocupação (#139)', () => {
+  const SALA = '11111111-1111-4111-8111-111111111111';
+  const PROF = '22222222-2222-4222-8222-222222222222';
+  const base = {
+    aba: 'ocupacao',
+    modo: 'mes',
+    mes: '2026-10',
+    de: '',
+    ate: '',
+    base: 'recebimento',
+  } as const;
+
+  it('ida e volta pela URL', () => {
+    const filtros = {
+      ...base,
+      salaId: SALA,
+      profissionalId: PROF,
+      turno: 'TARDE',
+      diaSemana: '4',
+    } as const;
+
+    const url = filtrosParaUrl(filtros);
+
+    expect(url.get('salaId')).toBe(SALA);
+    expect(filtrosDaUrl(url, HOJE)).toMatchObject({
+      salaId: SALA,
+      profissionalId: PROF,
+      turno: 'TARDE',
+      diaSemana: '4',
+    });
+  });
+
+  it('sem filtro, nada vai para a URL nem para a API', () => {
+    expect(filtrosParaUrl(base).toString()).toBe(
+      'aba=ocupacao&modo=mes&base=recebimento&mes=2026-10',
+    );
+    expect(filtrosParaApi(base)).toEqual({ modo: 'mes', mes: '2026-10', base: 'recebimento' });
+  });
+
+  it('só a aba Ocupação manda os filtros para a API', () => {
+    const filtros = { ...base, salaId: SALA, turno: 'NOITE', diaSemana: '0' } as const;
+
+    expect(filtrosParaApi(filtros)).toEqual({
+      modo: 'mes',
+      mes: '2026-10',
+      base: 'recebimento',
+      salaId: SALA,
+      turno: 'NOITE',
+      diaSemana: '0',
+    });
+    expect(filtrosParaApi({ ...filtros, aba: 'comercial' })).toEqual({
+      modo: 'mes',
+      mes: '2026-10',
+      base: 'recebimento',
+    });
+  });
+
+  it('valores inválidos na URL são ignorados', () => {
+    const filtros = filtrosDaUrl(
+      new URLSearchParams('aba=ocupacao&salaId=x&profissionalId=y&turno=MADRUGADA&diaSemana=9'),
+      HOJE,
+    );
+
+    expect(filtros.salaId).toBeUndefined();
+    expect(filtros.profissionalId).toBeUndefined();
+    expect(filtros.turno).toBeUndefined();
+    expect(filtros.diaSemana).toBeUndefined();
+  });
+});

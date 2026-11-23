@@ -1,10 +1,12 @@
 import {
   ABAS_PAINEL,
   BASES_PERIODO,
+  MATRIZ_TURNOS,
   MODOS_PERIODO,
   type AbaPainel,
   type BasePeriodo,
   type FiltrosPainelInput,
+  type MatrizTurno,
   type ModoPeriodo,
 } from '@torres/shared';
 
@@ -52,7 +54,19 @@ export interface FiltrosAplicados {
   de: string;
   ate: string;
   base: BasePeriodo;
+  /** Filtros da aba Ocupação (issue #139); ausente = sem filtro. */
+  salaId?: string;
+  profissionalId?: string;
+  turno?: MatrizTurno;
+  /** Dia da semana: "0" (domingo) a "6" (sábado). */
+  diaSemana?: string;
 }
+
+/** Campos de filtro da aba Ocupação, guardados na URL. */
+export const CAMPOS_OCUPACAO = ['salaId', 'profissionalId', 'turno', 'diaSemana'] as const;
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const DIA_SEMANA = /^[0-6]$/;
 
 function escolher<T extends string>(valor: string | null, validos: readonly T[], padrao: T): T {
   return validos.find((v) => v === valor) ?? padrao;
@@ -61,6 +75,10 @@ function escolher<T extends string>(valor: string | null, validos: readonly T[],
 /** Filtros e aba guardados na URL (`?aba=&modo=&mes=&de=&ate=&base=`); o que faltar usa o padrão. */
 export function filtrosDaUrl(params: URLSearchParams, hoje = new Date()): FiltrosAplicados {
   const mes = params.get('mes');
+  const sala = params.get('salaId');
+  const profissional = params.get('profissionalId');
+  const turno = MATRIZ_TURNOS.find((t) => t === params.get('turno'));
+  const dia = params.get('diaSemana');
   return {
     aba: escolher(params.get('aba'), ABAS_PAINEL, 'executivo'),
     modo: escolher(params.get('modo'), MODOS_PERIODO, 'mes'),
@@ -68,6 +86,10 @@ export function filtrosDaUrl(params: URLSearchParams, hoje = new Date()): Filtro
     de: params.get('de') ?? '',
     ate: params.get('ate') ?? '',
     base: escolher(params.get('base'), BASES_PERIODO, 'recebimento'),
+    ...(sala && UUID.test(sala) ? { salaId: sala } : {}),
+    ...(profissional && UUID.test(profissional) ? { profissionalId: profissional } : {}),
+    ...(turno ? { turno } : {}),
+    ...(dia && DIA_SEMANA.test(dia) ? { diaSemana: dia } : {}),
   };
 }
 
@@ -78,12 +100,25 @@ export function filtrosParaUrl(filtros: FiltrosAplicados): URLSearchParams {
     params.set('de', filtros.de);
     params.set('ate', filtros.ate);
   }
+  for (const campo of CAMPOS_OCUPACAO) {
+    const valor = filtros[campo];
+    if (valor) params.set(campo, valor);
+  }
   return params;
 }
 
 /** Query da API só com o que vale para o modo. */
 export function filtrosParaApi(filtros: FiltrosAplicados): FiltrosPainelInput {
-  return filtros.modo === 'mes'
-    ? { modo: 'mes', mes: filtros.mes, base: filtros.base }
-    : { modo: 'periodo', de: filtros.de, ate: filtros.ate, base: filtros.base };
+  const periodo: FiltrosPainelInput =
+    filtros.modo === 'mes'
+      ? { modo: 'mes', mes: filtros.mes, base: filtros.base }
+      : { modo: 'periodo', de: filtros.de, ate: filtros.ate, base: filtros.base };
+  if (filtros.aba !== 'ocupacao') return periodo;
+  return {
+    ...periodo,
+    ...(filtros.salaId ? { salaId: filtros.salaId } : {}),
+    ...(filtros.profissionalId ? { profissionalId: filtros.profissionalId } : {}),
+    ...(filtros.turno ? { turno: filtros.turno } : {}),
+    ...(filtros.diaSemana ? { diaSemana: filtros.diaSemana } : {}),
+  };
 }

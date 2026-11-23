@@ -12,6 +12,7 @@ import {
   ROTULOS_ABA,
   type FiltrosAplicados,
 } from './filtros-painel';
+import { FiltrosOcupacao } from './FiltrosOcupacao';
 import { FiltrosPainel } from './FiltrosPainel';
 import { useDashboard } from './use-dashboard';
 
@@ -61,6 +62,8 @@ export default function PainelPage() {
           </button>
         ))}
       </div>
+
+      {filtros.aba === 'ocupacao' && <FiltrosOcupacao filtros={filtros} onAlterar={aplicar} />}
 
       <div
         id="painel-aba"

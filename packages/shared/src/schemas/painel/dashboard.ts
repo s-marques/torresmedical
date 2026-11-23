@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { matrizTurnoSchema } from '../comercial-atendimento/agenda-matriz';
 
 /** Abas do dashboard, na ordem da tela (docs/inventario/telas/painel-painel.md). */
 export const ABAS_PAINEL = [
@@ -50,6 +51,16 @@ export const filtrosPainelSchema = z
     de: z.string().trim().optional(),
     ate: z.string().trim().optional(),
     base: z.enum(BASES_PERIODO, { error: 'Base inválida' }).default('recebimento'),
+    // Filtros da aba Ocupação (issue #139): sala, profissional, turno e dia da semana.
+    salaId: z.uuid({ error: 'Sala inválida' }).optional(),
+    profissionalId: z.uuid({ error: 'Profissional inválido' }).optional(),
+    turno: matrizTurnoSchema.optional(),
+    /** Dia da semana: 0 = domingo … 6 = sábado. */
+    diaSemana: z
+      .string({ error: 'Dia da semana inválido' })
+      .regex(/^[0-6]$/, { error: 'Dia da semana inválido' })
+      .transform(Number)
+      .optional(),
   })
   .superRefine((filtros, ctx) => {
     if (filtros.modo !== 'periodo') return;

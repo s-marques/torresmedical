@@ -920,5 +920,29 @@
       "nomeTipo": "Nome",
       "nomeTipoPlaceholder": "Ex.: Biossegurança"
     }
+  },
+  "painelOcupacao": {
+    "filtrosRotulo": "Filtros da ocupação",
+    "sala": "Sala",
+    "profissional": "Profissional",
+    "turno": "Turno",
+    "todosTurnos": "Todos os turnos",
+    "diaSemana": "Dia da semana",
+    "todosDias": "Todos os dias",
+    "limpar": "Limpar filtros",
+    "turnos": {
+      "MANHA": "Manhã",
+      "TARDE": "Tarde",
+      "NOITE": "Noite"
+    },
+    "dias": {
+      "0": "Domingo",
+      "1": "Segunda",
+      "2": "Terça",
+      "3": "Quarta",
+      "4": "Quinta",
+      "5": "Sexta",
+      "6": "Sábado"
+    }
   }
 }
