@@ -169,6 +169,22 @@ export class UsuariosLookupService extends EntidadeLookupService<
     });
     return new Map(usuarios.map((u) => [u.id, u.nome]));
   }
+
+  /**
+   * Ids, entre os informados, dos profissionais que têm usuário ativo vinculado:
+   * a etapa "Acesso ao sistema criado" do onboarding (issue #142).
+   */
+  async profissionaisComAcesso(profissionalIds: readonly string[]): Promise<Set<string>> {
+    if (profissionalIds.length === 0) return new Set();
+    const vinculos = await this.txHost.tx.usuarioProfissional.findMany({
+      where: {
+        profissionalId: { in: [...profissionalIds] },
+        usuario: { ativo: true, deletedAt: null },
+      },
+      select: { profissionalId: true },
+    });
+    return new Set(vinculos.map((v) => v.profissionalId));
+  }
 }
 
 /** Tela Usuários (`/usuarios`): usuários do sistema e o perfil de acesso de cada um. */

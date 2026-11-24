@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { formatarMascara } from '@/lib/forms/mascaras';
 import { AvatarProfissional } from './AvatarProfissional';
 import { ContratosProfissional } from './ContratosProfissional';
+import { OnboardingProfissional } from './OnboardingProfissional';
 import { DocumentosProfissional } from './DocumentosProfissional';
 import { corHex, formatarComissao, formatarValor } from './formatadores';
 
@@ -126,6 +127,7 @@ export function DetalheProfissional({
             </ul>
           </section>
         )}
+        <OnboardingProfissional profissionalId={p.id} />
         <DocumentosProfissional profissionalId={p.id} />
         <ContratosProfissional profissionalId={p.id} />
       </div>

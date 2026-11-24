@@ -2,6 +2,8 @@ import { CONSULTA_LOOKUP, txHostFalso } from '../../../../test/utils/tx-host-fal
 import { SegredosService } from '../../../common/crypto/segredos.service';
 import type { ExportService } from '../../../common/export/export.service';
 import type { ArquivosService } from '../../../common/storage/arquivos.service';
+import { BusinessException } from '../../../common/errors/api.exception';
+import type { ProfissionaisOnboardingService } from './profissionais-onboarding.service';
 import { ProfissionaisService } from './profissionais.service';
 
 const ESPECIALIDADE_ID = '7a1d3c52-8d0f-4b8e-9f4c-2b2f3c4d5e6f';
@@ -28,17 +30,20 @@ function setup(registros: unknown[] = [PROFISSIONAL], arquivo?: { uso: string })
   const arquivos = {
     findById: jest.fn().mockResolvedValue(arquivo ?? { uso: 'foto-profissional' }),
   };
+  const onboarding = { garantirPodeAtivar: jest.fn().mockResolvedValue(undefined) };
   return {
     service: new ProfissionaisService(
       txHost,
       exportService as unknown as ExportService,
       segredos,
       arquivos as unknown as ArquivosService,
+      onboarding as unknown as ProfissionaisOnboardingService,
     ),
     delegate,
     especialidade,
     exportService,
     arquivos,
+    onboarding,
   };
 }
 
@@ -338,6 +343,36 @@ describe('ProfissionaisService', () => {
       expect(delegate.update).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: PROFISSIONAL.id }, data: { ativo: false } }),
       );
+    });
+
+    it('alterarStatus: ativar passa pela regra do onboarding (#142)', async () => {
+      const { service, delegate, onboarding } = setup([{ ...COMPLETO, ativo: false }]);
+
+      await service.alterarStatus(PROFISSIONAL.id, true);
+
+      expect(onboarding.garantirPodeAtivar).toHaveBeenCalledWith(PROFISSIONAL.id);
+      expect(delegate.update).toHaveBeenCalled();
+    });
+
+    it('alterarStatus: onboarding incompleto impede a ativação', async () => {
+      const { service, delegate, onboarding } = setup([{ ...COMPLETO, ativo: false }]);
+      onboarding.garantirPodeAtivar.mockRejectedValue(
+        new BusinessException('ONBOARDING_INCOMPLETO', 'Conclua as etapas', { status: 409 }),
+      );
+
+      await expect(service.alterarStatus(PROFISSIONAL.id, true)).rejects.toMatchObject({
+        status: 409,
+      });
+      expect(delegate.update).not.toHaveBeenCalled();
+    });
+
+    it('alterarStatus: desativar e reativar quem já está ativo não consulta o onboarding', async () => {
+      const { service, onboarding } = setup([{ ...COMPLETO, ativo: true }]);
+
+      await service.alterarStatus(PROFISSIONAL.id, false);
+      await service.alterarStatus(PROFISSIONAL.id, true);
+
+      expect(onboarding.garantirPodeAtivar).not.toHaveBeenCalled();
     });
 
     it('remove: exclusão lógica', async () => {

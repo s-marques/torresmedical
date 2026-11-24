@@ -1,5 +1,6 @@
 import {
   arquivoLinkSchema,
+  type AssinarContratoSalaInput,
   contratoSalaSchema,
   descreverResumoGerarCobrancas,
   gerarCobrancasMesResumoSchema,
@@ -14,6 +15,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api/client';
+import { i18next } from '@/lib/i18n';
 import { META_FORMULARIO } from '@/lib/api/query-client';
 
 export const URL_CONTRATOS = '/api/gestao-profissionais/contratos-sala';
@@ -68,6 +70,29 @@ export function useDefinirPdfContrato() {
       chamar(`/${id}/pdf`, 'PUT', { arquivoId }),
     { sucesso: undefined },
   );
+}
+
+/** Registra a assinatura (issue #142): ativa o contrato e cria o onboarding do profissional. */
+export function useAssinarContrato(id: string) {
+  const queryClient = useQueryClient();
+  const mutation = useMutationContrato(
+    (dados: AssinarContratoSalaInput) => chamar(`/${id}/assinar`, 'POST', dados),
+    { formulario: true, sucesso: i18next.t('onboarding.assinatura.sucesso') },
+  );
+  return {
+    ...mutation,
+    mutateAsync: async (dados: AssinarContratoSalaInput) => {
+      const contrato = await mutation.mutateAsync(dados);
+      // O profissional ganhou checklist: o cadastro e a lista de onboarding recarregam.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['onboarding-profissional'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['data-grid', '/api/gestao-profissionais/onboarding'],
+        }),
+      ]);
+      return contrato;
+    },
+  };
 }
 
 /** Link temporário para ver o PDF do contrato. */

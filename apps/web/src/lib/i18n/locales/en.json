@@ -257,6 +257,7 @@
       "gestao-profissionais": {
         "salas": "Rooms",
         "profissionais": "Professionals",
+        "onboarding": "Onboarding",
         "servicos-profissionais": "Professional Services",
         "protocolos": "Protocols",
         "receita-profissionais": "Professional Revenue",
@@ -1394,6 +1395,92 @@
       "atualizado": "Document updated.",
       "decidido": "Document updated.",
       "removido": "Document deleted."
+    }
+  },
+  "onboarding": {
+    "titulo": "Onboarding",
+    "erroCarregar": "Could not load the onboarding.",
+    "resumo": "{{concluidas}} of {{total}} steps · contract signed on {{data}} ({{dias}} day(s))",
+    "concluida": "Done",
+    "pendente": "Pending",
+    "atrasada": "Overdue",
+    "marcadaPor": "Marked by {{nome}} on {{data}}",
+    "falta": "Missing: {{itens}}",
+    "desmarcar": "Unmark",
+    "marcarOrientada": "Mark as briefed",
+    "avisoAtivacao": "The professional can only be activated once every step, except \"Professional active\", is done.",
+    "sugestoes": {
+      "horarios": "Working hours suggested by the contract:",
+      "usuario": "Suggestion: create the user linked to the professional.",
+      "abrirUsuarios": "Open Users"
+    },
+    "dias": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    "etapas": {
+      "CONTRATO_ASSINADO": "Contract signed",
+      "CADASTRO_COMPLETO": "Complete profile",
+      "DOCUMENTACAO_VALIDADA": "Documents validated",
+      "SALA_DEFINIDA": "Room assigned",
+      "AGENDA_CONFIGURADA": "Schedule configured",
+      "ACESSO_CRIADO": "System access created",
+      "RECEPCAO_ORIENTADA": "Reception briefed",
+      "PRIMEIRO_ATENDIMENTO": "First appointment",
+      "PROFISSIONAL_ATIVO": "Professional active"
+    },
+    "campos": {
+      "nome": "Name",
+      "profissao": "Profession",
+      "registro": "Council registration",
+      "especialidade": "Specialty",
+      "cpf": "CPF",
+      "rg": "ID (RG)",
+      "dataNascimento": "Date of birth",
+      "endereco": "Address",
+      "contato": "Phone or email",
+      "cnpj": "CNPJ",
+      "contatoAdministrativo": "Administrative contact"
+    },
+    "mensagens": {
+      "orientada": "Reception marked as briefed.",
+      "desmarcada": "Reception mark removed."
+    },
+    "assinatura": {
+      "titulo": "Record signature",
+      "descricao": "Contract of {{locatario}}. This only records it: there is no electronic signature.",
+      "confirmar": "Record signature",
+      "data": "Signature date",
+      "pdf": "Signed PDF (optional)",
+      "efeitos": "Once recorded, the contract becomes active, the professional gets the onboarding checklist and the first month is billed (Monthly contract).",
+      "sucesso": "Signature recorded. The professional onboarding has started.",
+      "acao": "Record signature",
+      "acaoDe": "Record signature of the contract of {{nome}}",
+      "aguardando": "Awaiting signature",
+      "aguardandoAjuda": "The contract has no effect (room free, no billing) until the signature is recorded."
+    },
+    "lista": {
+      "titulo": "Onboarding",
+      "descricao": "Professionals who signed the contract and have not yet finished the entry checklist.",
+      "vazio": "No onboarding in progress.",
+      "buscar": "Search professional...",
+      "verEtapas": "View steps of {{nome}}",
+      "verEtapasTitulo": "View steps",
+      "modalTitulo": "Onboarding of {{nome}}",
+      "filtros": {
+        "situacao": "Status",
+        "todas": "All statuses"
+      },
+      "situacoes": {
+        "EM_ANDAMENTO": "In progress",
+        "ATRASADO": "Overdue"
+      },
+      "colunas": {
+        "profissional": "Professional",
+        "sala": "Room",
+        "assinatura": "Signature",
+        "progresso": "Steps",
+        "proxima": "Next step",
+        "situacao": "Status",
+        "acoes": "Actions"
+      }
     }
   }
 }

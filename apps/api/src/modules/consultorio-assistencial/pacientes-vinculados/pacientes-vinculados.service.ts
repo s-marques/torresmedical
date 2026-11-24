@@ -15,6 +15,25 @@ export class PacientesVinculadosService {
     private readonly escopo: EscopoDadosService,
   ) {}
 
+  /**
+   * Ids, entre os informados, dos profissionais com ao menos um atendimento finalizado: a etapa
+   * "Primeiro atendimento" do onboarding (issue #142). Não aplica o escopo: quem chama já aplicou o seu.
+   */
+  async profissionaisComAtendimentoFinalizado(
+    profissionalIds: readonly string[],
+  ): Promise<Set<string>> {
+    if (profissionalIds.length === 0) return new Set();
+    const grupos = await this.txHost.tx.atendimento.groupBy({
+      by: ['profissionalId'],
+      where: {
+        profissionalId: { in: [...profissionalIds] },
+        status: 'FINALIZADO',
+        deletedAt: null,
+      },
+    });
+    return new Set(grupos.map((g) => g.profissionalId));
+  }
+
   /** Ids dos pacientes visíveis; `null` = todos (usuário sem restrição). */
   async idsNoEscopo(): Promise<string[] | null> {
     const profissionalIds = this.escopo.profissionalIds();

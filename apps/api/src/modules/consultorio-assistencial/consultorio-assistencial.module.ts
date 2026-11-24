@@ -28,7 +28,11 @@ import { ReceituarioBlocosService } from './receituarios/receituario-blocos.serv
   // Paciente e Agendamento (comercial-atendimento) e Profissional (gestao-profissionais) são
   // lidos pelos services exportados, sem FK nas tabelas deste módulo (CLAUDE.md, seção 3).
   // A tela Pacientes (comercial-atendimento) usa os pacientes vinculados daqui (issue #153).
-  imports: [forwardRef(() => ComercialAtendimentoModule), GestaoProfissionaisModule],
+  imports: [
+    forwardRef(() => ComercialAtendimentoModule),
+    // O onboarding do profissional (#142) lê os atendimentos daqui, então o vínculo é circular.
+    forwardRef(() => GestaoProfissionaisModule),
+  ],
   controllers: [
     ProntuariosController,
     AtendimentoMedicoController,

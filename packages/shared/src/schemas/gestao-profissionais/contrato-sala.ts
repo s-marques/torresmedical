@@ -93,7 +93,12 @@ export const CONTRATO_INDICE_REAJUSTE_ROTULOS: Record<ContratoIndiceReajuste, st
   LIVRE_NEGOCIACAO: 'Livre negociação',
 };
 
-export const CONTRATO_STATUS = ['ATIVO', 'CANCELADO', 'ENCERRADO'] as const;
+export const CONTRATO_STATUS = [
+  'ATIVO',
+  'CANCELADO',
+  'ENCERRADO',
+  'AGUARDANDO_ASSINATURA',
+] as const;
 export const contratoStatusSchema = z.enum(CONTRATO_STATUS, { error: 'Status inválido' });
 export type ContratoStatus = z.infer<typeof contratoStatusSchema>;
 
@@ -101,6 +106,7 @@ export const CONTRATO_STATUS_ROTULOS: Record<ContratoStatus, string> = {
   ATIVO: 'ativo',
   CANCELADO: 'cancelado',
   ENCERRADO: 'encerrado',
+  AGUARDANDO_ASSINATURA: 'aguardando assinatura',
 };
 
 /** Abreviação do dia da semana (`DIAS_SEMANA`, 0 = domingo): "Dom", "Seg", "Ter"… */
@@ -189,6 +195,8 @@ export const contratoSalaInputSchema = z
     dias: z.array(contratoDiaSchema).max(7).default([]),
     permiteIndicacao: z.boolean({ error: 'Valor inválido' }).default(true),
     participaEventos: z.boolean({ error: 'Valor inválido' }).default(false),
+    /** Só na criação, para locatário profissional: o contrato nasce "aguardando assinatura" (#142). */
+    aguardandoAssinatura: z.boolean({ error: 'Valor inválido' }).default(false),
     observacoes: z
       .string({ error: 'Observações inválidas' })
       .trim()
@@ -351,6 +359,8 @@ export const contratoSalaSchema = z.object({
   participaEventos: z.boolean(),
   observacoes: z.string().nullable(),
   status: contratoStatusSchema,
+  /** Data da assinatura ( enquanto aguarda ou em contratos anteriores ao onboarding). */
+  assinadoEm: z.iso.date().nullable(),
   /**
    * Por Turno, ativo e sem cobrança gerada no mês atual (Mensal é coberto por "Gerar Cobranças
    * do Mês" e Hora Avulsa pelo "Gerar Cobrança" do modal Horas Utilizadas).

@@ -1,4 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
+import { ConsultorioAssistencialModule } from '../consultorio-assistencial/consultorio-assistencial.module';
 import { ComercialAtendimentoModule } from '../comercial-atendimento/comercial-atendimento.module';
 import { ComprasEstoqueModule } from '../compras-estoque/compras-estoque.module';
 import { ConfiguracoesGestaoModule } from '../configuracoes-gestao/configuracoes-gestao.module';
@@ -6,6 +7,8 @@ import { FinanceiroModule } from '../financeiro/financeiro.module';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { EspecialidadesController } from './especialidades/especialidades.controller';
 import { EspecialidadesService } from './especialidades/especialidades.service';
+import { ContratosSalaAssinaturaController } from './salas/contratos-sala-assinatura.controller';
+import { ContratosSalaAssinaturaService } from './salas/contratos-sala-assinatura.service';
 import { ContratosSalaController } from './salas/contratos-sala.controller';
 import { ContratosSalaCobrancaController } from './salas/contratos-sala-cobranca.controller';
 import { ContratosSalaCobrancaService } from './salas/contratos-sala-cobranca.service';
@@ -33,6 +36,8 @@ import { ReceitaProfissionaisController } from './receita-profissionais/receita-
 import { ReceitaProfissionaisService } from './receita-profissionais/receita-profissionais.service';
 import { ProfissionaisDocumentosController } from './profissionais/profissionais-documentos.controller';
 import { ProfissionaisDocumentosService } from './profissionais/profissionais-documentos.service';
+import { ProfissionaisOnboardingController } from './profissionais/profissionais-onboarding.controller';
+import { ProfissionaisOnboardingService } from './profissionais/profissionais-onboarding.service';
 import { ProfissionalAgendaService } from './profissionais/profissional-agenda.service';
 import { ProfissionaisController } from './profissionais/profissionais.controller';
 import { ProfissionaisService } from './profissionais/profissionais.service';
@@ -44,6 +49,8 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     forwardRef(() => FinanceiroModule),
     forwardRef(() => ConfiguracoesGestaoModule),
     forwardRef(() => ComprasEstoqueModule),
+    // Lê os atendimentos para a etapa "Primeiro atendimento" do onboarding (#142).
+    forwardRef(() => ConsultorioAssistencialModule),
   ],
   controllers: [
     criarLookupController('profissionais', ProfissionaisService),
@@ -51,6 +58,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     criarLookupController('salas', SalasService),
     ProfissionaisController,
     ProfissionaisDocumentosController,
+    ProfissionaisOnboardingController,
     EspecialidadesController,
     ServicosProfissionaisController,
     ProtocolosController,
@@ -58,6 +66,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     SalasPainelController,
     SalasController,
     ContratosSalaController,
+    ContratosSalaAssinaturaController,
     ContratosSalaCobrancaController,
     ContratosSalaHorasController,
     ReceitaProfissionaisController,
@@ -68,6 +77,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     EspecialidadesService,
     ProfissionalAgendaService,
     ProfissionaisDocumentosService,
+    ProfissionaisOnboardingService,
     ServicosProfissionaisService,
     ProtocolosService,
     ProtocolosMaeService,
@@ -75,6 +85,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     SalasPainelService,
     ContratosSalaService,
     ContratosSalaCobrancaService,
+    ContratosSalaAssinaturaService,
     ContratosSalaHorasService,
     ReceitaProfissionaisService,
     SalasBloqueiosService,

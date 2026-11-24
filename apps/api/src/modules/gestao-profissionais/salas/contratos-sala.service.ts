@@ -205,7 +205,12 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
   async create(input: CreateContratoSalaInput): Promise<ContratoSalaDto> {
     await this.validar(input);
     const criado = await this.txHost.tx.contratoSala.create({
-      data: { ...this.dados(input), dias: { create: input.dias } },
+      data: {
+        ...this.dados(input),
+        // Contrato de profissional pode nascer aguardando assinatura (issue #142).
+        status: input.aguardandoAssinatura ? 'AGUARDANDO_ASSINATURA' : 'ATIVO',
+        dias: { create: input.dias },
+      },
       include: INCLUDE,
     });
     return this.toDto(
@@ -384,6 +389,9 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       }
       throw erro;
     }
+    if (input.aguardandoAssinatura && input.locatarioTipo !== 'PROFISSIONAL') {
+      this.invalido('aguardandoAssinatura', 'Só o contrato de profissional aguarda assinatura');
+    }
     if (input.formaPagamentoId) {
       try {
         await this.formasPagamento.findLookupById(input.formaPagamentoId);
@@ -526,6 +534,7 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       participaEventos: contrato.participaEventos,
       observacoes: contrato.observacoes,
       status: contrato.status,
+      assinadoEm: contrato.assinadoEm ? diaISO(contrato.assinadoEm) : null,
       semCobrancaNoMes: semCobranca.has(contrato.id),
       encerradoEm: contrato.encerradoEm ? diaISO(contrato.encerradoEm) : null,
       motivoEncerramento: contrato.motivoEncerramento,

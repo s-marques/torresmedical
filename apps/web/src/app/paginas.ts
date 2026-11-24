@@ -131,6 +131,9 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   'gestao-profissionais.profissionais': lazy(
     () => import('@/features/gestao-profissionais/profissionais/ProfissionaisPage'),
   ),
+  'gestao-profissionais.onboarding': lazy(
+    () => import('@/features/gestao-profissionais/onboarding/OnboardingPage'),
+  ),
   'gestao-profissionais.salas': lazy(
     () => import('@/features/gestao-profissionais/salas/SalasPage'),
   ),

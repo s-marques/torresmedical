@@ -257,6 +257,7 @@
       "gestao-profissionais": {
         "salas": "Salas",
         "profissionais": "Profesionales",
+        "onboarding": "Onboarding",
         "servicos-profissionais": "Servicios Profesionales",
         "protocolos": "Protocolos",
         "receita-profissionais": "Ingresos de Profesionales",
@@ -1394,6 +1395,92 @@
       "atualizado": "Documento actualizado.",
       "decidido": "Documento actualizado.",
       "removido": "Documento eliminado."
+    }
+  },
+  "onboarding": {
+    "titulo": "Onboarding",
+    "erroCarregar": "No se pudo cargar el onboarding.",
+    "resumo": "{{concluidas}} de {{total}} etapas · contrato firmado el {{data}} ({{dias}} día(s))",
+    "concluida": "Completada",
+    "pendente": "Pendiente",
+    "atrasada": "Atrasada",
+    "marcadaPor": "Marcada por {{nome}} el {{data}}",
+    "falta": "Falta: {{itens}}",
+    "desmarcar": "Desmarcar",
+    "marcarOrientada": "Marcar como orientada",
+    "avisoAtivacao": "El profesional solo puede activarse con todas las etapas, excepto \"Profesional activo\", completadas.",
+    "sugestoes": {
+      "horarios": "Horario de atención sugerido por el contrato:",
+      "usuario": "Sugerencia: crear el usuario vinculado al profesional.",
+      "abrirUsuarios": "Abrir Usuarios"
+    },
+    "dias": ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
+    "etapas": {
+      "CONTRATO_ASSINADO": "Contrato firmado",
+      "CADASTRO_COMPLETO": "Registro completo",
+      "DOCUMENTACAO_VALIDADA": "Documentación validada",
+      "SALA_DEFINIDA": "Sala definida",
+      "AGENDA_CONFIGURADA": "Agenda configurada",
+      "ACESSO_CRIADO": "Acceso al sistema creado",
+      "RECEPCAO_ORIENTADA": "Recepción orientada",
+      "PRIMEIRO_ATENDIMENTO": "Primera atención",
+      "PROFISSIONAL_ATIVO": "Profesional activo"
+    },
+    "campos": {
+      "nome": "Nombre",
+      "profissao": "Profesión",
+      "registro": "Registro en el colegio",
+      "especialidade": "Especialidad",
+      "cpf": "CPF",
+      "rg": "Documento (RG)",
+      "dataNascimento": "Fecha de nacimiento",
+      "endereco": "Dirección",
+      "contato": "Teléfono o correo",
+      "cnpj": "CNPJ",
+      "contatoAdministrativo": "Contacto administrativo"
+    },
+    "mensagens": {
+      "orientada": "Recepción marcada como orientada.",
+      "desmarcada": "Marca de la recepción eliminada."
+    },
+    "assinatura": {
+      "titulo": "Registrar firma",
+      "descricao": "Contrato de {{locatario}}. Es solo el registro: no hay firma electrónica.",
+      "confirmar": "Registrar firma",
+      "data": "Fecha de la firma",
+      "pdf": "PDF firmado (opcional)",
+      "efeitos": "Al registrar, el contrato queda activo, el profesional recibe el checklist de onboarding y se genera el cobro del primer mes (contrato Mensual).",
+      "sucesso": "Firma registrada. Se inició el onboarding del profesional.",
+      "acao": "Registrar firma",
+      "acaoDe": "Registrar la firma del contrato de {{nome}}",
+      "aguardando": "Pendiente de firma",
+      "aguardandoAjuda": "El contrato no tiene efecto (sala libre y sin cobro) hasta que se registre la firma."
+    },
+    "lista": {
+      "titulo": "Onboarding",
+      "descricao": "Profesionales que firmaron el contrato y aún no completaron el checklist de ingreso.",
+      "vazio": "Ningún onboarding en curso.",
+      "buscar": "Buscar profesional...",
+      "verEtapas": "Ver etapas de {{nome}}",
+      "verEtapasTitulo": "Ver etapas",
+      "modalTitulo": "Onboarding de {{nome}}",
+      "filtros": {
+        "situacao": "Situación",
+        "todas": "Todas las situaciones"
+      },
+      "situacoes": {
+        "EM_ANDAMENTO": "En curso",
+        "ATRASADO": "Atrasado"
+      },
+      "colunas": {
+        "profissional": "Profesional",
+        "sala": "Sala",
+        "assinatura": "Firma",
+        "progresso": "Etapas",
+        "proxima": "Próxima etapa",
+        "situacao": "Situación",
+        "acoes": "Acciones"
+      }
     }
   }
 }
