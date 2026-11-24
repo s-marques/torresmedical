@@ -33,5 +33,7 @@
   "PESQUISA_NAO_ENCONTRADA": "Survey not found",
   "PESQUISA_JA_RESPONDIDA": "This survey was already answered",
   "PESQUISA_EXPIRADA": "The link for this survey has expired",
-  "RECEPCAO_STATUS_TRAVADO": "The appointment is in progress or finished, and only the doctor can change its status"
+  "RECEPCAO_STATUS_TRAVADO": "The appointment is in progress or finished, and only the doctor can change its status",
+  "ONBOARDING_INCOMPLETO": "Finish the onboarding steps before activating the professional",
+  "CONTRATO_NAO_AGUARDA_ASSINATURA": "Only a contract awaiting signature can be signed"
 }

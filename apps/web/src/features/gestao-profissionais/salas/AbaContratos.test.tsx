@@ -1,8 +1,15 @@
-import type { ContratoSala, Sala } from '@torres/shared';
+import { PREFERENCIAS_PADRAO, type ContratoSala, type Sala } from '@torres/shared';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { apiFalsa, chamadasPara, json, renderApp, type ApiFalsaOptions } from '@/test/render-app';
+import {
+  apiFalsa,
+  chamadasPara,
+  json,
+  renderApp,
+  USUARIO_TESTE,
+  type ApiFalsaOptions,
+} from '@/test/render-app';
 
 vi.setConfig({ testTimeout: 30_000 });
 
@@ -49,6 +56,7 @@ function contrato(parcial: Partial<ContratoSala>): ContratoSala {
     participaEventos: false,
     observacoes: null,
     status: 'ATIVO',
+    assinadoEm: null,
     semCobrancaNoMes: false,
     encerradoEm: null,
     motivoEncerramento: null,
@@ -955,5 +963,135 @@ describe('Gestão de Salas: encerrar e cancelar contrato', () => {
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
       expect(chamou).toBe(true);
     });
+  });
+});
+
+describe('Gestão de Salas: assinatura do contrato (#142)', () => {
+  const AGUARDANDO = contrato({
+    id: ID_1,
+    locatarioNome: 'Dra. Ana Teste',
+    status: 'AGUARDANDO_ASSINATURA',
+    modalidade: 'MENSAL',
+  });
+  const ATIVO = contrato({ id: ID_2, locatarioNome: 'Dr. Beto Teste', status: 'ATIVO' });
+
+  it('mostra o selo "aguardando assinatura" e a ação só nesse contrato', async () => {
+    await renderAba(api({ rotas: { [API]: () => pagina([AGUARDANDO, ATIVO]) } }));
+
+    const aguardando = linha('Dra. Ana Teste');
+    expect(await within(aguardando).findByText('aguardando assinatura')).toBeVisible();
+    expect(
+      within(aguardando).getByRole('button', {
+        name: 'Registrar assinatura do contrato de Dra. Ana Teste',
+      }),
+    ).toBeVisible();
+    expect(
+      within(linha('Dr. Beto Teste')).queryByRole('button', { name: /Registrar assinatura/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('registrar assinatura exige a data e envia data e PDF para a API', async () => {
+    let corpo: Record<string, unknown> = {};
+    const fetchMock = api({
+      rotas: {
+        [API]: () => pagina([AGUARDANDO]),
+        [`${API}/${ID_1}/assinar`]: (init) => {
+          corpo = corpoDe(init);
+          return json({ ...AGUARDANDO, status: 'ATIVO', assinadoEm: '2026-11-20' });
+        },
+      },
+    });
+    const { user } = await renderAba(fetchMock);
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'Registrar assinatura do contrato de Dra. Ana Teste',
+      }),
+    );
+    const modal = await screen.findByRole('dialog', { name: 'Registrar assinatura' });
+    const data = within(modal).getByLabelText(/Data da assinatura/);
+    await user.clear(data);
+    await user.click(within(modal).getByRole('button', { name: 'Registrar assinatura' }));
+    expect(await within(modal).findByText('Data de assinatura é obrigatória.')).toBeVisible();
+    expect(corpo).toEqual({});
+
+    fireEvent.change(data, { target: { value: '2026-11-20' } });
+    await user.click(within(modal).getByRole('button', { name: 'Registrar assinatura' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(corpo).toEqual({ assinadoEm: '2026-11-20', pdfArquivoId: null });
+  });
+
+  it('Novo Contrato de profissional oferece "Aguardando assinatura" e envia o campo', async () => {
+    let corpo: Record<string, unknown> = {};
+    const fetchMock = api({
+      rotas: {
+        [API]: (init) => {
+          if (ehLeitura(init)) return pagina(CONTRATOS);
+          corpo = corpoDe(init);
+          return json(AGUARDANDO, 201);
+        },
+      },
+    });
+    const { user } = await renderAba(fetchMock);
+    await screen.findByText('Dra. Ana Teste');
+
+    await user.click(screen.getByRole('button', { name: 'Novo Contrato' }));
+    const modal = await screen.findByRole('dialog', { name: 'Novo Contrato' });
+    await preencherBase(user, modal);
+    await user.click(within(modal).getByRole('checkbox', { name: 'Aguardando assinatura' }));
+    await user.click(within(modal).getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(corpo).toMatchObject({ locatarioTipo: 'PROFISSIONAL', aguardandoAssinatura: true });
+  });
+
+  it('para cliente a opção "Aguardando assinatura" não aparece, e na edição também não', async () => {
+    const { user } = await renderAba();
+    await screen.findByText('Dra. Ana Teste');
+
+    await user.click(screen.getByRole('button', { name: 'Novo Contrato' }));
+    const modal = await screen.findByRole('dialog', { name: 'Novo Contrato' });
+    expect(within(modal).getByRole('checkbox', { name: 'Aguardando assinatura' })).toBeVisible();
+    await user.click(within(modal).getByRole('radio', { name: 'Cliente' }));
+    expect(
+      within(modal).queryByRole('checkbox', { name: 'Aguardando assinatura' }),
+    ).not.toBeInTheDocument();
+    await user.click(within(modal).getByRole('button', { name: 'Cancelar' }));
+
+    await user.click(
+      within(linha('Dra. Ana Teste')).getByRole('button', {
+        name: 'Editar contrato de Dra. Ana Teste',
+      }),
+    );
+    const edicao = await screen.findByRole('dialog', { name: 'Editar Contrato' });
+    expect(
+      within(edicao).queryByRole('checkbox', { name: 'Aguardando assinatura' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('em inglês, o modal de assinatura aparece traduzido', async () => {
+    const fetchMock = apiFalsa({
+      usuario: {
+        ...USUARIO_TESTE,
+        preferencias: { ...PREFERENCIAS_PADRAO, idioma: 'en' },
+      },
+      rotas: {
+        [SALAS]: () => pagina([SALA]),
+        [API]: () => pagina([AGUARDANDO]),
+        '/api/lookups/profissionais': () => lookup([PROF_ID, 'Dra. Ana Teste']),
+      },
+    });
+    const { user } = await renderAba(fetchMock);
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'Record signature of the contract of Dra. Ana Teste',
+      }),
+    );
+
+    const modal = await screen.findByRole('dialog', { name: 'Record signature' });
+    expect(within(modal).getByLabelText(/Signature date/)).toBeVisible();
+    expect(within(modal).getByText(/there is no electronic signature/)).toBeVisible();
   });
 });

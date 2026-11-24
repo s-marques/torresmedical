@@ -46,8 +46,18 @@ describe('contratoSalaInputSchema', () => {
       dias: [],
       permiteIndicacao: true,
       participaEventos: false,
+      aguardandoAssinatura: false,
       observacoes: null,
     });
+  });
+
+  it('aguardandoAssinatura (#142): padrão falso; aceita verdadeiro e rejeita outros tipos', () => {
+    expect(createContratoSalaSchema.parse({ ...BASE, aguardandoAssinatura: true })).toMatchObject({
+      aguardandoAssinatura: true,
+    });
+    expect(mensagens({ ...BASE, aguardandoAssinatura: 'sim' })).toContain(
+      'aguardandoAssinatura: Valor inválido',
+    );
   });
 
   it('exige a quantidade em Por Turno (inteira) e em Hora Avulsa', () => {

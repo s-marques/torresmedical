@@ -10,6 +10,7 @@ import {
   type ContratoSala,
   type ContratoSalaFormulario,
 } from '@torres/shared';
+import { useTranslation } from 'react-i18next';
 import { useWatch } from 'react-hook-form';
 import { FormAcoes } from '@/components/shared/form/FormAcoes';
 import { FormField } from '@/components/shared/form/FormField';
@@ -51,6 +52,7 @@ function valoresIniciais(contrato?: ContratoSala): ContratoSalaFormulario {
     dias: contrato?.dias ?? [],
     permiteIndicacao: contrato?.permiteIndicacao ?? true,
     participaEventos: contrato?.participaEventos ?? false,
+    aguardandoAssinatura: false,
     observacoes: contrato?.observacoes ?? '',
   };
 }
@@ -62,6 +64,7 @@ export interface ModalContratoProps {
 }
 
 export function ModalContrato({ contrato, onFechar }: Readonly<ModalContratoProps>) {
+  const { t } = useTranslation();
   const criar = useCriarContrato();
   const alterar = useAlterarContrato(contrato?.id ?? '');
   const salas = useSalas();
@@ -71,6 +74,7 @@ export function ModalContrato({ contrato, onFechar }: Readonly<ModalContratoProp
   const modalidade = useWatch({ control: form.control, name: 'modalidade' }) ?? 'MENSAL';
   const valor = useWatch({ control: form.control, name: 'valorUnitario' });
   const quantidade = useWatch({ control: form.control, name: 'quantidadeMensal' });
+  const locatarioTipo = useWatch({ control: form.control, name: 'locatarioTipo' });
   const campos = CONTRATO_MODALIDADE_CAMPOS[modalidade];
   const opcoesSala = (salas.data?.data ?? []).map((sala) => ({
     valor: sala.id,
@@ -116,6 +120,15 @@ export function ModalContrato({ contrato, onFechar }: Readonly<ModalContratoProp
         <div className="sm:col-span-2">
           <SeletorLocatario />
         </div>
+        {!contrato && locatarioTipo !== 'CLIENTE' && (
+          <FormField
+            name="aguardandoAssinatura"
+            label={t('onboarding.assinatura.aguardando')}
+            tipo="checkbox"
+            descricao={t('onboarding.assinatura.aguardandoAjuda')}
+            className="sm:col-span-2"
+          />
+        )}
         <FormField
           name="especialidade"
           label="Especialidade"

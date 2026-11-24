@@ -33,5 +33,7 @@
   "PESQUISA_NAO_ENCONTRADA": "Encuesta no encontrada",
   "PESQUISA_JA_RESPONDIDA": "Esta encuesta ya fue respondida",
   "PESQUISA_EXPIRADA": "El enlace de esta encuesta expiró",
-  "RECEPCAO_STATUS_TRAVADO": "La atención está en curso o finalizada y solo el médico cambia el estado"
+  "RECEPCAO_STATUS_TRAVADO": "La atención está en curso o finalizada y solo el médico cambia el estado",
+  "ONBOARDING_INCOMPLETO": "Complete las etapas del onboarding antes de activar al profesional",
+  "CONTRATO_NAO_AGUARDA_ASSINATURA": "Solo se puede firmar un contrato pendiente de firma"
 }

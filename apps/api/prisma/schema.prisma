@@ -464,6 +464,7 @@ model Profissional {
   pesquisasProfissional   PesquisaProfissional[]
   documentosConhecimento  DocumentoConhecimento[]
   documentos              ProfissionalDocumento[]
+  onboarding              ProfissionalOnboarding?
 
   baixasInsumos BaixaInsumo[]
   receitas      ContaReceber[]
@@ -549,6 +550,28 @@ model ProfissionalDocumento {
   @@index([profissionalId, deletedAt])
   @@index([validade])
   @@map("profissionais_documentos")
+}
+
+/// Dono: gestao-profissionais. Onboarding do profissional (issue #142): nasce da assinatura do
+/// contrato de sala e guarda só o que não se calcula. As etapas automáticas são avaliadas na
+/// leitura pelo dado de origem; `recepcao_orientada_*` é a única etapa marcada por uma pessoa.
+/// `iniciado_em` é a data da assinatura; o prazo das etapas conta a partir dela.
+/// `recepcao_orientada_por_id` é um usuário (configuracoes-gestao), sem FK.
+model ProfissionalOnboarding {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profissionalId         String    @unique @map("profissional_id") @db.Uuid
+  contratoSalaId         String    @map("contrato_sala_id") @db.Uuid
+  iniciadoEm             DateTime  @map("iniciado_em") @db.Date
+  recepcaoOrientadaEm    DateTime? @map("recepcao_orientada_em") @db.Timestamptz(3)
+  recepcaoOrientadaPorId String?   @map("recepcao_orientada_por_id") @db.Uuid
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  profissional Profissional @relation(fields: [profissionalId], references: [id])
+  contrato     ContratoSala @relation(fields: [contratoSalaId], references: [id])
+
+  @@index([contratoSalaId])
+  @@map("profissionais_onboarding")
 }
 
 /// Contato administrativo do profissional (secretária, financeiro…).
@@ -1778,6 +1801,8 @@ enum ContratoSalaStatus {
   ATIVO
   CANCELADO
   ENCERRADO
+  /// Contrato do profissional que ainda não foi assinado (issue #142). Não ocupa a sala nem gera cobrança.
+  AGUARDANDO_ASSINATURA
 
   @@map("contrato_sala_status")
 }
@@ -1815,6 +1840,8 @@ model ContratoSala {
   motivoEncerramento String?                    @map("motivo_encerramento")
   /// PDF do contrato enviado em `/api/arquivos` (uso `contrato-sala`).
   pdfArquivoId       String?                    @map("pdf_arquivo_id") @db.Uuid
+  /// Data da assinatura (issue #142). Nula enquanto aguarda e nos contratos anteriores ao onboarding.
+  assinadoEm         DateTime?                  @map("assinado_em") @db.Date
   createdAt          DateTime                   @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt          DateTime?                  @map("deleted_at") @db.Timestamptz(3)
@@ -1824,6 +1851,7 @@ model ContratoSala {
   dias         ContratoSalaDia[]
   horas        ContratoSalaHora[]
   cobrancas    ContratoSalaCobranca[]
+  onboardings  ProfissionalOnboarding[]
 
   @@index([salaId])
   @@index([profissionalId])

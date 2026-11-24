@@ -76,6 +76,7 @@ export * from './schemas/gestao-profissionais/especialidade';
 export * from './schemas/gestao-profissionais/profissional';
 export * from './schemas/gestao-profissionais/profissional-agenda';
 export * from './schemas/gestao-profissionais/profissional-documento';
+export * from './schemas/gestao-profissionais/profissional-onboarding';
 export * from './schemas/gestao-profissionais/contrato-sala';
 export * from './schemas/gestao-profissionais/contrato-sala-cobranca';
 export * from './schemas/gestao-profissionais/contrato-sala-hora';

@@ -58,6 +58,7 @@ const DEFINICAO = {
     telas: {
       salas: ['Salas', '/salas'],
       profissionais: ['Profissionais', '/profissionais'],
+      onboarding: ['Onboarding', '/onboarding'],
       servicosProfissionais: ['Serviços Profissionais', '/servicos-profissionais'],
       protocolos: ['Protocolos', '/protocolos'],
       receitaProfissionais: ['Receita Profissionais', '/receita-profissionais'],
@@ -173,6 +174,8 @@ export const TELAS_FORA_DO_INVENTARIO: readonly TelaId[] = [
   'comercial-atendimento.pesquisa-profissional',
   /** Atendimentos de hoje da recepção (issue #147, R §7 e §12). */
   'comercial-atendimento.recepcao',
+  /** Onboarding do profissional a partir do contrato assinado (issue #142, R §6). */
+  'gestao-profissionais.onboarding',
 ];
 
 /** Ação de permissão que libera a tela no menu. */

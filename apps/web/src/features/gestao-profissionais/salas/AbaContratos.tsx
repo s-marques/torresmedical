@@ -14,6 +14,7 @@ import {
   AlertTriangleIcon,
   BanIcon,
   CoinsIcon,
+  FileSignatureIcon,
   PencilIcon,
   SearchIcon,
   TimerIcon,
@@ -21,6 +22,7 @@ import {
   XCircleIcon,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataGrid } from '@/components/shared/data-grid/DataGrid';
 import type { ColunaGrid, ExportacaoGrid } from '@/components/shared/data-grid/tipos';
@@ -29,6 +31,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { hojeISO } from '@/lib/datas';
 import { formatarData } from '@/lib/formatar';
+import { ModalAssinarContrato } from './ModalAssinarContrato';
 import { ModalContrato } from './ModalContrato';
 import { ModalDetalhesContrato } from './ModalDetalhesContrato';
 import { ModalFecharContrato } from './ModalFecharContrato';
@@ -75,6 +78,7 @@ export interface AbaContratosProps {
 
 /** Aba Contratos: tabela dos contratos, com PDF, Detalhar (lupa), Editar e Excluir. */
 export function AbaContratos({ criando, onFecharCriar }: Readonly<AbaContratosProps>) {
+  const { t } = useTranslation();
   const [detalhando, setDetalhando] = useState<ContratoSala | null>(null);
   const [editando, setEditando] = useState<ContratoSala | null>(null);
   const [lancandoHoras, setLancandoHoras] = useState<ContratoSala | null>(null);
@@ -84,6 +88,7 @@ export function AbaContratos({ criando, onFecharCriar }: Readonly<AbaContratosPr
   } | null>(null);
   const [excluindo, setExcluindo] = useState<ContratoSala | null>(null);
   const [gerandoParcela, setGerandoParcela] = useState<ContratoSala | null>(null);
+  const [assinando, setAssinando] = useState<ContratoSala | null>(null);
   const excluir = useExcluirContrato();
   const gerarCobrancasDoMes = useGerarCobrancasDoMes();
 
@@ -202,6 +207,21 @@ export function AbaContratos({ criando, onFecharCriar }: Readonly<AbaContratosPr
               </Button>
             </SePermitido>
           )}
+          {c.status === 'AGUARDANDO_ASSINATURA' && (
+            <SePermitido permissao="gestao-profissionais.salas.editar">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="text-emerald-600 hover:text-emerald-600"
+                aria-label={t('onboarding.assinatura.acaoDe', { nome: c.locatarioNome })}
+                title={t('onboarding.assinatura.acao')}
+                onClick={() => setAssinando(c)}
+              >
+                <FileSignatureIcon aria-hidden />
+              </Button>
+            </SePermitido>
+          )}
           {c.status === 'ATIVO' && (
             <SePermitido permissao="gestao-profissionais.salas.editar">
               <Button
@@ -292,6 +312,9 @@ export function AbaContratos({ criando, onFecharCriar }: Readonly<AbaContratosPr
           contrato={gerandoParcela}
           onFechar={() => setGerandoParcela(null)}
         />
+      )}
+      {assinando && (
+        <ModalAssinarContrato contrato={assinando} onFechar={() => setAssinando(null)} />
       )}
       {fechando && (
         <ModalFecharContrato

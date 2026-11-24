@@ -29,6 +29,7 @@ import {
 import { paginate, searchWhere, toOrderBy, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { ArquivosService } from '../../../common/storage/arquivos.service';
+import { ProfissionaisOnboardingService } from './profissionais-onboarding.service';
 
 const COM_ESPECIALIDADE = { especialidade: { select: { nome: true } } } as const;
 const NAO_EXCLUIDOS = { deletedAt: null } as const;
@@ -107,6 +108,7 @@ export class ProfissionaisService extends EntidadeLookupService<
     private readonly exportService: ExportService,
     private readonly segredos: SegredosService,
     private readonly arquivos: ArquivosService,
+    private readonly onboarding: ProfissionaisOnboardingService,
   ) {
     super();
   }
@@ -229,7 +231,9 @@ export class ProfissionaisService extends EntidadeLookupService<
 
   /** Ativar / Desativar (menu da linha). */
   async alterarStatus(id: string, ativo: boolean): Promise<ProfissionalDto> {
-    await this.buscar(id);
+    const atual = await this.buscar(id);
+    // Com onboarding em andamento, só ativa com as etapas obrigatórias concluídas (issue #142).
+    if (ativo && !atual.ativo) await this.onboarding.garantirPodeAtivar(id);
     const alterado = await this.txHost.tx.profissional.update({
       where: { id },
       data: { ativo },

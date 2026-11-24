@@ -90,6 +90,7 @@ function contrato(parcial: Partial<ContratoSala>): ContratoSala {
     participaEventos: false,
     observacoes: null,
     status: 'ATIVO',
+    assinadoEm: null,
     semCobrancaNoMes: false,
     encerradoEm: null,
     motivoEncerramento: null,

@@ -104,6 +104,7 @@ export const ICONES_TELA: Record<TelaId, LucideIcon> = {
 
   'gestao-profissionais.salas': DoorOpen,
   'gestao-profissionais.profissionais': UserRound,
+  'gestao-profissionais.onboarding': ListChecks,
   'gestao-profissionais.servicos-profissionais': BriefcaseBusiness,
   'gestao-profissionais.protocolos': ClipboardCheck,
   'gestao-profissionais.receita-profissionais': HandCoins,

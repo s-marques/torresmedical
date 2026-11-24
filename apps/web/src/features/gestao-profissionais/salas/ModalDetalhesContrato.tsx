@@ -104,6 +104,9 @@ export function ModalDetalhesContrato({
       <Secao titulo="Vigência">
         <Linha rotulo="Início">{formatarData(contrato.dataInicio)}</Linha>
         <Linha rotulo="Fim">{contrato.dataFim ? formatarData(contrato.dataFim) : SEM_VALOR}</Linha>
+        {contrato.assinadoEm && (
+          <Linha rotulo="Assinado em">{formatarData(contrato.assinadoEm)}</Linha>
+        )}
         {contrato.encerradoEm && (
           <Linha rotulo={contrato.status === 'CANCELADO' ? 'Cancelado em' : 'Encerrado em'}>
             {formatarData(contrato.encerradoEm)}
