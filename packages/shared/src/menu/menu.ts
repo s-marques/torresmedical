@@ -26,6 +26,7 @@ const DEFINICAO = {
       pacientes: ['Pacientes', '/clientes'],
       origensCliente: ['Origens de Cliente', '/origens-cliente'],
       agenda: ['Agenda', '/agenda'],
+      recepcao: ['Recepção', '/recepcao'],
       confirmacoes: ['Confirmações', '/confirmacoes'],
       orcamentos: ['Orçamentos', '/orcamentos'],
       vendasPdv: ['Vendas/PDV', '/vendas'],
@@ -170,6 +171,8 @@ export const TELAS_FORA_DO_INVENTARIO: readonly TelaId[] = [
   'consultorio-assistencial.encaminhamentos',
   /** Pesquisa de experiência do profissional (issue #145, R §36). */
   'comercial-atendimento.pesquisa-profissional',
+  /** Atendimentos de hoje da recepção (issue #147, R §7 e §12). */
+  'comercial-atendimento.recepcao',
 ];
 
 /** Ação de permissão que libera a tela no menu. */

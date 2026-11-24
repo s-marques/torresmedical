@@ -1507,6 +1507,11 @@ model Agendamento {
   /// = "Sem cobrança"/pendente. Preenchidos pelo futuro fluxo "Receber" (aguardando a QA, #15).
   formaPagamentoId  String?           @map("forma_pagamento_id") @db.Uuid
   pagoEm            DateTime?         @map("pago_em") @db.Timestamptz(3)
+  /// Horários da tela Recepção (#147): chegada (Chegou/Aguardando), entrada no consultório
+  /// ("Atender") e fim do atendimento. Base do tempo médio de espera e da duração (R §12).
+  chegadaEm         DateTime?         @map("chegada_em") @db.Timestamptz(3)
+  entradaEm         DateTime?         @map("entrada_em") @db.Timestamptz(3)
+  finalizadoEm      DateTime?         @map("finalizado_em") @db.Timestamptz(3)
   createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt         DateTime?         @map("deleted_at") @db.Timestamptz(3)

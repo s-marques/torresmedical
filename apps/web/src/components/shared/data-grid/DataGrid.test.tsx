@@ -166,6 +166,21 @@ describe('DataGrid', () => {
     expect(idLinha).toHaveBeenCalledWith(expect.objectContaining({ nome: 'Unidade 2' }), 1);
   });
 
+  it('refaz a consulta sozinha quando recebe `atualizacaoMs`', async () => {
+    renderizar({ atualizacaoMs: 50 });
+    await screen.findByText('Unidade 1');
+
+    await waitFor(() => expect(pedidos[URL_LISTA]?.length).toBeGreaterThanOrEqual(3));
+  });
+
+  it('sem `atualizacaoMs` consulta uma vez só', async () => {
+    renderizar();
+    await screen.findByText('Unidade 1');
+    await new Promise((resolver) => setTimeout(resolver, 150));
+
+    expect(pedidos[URL_LISTA]).toHaveLength(1);
+  });
+
   it('ordena pelo cabeçalho: asc, desc e volta ao padrão', async () => {
     const { user, router } = renderizar();
     await screen.findByText('Unidade 1');

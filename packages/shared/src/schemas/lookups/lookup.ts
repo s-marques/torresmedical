@@ -128,6 +128,7 @@ const PROFISSIONAL = telas(
   'gestao-profissionais.profissionais',
   'gestao-profissionais.salas',
   'comercial-atendimento.agenda',
+  'comercial-atendimento.recepcao',
   'consultorio-assistencial.atendimento-medico',
   'consultorio-assistencial.evolucao-voz',
   'consultorio-assistencial.receituarios',
@@ -199,8 +200,12 @@ export const LOOKUP_PERMISSOES: Readonly<Record<LookupEntidade, PermissoesLookup
     'comercial-atendimento.agenda',
     'gestao-profissionais.profissionais',
   ),
-  /** Sala do agendamento (issue #136): o seletor da Agenda lista as salas ativas. */
-  salas: telas('gestao-profissionais.salas', 'comercial-atendimento.agenda'),
+  /** Sala do agendamento (issue #136): o seletor da Agenda lista as salas ativas; a Recepção (#147) filtra por sala. */
+  salas: telas(
+    'gestao-profissionais.salas',
+    'comercial-atendimento.agenda',
+    'comercial-atendimento.recepcao',
+  ),
   'origens-cliente': telas(
     'comercial-atendimento.origens-cliente',
     'comercial-atendimento.pacientes',

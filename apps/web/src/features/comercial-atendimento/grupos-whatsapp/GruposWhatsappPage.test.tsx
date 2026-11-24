@@ -19,7 +19,7 @@ function api(grupos: { id: string; nome: string; participantes: number }[]) {
       '/api/lookups/canais-whatsapp': () =>
         json({
           data: [
-            { id: CANAL, label: 'Recepção', descricao: '5565999990001' },
+            { id: CANAL, label: 'Canal Principal', descricao: '5565999990001' },
             {
               id: '00000000-0000-4000-8000-0000000000c2',
               label: 'Gerência Geral',
@@ -29,7 +29,7 @@ function api(grupos: { id: string; nome: string; participantes: number }[]) {
           meta: { page: 1, pageSize: 20, total: 2, totalPages: 1 },
         }),
       [`/api/lookups/canais-whatsapp/${CANAL}`]: () =>
-        json({ id: CANAL, label: 'Recepção', descricao: '5565999990001' }),
+        json({ id: CANAL, label: 'Canal Principal', descricao: '5565999990001' }),
     },
   });
 }
@@ -53,7 +53,7 @@ describe('Grupos WhatsApp (/grupos-whatsapp)', () => {
   it('o seletor lista os canais do lookup', async () => {
     const { user } = renderTela();
     await user.click(await screen.findByRole('combobox', { name: 'Canal WhatsApp' }));
-    expect(await screen.findByText('Recepção')).toBeVisible();
+    expect(await screen.findByText('Canal Principal')).toBeVisible();
     expect(screen.getByText('Gerência Geral')).toBeVisible();
   });
 
@@ -62,7 +62,7 @@ describe('Grupos WhatsApp (/grupos-whatsapp)', () => {
       { id: '1203@g.us', nome: 'Equipe Médica', participantes: 7 },
     ]);
     await user.click(await screen.findByRole('combobox', { name: 'Canal WhatsApp' }));
-    await user.click(await screen.findByText('Recepção'));
+    await user.click(await screen.findByText('Canal Principal'));
 
     expect(await screen.findByText('Equipe Médica')).toBeVisible();
     expect(screen.getByText('1203@g.us')).toBeVisible();
@@ -77,7 +77,7 @@ describe('Grupos WhatsApp (/grupos-whatsapp)', () => {
   it('canal sem grupos mostra o estado vazio', async () => {
     const { user } = renderTela([]);
     await user.click(await screen.findByRole('combobox', { name: 'Canal WhatsApp' }));
-    await user.click(await screen.findByText('Recepção'));
+    await user.click(await screen.findByText('Canal Principal'));
     expect(await screen.findByText('Nenhum grupo encontrado.')).toBeVisible();
   });
 });

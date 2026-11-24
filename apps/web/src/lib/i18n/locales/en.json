@@ -231,6 +231,7 @@
         "pacientes": "Patients",
         "origens-cliente": "Customer Sources",
         "agenda": "Schedule",
+        "recepcao": "Reception",
         "confirmacoes": "Confirmations",
         "orcamentos": "Quotes",
         "vendas-pdv": "Sales/POS",
@@ -1280,6 +1281,55 @@
       "linkInvalido": "This link is not valid.",
       "jaRespondida": "This survey was already answered. Thank you!",
       "expirada": "The link for this survey has expired."
+    }
+  },
+  "recepcao": {
+    "titulo": "Reception",
+    "descricao": "Today's appointments, waiting queue and quick statuses to run the day.",
+    "vazio": "No appointments for today.",
+    "resumo": "{{data}} - {{total}} appointment(s)",
+    "botaoAria": "{{status}}: {{paciente}}",
+    "filtros": {
+      "profissional": "Professional",
+      "todosProfissionais": "All professionals",
+      "sala": "Room",
+      "todasSalas": "All rooms",
+      "status": "Status",
+      "todosStatus": "All statuses"
+    },
+    "colunas": {
+      "horario": "Time",
+      "paciente": "Patient",
+      "profissional": "Professional",
+      "sala": "Room",
+      "status": "Status",
+      "chegada": "Arrival",
+      "espera": "Wait",
+      "entrada": "Entry",
+      "fim": "End",
+      "acoes": "Actions"
+    },
+    "fila": {
+      "titulo": "Waiting queue",
+      "vazia": "Nobody is waiting right now.",
+      "chegou": "Arrived at {{hora}}",
+      "espera": "Waiting: {{tempo}}"
+    },
+    "cancelar": {
+      "titulo": "Cancel appointment?",
+      "descricao": "{{paciente}}'s appointment will be marked as canceled.",
+      "confirmar": "Cancel appointment"
+    },
+    "status": {
+      "AGENDADO": "Scheduled",
+      "CONFIRMADO": "Confirmed",
+      "CHECK_IN": "Arrived",
+      "AGUARDANDO": "Waiting",
+      "EM_ATENDIMENTO": "In consultation",
+      "ATENDIDO": "Finished",
+      "FALTOU": "No-show",
+      "CANCELADO": "Canceled",
+      "REAGENDAR": "Rescheduled"
     }
   }
 }

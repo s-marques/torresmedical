@@ -21,6 +21,7 @@ import { paginate, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { intervaloDoPeriodo } from '../../../common/relatorios/periodo';
 import { FormasPagamentoService } from '../../financeiro/formas-pagamento/formas-pagamento.service';
+import { horariosDaTransicao } from '../recepcao/recepcao-horarios';
 
 const INCLUDE = {
   paciente: { select: { nome: true } },
@@ -59,6 +60,9 @@ function estadoAuditado(a: AgendamentoCompleto) {
     status: a.status,
     formaPagamentoId: a.formaPagamentoId,
     pagoEm: a.pagoEm?.toISOString() ?? null,
+    chegadaEm: a.chegadaEm?.toISOString() ?? null,
+    entradaEm: a.entradaEm?.toISOString() ?? null,
+    finalizadoEm: a.finalizadoEm?.toISOString() ?? null,
   };
 }
 
@@ -244,7 +248,6 @@ export class AgendamentosAtendimentoService {
     return toAtendimentoMedicoItem(await this.buscar(id));
   }
 
-  /** Muda o status (ex.: `EM_ATENDIMENTO` no "Atender") e grava o audit_log do agendamento. */
   /**
    * Agendamentos dos pacientes com os profissionais, sem os cancelados, reagendados e faltas.
    * Base da situação dos encaminhamentos (#146). Não aplica o escopo: quem chama já aplicou o seu.
@@ -271,12 +274,16 @@ export class AgendamentosAtendimentoService {
     }));
   }
 
+  /**
+   * Muda o status (ex.: `EM_ATENDIMENTO` no "Atender"), grava os horários da transição
+   * (chegada, entrada, finalização) e o audit_log do agendamento.
+   */
   async alterarStatus(id: string, status: AgendamentoStatus): Promise<AtendimentoMedicoItem> {
     const antes = await this.buscar(id);
     if (antes.status === status) return toAtendimentoMedicoItem(antes);
     const depois = await this.txHost.tx.agendamento.update({
       where: { id },
-      data: { status },
+      data: { status, ...horariosDaTransicao(antes, status, new Date()) },
       include: INCLUDE,
     });
     await this.audit.record({

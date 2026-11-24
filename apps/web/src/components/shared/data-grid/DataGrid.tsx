@@ -88,6 +88,7 @@ export function DataGrid<T extends RowData>({
   mensagemVazio: mensagemVazioInformada,
   tamanhosPagina = TAMANHOS_PAGINA,
   resumo,
+  atualizacaoMs,
 }: Readonly<DataGridProps<T>>) {
   const { t } = useTranslation();
   const busca = buscaInformada ?? t('grid.buscar');
@@ -102,6 +103,7 @@ export function DataGrid<T extends RowData>({
     queryKey: ['data-grid', url, query],
     queryFn: ({ signal }) => apiFetch(url, { query, schema, signal }),
     placeholderData: keepPreviousData,
+    refetchInterval: atualizacaoMs,
   });
 
   const exportar = useExportacao({

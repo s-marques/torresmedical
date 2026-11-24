@@ -32,5 +32,6 @@
   "DESTINO_SEM_INDICACAO": "El profesional de destino no tiene un contrato activo que permita derivar pacientes",
   "PESQUISA_NAO_ENCONTRADA": "Encuesta no encontrada",
   "PESQUISA_JA_RESPONDIDA": "Esta encuesta ya fue respondida",
-  "PESQUISA_EXPIRADA": "El enlace de esta encuesta expiró"
+  "PESQUISA_EXPIRADA": "El enlace de esta encuesta expiró",
+  "RECEPCAO_STATUS_TRAVADO": "La atención está en curso o finalizada y solo el médico cambia el estado"
 }

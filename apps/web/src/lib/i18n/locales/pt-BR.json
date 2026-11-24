@@ -1176,5 +1176,54 @@
       "jaRespondida": "Esta pesquisa já foi respondida. Obrigado!",
       "expirada": "O link desta pesquisa expirou."
     }
+  },
+  "recepcao": {
+    "titulo": "Recepção",
+    "descricao": "Atendimentos de hoje, fila de espera e status rápidos para conduzir o dia.",
+    "vazio": "Nenhum atendimento para hoje.",
+    "resumo": "{{data}} - {{total}} atendimento(s)",
+    "botaoAria": "{{status}}: {{paciente}}",
+    "filtros": {
+      "profissional": "Profissional",
+      "todosProfissionais": "Todos os profissionais",
+      "sala": "Sala",
+      "todasSalas": "Todas as salas",
+      "status": "Status",
+      "todosStatus": "Todos os status"
+    },
+    "colunas": {
+      "horario": "Horário",
+      "paciente": "Paciente",
+      "profissional": "Profissional",
+      "sala": "Sala",
+      "status": "Status",
+      "chegada": "Chegada",
+      "espera": "Espera",
+      "entrada": "Entrada",
+      "fim": "Fim",
+      "acoes": "Ações"
+    },
+    "fila": {
+      "titulo": "Fila de espera",
+      "vazia": "Ninguém aguardando no momento.",
+      "chegou": "Chegou às {{hora}}",
+      "espera": "Espera: {{tempo}}"
+    },
+    "cancelar": {
+      "titulo": "Cancelar atendimento?",
+      "descricao": "O atendimento de {{paciente}} será marcado como cancelado.",
+      "confirmar": "Cancelar atendimento"
+    },
+    "status": {
+      "AGENDADO": "Agendado",
+      "CONFIRMADO": "Confirmado",
+      "CHECK_IN": "Chegou",
+      "AGUARDANDO": "Aguardando",
+      "EM_ATENDIMENTO": "Em atendimento",
+      "ATENDIDO": "Finalizado",
+      "FALTOU": "Faltou",
+      "CANCELADO": "Cancelou",
+      "REAGENDAR": "Reagendou"
+    }
   }
 }
