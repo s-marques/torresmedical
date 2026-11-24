@@ -10,6 +10,8 @@ export type Acao = (typeof ACOES)[number];
 export const PERMISSOES_EXTRAS = [
   /** Consulta do audit_log (restrita ao Administrador, CLAUDE.md seção 4). */
   'configuracoes-gestao.auditoria.ver',
+  /** Validar ou recusar documento do profissional (issue #141): perfil distinto de quem envia. */
+  'gestao-profissionais.profissionais-documentos.validar',
 ] as const;
 
 /** Permissão no formato `<modulo>.<recurso>.<acao>` (CLAUDE.md, seção 3). */

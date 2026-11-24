@@ -1176,5 +1176,69 @@
       "jaRespondida": "Esta pesquisa já foi respondida. Obrigado!",
       "expirada": "O link desta pesquisa expirou."
     }
+  },
+  "profissionalDocumentos": {
+    "titulo": "Documentos",
+    "novo": "Novo documento",
+    "editar": "Editar documento",
+    "carregando": "Carregando…",
+    "erroCarregar": "Não foi possível carregar os documentos.",
+    "erroBaixar": "Não foi possível baixar o documento.",
+    "vazio": "Nenhum documento enviado.",
+    "documentacaoValidada": "Documentação validada",
+    "documentacaoPendente": "Documentação pendente",
+    "pendentes": "Documentos obrigatórios pendentes",
+    "avisoRevalidar": "Ao salvar, o documento volta para \"Enviado\" e precisa ser validado de novo.",
+    "placeholderTipo": "Selecione o tipo",
+    "arquivoAtual": "Arquivo atual: {{nome}}",
+    "datas": "Emissão: {{emissao}} · Validade: {{validade}}",
+    "venceEm": "Vence em {{dias}} dia(s)",
+    "validadoPor": "Validado por {{nome}} em {{data}}",
+    "motivoRecusa": "Motivo da recusa: {{motivo}}",
+    "baixar": "Baixar",
+    "validar": "Validar",
+    "recusar": "Recusar",
+    "confirmarRecusa": "Recusar documento",
+    "acaoEditar": "Editar",
+    "acaoExcluir": "Excluir",
+    "baixarDe": "Baixar {{tipo}}",
+    "validarDe": "Validar {{tipo}}",
+    "recusarDe": "Recusar {{tipo}}",
+    "editarDe": "Editar {{tipo}}",
+    "removerDe": "Excluir {{tipo}}",
+    "confirmarRemocao": "Excluir documento?",
+    "descricaoRemocao": "O documento sai da lista do profissional. A ação fica registrada na auditoria.",
+    "campos": {
+      "tipo": "Tipo",
+      "arquivo": "Arquivo",
+      "numero": "Número",
+      "emissao": "Emissão",
+      "validade": "Validade",
+      "observacao": "Observação",
+      "motivo": "Motivo da recusa"
+    },
+    "tipos": {
+      "CONTRATO": "Contrato",
+      "DOCUMENTO_PESSOAL": "Documento pessoal",
+      "REGISTRO_CONSELHO": "Registro no conselho (CRM, CRN…)",
+      "RQE": "RQE",
+      "LICENCA": "Licença",
+      "CERTIFICADO": "Certificado",
+      "DOCUMENTO_SANITARIO": "Documento sanitário",
+      "OUTRO": "Outro"
+    },
+    "situacoes": {
+      "PENDENTE": "Pendente",
+      "ENVIADO": "Enviado",
+      "VALIDADO": "Validado",
+      "VENCIDO": "Vencido",
+      "RECUSADO": "Recusado"
+    },
+    "mensagens": {
+      "criado": "Documento enviado.",
+      "atualizado": "Documento atualizado.",
+      "decidido": "Documento atualizado.",
+      "removido": "Documento excluído."
+    }
   }
 }

@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { formatarMascara } from '@/lib/forms/mascaras';
 import { AvatarProfissional } from './AvatarProfissional';
 import { ContratosProfissional } from './ContratosProfissional';
+import { DocumentosProfissional } from './DocumentosProfissional';
 import { corHex, formatarComissao, formatarValor } from './formatadores';
 
 function Item({
@@ -125,6 +126,7 @@ export function DetalheProfissional({
             </ul>
           </section>
         )}
+        <DocumentosProfissional profissionalId={p.id} />
         <ContratosProfissional profissionalId={p.id} />
       </div>
     </Modal>
