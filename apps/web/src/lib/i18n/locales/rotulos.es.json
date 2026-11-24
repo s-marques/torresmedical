@@ -42,5 +42,8 @@
   "Marca": "Marca",
   "Modelo": "Modelo",
   "Placa": "Placa",
-  "RENAVAM": "RENAVAM"
+  "RENAVAM": "RENAVAM",
+  "Canal": "Canal",
+  "Consentimento": "Consentimiento",
+  "Quem indicou": "Quién lo recomendó"
 }

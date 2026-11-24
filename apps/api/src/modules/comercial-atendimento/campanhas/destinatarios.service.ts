@@ -24,13 +24,15 @@ export interface FiltroDestinatarios {
 export interface DadosDestinatario {
   nome: string;
   celular: string | null;
+  /** Consentimento vigente de campanhas e de comunicação (LGPD), conferido na hora do envio. */
+  aceitaContato: boolean;
   /** `dd/mm/aaaa` da última venda finalizada, ou null. */
   ultimaCompra: string | null;
 }
 
 /**
  * Quem recebe campanhas e mensagens automáticas: pacientes não excluídos, novos ou ativos, com
- * celular, que atendem ao filtro (todos, aniversariantes do dia, origem ou compra recente).
+ * celular e sem consentimento revogado (campanhas ou comunicação), que atendem ao filtro (todos, aniversariantes do dia, origem ou compra recente).
  */
 @Injectable()
 export class DestinatariosService {
@@ -79,7 +81,13 @@ export class DestinatariosService {
     const [pacientes, compras] = await Promise.all([
       this.txHost.tx.paciente.findMany({
         where: { id: { in: unicos } },
-        select: { id: true, nome: true, celular: true },
+        select: {
+          id: true,
+          nome: true,
+          celular: true,
+          aceitaCampanhasWhatsapp: true,
+          aceitaComunicacao: true,
+        },
       }),
       this.txHost.tx.venda.groupBy({
         by: ['pacienteId'],
@@ -96,6 +104,7 @@ export class DestinatariosService {
           {
             nome: p.nome,
             celular: p.celular,
+            aceitaContato: p.aceitaCampanhasWhatsapp && p.aceitaComunicacao,
             ultimaCompra: data ? formatarDiaClinica(data) : null,
           },
         ];
@@ -110,6 +119,9 @@ export class DestinatariosService {
     const base: Prisma.PacienteWhereInput = {
       deletedAt: null,
       status: { in: ['NOVO', 'ATIVO'] },
+      // LGPD (#148): consentimento revogado de campanhas ou de comunicação tira da lista.
+      aceitaCampanhasWhatsapp: true,
+      aceitaComunicacao: true,
       celular: { not: null },
       NOT: { celular: '' },
     };

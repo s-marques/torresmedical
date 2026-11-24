@@ -1,9 +1,17 @@
-import { PERMISSOES, type AuditLogItem, type Paciente } from '@torres/shared';
+import {
+  PERMISSOES,
+  PREFERENCIAS_PADRAO,
+  type AuditLogItem,
+  type Consentimento,
+  type PacienteResumo as Paciente,
+} from '@torres/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { apiFalsa, chamadasPara, json, renderApp, USUARIO_TESTE } from '@/test/render-app';
 import { camposAlterados, formatarData, iniciaisDe } from './formatadores';
+
+vi.setConfig({ testTimeout: 20_000 });
 
 const API = '/api/comercial-atendimento/pacientes';
 const ID_1 = '00000000-0000-4000-8000-0000000000b1';
@@ -31,6 +39,22 @@ function paciente(parcial: Partial<Paciente>): Paciente {
     status: 'NOVO',
     observacoes: null,
     aceitaCampanhasWhatsapp: true,
+    aceitaComunicacao: true,
+    canalOrigem: null,
+    whatsapp: null,
+    preferenciaComunicacao: null,
+    indicacaoTipo: null,
+    indicacaoReferenciaId: null,
+    indicacaoTexto: null,
+    indicacaoNome: null,
+    profissionalVinculoId: null,
+    profissionalVinculoNome: null,
+    especialidadeVinculoId: null,
+    especialidadeVinculoNome: null,
+    primeiroAtendimento: null,
+    ultimoAtendimento: null,
+    proximoRetorno: null,
+    faltas: 0,
     razaoSocial: null,
     nomeFantasia: null,
     inscricaoEstadual: null,
@@ -90,6 +114,50 @@ function api(rotas: Parameters<typeof apiFalsa>[0] = {}) {
 
 function renderTela(fetchMock = api(), usuario = USUARIO_TESTE) {
   return { user: userEvent.setup(), ...renderApp('/clientes', fetchMock), usuario };
+}
+
+/** Escolhe uma opção de um select (Radix): abre o combobox e clica na opção. */
+async function escolher(
+  user: ReturnType<typeof userEvent.setup>,
+  combobox: HTMLElement,
+  opcao: string | RegExp,
+) {
+  await user.click(combobox);
+  await user.click(await screen.findByRole('option', { name: opcao }));
+}
+
+const idConsentimento = (n: number) => `00000000-0000-4000-8000-0000000000d${n}`;
+
+function consentimento(parcial: Partial<Consentimento>): Consentimento {
+  return {
+    id: idConsentimento(1),
+    pacienteId: ID_1,
+    tipo: 'CAMPANHAS',
+    aceito: true,
+    canal: 'PRESENCIAL',
+    versao: '1',
+    observacao: null,
+    registradoPorId: null,
+    registradoPorNome: 'Atendente Fictícia',
+    registradoEm: AGORA,
+    ...parcial,
+  };
+}
+
+/** Marca os três consentimentos do cadastro novo e o canal (obrigatórios para cadastrar). */
+async function marcarConsentimentos(
+  modal: HTMLElement,
+  user: ReturnType<typeof userEvent.setup>,
+  escolha: 'Aceito' | 'Recusado' = 'Aceito',
+) {
+  for (const tipo of ['Tratamento de dados', 'Comunicação', 'Campanhas']) {
+    const grupo = within(modal).getByRole('radiogroup', { name: tipo });
+    await user.click(within(grupo).getByRole('radio', { name: escolha }));
+  }
+  await user.selectOptions(
+    within(modal).getByLabelText('Onde foi dado o consentimento'),
+    'PRESENCIAL',
+  );
 }
 
 const consulta = (fetchMock: ReturnType<typeof api>) => {
@@ -240,6 +308,7 @@ describe('Pacientes (/clientes)', () => {
 
     await user.clear(within(modal).getByLabelText('CPF'));
     await user.type(within(modal).getByLabelText('CPF'), '52998224725');
+    await marcarConsentimentos(modal, user);
     await user.click(within(modal).getByRole('button', { name: 'Cadastrar' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -249,6 +318,11 @@ describe('Pacientes (/clientes)', () => {
       documento: '52998224725',
       status: 'ATIVO',
     });
+    expect(corpo.consentimentos).toEqual([
+      { tipo: 'TRATAMENTO_DADOS', aceito: true, canal: 'PRESENCIAL', observacao: null },
+      { tipo: 'COMUNICACAO', aceito: true, canal: 'PRESENCIAL', observacao: null },
+      { tipo: 'CAMPANHAS', aceito: true, canal: 'PRESENCIAL', observacao: null },
+    ]);
     expect(
       chamadasPara(fetchMock, API).filter(([, i]) => !i?.method || i.method === 'GET'),
     ).toHaveLength(2);
@@ -278,6 +352,7 @@ describe('Pacientes (/clientes)', () => {
     await user.click(screen.getByRole('button', { name: 'Novo Paciente' }));
     const modal = await screen.findByRole('dialog', { name: 'Novo Paciente' });
     await user.type(within(modal).getByPlaceholderText('Nome completo'), 'Outra');
+    await marcarConsentimentos(modal, user);
     await user.click(within(modal).getByRole('button', { name: 'Cadastrar' }));
 
     expect(await within(modal).findByText(/já existe um cadastro com este cpf/i)).toBeVisible();
@@ -419,6 +494,312 @@ describe('Pacientes (/clientes)', () => {
     URL.createObjectURL = original.criar;
     URL.revokeObjectURL = original.revogar;
   });
+});
+
+describe('Pacientes: relacionamento e consentimentos (#148)', () => {
+  const DETALHADO = paciente({
+    canalOrigem: 'WHATSAPP',
+    preferenciaComunicacao: 'EMAIL',
+    whatsapp: '65988880001',
+    indicacaoTipo: 'PROFISSIONAL',
+    indicacaoReferenciaId: ID_2,
+    indicacaoNome: 'Dr. Indicador',
+    profissionalVinculoId: ID_2,
+    profissionalVinculoNome: 'Dra. Vínculo',
+    especialidadeVinculoId: ORIGEM,
+    especialidadeVinculoNome: 'Nutrologia',
+    primeiroAtendimento: '2026-01-10T13:00:00.000Z',
+    ultimoAtendimento: '2026-08-20T13:00:00.000Z',
+    proximoRetorno: '2027-01-05T13:00:00.000Z',
+    faltas: 2,
+  });
+
+  function apiDetalhe(
+    historico: () => Consentimento[],
+    extra: NonNullable<Parameters<typeof apiFalsa>[0]>['rotas'] = {},
+  ) {
+    return api({
+      rotas: {
+        [API]: () => pagina([DETALHADO]),
+        [`${API}/${ID_1}/consentimentos`]: (init) =>
+          init?.method === 'POST'
+            ? json(consentimento({ aceito: false, canal: 'WHATSAPP' }), 201)
+            : json({ data: historico() }),
+        ...extra,
+      },
+    });
+  }
+
+  it('colunas de relacionamento começam ocultas e o botão Colunas as mostra', async () => {
+    const { user } = renderTela(apiDetalhe(() => []));
+    await screen.findByText('Ana Teste');
+    expect(screen.queryByRole('columnheader', { name: 'Faltas' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /colunas/i }));
+    for (const nome of ['Canal de origem', 'Último atendimento', 'Próximo retorno', 'Faltas']) {
+      await user.click(await screen.findByRole('menuitemcheckbox', { name: nome }));
+    }
+    await user.keyboard('{Escape}');
+
+    expect(await screen.findByRole('columnheader', { name: 'Faltas' })).toBeVisible();
+    const linha = screen.getByText('Ana Teste').closest('tr') as HTMLElement;
+    // A origem da linha também se chama WhatsApp: a célula nova é a segunda.
+    expect(within(linha).getAllByText('WhatsApp')).toHaveLength(2);
+    expect(within(linha).getByText('20/08/2026')).toBeVisible();
+    expect(within(linha).getByText('2')).toBeVisible();
+  });
+
+  it('filtros: origem, canal, sem retorno, com faltas e novos no período vão para a API', async () => {
+    const fetchMock = api();
+    const { user } = renderTela(fetchMock);
+    await screen.findByText('Ana Teste');
+
+    await escolher(user, screen.getByRole('combobox', { name: 'Canal de origem' }), 'WhatsApp');
+    await waitFor(() => expect(consulta(fetchMock)).toMatchObject({ canalOrigem: 'WHATSAPP' }));
+
+    await escolher(
+      user,
+      screen.getByRole('combobox', { name: 'Sem retorno há…' }),
+      'Mais de 90 dias',
+    );
+    await waitFor(() => expect(consulta(fetchMock)).toMatchObject({ semRetornoDias: '90' }));
+
+    await user.click(screen.getByRole('checkbox', { name: 'Com faltas' }));
+    await waitFor(() => expect(consulta(fetchMock)).toMatchObject({ comFaltas: 'true' }));
+
+    await user.type(screen.getByLabelText('Novos no período de:'), '2026-11-01');
+    await waitFor(() => expect(consulta(fetchMock)).toMatchObject({ novosDe: '2026-11-01' }));
+    expect(consulta(fetchMock)).toMatchObject({ canalOrigem: 'WHATSAPP', semRetornoDias: '90' });
+  });
+
+  it('detalhe mostra relacionamento, atendimento e retorno, e o histórico de consentimentos', async () => {
+    const historico = [
+      consentimento({
+        id: idConsentimento(3),
+        aceito: false,
+        canal: 'WHATSAPP',
+        observacao: 'Pediu para parar',
+      }),
+      consentimento({ id: idConsentimento(2), tipo: 'COMUNICACAO', aceito: true }),
+      consentimento({ id: idConsentimento(1), aceito: true }),
+    ];
+    const { user } = renderTela(apiDetalhe(() => historico));
+
+    await user.click(await screen.findByText('Ana Teste'));
+
+    const detalhe = await screen.findByRole('dialog', { name: 'Ana Teste' });
+    expect(within(detalhe).getByText('Profissional do Torres: Dr. Indicador')).toBeVisible();
+    expect(within(detalhe).getByText('Dra. Vínculo')).toBeVisible();
+    expect(within(detalhe).getByText('Nutrologia')).toBeVisible();
+    expect(within(detalhe).getByText('(65) 98888-0001')).toBeVisible();
+    expect(within(detalhe).getByText('10/01/2026')).toBeVisible();
+    expect(within(detalhe).getByText('20/08/2026')).toBeVisible();
+    expect(within(detalhe).getByText('Próximo retorno agendado')).toBeVisible();
+
+    const itens = await within(detalhe).findAllByTestId('consentimento-historico');
+    expect(itens).toHaveLength(3);
+    expect(within(itens[0] as HTMLElement).getByText('Recusado')).toBeVisible();
+    expect(within(itens[0] as HTMLElement).getByText('Pediu para parar')).toBeVisible();
+    expect(within(detalhe).getByText('Sem registro')).toBeVisible();
+  });
+
+  it('registrar revogação envia o POST e recarrega o histórico', async () => {
+    let historico: Consentimento[] = [consentimento({ id: idConsentimento(1), aceito: true })];
+    let corpo: Corpo = {};
+    const fetchMock = apiDetalhe(() => historico, {
+      [`${API}/${ID_1}/consentimentos`]: (init) => {
+        if (init?.method !== 'POST') return json({ data: historico });
+        corpo = corpoDe(init);
+        historico = [
+          consentimento({ id: idConsentimento(2), aceito: false, canal: 'WHATSAPP' }),
+          ...historico,
+        ];
+        return json(historico[0], 201);
+      },
+    });
+    const { user } = renderTela(fetchMock);
+    await user.click(await screen.findByText('Ana Teste'));
+    const detalhe = await screen.findByRole('dialog', { name: 'Ana Teste' });
+    await within(detalhe).findAllByTestId('consentimento-historico');
+
+    await escolher(user, within(detalhe).getByRole('combobox', { name: 'Canal' }), 'WhatsApp');
+    await user.click(within(detalhe).getByRole('switch', { name: 'Aceito' }));
+    await user.click(within(detalhe).getByRole('button', { name: 'Registrar' }));
+
+    await waitFor(() =>
+      expect(corpo).toMatchObject({ tipo: 'CAMPANHAS', aceito: false, canal: 'WHATSAPP' }),
+    );
+    await waitFor(() =>
+      expect(within(detalhe).getAllByTestId('consentimento-historico')).toHaveLength(2),
+    );
+  });
+
+  it('sem a permissão de editar, o detalhe só lista os consentimentos', async () => {
+    const usuario = {
+      ...USUARIO_TESTE,
+      permissoes: ['comercial-atendimento.pacientes.ver'] as typeof USUARIO_TESTE.permissoes,
+    };
+    const fetchMock = apiFalsa({
+      usuario,
+      rotas: {
+        [API]: () => pagina([DETALHADO]),
+        [`${API}/${ID_1}/consentimentos`]: () => json({ data: [consentimento({})] }),
+      },
+    });
+    const { user } = renderTela(fetchMock, usuario);
+
+    await user.click(await screen.findByText('Ana Teste'));
+
+    const detalhe = await screen.findByRole('dialog', { name: 'Ana Teste' });
+    await within(detalhe).findAllByTestId('consentimento-historico');
+    expect(within(detalhe).queryByRole('button', { name: 'Registrar' })).not.toBeInTheDocument();
+  });
+
+  it('Novo Paciente: sem escolher os consentimentos não cadastra e mostra o que falta', async () => {
+    const fetchMock = api();
+    const { user } = renderTela(fetchMock);
+    await screen.findByText('Ana Teste');
+
+    await user.click(screen.getByRole('button', { name: 'Novo Paciente' }));
+    const modal = await screen.findByRole('dialog', { name: 'Novo Paciente' });
+    await user.type(within(modal).getByPlaceholderText('Nome completo'), 'Nova');
+    await user.click(within(modal).getByRole('button', { name: 'Cadastrar' }));
+
+    expect(
+      await within(modal).findAllByText('Informe se o paciente aceitou ou recusou.'),
+    ).toHaveLength(3);
+    expect(within(modal).getByText('Informe onde foi dado o consentimento.')).toBeVisible();
+    expect(chamadasPara(fetchMock, API).filter(([, i]) => i?.method === 'POST')).toHaveLength(0);
+  });
+
+  it('Novo Paciente: envia relacionamento (canal, WhatsApp, indicação por texto, preferência)', async () => {
+    let corpo: Corpo = {};
+    const fetchMock = api({
+      rotas: {
+        [API]: (init) => {
+          if (init?.method !== 'POST') return pagina(PACIENTES);
+          corpo = corpoDe(init);
+          return json(paciente({ id: '00000000-0000-4000-8000-0000000000b3' }), 201);
+        },
+      },
+    });
+    const { user } = renderTela(fetchMock);
+    await screen.findByText('Ana Teste');
+
+    await user.click(screen.getByRole('button', { name: 'Novo Paciente' }));
+    const modal = await screen.findByRole('dialog', { name: 'Novo Paciente' });
+    await user.type(within(modal).getByPlaceholderText('Nome completo'), 'Nova');
+    await escolher(
+      user,
+      within(modal).getByRole('combobox', { name: 'Canal de origem' }),
+      'Redes sociais',
+    );
+    await escolher(
+      user,
+      within(modal).getByRole('combobox', { name: 'Preferência de comunicação' }),
+      'WhatsApp',
+    );
+    await user.type(within(modal).getByLabelText('WhatsApp'), '65988880001');
+    await escolher(
+      user,
+      within(modal).getByRole('combobox', { name: 'Quem indicou' }),
+      'Outra pessoa (texto livre)',
+    );
+    await user.type(within(modal).getByLabelText(/Nome de quem indicou/), 'Vizinha da clínica');
+    await marcarConsentimentos(modal, user, 'Recusado');
+    await user.click(within(modal).getByRole('button', { name: 'Cadastrar' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(corpo).toMatchObject({
+      canalOrigem: 'REDES_SOCIAIS',
+      preferenciaComunicacao: 'WHATSAPP',
+      whatsapp: '65988880001',
+      indicacaoTipo: 'TEXTO',
+      indicacaoTexto: 'Vizinha da clínica',
+    });
+    expect(corpo.consentimentos).toHaveLength(3);
+    expect(corpo.consentimentos).toEqual(
+      expect.arrayContaining([expect.objectContaining({ tipo: 'CAMPANHAS', aceito: false })]),
+    );
+  });
+
+  it('Novo Paciente: indicação por texto sem o nome mostra o erro de obrigatório', async () => {
+    const { user } = renderTela();
+    await screen.findByText('Ana Teste');
+
+    await user.click(screen.getByRole('button', { name: 'Novo Paciente' }));
+    const modal = await screen.findByRole('dialog', { name: 'Novo Paciente' });
+    await user.type(within(modal).getByPlaceholderText('Nome completo'), 'Nova');
+    await escolher(
+      user,
+      within(modal).getByRole('combobox', { name: 'Quem indicou' }),
+      'Outra pessoa (texto livre)',
+    );
+    await user.click(within(modal).getByRole('button', { name: 'Cadastrar' }));
+
+    expect(await within(modal).findByText('Quem indicou é obrigatório.')).toBeVisible();
+  });
+
+  it('Editar: não pede consentimentos, avisa onde alterar e não envia o campo', async () => {
+    let corpo: Corpo = {};
+    const fetchMock = api({
+      rotas: {
+        [`${API}/${ID_1}`]: (init) => {
+          corpo = corpoDe(init);
+          return json(paciente({}));
+        },
+      },
+    });
+    const { user } = renderTela(fetchMock);
+    await screen.findByText('Ana Teste');
+
+    await user.click(screen.getAllByRole('button', { name: 'Ações' })[0] as HTMLElement);
+    await user.click(await screen.findByRole('menuitem', { name: 'Editar' }));
+    const modal = await screen.findByRole('dialog', { name: 'Editar Paciente' });
+    expect(
+      within(modal).getByText(
+        'Para registrar ou revogar um consentimento, abra o detalhe do paciente.',
+      ),
+    ).toBeVisible();
+    expect(within(modal).queryByRole('radiogroup', { name: 'Campanhas' })).not.toBeInTheDocument();
+    await user.click(within(modal).getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(corpo).not.toHaveProperty('consentimentos');
+    expect(corpo).not.toHaveProperty('aceitaCampanhasWhatsapp');
+  });
+
+  it.each([
+    ['en', 'Last visit', 'No-shows', 'Consents (LGPD)', 'Accepted'],
+    ['es', 'Última atención', 'Inasistencias', 'Consentimientos (LGPD)', 'Aceptado'],
+  ] as const)(
+    'em %s, traduz colunas, filtros e consentimentos do detalhe',
+    async (idioma, ultimo, faltas, titulo, aceito) => {
+      const usuario = {
+        ...USUARIO_TESTE,
+        preferencias: { ...PREFERENCIAS_PADRAO, idioma },
+      };
+      const fetchMock = apiFalsa({
+        usuario,
+        rotas: {
+          [API]: () => pagina([DETALHADO]),
+          [`${API}/${ID_1}/consentimentos`]: () => json({ data: [consentimento({})] }),
+        },
+      });
+      const { user } = renderTela(fetchMock, usuario);
+      await screen.findByText('Ana Teste');
+
+      await user.click(screen.getByRole('button', { name: /columns|columnas/i }));
+      expect(await screen.findByRole('menuitemcheckbox', { name: ultimo })).toBeVisible();
+      expect(screen.getByRole('menuitemcheckbox', { name: faltas })).toBeVisible();
+      await user.keyboard('{Escape}');
+
+      await user.click(screen.getByText('Ana Teste'));
+      const detalhe = await screen.findByRole('dialog', { name: 'Ana Teste' });
+      expect(await within(detalhe).findByText(titulo)).toBeVisible();
+      expect((await within(detalhe).findAllByText(aceito)).length).toBeGreaterThan(0);
+    },
+  );
 });
 
 describe('formatadores', () => {

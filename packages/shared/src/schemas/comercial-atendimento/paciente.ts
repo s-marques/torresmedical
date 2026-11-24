@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { exportQuerySchema, listQuerySchema } from '../common/list-query';
+import { mensagemObrigatoria } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
+import { createConsentimentoSchema } from './consentimento-paciente';
 
 export const PACIENTE_TIPOS = ['PF', 'PJ'] as const;
 export const pacienteTipoSchema = z.enum(PACIENTE_TIPOS, { error: 'Tipo de pessoa inválido' });
@@ -30,6 +32,63 @@ export const PACIENTE_SEXO_ROTULOS: Record<PacienteSexo, string> = {
   FEMININO: 'Feminino',
   MASCULINO: 'Masculino',
   OUTRO: 'Outro / não informado',
+};
+
+/** Como o paciente chegou à clínica (diferente da origem: Indicação, Instagram…). */
+export const PACIENTE_CANAIS_ORIGEM = [
+  'WHATSAPP',
+  'TELEFONE',
+  'SITE',
+  'PRESENCIAL',
+  'REDES_SOCIAIS',
+  'OUTRO',
+] as const;
+export const pacienteCanalOrigemSchema = z.enum(PACIENTE_CANAIS_ORIGEM, {
+  error: 'Canal de origem inválido',
+});
+export type PacienteCanalOrigem = z.infer<typeof pacienteCanalOrigemSchema>;
+
+export const PACIENTE_CANAL_ORIGEM_ROTULOS: Record<PacienteCanalOrigem, string> = {
+  WHATSAPP: 'WhatsApp',
+  TELEFONE: 'Telefone',
+  SITE: 'Site',
+  PRESENCIAL: 'Presencial',
+  REDES_SOCIAIS: 'Redes sociais',
+  OUTRO: 'Outro',
+};
+
+export const PACIENTE_PREFERENCIAS_COMUNICACAO = [
+  'WHATSAPP',
+  'TELEFONE',
+  'EMAIL',
+  'SEM_PREFERENCIA',
+] as const;
+export const pacientePreferenciaComunicacaoSchema = z.enum(PACIENTE_PREFERENCIAS_COMUNICACAO, {
+  error: 'Preferência de comunicação inválida',
+});
+export type PacientePreferenciaComunicacao = z.infer<typeof pacientePreferenciaComunicacaoSchema>;
+
+export const PACIENTE_PREFERENCIA_COMUNICACAO_ROTULOS: Record<
+  PacientePreferenciaComunicacao,
+  string
+> = {
+  WHATSAPP: 'WhatsApp',
+  TELEFONE: 'Telefone',
+  EMAIL: 'Email',
+  SEM_PREFERENCIA: 'Sem preferência',
+};
+
+/** Quem indicou o paciente: outro paciente, um profissional do Torres ou texto livre. */
+export const PACIENTE_INDICACAO_TIPOS = ['PACIENTE', 'PROFISSIONAL', 'TEXTO'] as const;
+export const pacienteIndicacaoTipoSchema = z.enum(PACIENTE_INDICACAO_TIPOS, {
+  error: 'Tipo de indicação inválido',
+});
+export type PacienteIndicacaoTipo = z.infer<typeof pacienteIndicacaoTipoSchema>;
+
+export const PACIENTE_INDICACAO_TIPO_ROTULOS: Record<PacienteIndicacaoTipo, string> = {
+  PACIENTE: 'Paciente',
+  PROFISSIONAL: 'Profissional do Torres',
+  TEXTO: 'Outra pessoa (texto livre)',
 };
 
 export const PACIENTE_NOME_MAX = 200;
@@ -98,6 +157,21 @@ const dataOpcional = (rotulo: string) =>
     .nullish()
     .transform((valor) => valor || null);
 
+/** Id opcional: vazio, `null` ou ausente viram `null`. */
+const idOpcional = (mensagem: string) =>
+  z
+    .union([z.literal(''), z.uuid({ error: mensagem })])
+    .nullish()
+    .transform((valor) => valor || null);
+
+/** Enum opcional: vazio, `null` ou ausente viram `null`. */
+function enumOpcional<T extends z.ZodType<string>>(schema: T) {
+  return z
+    .union([z.literal(''), schema])
+    .nullish()
+    .transform((valor) => valor || null);
+}
+
 const nome = z
   .string({ error: 'O nome do paciente é obrigatório.' })
   .trim()
@@ -138,7 +212,25 @@ export const pacienteInputSchema = z
       .transform((valor) => valor || null),
     status: pacienteStatusSchema.default('ATIVO'),
     observacoes: textoOpcional(2000, 'Observações'),
-    aceitaCampanhasWhatsapp: z.boolean().default(true),
+    /**
+     * Atalho do consentimento de campanhas (LGPD): quando muda, grava um registro de
+     * consentimento. Ausente = não altera. O histórico completo vem de `/consentimentos`.
+     */
+    aceitaCampanhasWhatsapp: z.boolean().optional(),
+    /** Consentimentos informados no cadastro: cada um vira um registro com data e autor. */
+    consentimentos: z.array(createConsentimentoSchema).max(3).optional(),
+    canalOrigem: enumOpcional(pacienteCanalOrigemSchema),
+    /** WhatsApp, quando diferente do celular. */
+    whatsapp: digitosOpcional('WhatsApp', [10, 11]),
+    preferenciaComunicacao: enumOpcional(pacientePreferenciaComunicacaoSchema),
+    indicacaoTipo: enumOpcional(pacienteIndicacaoTipoSchema),
+    /** Paciente ou profissional que indicou, conforme `indicacaoTipo`. */
+    indicacaoReferenciaId: idOpcional('Quem indicou é inválido'),
+    /** Texto livre de quem indicou (`indicacaoTipo = TEXTO`). */
+    indicacaoTexto: textoOpcional(PACIENTE_NOME_MAX, 'Quem indicou'),
+    /** Profissional e especialidade principais do paciente. */
+    profissionalVinculoId: idOpcional('Profissional inválido'),
+    especialidadeVinculoId: idOpcional('Especialidade inválida'),
     razaoSocial: textoOpcional(200, 'Razão social'),
     nomeFantasia: textoOpcional(200, 'Nome fantasia'),
     inscricaoEstadual: textoOpcional(30, 'Inscrição estadual'),
@@ -167,28 +259,52 @@ export const pacienteInputSchema = z
       }),
   })
   .superRefine((dados, ctx) => {
-    if (!dados.documento) return;
-    const pf = dados.tipo === 'PF';
-    if (pf ? !cpfValido(dados.documento) : !cnpjValido(dados.documento)) {
+    if (dados.documento) {
+      const pf = dados.tipo === 'PF';
+      if (pf ? !cpfValido(dados.documento) : !cnpjValido(dados.documento)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['documento'],
+          message: pf ? 'CPF inválido' : 'CNPJ inválido',
+        });
+      }
+    }
+    if (dados.indicacaoTipo === 'TEXTO' && !dados.indicacaoTexto) {
       ctx.addIssue({
         code: 'custom',
-        path: ['documento'],
-        message: pf ? 'CPF inválido' : 'CNPJ inválido',
+        path: ['indicacaoTexto'],
+        message: mensagemObrigatoria('Quem indicou'),
+      });
+    } else if (
+      (dados.indicacaoTipo === 'PACIENTE' || dados.indicacaoTipo === 'PROFISSIONAL') &&
+      !dados.indicacaoReferenciaId
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['indicacaoReferenciaId'],
+        message: mensagemObrigatoria('Quem indicou'),
       });
     }
   })
-  .transform((dados) =>
-    dados.tipo === 'PF'
+  .transform((dados) => {
+    // Só o dado do tipo escolhido fica: trocar de PACIENTE para TEXTO não deixa o id antigo.
+    const texto = dados.indicacaoTipo === 'TEXTO';
+    const indicacao = {
+      indicacaoReferenciaId: dados.indicacaoTipo && !texto ? dados.indicacaoReferenciaId : null,
+      indicacaoTexto: texto ? dados.indicacaoTexto : null,
+    };
+    return dados.tipo === 'PF'
       ? {
           ...dados,
+          ...indicacao,
           razaoSocial: null,
           nomeFantasia: null,
           inscricaoEstadual: null,
           representanteNome: null,
           representanteCelular: null,
         }
-      : { ...dados, rg: null, sexo: null, menorIdade: false },
-  );
+      : { ...dados, ...indicacao, rg: null, sexo: null, menorIdade: false };
+  });
 
 export type PacienteInput = z.input<typeof pacienteInputSchema>;
 export type CreatePacienteInput = z.output<typeof pacienteInputSchema>;
@@ -202,7 +318,21 @@ export const PACIENTE_SORT_FIELDS = ['nome', 'telefone', 'email', 'origem', 'sta
 export const listPacientesQuerySchema = listQuerySchema({
   sortFields: PACIENTE_SORT_FIELDS,
   defaultSort: 'nome:asc',
-  filters: { status: pacienteStatusSchema.optional() },
+  filters: {
+    status: pacienteStatusSchema.optional(),
+    origemClienteId: z.uuid().optional(),
+    canalOrigem: pacienteCanalOrigemSchema.optional(),
+    /** Com ao menos um atendimento, o último há mais de N dias e nada agendado à frente. */
+    semRetornoDias: z.coerce.number().int().min(1).max(3650).optional(),
+    /** Só quem tem ao menos uma falta. */
+    comFaltas: z
+      .enum(['true', 'false'])
+      .transform((valor) => valor === 'true')
+      .optional(),
+    /** Pacientes cadastrados no período (dias inteiros, no fuso da clínica). */
+    novosDe: z.iso.date().optional(),
+    novosAte: z.iso.date().optional(),
+  },
 });
 
 export type ListPacientesQuery = z.infer<typeof listPacientesQuerySchema>;
@@ -246,7 +376,22 @@ export const pacienteSchema = z.object({
   origemNome: nullableText,
   status: pacienteStatusSchema,
   observacoes: nullableText,
+  /** Consentimento vigente de campanhas (derivado do histórico de consentimentos). */
   aceitaCampanhasWhatsapp: z.boolean(),
+  /** Consentimento vigente de comunicação (confirmações, lembretes, pesquisas). */
+  aceitaComunicacao: z.boolean(),
+  canalOrigem: pacienteCanalOrigemSchema.nullable(),
+  whatsapp: nullableText,
+  preferenciaComunicacao: pacientePreferenciaComunicacaoSchema.nullable(),
+  indicacaoTipo: pacienteIndicacaoTipoSchema.nullable(),
+  indicacaoReferenciaId: z.uuid().nullable(),
+  indicacaoTexto: nullableText,
+  /** Nome de quem indicou (paciente, profissional ou o texto livre), para a tela. */
+  indicacaoNome: nullableText,
+  profissionalVinculoId: z.uuid().nullable(),
+  profissionalVinculoNome: nullableText,
+  especialidadeVinculoId: z.uuid().nullable(),
+  especialidadeVinculoNome: nullableText,
   razaoSocial: nullableText,
   nomeFantasia: nullableText,
   inscricaoEstadual: nullableText,
@@ -266,6 +411,22 @@ export const pacienteSchema = z.object({
 
 export type Paciente = z.infer<typeof pacienteSchema>;
 
-export const pacientePageSchema = paginatedResponseSchema(pacienteSchema);
+/**
+ * Cadastro com os dados de relacionamento calculados (somente leitura), vindos dos
+ * agendamentos: listagem e detalhe da tela. As respostas de escrita trazem só o cadastro.
+ */
+export const pacienteResumoSchema = pacienteSchema.extend({
+  /** Primeiro atendimento realizado (`ATENDIDO`). */
+  primeiroAtendimento: z.iso.datetime().nullable(),
+  ultimoAtendimento: z.iso.datetime().nullable(),
+  /** Próximo agendamento ainda por acontecer (sem cancelados, faltas e reagendar). */
+  proximoRetorno: z.iso.datetime().nullable(),
+  /** Agendamentos com status `FALTOU`. */
+  faltas: z.number().int().nonnegative(),
+});
+
+export type PacienteResumo = z.infer<typeof pacienteResumoSchema>;
+
+export const pacientePageSchema = paginatedResponseSchema(pacienteResumoSchema);
 
 export type PacientePage = z.infer<typeof pacientePageSchema>;

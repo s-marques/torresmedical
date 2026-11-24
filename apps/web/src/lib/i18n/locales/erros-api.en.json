@@ -35,5 +35,8 @@
   "PESQUISA_EXPIRADA": "The link for this survey has expired",
   "RECEPCAO_STATUS_TRAVADO": "The appointment is in progress or finished, and only the doctor can change its status",
   "ONBOARDING_INCOMPLETO": "Finish the onboarding steps before activating the professional",
-  "CONTRATO_NAO_AGUARDA_ASSINATURA": "Only a contract awaiting signature can be signed"
+  "CONTRATO_NAO_AGUARDA_ASSINATURA": "Only a contract awaiting signature can be signed",
+  "PACIENTE_INDICACAO_INVALIDA": "The referring patient or professional is invalid",
+  "PACIENTE_PROFISSIONAL_INVALIDO": "The professional is invalid",
+  "PACIENTE_ESPECIALIDADE_INVALIDA": "The specialty is invalid"
 }

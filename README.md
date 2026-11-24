@@ -285,6 +285,47 @@ Mede capacidade, contratado, utilizado e vago por sala, dia, turno e profissiona
   `MinhaEmpresaService`). Os KPIs Taxa de Ocupação e Vacância das telas Executivo e Financeiro >
   Indicadores seguem sem valor até serem ligados a este cálculo.
 
+## Pacientes: relacionamento e consentimentos (`/clientes`)
+
+Cadastro do paciente como informação de gestão (issue #148, R §8 e §41).
+
+- **Campos novos:** `canalOrigem` (WhatsApp, telefone, site, presencial, redes sociais, outro),
+  `whatsapp` (só se diferente do celular), `preferenciaComunicacao`, quem indicou
+  (`indicacaoTipo` = `PACIENTE`, `PROFISSIONAL` ou `TEXTO`, com `indicacaoReferenciaId` ou
+  `indicacaoTexto`; só o dado do tipo escolhido fica) e o profissional e a especialidade de vínculo
+  (`profissionalVinculoId`, `especialidadeVinculoId`: um profissional principal, decisão do dev).
+  Origem (Instagram, Indicação…) e canal (como o contato chegou) são coisas diferentes. Os ids não têm
+  FK; o service valida pelos services donos (400 `PACIENTE_INDICACAO_INVALIDA`,
+  `PACIENTE_PROFISSIONAL_INVALIDO`, `PACIENTE_ESPECIALIDADE_INVALIDA`). Usuário restrito (#153) só
+  vincula um profissional do próprio escopo.
+- **Calculados (só leitura, na listagem e no detalhe):** primeiro e último atendimento (agendamentos
+  `ATENDIDO`), próximo retorno (agendamento futuro que não seja cancelado, falta, atendido nem a
+  reagendar) e número de faltas (`FALTOU`). Agendamento excluído não conta.
+- **Filtros do grid** (também na exportação): `origemClienteId`, `canalOrigem`, `semRetornoDias=N`
+  (já foi atendido, o último atendimento foi há mais de N dias e não há nada agendado à frente),
+  `comFaltas=true` e `novosDe`/`novosAte` (cadastrados no período, dias inteiros no fuso da clínica).
+  As colunas Canal, Último atendimento, Próximo retorno e Faltas começam ocultas (botão **Colunas**).
+- **Consentimentos (LGPD):** tabela `paciente_consentimentos`, só de inserção. Tipos
+  `TRATAMENTO_DADOS`, `COMUNICACAO` e `CAMPANHAS`; cada registro tem aceito ou recusado, canal, versão
+  do termo, observação, data e quem registrou. Revogar grava um novo registro; o histórico fica. O
+  vigente é o mais recente do tipo.
+  - `GET /api/comercial-atendimento/pacientes/:id/consentimentos` (`pacientes.ver`) e
+    `POST` no mesmo caminho (`pacientes.editar`, auditado como `ConsentimentoPaciente`), ambos no
+    escopo do usuário.
+  - O cadastro novo exige a escolha explícita dos três tipos e do canal (`consentimentos` no
+    `POST`). Na edição, os consentimentos mudam só pelo detalhe do paciente. O atalho
+    `aceitaCampanhasWhatsapp` do `POST`/`PATCH` grava um registro só quando o valor muda; ausente, não
+    altera.
+  - **Espelhos no cadastro:** `aceitaCampanhasWhatsapp` e `aceitaComunicacao` são derivados do
+    consentimento vigente e só o `ConsentimentosPacienteService` os grava. Sem nenhum registro do tipo,
+    vale o padrão (pode receber). A migration cria o registro de revogação de quem já tinha recusado
+    campanhas.
+  - **Quem respeita:** campanhas e mensagens automáticas (`DestinatariosService`, e de novo na hora do
+    envio, que cancela o que entrou na fila antes da revogação) exigem campanhas **e** comunicação
+    aceitas; a pesquisa NPS também; as confirmações de agendamento exigem comunicação aceita (sem ela, o
+    envio fica `FALHA` com `SEM_CONSENTIMENTO` no histórico). Revogar só campanhas não bloqueia
+    confirmações.
+
 ## Encaminhamentos (`/encaminhamentos`)
 
 Encaminhamento de pacientes entre profissionais (issue #146, R §26), para medir o ecossistema

@@ -19,7 +19,7 @@ import { MODELO_PADRAO, textoDaEtapa } from './modelos-padrao';
 export const LOTE_CONFIRMACOES = 100;
 
 const INCLUDE_ENVIO = {
-  paciente: { select: { id: true, nome: true, celular: true } },
+  paciente: { select: { id: true, nome: true, celular: true, aceitaComunicacao: true } },
   profissional: { select: { id: true, nome: true } },
 } satisfies Prisma.AgendamentoInclude;
 
@@ -102,6 +102,8 @@ export class EnvioConfirmacaoService {
   ): Promise<{ status: 'ENVIADO' | 'FALHA'; erro: string | null; mensagemId: string | null }> {
     const falha = (erro: string) => ({ status: 'FALHA' as const, erro, mensagemId: null });
     const { paciente, profissional } = agendamento;
+    // Comunicação revogada (LGPD, #148): fica no histórico como falha, sem mensagem.
+    if (!paciente.aceitaComunicacao) return falha('SEM_CONSENTIMENTO');
     if (!paciente.celular?.trim()) return falha('SEM_CELULAR');
     const canalId = await this.canais.canalParaProfissional(profissional.id);
     if (!canalId) return falha('SEM_CANAL');

@@ -115,6 +115,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'orcamentos',
       'origens_cliente',
       'outbox_events',
+      'paciente_consentimentos',
       'pacientes',
       'pacote_itens',
       'pacote_usos',

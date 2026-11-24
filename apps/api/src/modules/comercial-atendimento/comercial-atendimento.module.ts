@@ -69,6 +69,7 @@ import { NegociosListaService } from './pipeline/negocios-lista.service';
 import { NegociosLookupService } from './pipeline/negocios-lookup.service';
 import { NegociosService } from './pipeline/negocios.service';
 import { IndicadoresGestaoService } from './indicadores-gestao/indicadores-gestao.service';
+import { ConsentimentosPacienteService } from './pacientes/consentimentos-paciente.service';
 import { PacientesController } from './pacientes/pacientes.controller';
 import { PacientesService } from './pacientes/pacientes.service';
 import { AtendimentoWhatsappController } from './whatsapp/atendimento-whatsapp.controller';
@@ -123,6 +124,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
   ],
   providers: [
     PacientesService,
+    ConsentimentosPacienteService,
     OrigensClienteService,
     AgendaService,
     RecepcaoService,

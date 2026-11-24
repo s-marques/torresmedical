@@ -42,5 +42,8 @@
   "Marca": "Brand",
   "Modelo": "Model",
   "Placa": "License Plate",
-  "RENAVAM": "RENAVAM"
+  "RENAVAM": "RENAVAM",
+  "Canal": "Channel",
+  "Consentimento": "Consent",
+  "Quem indicou": "Referred by"
 }
