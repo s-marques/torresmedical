@@ -239,6 +239,41 @@ describe('Campanhas (e2e)', () => {
     });
   });
 
+  describe('consentimento (LGPD, #148)', () => {
+    it('quem revogou campanhas ou comunicação sai dos destinatários', async () => {
+      await paciente('Ana Teste');
+      await paciente('Bia Teste', { aceitaCampanhasWhatsapp: false });
+      await paciente('Caio Teste', { aceitaComunicacao: false });
+
+      const res = await http().get(`${BASE}/destinatarios`).expect(200);
+
+      expect(destinatarioPageSchema.parse(res.body).data.map((d) => d.nome)).toEqual(['Ana Teste']);
+    });
+
+    it('revogação depois de o envio entrar na fila cancela o envio e não manda mensagem', async () => {
+      const ana = await paciente('Ana Teste');
+      await paciente('Bia Teste');
+      const { id } = await criar({ quantidade: 2, mensagem: 'Oi {nome}!' });
+      const agora = agoraNaClinica(new Date(Date.now() + 60_000));
+      await ciclo((e) => e.dispararCampanhas(agora));
+      await ciclo((e) => e.prepararCampanha(id, agora));
+      expect(await prisma.envioCampanha.count({ where: { campanhaId: id } })).toBe(2);
+
+      await prisma.paciente.update({
+        where: { id: ana.id },
+        data: { aceitaCampanhasWhatsapp: false },
+      });
+      // Os envios saem escalonados: no dia seguinte os dois já estão na hora.
+      const depois = agoraNaClinica(new Date(Date.now() + 86_400_000));
+      expect(await ciclo((e) => e.enfileirar(depois))).toBe(1);
+
+      const envios = await prisma.envioCampanha.findMany({ where: { campanhaId: id } });
+      expect(envios.find((e) => e.pacienteId === ana.id)?.status).toBe('CANCELADO');
+      const mensagens = await prisma.mensagemWhatsapp.findMany();
+      expect(mensagens.map((m) => m.conteudo)).toEqual(['Oi Bia Teste!']);
+    });
+  });
+
   describe('Mensagens Automáticas', () => {
     const automacao = (extra: Record<string, unknown> = {}) => ({
       nome: 'Aniversariantes do Dia',

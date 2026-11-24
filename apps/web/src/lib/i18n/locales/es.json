@@ -1482,5 +1482,114 @@
         "acoes": "Acciones"
       }
     }
+  },
+  "pacientes": {
+    "colunas": {
+      "canal": "Canal de origen",
+      "ultimoAtendimento": "Última atención",
+      "proximoRetorno": "Próximo regreso",
+      "faltas": "Inasistencias"
+    },
+    "filtros": {
+      "origem": "Todos los orígenes",
+      "canal": "Canal de origen",
+      "todosCanais": "Todos los canales",
+      "semRetorno": "Sin regreso hace…",
+      "todosRetornos": "Cualquier regreso",
+      "semRetornoDias": "Más de {{count}} días",
+      "comFaltas": "Con inasistencias",
+      "novosNoPeriodo": "Nuevos en el período"
+    },
+    "canais": {
+      "WHATSAPP": "WhatsApp",
+      "TELEFONE": "Teléfono",
+      "SITE": "Sitio web",
+      "PRESENCIAL": "Presencial",
+      "REDES_SOCIAIS": "Redes sociales",
+      "OUTRO": "Otro"
+    },
+    "preferencias": {
+      "WHATSAPP": "WhatsApp",
+      "TELEFONE": "Teléfono",
+      "EMAIL": "Correo electrónico",
+      "SEM_PREFERENCIA": "Sin preferencia"
+    },
+    "indicacaoTipos": {
+      "PACIENTE": "Paciente",
+      "PROFISSIONAL": "Profesional de Torres",
+      "TEXTO": "Otra persona (texto libre)"
+    },
+    "relacionamento": {
+      "titulo": "Relación",
+      "canalOrigem": "Canal de origen",
+      "whatsapp": "WhatsApp",
+      "whatsappDica": "Complete solo si es diferente del celular.",
+      "preferenciaComunicacao": "Preferencia de comunicación",
+      "indicadoPorTipo": "Quién lo recomendó",
+      "indicadoPaciente": "Paciente que lo recomendó",
+      "indicadoProfissional": "Profesional que lo recomendó",
+      "indicadoTexto": "Nombre de quien lo recomendó",
+      "profissionalVinculo": "Profesional",
+      "especialidadeVinculo": "Especialidad",
+      "naoInformado": "No informado"
+    },
+    "resumo": {
+      "titulo": "Atención y regreso",
+      "primeiroAtendimento": "Primera atención",
+      "ultimoAtendimento": "Última atención",
+      "proximoRetorno": "Próximo regreso agendado",
+      "faltas": "Inasistencias"
+    },
+    "consentimentos": {
+      "titulo": "Consentimientos (LGPD)",
+      "descricao": "Cada aceptación o revocación queda en el historial. Vale el más reciente de cada tipo.",
+      "tipos": {
+        "TRATAMENTO_DADOS": "Tratamiento de datos",
+        "COMUNICACAO": "Comunicación",
+        "CAMPANHAS": "Campañas"
+      },
+      "dicaTipo": {
+        "TRATAMENTO_DADOS": "Uso de los datos personales y de salud en la atención.",
+        "COMUNICACAO": "Confirmaciones, recordatorios y encuestas de satisfacción.",
+        "CAMPANHAS": "Campañas y mensajes automáticos."
+      },
+      "situacao": {
+        "aceito": "Aceptado",
+        "recusado": "Rechazado",
+        "semRegistro": "Sin registro"
+      },
+      "canais": {
+        "PRESENCIAL": "Presencial",
+        "WHATSAPP": "WhatsApp",
+        "TELEFONE": "Teléfono",
+        "EMAIL": "Correo electrónico",
+        "SITE": "Sitio web",
+        "OUTRO": "Otro"
+      },
+      "historico": "Historial",
+      "semHistorico": "Ningún consentimiento registrado.",
+      "carregando": "Cargando consentimientos…",
+      "erro": "No fue posible cargar los consentimientos.",
+      "registradoPor": "por {{nome}}",
+      "registrar": {
+        "titulo": "Registrar aceptación o revocación",
+        "tipo": "Tipo",
+        "aceito": "Aceptado",
+        "aceitoDica": "Desmarque para registrar el rechazo o la revocación.",
+        "canal": "Canal",
+        "observacao": "Observación",
+        "botao": "Registrar",
+        "sucesso": "Consentimiento registrado."
+      },
+      "cadastro": {
+        "titulo": "Consentimientos (LGPD)",
+        "descricao": "Indique qué aceptó el paciente. Cada elección queda registrada con fecha y usuario.",
+        "escolha": "Elija una opción",
+        "canal": "Dónde se dio el consentimiento",
+        "obrigatorio": "Indique si el paciente aceptó o rechazó.",
+        "canalObrigatorio": "Indique dónde se dio el consentimiento.",
+        "edicao": "Para registrar o revocar un consentimiento, abra el detalle del paciente."
+      }
+    }
   }
 }

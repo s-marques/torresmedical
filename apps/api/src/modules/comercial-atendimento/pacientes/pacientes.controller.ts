@@ -11,16 +11,24 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
 import {
+  consentimentoSchema,
+  consentimentosResponseSchema,
+  createConsentimentoSchema,
   createPacienteSchema,
   exportPacientesQuerySchema,
   listPacientesQuerySchema,
   pacientePageSchema,
+  pacienteResumoSchema,
   pacienteSchema,
   updatePacienteSchema,
+  type Consentimento,
+  type ConsentimentosResponse,
+  type CreateConsentimentoInput,
   type CreatePacienteInput,
   type ExportPacientesQuery,
   type ListPacientesQuery,
   type Paciente,
+  type PacienteResumo,
   type UpdatePacienteInput,
 } from '@torres/shared';
 import { Audit } from '../../../common/audit/audit.decorator';
@@ -35,6 +43,7 @@ import {
 } from '../../../common/swagger/zod-openapi';
 import { IdParam } from '../../../common/validation/id-param.decorator';
 import { ZodValidationPipe } from '../../../common/validation/zod-validation.pipe';
+import { ConsentimentosPacienteService } from './consentimentos-paciente.service';
 import { PacientesService } from './pacientes.service';
 
 const ENTITY = 'Paciente';
@@ -43,7 +52,10 @@ const ENTITY = 'Paciente';
 @ApiTags('Comercial / Atendimento: Pacientes')
 @Controller('comercial-atendimento/pacientes')
 export class PacientesController {
-  constructor(private readonly pacientes: PacientesService) {}
+  constructor(
+    private readonly pacientes: PacientesService,
+    private readonly consentimentos: ConsentimentosPacienteService,
+  ) {}
 
   @Get()
   @RequirePermission('comercial-atendimento.pacientes.ver')
@@ -53,7 +65,7 @@ export class PacientesController {
   @ApiErrorResponses(400, 401, 403)
   list(
     @Query(new ZodValidationPipe(listPacientesQuerySchema)) query: ListPacientesQuery,
-  ): Promise<Page<Paciente>> {
+  ): Promise<Page<PacienteResumo>> {
     return this.pacientes.list(query);
   }
 
@@ -78,11 +90,36 @@ export class PacientesController {
 
   @Get(':id')
   @RequirePermission('comercial-atendimento.pacientes.ver')
-  @ApiOperation({ summary: 'Detalhe (modal ao clicar na linha)' })
-  @ApiZodResponse(200, pacienteSchema)
+  @ApiOperation({ summary: 'Detalhe (modal ao clicar na linha), com os dados calculados' })
+  @ApiZodResponse(200, pacienteResumoSchema)
   @ApiErrorResponses(400, 401, 403, 404)
-  findById(@IdParam() id: string): Promise<Paciente> {
+  findById(@IdParam() id: string): Promise<PacienteResumo> {
     return this.pacientes.detalheNoEscopo(id);
+  }
+
+  @Get(':id/consentimentos')
+  @RequirePermission('comercial-atendimento.pacientes.ver')
+  @ApiOperation({ summary: 'Histórico de consentimentos (LGPD), do mais recente ao mais antigo' })
+  @ApiZodResponse(200, consentimentosResponseSchema)
+  @ApiErrorResponses(400, 401, 403, 404)
+  consentimentosDoPaciente(@IdParam() id: string): Promise<ConsentimentosResponse> {
+    return this.consentimentos.listar(id);
+  }
+
+  @Post(':id/consentimentos')
+  @RequirePermission('comercial-atendimento.pacientes.editar')
+  @Audit({ entity: 'ConsentimentoPaciente', action: 'CREATE' })
+  @ApiOperation({
+    summary: 'Registra um aceite ou uma revogação; o histórico anterior é mantido',
+  })
+  @ApiZodBody(createConsentimentoSchema)
+  @ApiZodResponse(201, consentimentoSchema)
+  @ApiErrorResponses(400, 401, 403, 404)
+  registrarConsentimento(
+    @IdParam() id: string,
+    @Body(new ZodValidationPipe(createConsentimentoSchema)) body: CreateConsentimentoInput,
+  ): Promise<Consentimento> {
+    return this.consentimentos.registrar(id, body);
   }
 
   @Post()

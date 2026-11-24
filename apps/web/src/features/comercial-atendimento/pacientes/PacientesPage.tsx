@@ -1,23 +1,28 @@
 import {
+  PACIENTE_CANAIS_ORIGEM,
   exportPacientesQuerySchema,
   listPacientesQuerySchema,
   pacientePageSchema,
-  type Paciente,
+  type PacienteResumo as Paciente,
 } from '@torres/shared';
+import type { TFunction } from 'i18next';
 import { DownloadIcon, HistoryIcon, PencilIcon, PlusIcon, Trash2Icon } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataGrid } from '@/components/shared/data-grid/DataGrid';
 import type {
   AcaoLinha,
   ColunaGrid,
   ExportacaoGrid,
+  FiltroGrid,
   FiltroStatus,
 } from '@/components/shared/data-grid/tipos';
 import { useExportacao } from '@/components/shared/data-grid/use-exportacao';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { SePermitido } from '@/components/shared/SePermitido';
 import { Button } from '@/components/ui/button';
+import { formatarData as formatarDataIdioma, formatarDataHora } from '@/lib/formatar';
 import { formatarMascara } from '@/lib/forms/mascaras';
 import { DetalhePaciente } from './DetalhePaciente';
 import { iniciaisDe } from './formatadores';
@@ -40,6 +45,8 @@ const EXPORTACAO: ExportacaoGrid = {
 };
 
 const TAMANHOS_PAGINA = [20, 50, 100] as const;
+
+const DIAS_SEM_RETORNO = [30, 60, 90, 180] as const;
 
 const COLUNAS: ColunaGrid<Paciente>[] = [
   {
@@ -101,11 +108,82 @@ const COLUNAS: ColunaGrid<Paciente>[] = [
   },
 ];
 
+/** Colunas de relacionamento (issue #148): começam ocultas, o botão Colunas as mostra. */
+function colunasRelacionamento(t: TFunction): ColunaGrid<Paciente>[] {
+  return [
+    {
+      id: 'canalOrigem',
+      titulo: t('pacientes.colunas.canal'),
+      oculta: true,
+      celula: (p) => (p.canalOrigem ? t(`pacientes.canais.${p.canalOrigem}`) : '-'),
+    },
+    {
+      id: 'ultimoAtendimento',
+      titulo: t('pacientes.colunas.ultimoAtendimento'),
+      oculta: true,
+      celula: (p) => formatarDataIdioma(p.ultimoAtendimento),
+    },
+    {
+      id: 'proximoRetorno',
+      titulo: t('pacientes.colunas.proximoRetorno'),
+      oculta: true,
+      celula: (p) => formatarDataHora(p.proximoRetorno),
+    },
+    {
+      id: 'faltas',
+      titulo: t('pacientes.colunas.faltas'),
+      oculta: true,
+      celula: (p) => String(p.faltas),
+    },
+  ];
+}
+
 /**
  * Pacientes (`/clientes`, docs/inventario/telas/comercial-atendimento-pacientes.md): cadastro de
  * pacientes e clientes, pessoa física ou jurídica. Clicar na linha abre o detalhe.
  */
 export default function PacientesPage() {
+  const { t } = useTranslation();
+  const colunas = useMemo(() => [...COLUNAS, ...colunasRelacionamento(t)], [t]);
+  const filtros = useMemo<readonly FiltroGrid[]>(
+    () => [
+      {
+        tipo: 'entidade',
+        parametro: 'origemClienteId',
+        rotulo: t('pacientes.filtros.origem'),
+        entidade: 'origens-cliente',
+        rotuloTodos: t('pacientes.filtros.origem'),
+      },
+      {
+        tipo: 'select',
+        parametro: 'canalOrigem',
+        rotulo: t('pacientes.filtros.canal'),
+        rotuloTodos: t('pacientes.filtros.todosCanais'),
+        opcoes: PACIENTE_CANAIS_ORIGEM.map((valor) => ({
+          valor,
+          rotulo: t(`pacientes.canais.${valor}`),
+        })),
+      },
+      {
+        tipo: 'select',
+        parametro: 'semRetornoDias',
+        rotulo: t('pacientes.filtros.semRetorno'),
+        rotuloTodos: t('pacientes.filtros.semRetorno'),
+        opcoes: DIAS_SEM_RETORNO.map((dias) => ({
+          valor: String(dias),
+          rotulo: t('pacientes.filtros.semRetornoDias', { count: dias }),
+        })),
+      },
+      { tipo: 'checkbox', parametro: 'comFaltas', rotulo: t('pacientes.filtros.comFaltas') },
+      {
+        tipo: 'periodo',
+        rotulo: t('pacientes.filtros.novosNoPeriodo'),
+        parametroDe: 'novosDe',
+        parametroAte: 'novosAte',
+      },
+    ],
+    [t],
+  );
   const [criando, setCriando] = useState(false);
   const [detalhando, setDetalhando] = useState<Paciente | null>(null);
   const [editando, setEditando] = useState<Paciente | null>(null);
@@ -170,7 +248,8 @@ export default function PacientesPage() {
         url={URL_PACIENTES}
         schema={pacientePageSchema}
         querySchema={listPacientesQuerySchema}
-        colunas={COLUNAS}
+        colunas={colunas}
+        filtros={filtros}
         busca="Buscar por nome, CPF, celular, email..."
         status={STATUS}
         exportacao={EXPORTACAO}

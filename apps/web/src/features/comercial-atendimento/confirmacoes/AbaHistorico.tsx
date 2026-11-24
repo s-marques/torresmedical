@@ -13,6 +13,7 @@ import { URL_CONFIRMACOES } from './use-confirmacoes';
 const MOTIVOS: Record<string, string> = {
   SEM_CANAL: 'falha_canal',
   SEM_CELULAR: 'falha_celular',
+  SEM_CONSENTIMENTO: 'falha_consentimento',
 };
 
 /** Resultado como no legado: "whatsapp - enviado" ou "whatsapp - falha_canal". */

@@ -206,6 +206,19 @@ describe('Confirmações (e2e)', () => {
       ]);
     });
 
+    it('paciente que revogou a comunicação (LGPD): FALHA SEM_CONSENTIMENTO e nenhuma mensagem', async () => {
+      await conectarCanal();
+      const p = await paciente('Sem Consentimento', { aceitaComunicacao: false });
+      const a = await prisma.agendamento.create({
+        data: { pacienteId: p.id, profissionalId, inicio: CONSULTA },
+      });
+      await http().post(`${BASE}/${a.id}/enviar`).expect(200);
+      expect(
+        await prisma.envioConfirmacao.findFirstOrThrow({ where: { agendamentoId: a.id } }),
+      ).toMatchObject({ status: 'FALHA', erro: 'SEM_CONSENTIMENTO' });
+      expect(await prisma.mensagemWhatsapp.count()).toBe(0);
+    });
+
     it('paciente sem celular: FALHA SEM_CELULAR', async () => {
       await conectarCanal();
       const p = await paciente('Sem Celular', { celular: null });

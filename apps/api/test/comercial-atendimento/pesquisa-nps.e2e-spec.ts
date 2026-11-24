@@ -321,6 +321,16 @@ describe('Pesquisa NPS (e2e)', () => {
       await expectNoAudit(prisma, { entity: 'PesquisaNps' });
     });
 
+    it('respeita a comunicação revogada (LGPD, #148): não envia nem registra', async () => {
+      await conectarCanal();
+      const p = await paciente('Ana Fictícia', { aceitaComunicacao: false });
+      expect(
+        await noContexto(() => app.get(EnvioPesquisaNpsService).enviar(finalizado(p.id))),
+      ).toBe(false);
+      expect(await prisma.pesquisaNps.count()).toBe(0);
+      expect(await prisma.mensagemWhatsapp.count()).toBe(0);
+    });
+
     it('sem canal ou sem celular registra FALHA e não envia', async () => {
       const comCelular = await paciente('Ana Fictícia');
       const semCelular = await paciente('Bia Fictícia', { celular: null });

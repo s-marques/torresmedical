@@ -1375,5 +1375,114 @@
         "acoes": "Ações"
       }
     }
+  },
+  "pacientes": {
+    "colunas": {
+      "canal": "Canal de origem",
+      "ultimoAtendimento": "Último atendimento",
+      "proximoRetorno": "Próximo retorno",
+      "faltas": "Faltas"
+    },
+    "filtros": {
+      "origem": "Todas as origens",
+      "canal": "Canal de origem",
+      "todosCanais": "Todos os canais",
+      "semRetorno": "Sem retorno há…",
+      "todosRetornos": "Qualquer retorno",
+      "semRetornoDias": "Mais de {{count}} dias",
+      "comFaltas": "Com faltas",
+      "novosNoPeriodo": "Novos no período"
+    },
+    "canais": {
+      "WHATSAPP": "WhatsApp",
+      "TELEFONE": "Telefone",
+      "SITE": "Site",
+      "PRESENCIAL": "Presencial",
+      "REDES_SOCIAIS": "Redes sociais",
+      "OUTRO": "Outro"
+    },
+    "preferencias": {
+      "WHATSAPP": "WhatsApp",
+      "TELEFONE": "Telefone",
+      "EMAIL": "Email",
+      "SEM_PREFERENCIA": "Sem preferência"
+    },
+    "indicacaoTipos": {
+      "PACIENTE": "Paciente",
+      "PROFISSIONAL": "Profissional do Torres",
+      "TEXTO": "Outra pessoa (texto livre)"
+    },
+    "relacionamento": {
+      "titulo": "Relacionamento",
+      "canalOrigem": "Canal de origem",
+      "whatsapp": "WhatsApp",
+      "whatsappDica": "Preencha só se for diferente do celular.",
+      "preferenciaComunicacao": "Preferência de comunicação",
+      "indicadoPorTipo": "Quem indicou",
+      "indicadoPaciente": "Paciente que indicou",
+      "indicadoProfissional": "Profissional que indicou",
+      "indicadoTexto": "Nome de quem indicou",
+      "profissionalVinculo": "Profissional",
+      "especialidadeVinculo": "Especialidade",
+      "naoInformado": "Não informado"
+    },
+    "resumo": {
+      "titulo": "Atendimento e retorno",
+      "primeiroAtendimento": "Primeiro atendimento",
+      "ultimoAtendimento": "Último atendimento",
+      "proximoRetorno": "Próximo retorno agendado",
+      "faltas": "Faltas"
+    },
+    "consentimentos": {
+      "titulo": "Consentimentos (LGPD)",
+      "descricao": "Cada aceite ou revogação fica no histórico. O vigente é o mais recente de cada tipo.",
+      "tipos": {
+        "TRATAMENTO_DADOS": "Tratamento de dados",
+        "COMUNICACAO": "Comunicação",
+        "CAMPANHAS": "Campanhas"
+      },
+      "dicaTipo": {
+        "TRATAMENTO_DADOS": "Uso dos dados pessoais e de saúde no atendimento.",
+        "COMUNICACAO": "Confirmações, lembretes e pesquisas de satisfação.",
+        "CAMPANHAS": "Campanhas e mensagens automáticas."
+      },
+      "situacao": {
+        "aceito": "Aceito",
+        "recusado": "Recusado",
+        "semRegistro": "Sem registro"
+      },
+      "canais": {
+        "PRESENCIAL": "Presencial",
+        "WHATSAPP": "WhatsApp",
+        "TELEFONE": "Telefone",
+        "EMAIL": "Email",
+        "SITE": "Site",
+        "OUTRO": "Outro"
+      },
+      "historico": "Histórico",
+      "semHistorico": "Nenhum consentimento registrado.",
+      "carregando": "Carregando consentimentos…",
+      "erro": "Não foi possível carregar os consentimentos.",
+      "registradoPor": "por {{nome}}",
+      "registrar": {
+        "titulo": "Registrar aceite ou revogação",
+        "tipo": "Tipo",
+        "aceito": "Aceito",
+        "aceitoDica": "Desmarque para registrar a recusa ou a revogação.",
+        "canal": "Canal",
+        "observacao": "Observação",
+        "botao": "Registrar",
+        "sucesso": "Consentimento registrado."
+      },
+      "cadastro": {
+        "titulo": "Consentimentos (LGPD)",
+        "descricao": "Informe o que o paciente aceitou. Cada escolha fica registrada com data e usuário.",
+        "escolha": "Escolha uma opção",
+        "canal": "Onde foi dado o consentimento",
+        "obrigatorio": "Informe se o paciente aceitou ou recusou.",
+        "canalObrigatorio": "Informe onde foi dado o consentimento.",
+        "edicao": "Para registrar ou revogar um consentimento, abra o detalhe do paciente."
+      }
+    }
   }
 }

@@ -189,6 +189,11 @@ export class EnviosCampanhaService {
         await tx.envioCampanha.update({ where: { id: envio.id }, data: { status: 'CANCELADO' } });
         continue;
       }
+      if (paciente && !paciente.aceitaContato) {
+        // Consentimento revogado depois de o envio entrar na fila: não manda (LGPD, #148).
+        await tx.envioCampanha.update({ where: { id: envio.id }, data: { status: 'CANCELADO' } });
+        continue;
+      }
       if (!paciente?.celular) {
         await tx.envioCampanha.update({
           where: { id: envio.id },

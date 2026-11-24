@@ -10,13 +10,22 @@ import {
   type PacienteInput,
   type PacienteTipo,
 } from '@torres/shared';
+import { useState } from 'react';
 import { useController, useWatch } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { FormAcoes } from '@/components/shared/form/FormAcoes';
 import { FormField } from '@/components/shared/form/FormField';
 import { FormLayout } from '@/components/shared/form/FormLayout';
 import { useFormulario } from '@/components/shared/form/use-formulario';
 import { Modal } from '@/components/shared/Modal';
 import { cn } from '@/lib/utils';
+import { CamposRelacionamento } from './CamposRelacionamento';
+import { ConsentimentosNovoPaciente } from './ConsentimentosNovoPaciente';
+import {
+  ESCOLHAS_VAZIAS,
+  montarConsentimentos,
+  type EscolhasConsentimento,
+} from './escolhas-consentimento';
 import { useCriarPaciente, useEditarPaciente } from './use-pacientes';
 
 const ID_FORMULARIO = 'form-paciente';
@@ -48,7 +57,14 @@ function valoresIniciais(paciente?: Paciente): PacienteInput {
     origemClienteId: paciente?.origemClienteId ?? null,
     status: paciente?.status ?? 'ATIVO',
     observacoes: paciente?.observacoes ?? '',
-    aceitaCampanhasWhatsapp: paciente?.aceitaCampanhasWhatsapp ?? true,
+    canalOrigem: paciente?.canalOrigem ?? '',
+    whatsapp: paciente?.whatsapp ?? '',
+    preferenciaComunicacao: paciente?.preferenciaComunicacao ?? '',
+    indicacaoTipo: paciente?.indicacaoTipo ?? '',
+    indicacaoReferenciaId: paciente?.indicacaoReferenciaId ?? null,
+    indicacaoTexto: paciente?.indicacaoTexto ?? '',
+    profissionalVinculoId: paciente?.profissionalVinculoId ?? null,
+    especialidadeVinculoId: paciente?.especialidadeVinculoId ?? null,
     razaoSocial: paciente?.razaoSocial ?? '',
     nomeFantasia: paciente?.nomeFantasia ?? '',
     inscricaoEstadual: paciente?.inscricaoEstadual ?? '',
@@ -76,6 +92,11 @@ export function ModalPaciente({ paciente, onFechar }: Readonly<ModalPacienteProp
   const criar = useCriarPaciente();
   const editar = useEditarPaciente(paciente?.id ?? '');
   const form = useFormulario(createPacienteSchema, { defaultValues: valoresIniciais(paciente) });
+  const { t } = useTranslation();
+  // Cadastro novo: os consentimentos são escolhidos aqui (explícitos, com canal). Na edição ficam
+  // no detalhe do paciente, para o histórico não ser sobrescrito.
+  const [escolhas, setEscolhas] = useState<EscolhasConsentimento>(ESCOLHAS_VAZIAS);
+  const [mostrarErros, setMostrarErros] = useState(false);
   const tipo = useWatch({ control: form.control, name: 'tipo' }) ?? 'PF';
   const pf = tipo === 'PF';
 
@@ -100,8 +121,16 @@ export function ModalPaciente({ paciente, onFechar }: Readonly<ModalPacienteProp
         colunas={2}
         acoes={null}
         onSubmit={async (valores) => {
+          const consentimentos = paciente ? undefined : montarConsentimentos(escolhas);
+          if (!paciente && !consentimentos) {
+            setMostrarErros(true);
+            return;
+          }
           // Os dois aceitam o mesmo corpo; a API devolve o paciente já normalizado.
-          await (paciente ? editar : criar).mutateAsync(valores as PacienteInput);
+          await (paciente ? editar : criar).mutateAsync({
+            ...(valores as PacienteInput),
+            ...(consentimentos ? { consentimentos } : {}),
+          });
           onFechar();
         }}
       >
@@ -192,14 +221,18 @@ export function ModalPaciente({ paciente, onFechar }: Readonly<ModalPacienteProp
           placeholder="Observações sobre o paciente..."
           className="sm:col-span-2"
         />
-        <div className="rounded-md border p-3 sm:col-span-2">
-          <FormField
-            name="aceitaCampanhasWhatsapp"
-            label="Aceita receber campanhas por WhatsApp"
-            tipo="checkbox"
-            descricao="Desmarque quando o paciente pedir para não receber mais mensagens (LGPD). Ele continua recebendo confirmações de agendamento e atendimento normal."
+        <CamposRelacionamento />
+        {paciente ? (
+          <p className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground sm:col-span-2">
+            {t('pacientes.consentimentos.cadastro.edicao')}
+          </p>
+        ) : (
+          <ConsentimentosNovoPaciente
+            valor={escolhas}
+            onChange={setEscolhas}
+            mostrarErros={mostrarErros}
           />
-        </div>
+        )}
 
         <fieldset className="grid gap-4 border-t pt-4 sm:col-span-2 sm:grid-cols-2">
           <legend className="pr-2 text-sm font-semibold">Endereço</legend>

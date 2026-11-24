@@ -1482,5 +1482,114 @@
         "acoes": "Actions"
       }
     }
+  },
+  "pacientes": {
+    "colunas": {
+      "canal": "Source channel",
+      "ultimoAtendimento": "Last visit",
+      "proximoRetorno": "Next return",
+      "faltas": "No-shows"
+    },
+    "filtros": {
+      "origem": "All sources",
+      "canal": "Source channel",
+      "todosCanais": "All channels",
+      "semRetorno": "No return for…",
+      "todosRetornos": "Any return",
+      "semRetornoDias": "More than {{count}} days",
+      "comFaltas": "With no-shows",
+      "novosNoPeriodo": "New in the period"
+    },
+    "canais": {
+      "WHATSAPP": "WhatsApp",
+      "TELEFONE": "Phone",
+      "SITE": "Website",
+      "PRESENCIAL": "In person",
+      "REDES_SOCIAIS": "Social media",
+      "OUTRO": "Other"
+    },
+    "preferencias": {
+      "WHATSAPP": "WhatsApp",
+      "TELEFONE": "Phone",
+      "EMAIL": "Email",
+      "SEM_PREFERENCIA": "No preference"
+    },
+    "indicacaoTipos": {
+      "PACIENTE": "Patient",
+      "PROFISSIONAL": "Torres professional",
+      "TEXTO": "Someone else (free text)"
+    },
+    "relacionamento": {
+      "titulo": "Relationship",
+      "canalOrigem": "Source channel",
+      "whatsapp": "WhatsApp",
+      "whatsappDica": "Fill in only if it differs from the mobile phone.",
+      "preferenciaComunicacao": "Communication preference",
+      "indicadoPorTipo": "Referred by",
+      "indicadoPaciente": "Referring patient",
+      "indicadoProfissional": "Referring professional",
+      "indicadoTexto": "Name of the person who referred",
+      "profissionalVinculo": "Professional",
+      "especialidadeVinculo": "Specialty",
+      "naoInformado": "Not informed"
+    },
+    "resumo": {
+      "titulo": "Visits and return",
+      "primeiroAtendimento": "First visit",
+      "ultimoAtendimento": "Last visit",
+      "proximoRetorno": "Next scheduled return",
+      "faltas": "No-shows"
+    },
+    "consentimentos": {
+      "titulo": "Consents (LGPD)",
+      "descricao": "Every acceptance or revocation stays in the history. The latest one of each type applies.",
+      "tipos": {
+        "TRATAMENTO_DADOS": "Data processing",
+        "COMUNICACAO": "Communication",
+        "CAMPANHAS": "Campaigns"
+      },
+      "dicaTipo": {
+        "TRATAMENTO_DADOS": "Use of personal and health data in care.",
+        "COMUNICACAO": "Confirmations, reminders and satisfaction surveys.",
+        "CAMPANHAS": "Campaigns and automatic messages."
+      },
+      "situacao": {
+        "aceito": "Accepted",
+        "recusado": "Refused",
+        "semRegistro": "No record"
+      },
+      "canais": {
+        "PRESENCIAL": "In person",
+        "WHATSAPP": "WhatsApp",
+        "TELEFONE": "Phone",
+        "EMAIL": "Email",
+        "SITE": "Website",
+        "OUTRO": "Other"
+      },
+      "historico": "History",
+      "semHistorico": "No consent recorded.",
+      "carregando": "Loading consents…",
+      "erro": "Could not load the consents.",
+      "registradoPor": "by {{nome}}",
+      "registrar": {
+        "titulo": "Record an acceptance or revocation",
+        "tipo": "Type",
+        "aceito": "Accepted",
+        "aceitoDica": "Clear to record a refusal or revocation.",
+        "canal": "Channel",
+        "observacao": "Note",
+        "botao": "Record",
+        "sucesso": "Consent recorded."
+      },
+      "cadastro": {
+        "titulo": "Consents (LGPD)",
+        "descricao": "Tell what the patient accepted. Each choice is recorded with the date and user.",
+        "escolha": "Choose an option",
+        "canal": "Where the consent was given",
+        "obrigatorio": "Tell whether the patient accepted or refused.",
+        "canalObrigatorio": "Tell where the consent was given.",
+        "edicao": "To record or revoke a consent, open the patient details."
+      }
+    }
   }
 }

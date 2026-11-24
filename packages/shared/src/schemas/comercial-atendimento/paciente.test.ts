@@ -48,12 +48,181 @@ describe('createPacienteSchema', () => {
       nome: 'Ana',
       tipo: 'PF',
       status: 'ATIVO',
-      aceitaCampanhasWhatsapp: true,
       email: null,
       celular: '65999990001',
       cep: '78000000',
       uf: 'MT',
       sexo: null,
+      canalOrigem: null,
+      whatsapp: null,
+      preferenciaComunicacao: null,
+      indicacaoTipo: null,
+      indicacaoReferenciaId: null,
+      indicacaoTexto: null,
+      profissionalVinculoId: null,
+      especialidadeVinculoId: null,
+    });
+    // Sem o campo, o consentimento de campanhas não muda (o PATCH não reativa o que foi revogado).
+    expect(data).not.toHaveProperty('aceitaCampanhasWhatsapp');
+    expect(data).not.toHaveProperty('consentimentos');
+  });
+
+  describe('relacionamento (issue #148)', () => {
+    const ID = '1b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
+    const parse = (dados: object) => createPacienteSchema.safeParse({ nome: 'Ana', ...dados });
+
+    it('aceita canal, WhatsApp (só dígitos), preferência e vínculos', () => {
+      const { data } = parse({
+        canalOrigem: 'REDES_SOCIAIS',
+        whatsapp: '(65) 98888-0001',
+        preferenciaComunicacao: 'EMAIL',
+        profissionalVinculoId: ID,
+        especialidadeVinculoId: ID,
+      });
+
+      expect(data).toMatchObject({
+        canalOrigem: 'REDES_SOCIAIS',
+        whatsapp: '65988880001',
+        preferenciaComunicacao: 'EMAIL',
+        profissionalVinculoId: ID,
+        especialidadeVinculoId: ID,
+      });
+    });
+
+    it('vazio vira null nos campos opcionais', () => {
+      const { data } = parse({
+        canalOrigem: '',
+        preferenciaComunicacao: '',
+        indicacaoTipo: '',
+        profissionalVinculoId: '',
+        especialidadeVinculoId: '',
+      });
+
+      expect(data).toMatchObject({
+        canalOrigem: null,
+        preferenciaComunicacao: null,
+        indicacaoTipo: null,
+        profissionalVinculoId: null,
+        especialidadeVinculoId: null,
+      });
+    });
+
+    it('recusa canal, preferência, WhatsApp e ids inválidos', () => {
+      for (const dados of [
+        { canalOrigem: 'FAX' },
+        { preferenciaComunicacao: 'CARTA' },
+        { whatsapp: '123' },
+        { profissionalVinculoId: 'abc' },
+        { especialidadeVinculoId: 'abc' },
+        { indicacaoTipo: 'ALGUEM' },
+      ]) {
+        expect(parse(dados).success).toBe(false);
+      }
+    });
+
+    it('quem indicou: paciente e profissional pedem o id; texto livre pede o texto', () => {
+      const campo = (dados: object) => parse(dados).error?.issues[0];
+
+      expect(campo({ indicacaoTipo: 'PACIENTE' })).toMatchObject({
+        path: ['indicacaoReferenciaId'],
+        message: 'Quem indicou é obrigatório.',
+      });
+      expect(campo({ indicacaoTipo: 'PROFISSIONAL' })?.path).toEqual(['indicacaoReferenciaId']);
+      expect(campo({ indicacaoTipo: 'TEXTO', indicacaoTexto: '  ' })?.path).toEqual([
+        'indicacaoTexto',
+      ]);
+      expect(campo({ indicacaoTipo: 'PACIENTE', indicacaoReferenciaId: ID })).toBeUndefined();
+      expect(campo({ indicacaoTipo: 'TEXTO', indicacaoTexto: 'Vizinha' })).toBeUndefined();
+    });
+
+    it('guarda só o dado do tipo escolhido e limpa o resto', () => {
+      const paciente = parse({
+        indicacaoTipo: 'PACIENTE',
+        indicacaoReferenciaId: ID,
+        indicacaoTexto: 'sobra',
+      }).data;
+      const texto = parse({
+        indicacaoTipo: 'TEXTO',
+        indicacaoTexto: ' Vizinha ',
+        indicacaoReferenciaId: ID,
+      }).data;
+      const nenhuma = parse({ indicacaoReferenciaId: ID, indicacaoTexto: 'sobra' }).data;
+
+      expect(paciente).toMatchObject({ indicacaoReferenciaId: ID, indicacaoTexto: null });
+      expect(texto).toMatchObject({ indicacaoReferenciaId: null, indicacaoTexto: 'Vizinha' });
+      expect(nenhuma).toMatchObject({ indicacaoReferenciaId: null, indicacaoTexto: null });
+    });
+
+    it('valida e mantém os consentimentos do cadastro (máximo de três)', () => {
+      const consentimento = { tipo: 'CAMPANHAS', aceito: false, canal: 'PRESENCIAL' };
+
+      expect(parse({ consentimentos: [consentimento] }).data?.consentimentos).toEqual([
+        { ...consentimento, observacao: null },
+      ]);
+      expect(parse({ consentimentos: [{ ...consentimento, tipo: 'X' }] }).success).toBe(false);
+      expect(parse({ consentimentos: Array(4).fill(consentimento) }).success).toBe(false);
+    });
+
+    it('o atalho aceitaCampanhasWhatsapp é opcional e booleano', () => {
+      expect(parse({ aceitaCampanhasWhatsapp: false }).data?.aceitaCampanhasWhatsapp).toBe(false);
+      expect(parse({ aceitaCampanhasWhatsapp: 'não' }).success).toBe(false);
+    });
+  });
+
+  describe('filtros da listagem (issue #148)', () => {
+    const ID = '1b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
+    const parse = (query: object) => listPacientesQuerySchema.safeParse(query);
+
+    it('lê origem, canal, sem retorno, com faltas e novos no período da query string', () => {
+      const { data } = parse({
+        origemClienteId: ID,
+        canalOrigem: 'WHATSAPP',
+        semRetornoDias: '90',
+        comFaltas: 'true',
+        novosDe: '2026-11-01',
+        novosAte: '2026-11-30',
+      });
+
+      expect(data).toMatchObject({
+        origemClienteId: ID,
+        canalOrigem: 'WHATSAPP',
+        semRetornoDias: 90,
+        comFaltas: true,
+        novosDe: '2026-11-01',
+        novosAte: '2026-11-30',
+      });
+    });
+
+    it('sem filtro, nenhum deles aparece; comFaltas=false vale falso', () => {
+      const vazio = parse({}).data;
+
+      expect(vazio?.comFaltas).toBeUndefined();
+      expect(vazio?.semRetornoDias).toBeUndefined();
+      expect(parse({ comFaltas: 'false' }).data?.comFaltas).toBe(false);
+    });
+
+    it('recusa valores fora do padrão', () => {
+      for (const query of [
+        { semRetornoDias: '0' },
+        { semRetornoDias: '3651' },
+        { semRetornoDias: '1.5' },
+        { comFaltas: 'sim' },
+        { canalOrigem: 'FAX' },
+        { origemClienteId: 'abc' },
+        { novosDe: '01/11/2026' },
+      ]) {
+        expect(parse(query).success).toBe(false);
+      }
+    });
+
+    it('a exportação aceita os mesmos filtros', () => {
+      const { data } = exportPacientesQuerySchema.safeParse({
+        format: 'xlsx',
+        comFaltas: 'true',
+        semRetornoDias: '30',
+      });
+
+      expect(data).toMatchObject({ comFaltas: true, semRetornoDias: 30 });
     });
   });
 

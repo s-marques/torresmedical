@@ -14,6 +14,8 @@ const P2 = '00000000-0000-4000-8000-0000000000d2';
 // 17/11/2026 12:00 UTC = 09:00 em São Paulo, terça-feira.
 const AGORA = agoraNaClinica(new Date('2026-11-17T12:00:00.000Z'));
 
+const P_REVOGADO = '00000000-0000-4000-8000-0000000000c3';
+
 function montar(dados: Partial<Record<string, unknown>> = {}) {
   const tx = {
     campanha: {
@@ -46,8 +48,25 @@ function montar(dados: Partial<Record<string, unknown>> = {}) {
     dados: jest.fn(
       async () =>
         new Map([
-          [P1, { nome: 'Ana Teste', celular: '65999990000', ultimaCompra: '10/11/2026' }],
-          [P2, { nome: 'Bia Teste', celular: null, ultimaCompra: null }],
+          [
+            P1,
+            {
+              nome: 'Ana Teste',
+              celular: '65999990000',
+              aceitaContato: true,
+              ultimaCompra: '10/11/2026',
+            },
+          ],
+          [P2, { nome: 'Bia Teste', celular: null, aceitaContato: true, ultimaCompra: null }],
+          [
+            P_REVOGADO,
+            {
+              nome: 'Caio Teste',
+              celular: '65999990001',
+              aceitaContato: false,
+              ultimaCompra: null,
+            },
+          ],
         ]),
     ),
   };
@@ -223,6 +242,18 @@ describe('EnviosCampanhaService', () => {
       expect(tx.envioCampanha.update).toHaveBeenCalledWith({
         where: { id: 'envio-2' },
         data: { status: 'FALHA', erro: 'SEM_CELULAR' },
+      });
+    });
+
+    it('paciente que revogou o consentimento depois de entrar na fila não recebe (LGPD)', async () => {
+      const { service, whatsapp, tx } = montar({
+        envios: [envio({ id: 'envio-3', pacienteId: P_REVOGADO })],
+      });
+      expect(await service.enfileirar(AGORA)).toBe(0);
+      expect(whatsapp.registrar).not.toHaveBeenCalled();
+      expect(tx.envioCampanha.update).toHaveBeenCalledWith({
+        where: { id: 'envio-3' },
+        data: { status: 'CANCELADO' },
       });
     });
 

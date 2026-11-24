@@ -1,14 +1,18 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   auditLogPageSchema,
+  consentimentoSchema,
+  consentimentosResponseSchema,
   pacienteSchema,
   type AuditLogItem,
+  type ConsentimentoInput,
   type Paciente,
   type PacienteInput,
 } from '@torres/shared';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api/client';
 import { META_FORMULARIO } from '@/lib/api/query-client';
+import { i18next } from '@/lib/i18n';
 
 export const URL_PACIENTES = '/api/comercial-atendimento/pacientes';
 
@@ -67,5 +71,38 @@ export function useHistoricoPaciente(id: string) {
         signal,
       }),
     placeholderData: keepPreviousData,
+  });
+}
+
+/** Histórico de consentimentos (LGPD) do paciente, do mais recente ao mais antigo. */
+export function useConsentimentos(pacienteId: string) {
+  return useQuery({
+    queryKey: ['consentimentos-paciente', pacienteId],
+    queryFn: ({ signal }) =>
+      apiFetch(`${URL_PACIENTES}/${pacienteId}/consentimentos`, {
+        schema: consentimentosResponseSchema,
+        signal,
+      }),
+  });
+}
+
+/** Registra um aceite ou uma revogação; o histórico e a lista são buscados de novo. */
+export function useRegistrarConsentimento(pacienteId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (dados: ConsentimentoInput) =>
+      apiFetch(`${URL_PACIENTES}/${pacienteId}/consentimentos`, {
+        method: 'POST',
+        body: dados,
+        schema: consentimentoSchema,
+      }),
+    meta: META_FORMULARIO,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['consentimentos-paciente', pacienteId] }),
+        queryClient.invalidateQueries({ queryKey: ['data-grid', URL_PACIENTES] }),
+      ]);
+      toast.success(i18next.t('pacientes.consentimentos.registrar.sucesso'));
+    },
   });
 }

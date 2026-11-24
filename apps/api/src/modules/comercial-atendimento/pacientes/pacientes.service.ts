@@ -9,9 +9,11 @@ import {
   type LookupQuery,
   type Paciente as PacienteDto,
   type PacienteExportColumn,
+  type PacienteResumo,
   type UpdatePacienteInput,
 } from '@torres/shared';
 import type { Paciente, Prisma } from '../../../generated/prisma/client';
+import { EscopoDadosService } from '../../../common/auth/escopo-dados.service';
 import { isUuid } from '../../../common/auth/tokens';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
@@ -20,6 +22,10 @@ import type { ExportColumn, ExportFile } from '../../../common/export/export.typ
 import { EntidadeLookupService, type FonteLookup } from '../../../common/lookups/lookup-query';
 import { paginate, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
+import { intervaloDoPeriodo } from '../../../common/relatorios/periodo';
+import { EspecialidadesService } from '../../gestao-profissionais/especialidades/especialidades.service';
+import { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
+import { ConsentimentosPacienteService } from './consentimentos-paciente.service';
 import { PacientesVinculadosService } from '../../consultorio-assistencial/pacientes-vinculados/pacientes-vinculados.service';
 
 const CPF_DIGITOS = 11;
@@ -27,6 +33,30 @@ const NAO_EXCLUIDOS = { deletedAt: null } as const;
 const COM_ORIGEM = { origemCliente: { select: { nome: true } } } as const;
 
 type PacienteComOrigem = Paciente & { origemCliente: { nome: string } | null };
+
+const DIA_MS = 86_400_000;
+/** Agendamento que ainda pode acontecer: fora os cancelados, as faltas, os atendidos e os a reagendar. */
+const STATUS_FORA_DO_RETORNO = ['CANCELADO', 'REAGENDAR', 'FALTOU', 'ATENDIDO'] as const;
+
+/** Filtros da listagem e da exportação (a ordenação e a paginação ficam de fora). */
+type FiltrosPacientes = Pick<
+  ListPacientesQuery,
+  | 'search'
+  | 'status'
+  | 'origemClienteId'
+  | 'canalOrigem'
+  | 'semRetornoDias'
+  | 'comFaltas'
+  | 'novosDe'
+  | 'novosAte'
+>;
+
+/** Nomes resolvidos nos módulos donos (profissional, especialidade, quem indicou). */
+export interface NomesPaciente {
+  indicacao?: string | null;
+  profissionalVinculo?: string | null;
+  especialidadeVinculo?: string | null;
+}
 
 /** CPF (`052.228.731-02`) ou CNPJ (`00.000.000/0000-00`) a partir dos dígitos gravados. */
 export function formatarDocumento(documento: string | null): string | null {
@@ -40,15 +70,17 @@ export function formatarDocumento(documento: string | null): string | null {
 }
 
 /** Resposta da API: a data de nascimento vira `AAAA-MM-DD` e a origem traz o nome. */
-export function toPacienteDto({
-  origemCliente,
-  deletedAt: _deletedAt,
-  ...p
-}: PacienteComOrigem): PacienteDto {
+export function toPacienteDto(
+  { origemCliente, deletedAt: _deletedAt, ...p }: PacienteComOrigem,
+  nomes: NomesPaciente = {},
+): PacienteDto {
   return {
     ...p,
     dataNascimento: p.dataNascimento?.toISOString().slice(0, 10) ?? null,
     origemNome: origemCliente?.nome ?? null,
+    indicacaoNome: p.indicacaoTipo === 'TEXTO' ? p.indicacaoTexto : (nomes.indicacao ?? null),
+    profissionalVinculoNome: nomes.profissionalVinculo ?? null,
+    especialidadeVinculoNome: nomes.especialidadeVinculo ?? null,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
   };
@@ -126,6 +158,10 @@ export class PacientesService extends EntidadeLookupService<
     private readonly txHost: TransactionHost<PrismaAdapter>,
     private readonly exportService: ExportService,
     private readonly vinculados: PacientesVinculadosService,
+    private readonly escopo: EscopoDadosService,
+    private readonly profissionais: ProfissionaisService,
+    private readonly especialidades: EspecialidadesService,
+    private readonly consentimentos: ConsentimentosPacienteService,
   ) {
     super();
   }
@@ -134,14 +170,14 @@ export class PacientesService extends EntidadeLookupService<
    * Tela Pacientes: busca, status e ordenação (a origem ordena pelo nome dela). Usuário com
    * escopo restrito vê só os pacientes vinculados aos seus profissionais (issue #153).
    */
-  async list(query: ListPacientesQuery): Promise<Page<PacienteDto>> {
+  async list(query: ListPacientesQuery): Promise<Page<PacienteResumo>> {
     const where = await this.whereNoEscopo(query);
     const orderBy = this.orderBy(query.sort);
     return paginate(query, {
       findMany: async (page) =>
-        (
-          await this.txHost.tx.paciente.findMany({ where, orderBy, include: COM_ORIGEM, ...page })
-        ).map(toPacienteDto),
+        this.resumos(
+          await this.txHost.tx.paciente.findMany({ where, orderBy, include: COM_ORIGEM, ...page }),
+        ),
       count: () => this.txHost.tx.paciente.count({ where }),
     });
   }
@@ -151,35 +187,38 @@ export class PacientesService extends EntidadeLookupService<
    * Atendimento Médico). A tela Pacientes usa `detalheNoEscopo`.
    */
   async detalhe(id: string): Promise<PacienteDto> {
-    return toPacienteDto(await this.buscarComOrigem(id));
+    return (await this.dtos([await this.buscarComOrigem(id)]))[0]!;
   }
 
-  /** `GET /pacientes/:id`: 404 se não existe; 403 se não está vinculado ao usuário restrito. */
-  async detalheNoEscopo(id: string): Promise<PacienteDto> {
+  /**
+   * `GET /pacientes/:id`: 404 se não existe; 403 se não está vinculado ao usuário restrito.
+   * Traz também os dados calculados de atendimento e retorno.
+   */
+  async detalheNoEscopo(id: string): Promise<PacienteResumo> {
     const paciente = await this.buscarComOrigem(id);
     await this.vinculados.garantir(id);
-    return toPacienteDto(paciente);
+    return (await this.resumos([paciente]))[0]!;
   }
 
   async create(input: CreatePacienteInput): Promise<PacienteDto> {
     await this.validar(input);
+    this.garantirVinculoNoEscopo(input.profissionalVinculoId);
     const criado = await this.txHost.tx.paciente.create({
       data: this.dados(input),
       include: COM_ORIGEM,
     });
-    return toPacienteDto(criado);
+    return this.aposConsentimentos(criado.id, input);
   }
 
   async update(id: string, input: UpdatePacienteInput): Promise<PacienteDto> {
-    await this.findById(id);
+    const atual = await this.findById(id);
     await this.vinculados.garantir(id);
     await this.validar(input, id);
-    const alterado = await this.txHost.tx.paciente.update({
-      where: { id },
-      data: this.dados(input),
-      include: COM_ORIGEM,
-    });
-    return toPacienteDto(alterado);
+    if (input.profissionalVinculoId !== atual.profissionalVinculoId) {
+      this.garantirVinculoNoEscopo(input.profissionalVinculoId);
+    }
+    await this.txHost.tx.paciente.update({ where: { id }, data: this.dados(input) });
+    return this.aposConsentimentos(id, input);
   }
 
   /** Exclusão lógica: o histórico clínico e financeiro continua apontando para o paciente. */
@@ -191,7 +230,7 @@ export class PacientesService extends EntidadeLookupService<
       data: { deletedAt: new Date() },
       include: COM_ORIGEM,
     });
-    return toPacienteDto(excluido);
+    return (await this.dtos([excluido]))[0]!;
   }
 
   async export(query: ExportPacientesQuery): Promise<ExportFile> {
@@ -231,14 +270,51 @@ export class PacientesService extends EntidadeLookupService<
     return pacientes.map((p) => p.id);
   }
 
-  private where(query: Pick<ListPacientesQuery, 'search' | 'status'>): Prisma.PacienteWhereInput {
-    return { ...NAO_EXCLUIDOS, status: query.status, ...buscaLista(query.search) };
+  /**
+   * Filtros do relacionamento (issue #148). "Sem retorno há N dias": já foi atendido, o último
+   * atendimento foi há mais de N dias e não há nada agendado à frente. "Novos": cadastrados no
+   * período, em dias inteiros do fuso da clínica.
+   */
+  private where(query: FiltrosPacientes, agora = new Date()): Prisma.PacienteWhereInput {
+    const e: Prisma.PacienteWhereInput[] = [];
+    if (query.semRetornoDias) {
+      const limite = new Date(agora.getTime() - query.semRetornoDias * DIA_MS);
+      e.push({
+        agendamentos: {
+          some: { status: 'ATENDIDO', deletedAt: null },
+          none: {
+            deletedAt: null,
+            OR: [
+              { status: 'ATENDIDO', inicio: { gte: limite } },
+              { inicio: { gte: agora }, status: { notIn: [...STATUS_FORA_DO_RETORNO] } },
+            ],
+          },
+        },
+      });
+    }
+    if (query.comFaltas) {
+      e.push({ agendamentos: { some: { status: 'FALTOU', deletedAt: null } } });
+    }
+    const periodo =
+      query.novosDe || query.novosAte
+        ? {
+            gte: query.novosDe ? intervaloDoPeriodo(query.novosDe, query.novosDe).gte : undefined,
+            lt: query.novosAte ? intervaloDoPeriodo(query.novosAte, query.novosAte).lt : undefined,
+          }
+        : undefined;
+    return {
+      ...NAO_EXCLUIDOS,
+      status: query.status,
+      origemClienteId: query.origemClienteId,
+      canalOrigem: query.canalOrigem,
+      createdAt: periodo,
+      ...buscaLista(query.search),
+      ...(e.length > 0 ? { AND: e } : {}),
+    };
   }
 
   /** Filtros da lista e da exportação, limitados aos pacientes vinculados quando restrito. */
-  private async whereNoEscopo(
-    query: Pick<ListPacientesQuery, 'search' | 'status'>,
-  ): Promise<Prisma.PacienteWhereInput> {
+  private async whereNoEscopo(query: FiltrosPacientes): Promise<Prisma.PacienteWhereInput> {
     const ids = await this.vinculados.idsNoEscopo();
     const where = this.where(query);
     return ids === null ? where : { AND: [where, { id: { in: ids } }] };
@@ -266,9 +342,110 @@ export class PacientesService extends EntidadeLookupService<
     return paciente;
   }
 
+  /** O profissional de vínculo precisa estar no escopo de quem grava (usuário restrito, #153). */
+  private garantirVinculoNoEscopo(profissionalId: string | null): void {
+    if (profissionalId) this.escopo.garantirProfissional(profissionalId);
+  }
+
+  /**
+   * Os consentimentos viram registros no histórico (só quando mudam) e atualizam os espelhos do
+   * cadastro; a resposta já traz o valor vigente.
+   */
+  private async aposConsentimentos(id: string, input: CreatePacienteInput): Promise<PacienteDto> {
+    for (const consentimento of input.consentimentos ?? []) {
+      await this.consentimentos.registrarSeMudou(id, consentimento);
+    }
+    if (input.aceitaCampanhasWhatsapp !== undefined) {
+      await this.consentimentos.registrarSeMudou(id, {
+        tipo: 'CAMPANHAS',
+        aceito: input.aceitaCampanhasWhatsapp,
+        canal: 'OUTRO',
+        observacao: null,
+      });
+    }
+    return (await this.dtos([await this.buscarComOrigem(id)]))[0]!;
+  }
+
+  /** Cadastros com os nomes de quem indicou, do profissional e da especialidade de vínculo. */
+  private async dtos(rows: readonly PacienteComOrigem[]): Promise<PacienteDto[]> {
+    const referencias = (tipo: 'PACIENTE' | 'PROFISSIONAL') =>
+      rows.flatMap((r) =>
+        r.indicacaoTipo === tipo && r.indicacaoReferenciaId ? [r.indicacaoReferenciaId] : [],
+      );
+    const [pacientes, profissionais, especialidades] = await Promise.all([
+      this.nomesPorIds(referencias('PACIENTE')),
+      this.profissionais.nomesPorIds([
+        ...referencias('PROFISSIONAL'),
+        ...rows.flatMap((r) => (r.profissionalVinculoId ? [r.profissionalVinculoId] : [])),
+      ]),
+      this.especialidades.nomesPorIds(
+        rows.flatMap((r) => (r.especialidadeVinculoId ? [r.especialidadeVinculoId] : [])),
+      ),
+    ]);
+    return rows.map((r) => {
+      const origemIndicacao = r.indicacaoTipo === 'PACIENTE' ? pacientes : profissionais;
+      return toPacienteDto(r, {
+        indicacao: r.indicacaoReferenciaId ? origemIndicacao.get(r.indicacaoReferenciaId) : null,
+        profissionalVinculo: r.profissionalVinculoId
+          ? profissionais.get(r.profissionalVinculoId)
+          : null,
+        especialidadeVinculo: r.especialidadeVinculoId
+          ? especialidades.get(r.especialidadeVinculoId)
+          : null,
+      });
+    });
+  }
+
+  /**
+   * Adiciona os dados calculados dos agendamentos: primeiro e último atendimento (`ATENDIDO`),
+   * próximo retorno (agendamento futuro ainda válido) e número de faltas.
+   */
+  private async resumos(rows: readonly PacienteComOrigem[]): Promise<PacienteResumo[]> {
+    const dtos = await this.dtos(rows);
+    if (rows.length === 0) return [];
+    const pacienteId = { in: rows.map((r) => r.id) };
+    const base = { pacienteId, deletedAt: null };
+    const [atendidos, faltas, futuros] = await Promise.all([
+      this.txHost.tx.agendamento.groupBy({
+        by: ['pacienteId'],
+        where: { ...base, status: 'ATENDIDO' },
+        _min: { inicio: true },
+        _max: { inicio: true },
+      }),
+      this.txHost.tx.agendamento.groupBy({
+        by: ['pacienteId'],
+        where: { ...base, status: 'FALTOU' },
+        _count: { _all: true },
+      }),
+      this.txHost.tx.agendamento.groupBy({
+        by: ['pacienteId'],
+        where: {
+          ...base,
+          inicio: { gte: new Date() },
+          status: { notIn: [...STATUS_FORA_DO_RETORNO] },
+        },
+        _min: { inicio: true },
+      }),
+    ]);
+    const atendimento = new Map(atendidos.map((a) => [a.pacienteId, a]));
+    const totalFaltas = new Map(faltas.map((f) => [f.pacienteId, f._count._all]));
+    const retorno = new Map(futuros.map((f) => [f.pacienteId, f._min.inicio]));
+    return dtos.map((dto) => ({
+      ...dto,
+      primeiroAtendimento: atendimento.get(dto.id)?._min.inicio?.toISOString() ?? null,
+      ultimoAtendimento: atendimento.get(dto.id)?._max.inicio?.toISOString() ?? null,
+      proximoRetorno: retorno.get(dto.id)?.toISOString() ?? null,
+      faltas: totalFaltas.get(dto.id) ?? 0,
+    }));
+  }
+
   private dados(input: CreatePacienteInput): Prisma.PacienteUncheckedCreateInput {
+    // Os consentimentos e o atalho de campanhas viram registros no histórico, não colunas livres.
+    const cadastro: Partial<CreatePacienteInput> = { ...input };
+    delete cadastro.consentimentos;
+    delete cadastro.aceitaCampanhasWhatsapp;
     return {
-      ...input,
+      ...(cadastro as Prisma.PacienteUncheckedCreateInput),
       dataNascimento: input.dataNascimento
         ? new Date(`${input.dataNascimento}T00:00:00.000Z`)
         : null,
@@ -307,6 +484,59 @@ export class PacientesService extends EntidadeLookupService<
         });
       }
     }
+    await this.validarIndicacao(input, ignorarId);
+    await this.validarVinculo(input);
+  }
+
+  /** Quem indicou, quando é paciente ou profissional, precisa existir (e não ser o próprio paciente). */
+  private async validarIndicacao(input: CreatePacienteInput, ignorarId?: string): Promise<void> {
+    const id = input.indicacaoReferenciaId;
+    if (!id || input.indicacaoTipo === 'TEXTO' || !input.indicacaoTipo) return;
+    const valido =
+      input.indicacaoTipo === 'PACIENTE'
+        ? id !== ignorarId && (await this.existeNaoExcluido(id))
+        : await this.profissionalExiste(id);
+    if (!valido) {
+      throw new BusinessException('PACIENTE_INDICACAO_INVALIDA', 'Quem indicou é inválido', {
+        status: 400,
+        details: [
+          { field: 'indicacaoReferenciaId', message: 'Paciente ou profissional inexistente' },
+        ],
+      });
+    }
+  }
+
+  private async validarVinculo(input: CreatePacienteInput): Promise<void> {
+    if (
+      input.profissionalVinculoId &&
+      !(await this.profissionalExiste(input.profissionalVinculoId))
+    ) {
+      throw new BusinessException('PACIENTE_PROFISSIONAL_INVALIDO', 'Profissional inválido', {
+        status: 400,
+        details: [{ field: 'profissionalVinculoId', message: 'Profissional inexistente' }],
+      });
+    }
+    if (input.especialidadeVinculoId) {
+      const nomes = await this.especialidades.nomesPorIds([input.especialidadeVinculoId]);
+      if (!nomes.has(input.especialidadeVinculoId)) {
+        throw new BusinessException('PACIENTE_ESPECIALIDADE_INVALIDA', 'Especialidade inválida', {
+          status: 400,
+          details: [{ field: 'especialidadeVinculoId', message: 'Especialidade inexistente' }],
+        });
+      }
+    }
+  }
+
+  private async existeNaoExcluido(id: string): Promise<boolean> {
+    const paciente = await this.txHost.tx.paciente.findFirst({
+      where: { id, ...NAO_EXCLUIDOS },
+      select: { id: true },
+    });
+    return paciente !== null;
+  }
+
+  private async profissionalExiste(id: string): Promise<boolean> {
+    return (await this.profissionais.nomesPorIds([id])).has(id);
   }
 
   protected filtro(query: LookupQuery<'pacientes'>): Prisma.PacienteWhereInput {

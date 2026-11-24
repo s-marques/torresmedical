@@ -264,35 +264,100 @@ enum PacienteSexo {
   @@map("paciente_sexo")
 }
 
+/// Canal pelo qual o paciente chegou (diferente da origem: Indicação, Instagram…). Issue #148.
+enum PacienteCanalOrigem {
+  WHATSAPP
+  TELEFONE
+  SITE
+  PRESENCIAL
+  REDES_SOCIAIS
+  OUTRO
+
+  @@map("paciente_canal_origem")
+}
+
+enum PacientePreferenciaComunicacao {
+  WHATSAPP
+  TELEFONE
+  EMAIL
+  SEM_PREFERENCIA
+
+  @@map("paciente_preferencia_comunicacao")
+}
+
+/// Quem indicou o paciente: outro paciente, profissional do Torres ou texto livre.
+enum PacienteIndicacaoTipo {
+  PACIENTE
+  PROFISSIONAL
+  TEXTO
+
+  @@map("paciente_indicacao_tipo")
+}
+
+enum ConsentimentoTipo {
+  TRATAMENTO_DADOS
+  COMUNICACAO
+  CAMPANHAS
+
+  @@map("consentimento_tipo")
+}
+
+enum ConsentimentoCanal {
+  PRESENCIAL
+  WHATSAPP
+  TELEFONE
+  EMAIL
+  SITE
+  OUTRO
+
+  @@map("consentimento_canal")
+}
+
 /// Dono: comercial-atendimento. Paciente/cliente, pessoa física ou jurídica (tela Pacientes, `/clientes`).
 model Paciente {
-  id                      String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tipo                    PacienteTipo   @default(PF)
+  id                      String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipo                    PacienteTipo                    @default(PF)
   nome                    String
-  nomeSocial              String?        @map("nome_social")
+  nomeSocial              String?                         @map("nome_social")
   /// CPF (PF) ou CNPJ (PJ), somente dígitos.
   documento               String?
   rg                      String?
-  menorIdade              Boolean        @default(false) @map("menor_idade")
+  menorIdade              Boolean                         @default(false) @map("menor_idade")
   telefone                String?
   celular                 String?
   email                   String?
   /// Data de nascimento (PF) ou de fundação (PJ).
-  dataNascimento          DateTime?      @map("data_nascimento") @db.Date
+  dataNascimento          DateTime?                       @map("data_nascimento") @db.Date
   sexo                    PacienteSexo?
   profissao               String?
   /// De onde o paciente chegou (tela Origens de Cliente).
-  origemClienteId         String?        @map("origem_cliente_id") @db.Uuid
+  origemClienteId         String?                         @map("origem_cliente_id") @db.Uuid
   /// Inativo some dos comboboxes (lookups), mas o cadastro continua consultável.
-  status                  PacienteStatus @default(ATIVO)
+  status                  PacienteStatus                  @default(ATIVO)
   observacoes             String?
-  /// LGPD: desmarcado quando o paciente pede para não receber campanhas. Confirmações continuam.
-  aceitaCampanhasWhatsapp Boolean        @default(true) @map("aceita_campanhas_whatsapp")
-  razaoSocial             String?        @map("razao_social")
-  nomeFantasia            String?        @map("nome_fantasia")
-  inscricaoEstadual       String?        @map("inscricao_estadual")
-  representanteNome       String?        @map("representante_nome")
-  representanteCelular    String?        @map("representante_celular")
+  /// LGPD: desmarcado quando o paciente pede para não receber campanhas. Derivado do consentimento
+  /// `CAMPANHAS` mais recente (`ConsentimentoPaciente`); só o `ConsentimentosPacienteService` grava.
+  aceitaCampanhasWhatsapp Boolean                         @default(true) @map("aceita_campanhas_whatsapp")
+  /// LGPD: derivado do consentimento `COMUNICACAO` mais recente. Falso bloqueia confirmações,
+  /// lembretes e pesquisas, além das campanhas.
+  aceitaComunicacao       Boolean                         @default(true) @map("aceita_comunicacao")
+  /// Relacionamento (issue #148).
+  canalOrigem             PacienteCanalOrigem?            @map("canal_origem")
+  /// WhatsApp, quando diferente do celular. Só dígitos.
+  whatsapp                String?
+  preferenciaComunicacao  PacientePreferenciaComunicacao? @map("preferencia_comunicacao")
+  indicacaoTipo           PacienteIndicacaoTipo?          @map("indicacao_tipo")
+  /// Paciente ou profissional que indicou (conforme o tipo), sem FK: validado pelo service.
+  indicacaoReferenciaId   String?                         @map("indicacao_referencia_id") @db.Uuid
+  indicacaoTexto          String?                         @map("indicacao_texto")
+  /// Profissional e especialidade principais do paciente, sem FK (validados pelos services donos).
+  profissionalVinculoId   String?                         @map("profissional_vinculo_id") @db.Uuid
+  especialidadeVinculoId  String?                         @map("especialidade_vinculo_id") @db.Uuid
+  razaoSocial             String?                         @map("razao_social")
+  nomeFantasia            String?                         @map("nome_fantasia")
+  inscricaoEstadual       String?                         @map("inscricao_estadual")
+  representanteNome       String?                         @map("representante_nome")
+  representanteCelular    String?                         @map("representante_celular")
   cep                     String?
   logradouro              String?
   numero                  String?
@@ -300,10 +365,10 @@ model Paciente {
   bairro                  String?
   cidade                  String?
   uf                      String?
-  codigoIbge              String?        @map("codigo_ibge")
-  createdAt               DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt               DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt               DateTime?      @map("deleted_at") @db.Timestamptz(3)
+  codigoIbge              String?                         @map("codigo_ibge")
+  createdAt               DateTime                        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt               DateTime                        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt               DateTime?                       @map("deleted_at") @db.Timestamptz(3)
 
   origemCliente    OrigemCliente?    @relation(fields: [origemClienteId], references: [id], onDelete: Restrict)
   agendamentos     Agendamento[]
@@ -315,13 +380,37 @@ model Paciente {
   contatosWhatsapp ContatoWhatsapp[]
   enviosCampanha   EnvioCampanha[]
 
-  baixasInsumos BaixaInsumo[]
-  pesquisasNps  PesquisaNps[]
+  baixasInsumos  BaixaInsumo[]
+  pesquisasNps   PesquisaNps[]
+  consentimentos ConsentimentoPaciente[]
 
   @@index([documento])
   @@index([origemClienteId])
   @@index([status])
+  @@index([canalOrigem])
+  @@index([createdAt])
   @@map("pacientes")
+}
+
+/// Dono: comercial-atendimento. Histórico de consentimentos LGPD do paciente (issue #148). Só
+/// insere: revogar grava um novo registro `aceito = false`, o vigente é o mais recente do tipo.
+model ConsentimentoPaciente {
+  id              String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pacienteId      String             @map("paciente_id") @db.Uuid
+  tipo            ConsentimentoTipo
+  aceito          Boolean
+  canal           ConsentimentoCanal
+  /// Versão do termo aceito ou recusado.
+  versao          String
+  observacao      String?
+  /// Usuário que registrou (sem FK); nulo para registros de rotina ou migração.
+  registradoPorId String?            @map("registrado_por_id")
+  registradoEm    DateTime           @default(now()) @map("registrado_em") @db.Timestamptz(3)
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
+
+  @@index([pacienteId, tipo, registradoEm])
+  @@map("paciente_consentimentos")
 }
 
 /// Dono: comercial-atendimento. De onde os pacientes chegam (cadastro de clientes e relatórios de captação).

@@ -35,5 +35,8 @@
   "PESQUISA_EXPIRADA": "El enlace de esta encuesta expiró",
   "RECEPCAO_STATUS_TRAVADO": "La atención está en curso o finalizada y solo el médico cambia el estado",
   "ONBOARDING_INCOMPLETO": "Complete las etapas del onboarding antes de activar al profesional",
-  "CONTRATO_NAO_AGUARDA_ASSINATURA": "Solo se puede firmar un contrato pendiente de firma"
+  "CONTRATO_NAO_AGUARDA_ASSINATURA": "Solo se puede firmar un contrato pendiente de firma",
+  "PACIENTE_INDICACAO_INVALIDA": "El paciente o profesional que recomendó no es válido",
+  "PACIENTE_PROFISSIONAL_INVALIDO": "El profesional no es válido",
+  "PACIENTE_ESPECIALIDADE_INVALIDA": "La especialidad no es válida"
 }

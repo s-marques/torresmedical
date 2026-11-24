@@ -1,10 +1,13 @@
-import { PACIENTE_SEXO_ROTULOS, PACIENTE_TIPO_ROTULOS, type Paciente } from '@torres/shared';
+import { PACIENTE_SEXO_ROTULOS, PACIENTE_TIPO_ROTULOS, type PacienteResumo } from '@torres/shared';
 import { HistoryIcon, PencilIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal } from '@/components/shared/Modal';
 import { SePermitido } from '@/components/shared/SePermitido';
 import { Button } from '@/components/ui/button';
+import { formatarData as formatarDataIdioma, formatarDataHora } from '@/lib/formatar';
 import { formatarMascara } from '@/lib/forms/mascaras';
+import { ConsentimentosPaciente } from './ConsentimentosPaciente';
 import { formatarData } from './formatadores';
 import { StatusPaciente } from './StatusPaciente';
 
@@ -18,7 +21,7 @@ function Item({ rotulo, children }: Readonly<{ rotulo: string; children: ReactNo
 }
 
 export interface DetalhePacienteProps {
-  paciente: Paciente;
+  paciente: PacienteResumo;
   onFechar: () => void;
   onEditar: () => void;
   onHistorico: () => void;
@@ -31,6 +34,7 @@ export function DetalhePaciente({
   onEditar,
   onHistorico,
 }: Readonly<DetalhePacienteProps>) {
+  const { t } = useTranslation();
   const pf = p.tipo === 'PF';
   const endereco = [p.logradouro, p.numero, p.complemento, p.bairro, p.cidade, p.uf]
     .filter(Boolean)
@@ -89,6 +93,57 @@ export function DetalhePaciente({
         {endereco && <Item rotulo="Endereço">{endereco}</Item>}
         {p.observacoes && <Item rotulo="Observações">{p.observacoes}</Item>}
       </dl>
+
+      <section aria-labelledby="titulo-relacionamento" className="mt-4 grid gap-3 border-t pt-4">
+        <h3 id="titulo-relacionamento" className="text-sm font-semibold">
+          {t('pacientes.relacionamento.titulo')}
+        </h3>
+        <dl className="grid gap-4 sm:grid-cols-2">
+          <Item rotulo={t('pacientes.relacionamento.canalOrigem')}>
+            {p.canalOrigem && t(`pacientes.canais.${p.canalOrigem}`)}
+          </Item>
+          <Item rotulo={t('pacientes.relacionamento.preferenciaComunicacao')}>
+            {p.preferenciaComunicacao && t(`pacientes.preferencias.${p.preferenciaComunicacao}`)}
+          </Item>
+          <Item rotulo={t('pacientes.relacionamento.whatsapp')}>
+            {p.whatsapp && formatarMascara('telefone', p.whatsapp)}
+          </Item>
+          <Item rotulo={t('pacientes.relacionamento.indicadoPorTipo')}>
+            {p.indicacaoTipo &&
+              [t(`pacientes.indicacaoTipos.${p.indicacaoTipo}`), p.indicacaoNome]
+                .filter(Boolean)
+                .join(': ')}
+          </Item>
+          <Item rotulo={t('pacientes.relacionamento.profissionalVinculo')}>
+            {p.profissionalVinculoNome}
+          </Item>
+          <Item rotulo={t('pacientes.relacionamento.especialidadeVinculo')}>
+            {p.especialidadeVinculoNome}
+          </Item>
+        </dl>
+      </section>
+
+      <section aria-labelledby="titulo-resumo" className="mt-4 grid gap-3 border-t pt-4">
+        <h3 id="titulo-resumo" className="text-sm font-semibold">
+          {t('pacientes.resumo.titulo')}
+        </h3>
+        <dl className="grid gap-4 sm:grid-cols-2">
+          <Item rotulo={t('pacientes.resumo.primeiroAtendimento')}>
+            {p.primeiroAtendimento && formatarDataIdioma(p.primeiroAtendimento)}
+          </Item>
+          <Item rotulo={t('pacientes.resumo.ultimoAtendimento')}>
+            {p.ultimoAtendimento && formatarDataIdioma(p.ultimoAtendimento)}
+          </Item>
+          <Item rotulo={t('pacientes.resumo.proximoRetorno')}>
+            {p.proximoRetorno && formatarDataHora(p.proximoRetorno)}
+          </Item>
+          <Item rotulo={t('pacientes.resumo.faltas')}>{String(p.faltas)}</Item>
+        </dl>
+      </section>
+
+      <div className="mt-4">
+        <ConsentimentosPaciente pacienteId={p.id} />
+      </div>
     </Modal>
   );
 }

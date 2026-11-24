@@ -46,6 +46,16 @@ export class EspecialidadesService extends EntidadeLookupService<
     return { id: especialidade.id, label: especialidade.nome, descricao: null };
   }
 
+  /** Nome das especialidades não excluídas entre os ids (cadastro do paciente). */
+  async nomesPorIds(ids: readonly string[]): Promise<ReadonlyMap<string, string>> {
+    if (ids.length === 0) return new Map();
+    const especialidades = await this.txHost.tx.especialidade.findMany({
+      where: { id: { in: [...new Set(ids)] }, deletedAt: null },
+      select: { id: true, nome: true },
+    });
+    return new Map(especialidades.map((e) => [e.id, e.nome]));
+  }
+
   // -------------------------------------------------------------------------------------------
   // Modal "Gerenciar Especialidades" (tela Profissionais)
 

@@ -38,8 +38,15 @@ export class EnvioPesquisaNpsService {
       tx.paciente.findFirst({ where: { id: pacienteId, deletedAt: null } }),
       tx.profissional.findFirst({ where: { id: profissionalId } }),
     ]);
-    // Opt-out (LGPD): sem registro, sem mensagem.
-    if (!paciente || !profissional || !paciente.aceitaCampanhasWhatsapp) return false;
+    // Opt-out (LGPD): consentimento de campanhas ou de comunicação revogado, sem mensagem.
+    if (
+      !paciente ||
+      !profissional ||
+      !paciente.aceitaCampanhasWhatsapp ||
+      !paciente.aceitaComunicacao
+    ) {
+      return false;
+    }
 
     let erro: string | null = null;
     let mensagemId: string | null = null;
