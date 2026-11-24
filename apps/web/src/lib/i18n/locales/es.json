@@ -1331,5 +1331,69 @@
       "CANCELADO": "Canceló",
       "REAGENDAR": "Reprogramó"
     }
+  },
+  "profissionalDocumentos": {
+    "titulo": "Documentos",
+    "novo": "Nuevo documento",
+    "editar": "Editar documento",
+    "carregando": "Cargando…",
+    "erroCarregar": "No se pudieron cargar los documentos.",
+    "erroBaixar": "No se pudo descargar el documento.",
+    "vazio": "Ningún documento enviado.",
+    "documentacaoValidada": "Documentación validada",
+    "documentacaoPendente": "Documentación pendiente",
+    "pendentes": "Documentos obligatorios pendientes",
+    "avisoRevalidar": "Al guardar, el documento vuelve a \"Enviado\" y debe validarse de nuevo.",
+    "placeholderTipo": "Seleccione el tipo",
+    "arquivoAtual": "Archivo actual: {{nome}}",
+    "datas": "Emisión: {{emissao}} · Vigencia: {{validade}}",
+    "venceEm": "Vence en {{dias}} día(s)",
+    "validadoPor": "Validado por {{nome}} el {{data}}",
+    "motivoRecusa": "Motivo del rechazo: {{motivo}}",
+    "baixar": "Descargar",
+    "validar": "Validar",
+    "recusar": "Rechazar",
+    "confirmarRecusa": "Rechazar documento",
+    "acaoEditar": "Editar",
+    "acaoExcluir": "Eliminar",
+    "baixarDe": "Descargar {{tipo}}",
+    "validarDe": "Validar {{tipo}}",
+    "recusarDe": "Rechazar {{tipo}}",
+    "editarDe": "Editar {{tipo}}",
+    "removerDe": "Eliminar {{tipo}}",
+    "confirmarRemocao": "¿Eliminar documento?",
+    "descricaoRemocao": "El documento sale de la lista del profesional. La acción queda registrada en la auditoría.",
+    "campos": {
+      "tipo": "Tipo",
+      "arquivo": "Archivo",
+      "numero": "Número",
+      "emissao": "Emisión",
+      "validade": "Vigencia",
+      "observacao": "Observación",
+      "motivo": "Motivo del rechazo"
+    },
+    "tipos": {
+      "CONTRATO": "Contrato",
+      "DOCUMENTO_PESSOAL": "Documento personal",
+      "REGISTRO_CONSELHO": "Registro profesional (CRM, CRN…)",
+      "RQE": "RQE",
+      "LICENCA": "Licencia",
+      "CERTIFICADO": "Certificado",
+      "DOCUMENTO_SANITARIO": "Documento sanitario",
+      "OUTRO": "Otro"
+    },
+    "situacoes": {
+      "PENDENTE": "Pendiente",
+      "ENVIADO": "Enviado",
+      "VALIDADO": "Validado",
+      "VENCIDO": "Vencido",
+      "RECUSADO": "Rechazado"
+    },
+    "mensagens": {
+      "criado": "Documento enviado.",
+      "atualizado": "Documento actualizado.",
+      "decidido": "Documento actualizado.",
+      "removido": "Documento eliminado."
+    }
   }
 }

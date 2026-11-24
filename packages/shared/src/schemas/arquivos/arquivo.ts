@@ -85,6 +85,11 @@ export const ARQUIVO_USOS = {
     formatos: ['pdf'],
     maxBytes: 10 * MB,
   },
+  'documento-profissional': {
+    descricao: 'Documento do profissional (contrato, registro, certificado…)',
+    formatos: ['pdf', 'jpg', 'jpeg', 'png'],
+    maxBytes: 10 * MB,
+  },
   'comprovante-conta-pagar': {
     descricao: 'Comprovante de pagamento de conta a pagar',
     formatos: ['pdf', 'jpg', 'jpeg', 'png'],

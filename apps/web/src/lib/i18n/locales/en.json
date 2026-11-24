@@ -1331,5 +1331,69 @@
       "CANCELADO": "Canceled",
       "REAGENDAR": "Rescheduled"
     }
+  },
+  "profissionalDocumentos": {
+    "titulo": "Documents",
+    "novo": "New document",
+    "editar": "Edit document",
+    "carregando": "Loading…",
+    "erroCarregar": "Could not load the documents.",
+    "erroBaixar": "Could not download the document.",
+    "vazio": "No documents uploaded.",
+    "documentacaoValidada": "Documentation validated",
+    "documentacaoPendente": "Documentation pending",
+    "pendentes": "Pending required documents",
+    "avisoRevalidar": "On save, the document goes back to \"Sent\" and must be validated again.",
+    "placeholderTipo": "Select the type",
+    "arquivoAtual": "Current file: {{nome}}",
+    "datas": "Issued: {{emissao}} · Valid until: {{validade}}",
+    "venceEm": "Expires in {{dias}} day(s)",
+    "validadoPor": "Validated by {{nome}} on {{data}}",
+    "motivoRecusa": "Reason for rejection: {{motivo}}",
+    "baixar": "Download",
+    "validar": "Validate",
+    "recusar": "Reject",
+    "confirmarRecusa": "Reject document",
+    "acaoEditar": "Edit",
+    "acaoExcluir": "Delete",
+    "baixarDe": "Download {{tipo}}",
+    "validarDe": "Validate {{tipo}}",
+    "recusarDe": "Reject {{tipo}}",
+    "editarDe": "Edit {{tipo}}",
+    "removerDe": "Delete {{tipo}}",
+    "confirmarRemocao": "Delete document?",
+    "descricaoRemocao": "The document is removed from the professional's list. The action is recorded in the audit log.",
+    "campos": {
+      "tipo": "Type",
+      "arquivo": "File",
+      "numero": "Number",
+      "emissao": "Issue date",
+      "validade": "Valid until",
+      "observacao": "Notes",
+      "motivo": "Reason for rejection"
+    },
+    "tipos": {
+      "CONTRATO": "Contract",
+      "DOCUMENTO_PESSOAL": "Personal document",
+      "REGISTRO_CONSELHO": "Council registration (CRM, CRN…)",
+      "RQE": "RQE",
+      "LICENCA": "License",
+      "CERTIFICADO": "Certificate",
+      "DOCUMENTO_SANITARIO": "Health authority document",
+      "OUTRO": "Other"
+    },
+    "situacoes": {
+      "PENDENTE": "Pending",
+      "ENVIADO": "Sent",
+      "VALIDADO": "Validated",
+      "VENCIDO": "Expired",
+      "RECUSADO": "Rejected"
+    },
+    "mensagens": {
+      "criado": "Document uploaded.",
+      "atualizado": "Document updated.",
+      "decidido": "Document updated.",
+      "removido": "Document deleted."
+    }
   }
 }

@@ -10,7 +10,9 @@ describe('catálogo de permissões', () => {
 
   it('segue o formato <modulo>.<recurso>.<acao>', () => {
     for (const permissao of PERMISSOES) {
-      expect(permissao).toMatch(/^[a-z0-9-]+\.[a-z0-9-]+\.(ver|criar|editar|excluir|exportar)$/);
+      expect(permissao).toMatch(
+        /^[a-z0-9-]+\.[a-z0-9-]+\.(ver|criar|editar|excluir|exportar|validar)$/,
+      );
     }
   });
 
