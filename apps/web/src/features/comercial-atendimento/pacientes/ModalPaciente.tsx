@@ -1,4 +1,5 @@
 import {
+  PACIENTE_POSSIVEL_DUPLICADO,
   PACIENTE_SEXO_ROTULOS,
   PACIENTE_SEXOS,
   PACIENTE_STATUS,
@@ -8,9 +9,10 @@ import {
   createPacienteSchema,
   type Paciente,
   type PacienteInput,
+  type PacientePossivelDuplicado,
   type PacienteTipo,
 } from '@torres/shared';
-import { useState } from 'react';
+import { useRef, useState, type FocusEvent } from 'react';
 import { useController, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { FormAcoes } from '@/components/shared/form/FormAcoes';
@@ -18,7 +20,9 @@ import { FormField } from '@/components/shared/form/FormField';
 import { FormLayout } from '@/components/shared/form/FormLayout';
 import { useFormulario } from '@/components/shared/form/use-formulario';
 import { Modal } from '@/components/shared/Modal';
+import { ApiRequestError } from '@/lib/api/api-error';
 import { cn } from '@/lib/utils';
+import { AlertaDuplicidade } from './AlertaDuplicidade';
 import { CamposRelacionamento } from './CamposRelacionamento';
 import { ConsentimentosNovoPaciente } from './ConsentimentosNovoPaciente';
 import {
@@ -26,7 +30,12 @@ import {
   montarConsentimentos,
   type EscolhasConsentimento,
 } from './escolhas-consentimento';
-import { useCriarPaciente, useEditarPaciente } from './use-pacientes';
+import {
+  useCriarPaciente,
+  useEditarPaciente,
+  verificarDuplicidade,
+  type DadosIdentificacao,
+} from './use-pacientes';
 
 const ID_FORMULARIO = 'form-paciente';
 
@@ -81,14 +90,46 @@ function valoresIniciais(paciente?: Paciente): PacienteInput {
   };
 }
 
+/** Campos que identificam o paciente: ao sair de um deles, procura possíveis duplicados (#149). */
+const CAMPOS_IDENTIFICACAO = new Set(['nome', 'email', 'telefone', 'celular', 'dataNascimento']);
+
+function identificacao(valores: Partial<PacienteInput>): DadosIdentificacao {
+  return {
+    nome: valores.nome?.trim() || null,
+    email: valores.email?.trim() || null,
+    telefone: valores.telefone || null,
+    celular: valores.celular || null,
+    dataNascimento: valores.dataNascimento || null,
+  };
+}
+
+/** Assinatura dos dados conferidos: o que já foi conferido ou confirmado não alerta de novo. */
+const assinaturaDe = (dados: DadosIdentificacao) => JSON.stringify(dados);
+
+interface AlertaAberto {
+  candidatos: PacientePossivelDuplicado[];
+  /** Veio do "Cadastrar/Salvar" (continuar grava) ou de sair do campo (continuar só fecha). */
+  aoSalvar: boolean;
+}
+
 export interface ModalPacienteProps {
   /** Sem paciente: "Novo Paciente". Com paciente: "Editar Paciente". */
   paciente?: Paciente;
   onFechar: () => void;
+  /** "Abrir registro existente" do alerta de duplicidade: abre o paciente escolhido. */
+  onAbrirExistente: (id: string) => Promise<unknown> | void;
 }
 
 /** Modal "Novo Paciente" e "Editar Paciente": pessoa física ou jurídica, com endereço. */
-export function ModalPaciente({ paciente, onFechar }: Readonly<ModalPacienteProps>) {
+export function ModalPaciente({
+  paciente,
+  onFechar,
+  onAbrirExistente,
+}: Readonly<ModalPacienteProps>) {
+  const [alerta, setAlerta] = useState<AlertaAberto | null>(null);
+  const [abrindo, setAbrindo] = useState(false);
+  const confirmada = useRef<string | null>(null);
+  const conferida = useRef<string | null>(null);
   const criar = useCriarPaciente();
   const editar = useEditarPaciente(paciente?.id ?? '');
   const form = useFormulario(createPacienteSchema, { defaultValues: valoresIniciais(paciente) });
@@ -99,6 +140,75 @@ export function ModalPaciente({ paciente, onFechar }: Readonly<ModalPacienteProp
   const [mostrarErros, setMostrarErros] = useState(false);
   const tipo = useWatch({ control: form.control, name: 'tipo' }) ?? 'PF';
   const pf = tipo === 'PF';
+
+  /** Falha na consulta não trava o cadastro: a API confere de novo ao gravar. */
+  async function conferir(dados: DadosIdentificacao): Promise<PacientePossivelDuplicado[]> {
+    try {
+      return await verificarDuplicidade(dados, paciente?.id);
+    } catch {
+      return [];
+    }
+  }
+
+  async function aoSairDoCampo(evento: FocusEvent<HTMLElement>) {
+    if (alerta || !CAMPOS_IDENTIFICACAO.has((evento.target as HTMLInputElement).name)) return;
+    const dados = identificacao(form.getValues());
+    const assinatura = assinaturaDe(dados);
+    if (assinatura === confirmada.current || assinatura === conferida.current) return;
+    conferida.current = assinatura;
+    const candidatos = await conferir(dados);
+    const mudou = assinaturaDe(identificacao(form.getValues())) !== assinatura;
+    if (candidatos.length > 0 && !mudou) setAlerta({ candidatos, aoSalvar: false });
+  }
+
+  /** Confere o duplicado, grava e fecha; sem a confirmação do usuário, mostra o alerta. */
+  async function salvar(valores: PacienteInput): Promise<void> {
+    const dados = identificacao(valores);
+    const confirmado = confirmada.current === assinaturaDe(dados);
+    if (!confirmado) {
+      const candidatos = await conferir(dados);
+      if (candidatos.length > 0) {
+        setAlerta({ candidatos, aoSalvar: true });
+        return;
+      }
+    }
+    try {
+      // Os dois aceitam o mesmo corpo; a API devolve o paciente já normalizado.
+      await (paciente ? editar : criar).mutateAsync({
+        ...valores,
+        duplicidadeConfirmada: confirmado || undefined,
+      });
+    } catch (erro) {
+      // Alguém cadastrou um parecido entre a consulta e o envio: mostra o alerta.
+      if (erro instanceof ApiRequestError && erro.body?.code === PACIENTE_POSSIVEL_DUPLICADO) {
+        const candidatos = await conferir(dados);
+        if (candidatos.length > 0) {
+          setAlerta({ candidatos, aoSalvar: true });
+          return;
+        }
+      }
+      throw erro;
+    }
+    onFechar();
+  }
+
+  function continuarCadastro() {
+    confirmada.current = assinaturaDe(identificacao(form.getValues()));
+    const salvando = alerta?.aoSalvar ?? false;
+    setAlerta(null);
+    if (salvando) {
+      (document.getElementById(ID_FORMULARIO) as HTMLFormElement | null)?.requestSubmit();
+    }
+  }
+
+  async function abrirExistente(id: string) {
+    setAbrindo(true);
+    try {
+      await onAbrirExistente(id);
+    } finally {
+      setAbrindo(false);
+    }
+  }
 
   return (
     <Modal
@@ -126,126 +236,137 @@ export function ModalPaciente({ paciente, onFechar }: Readonly<ModalPacienteProp
             setMostrarErros(true);
             return;
           }
-          // Os dois aceitam o mesmo corpo; a API devolve o paciente já normalizado.
-          await (paciente ? editar : criar).mutateAsync({
+          await salvar({
             ...(valores as PacienteInput),
             ...(consentimentos ? { consentimentos } : {}),
           });
-          onFechar();
         }}
       >
-        <FormField
-          name="nome"
-          label="Nome"
-          obrigatorio
-          placeholder={pf ? 'Nome completo' : 'Nome do cliente'}
-          className="sm:col-span-2"
-        />
-        <FormField
-          name="nomeSocial"
-          label="Nome Social"
-          placeholder="Nome social (opcional)"
-          className="sm:col-span-2"
-        />
-        <SeletorTipoPessoa />
-
-        <FormField name="email" label="Email" tipo="email" placeholder="email@exemplo.com" />
-        <FormField
-          name="documento"
-          label={pf ? 'CPF' : 'CNPJ'}
-          tipo={pf ? 'cpf' : 'cnpj'}
-          key={tipo}
-        />
-
-        {pf ? (
-          <>
-            <FormField name="rg" label="RG" />
-            <FormField name="menorIdade" label="Menor de idade" tipo="checkbox" />
-          </>
-        ) : (
-          <>
-            <FormField
-              name="razaoSocial"
-              label="Razão Social"
-              placeholder="Razão social da empresa"
-            />
-            <FormField name="nomeFantasia" label="Nome Fantasia" placeholder="Nome fantasia" />
-            <FormField
-              name="inscricaoEstadual"
-              label="Inscrição Estadual"
-              placeholder="Inscrição estadual (opcional)"
-              className="sm:col-span-2"
-            />
-            <fieldset className="grid gap-4 rounded-md border bg-muted/40 p-4 sm:col-span-2 sm:grid-cols-2">
-              <legend className="px-1 text-sm font-medium text-primary">Representante Legal</legend>
-              <FormField
-                name="representanteNome"
-                label="Nome do Representante"
-                placeholder="Nome completo"
-              />
-              <FormField
-                name="representanteCelular"
-                label="Celular do Representante"
-                tipo="telefone"
-              />
-            </fieldset>
-          </>
-        )}
-
-        <FormField name="telefone" label="Telefone" tipo="telefone" />
-        <FormField name="celular" label="Celular" tipo="telefone" />
-        <FormField
-          name="dataNascimento"
-          label={pf ? 'Data de Nascimento' : 'Data de Fundação'}
-          tipo="data"
-        />
-        {pf && <FormField name="sexo" label="Sexo" tipo="select" opcoes={OPCOES_SEXO} />}
-        <FormField name="profissao" label="Profissão" />
-        <FormField
-          name="origemClienteId"
-          label="Origem"
-          tipo="entidade"
-          entidade="origens-cliente"
-        />
-        <FormField
-          name="status"
-          label="Status"
-          tipo="select"
-          opcoes={OPCOES_STATUS}
-          className="sm:col-span-2"
-        />
-        <FormField
-          name="observacoes"
-          label="Observações"
-          tipo="textarea"
-          placeholder="Observações sobre o paciente..."
-          className="sm:col-span-2"
-        />
-        <CamposRelacionamento />
-        {paciente ? (
-          <p className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground sm:col-span-2">
-            {t('pacientes.consentimentos.cadastro.edicao')}
-          </p>
-        ) : (
-          <ConsentimentosNovoPaciente
-            valor={escolhas}
-            onChange={setEscolhas}
-            mostrarErros={mostrarErros}
+        <div className="contents" onBlur={(evento) => void aoSairDoCampo(evento)}>
+          <FormField
+            name="nome"
+            label="Nome"
+            obrigatorio
+            placeholder={pf ? 'Nome completo' : 'Nome do cliente'}
+            className="sm:col-span-2"
           />
-        )}
+          <FormField
+            name="nomeSocial"
+            label="Nome Social"
+            placeholder="Nome social (opcional)"
+            className="sm:col-span-2"
+          />
+          <SeletorTipoPessoa />
 
-        <fieldset className="grid gap-4 border-t pt-4 sm:col-span-2 sm:grid-cols-2">
-          <legend className="pr-2 text-sm font-semibold">Endereço</legend>
-          <FormField name="cep" label="CEP" tipo="cep" />
-          <FormField name="logradouro" label="Logradouro" placeholder="Rua, Av..." />
-          <FormField name="numero" label="Número" placeholder="Nº" />
-          <FormField name="complemento" label="Complemento" placeholder="Apto, Sala..." />
-          <FormField name="bairro" label="Bairro" />
-          <FormField name="cidade" label="Cidade" />
-          <FormField name="uf" label="UF" placeholder="MT" />
-          <FormField name="codigoIbge" label="Cód. IBGE" placeholder="5103403" />
-        </fieldset>
+          <FormField name="email" label="Email" tipo="email" placeholder="email@exemplo.com" />
+          <FormField
+            name="documento"
+            label={pf ? 'CPF' : 'CNPJ'}
+            tipo={pf ? 'cpf' : 'cnpj'}
+            key={tipo}
+          />
+
+          {pf ? (
+            <>
+              <FormField name="rg" label="RG" />
+              <FormField name="menorIdade" label="Menor de idade" tipo="checkbox" />
+            </>
+          ) : (
+            <>
+              <FormField
+                name="razaoSocial"
+                label="Razão Social"
+                placeholder="Razão social da empresa"
+              />
+              <FormField name="nomeFantasia" label="Nome Fantasia" placeholder="Nome fantasia" />
+              <FormField
+                name="inscricaoEstadual"
+                label="Inscrição Estadual"
+                placeholder="Inscrição estadual (opcional)"
+                className="sm:col-span-2"
+              />
+              <fieldset className="grid gap-4 rounded-md border bg-muted/40 p-4 sm:col-span-2 sm:grid-cols-2">
+                <legend className="px-1 text-sm font-medium text-primary">
+                  Representante Legal
+                </legend>
+                <FormField
+                  name="representanteNome"
+                  label="Nome do Representante"
+                  placeholder="Nome completo"
+                />
+                <FormField
+                  name="representanteCelular"
+                  label="Celular do Representante"
+                  tipo="telefone"
+                />
+              </fieldset>
+            </>
+          )}
+
+          <FormField name="telefone" label="Telefone" tipo="telefone" />
+          <FormField name="celular" label="Celular" tipo="telefone" />
+          <FormField
+            name="dataNascimento"
+            label={pf ? 'Data de Nascimento' : 'Data de Fundação'}
+            tipo="data"
+          />
+          {pf && <FormField name="sexo" label="Sexo" tipo="select" opcoes={OPCOES_SEXO} />}
+          <FormField name="profissao" label="Profissão" />
+          <FormField
+            name="origemClienteId"
+            label="Origem"
+            tipo="entidade"
+            entidade="origens-cliente"
+          />
+          <FormField
+            name="status"
+            label="Status"
+            tipo="select"
+            opcoes={OPCOES_STATUS}
+            className="sm:col-span-2"
+          />
+          <FormField
+            name="observacoes"
+            label="Observações"
+            tipo="textarea"
+            placeholder="Observações sobre o paciente..."
+            className="sm:col-span-2"
+          />
+          <CamposRelacionamento />
+          {paciente ? (
+            <p className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground sm:col-span-2">
+              {t('pacientes.consentimentos.cadastro.edicao')}
+            </p>
+          ) : (
+            <ConsentimentosNovoPaciente
+              valor={escolhas}
+              onChange={setEscolhas}
+              mostrarErros={mostrarErros}
+            />
+          )}
+
+          <fieldset className="grid gap-4 border-t pt-4 sm:col-span-2 sm:grid-cols-2">
+            <legend className="pr-2 text-sm font-semibold">Endereço</legend>
+            <FormField name="cep" label="CEP" tipo="cep" />
+            <FormField name="logradouro" label="Logradouro" placeholder="Rua, Av..." />
+            <FormField name="numero" label="Número" placeholder="Nº" />
+            <FormField name="complemento" label="Complemento" placeholder="Apto, Sala..." />
+            <FormField name="bairro" label="Bairro" />
+            <FormField name="cidade" label="Cidade" />
+            <FormField name="uf" label="UF" placeholder="MT" />
+            <FormField name="codigoIbge" label="Cód. IBGE" placeholder="5103403" />
+          </fieldset>
+        </div>
       </FormLayout>
+      {alerta && (
+        <AlertaDuplicidade
+          candidatos={alerta.candidatos}
+          ocupado={abrindo}
+          onAbrir={(id) => void abrirExistente(id)}
+          onContinuar={continuarCadastro}
+          onFechar={() => setAlerta(null)}
+        />
+      )}
     </Modal>
   );
 }

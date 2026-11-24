@@ -3,11 +3,15 @@ import {
   auditLogPageSchema,
   consentimentoSchema,
   consentimentosResponseSchema,
+  pacienteResumoSchema,
   pacienteSchema,
+  verificacaoDuplicidadePacienteSchema,
   type AuditLogItem,
   type ConsentimentoInput,
   type Paciente,
   type PacienteInput,
+  type PacientePossivelDuplicado,
+  type VerificarDuplicidadePacienteInput,
 } from '@torres/shared';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api/client';
@@ -104,5 +108,34 @@ export function useRegistrarConsentimento(pacienteId: string) {
       ]);
       toast.success(i18next.t('pacientes.consentimentos.registrar.sucesso'));
     },
+  });
+}
+
+/** Dados que identificam o paciente na verificação de duplicidade (issue #149). */
+export type DadosIdentificacao = Pick<
+  VerificarDuplicidadePacienteInput,
+  'nome' | 'email' | 'telefone' | 'celular' | 'dataNascimento'
+>;
+
+/**
+ * `POST /pacientes/duplicidade`: possíveis cadastros do mesmo paciente. Na edição, `pacienteId`
+ * faz a API ignorar o próprio paciente e o que não mudou.
+ */
+export function verificarDuplicidade(
+  dados: DadosIdentificacao,
+  pacienteId?: string,
+): Promise<PacientePossivelDuplicado[]> {
+  return apiFetch(`${URL_PACIENTES}/duplicidade`, {
+    method: 'POST',
+    body: { ...dados, pacienteId },
+    schema: verificacaoDuplicidadePacienteSchema,
+  }).then((r) => r.candidatos);
+}
+
+/** "Abrir registro existente": busca o paciente escolhido no alerta. */
+export function useAbrirPaciente() {
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiFetch(`${URL_PACIENTES}/${id}`, { schema: pacienteResumoSchema }),
   });
 }

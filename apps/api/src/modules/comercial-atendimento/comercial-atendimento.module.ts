@@ -71,6 +71,7 @@ import { NegociosService } from './pipeline/negocios.service';
 import { IndicadoresGestaoService } from './indicadores-gestao/indicadores-gestao.service';
 import { ConsentimentosPacienteService } from './pacientes/consentimentos-paciente.service';
 import { PacientesController } from './pacientes/pacientes.controller';
+import { PacientesDuplicidadeService } from './pacientes/pacientes-duplicidade.service';
 import { PacientesService } from './pacientes/pacientes.service';
 import { AtendimentoWhatsappController } from './whatsapp/atendimento-whatsapp.controller';
 import { AtendimentoWhatsappService } from './whatsapp/atendimento-whatsapp.service';
@@ -125,6 +126,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
   providers: [
     PacientesService,
     ConsentimentosPacienteService,
+    PacientesDuplicidadeService,
     OrigensClienteService,
     AgendaService,
     RecepcaoService,

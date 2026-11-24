@@ -21,6 +21,7 @@ export * from './schemas/comercial-atendimento/venda';
 export * from './schemas/comercial-atendimento/origem-cliente';
 export * from './schemas/comercial-atendimento/consentimento-paciente';
 export * from './schemas/comercial-atendimento/paciente';
+export * from './schemas/comercial-atendimento/paciente-duplicidade';
 export * from './schemas/comercial-atendimento/conversa-whatsapp';
 export * from './schemas/configuracoes-gestao/canal-whatsapp';
 export * from './schemas/comercial-atendimento/crm-config';

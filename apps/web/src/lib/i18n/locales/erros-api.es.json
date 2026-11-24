@@ -38,5 +38,6 @@
   "CONTRATO_NAO_AGUARDA_ASSINATURA": "Solo se puede firmar un contrato pendiente de firma",
   "PACIENTE_INDICACAO_INVALIDA": "El paciente o profesional que recomendó no es válido",
   "PACIENTE_PROFISSIONAL_INVALIDO": "El profesional no es válido",
-  "PACIENTE_ESPECIALIDADE_INVALIDA": "La especialidad no es válida"
+  "PACIENTE_ESPECIALIDADE_INVALIDA": "La especialidad no es válida",
+  "PACIENTE_POSSIVEL_DUPLICADO": "Es posible que el paciente ya esté registrado. Abra el registro existente o confirme para continuar"
 }

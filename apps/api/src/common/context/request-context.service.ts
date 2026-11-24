@@ -6,6 +6,7 @@ export interface RequestContextStore extends ClsStore {
   userId?: string;
   ip?: string;
   escopoDados?: EscopoDados;
+  verDadosSensiveis?: boolean;
 }
 
 /** Acesso tipado ao contexto da requisição (requestId, usuário autenticado e IP). */
@@ -34,6 +35,16 @@ export class RequestContextService {
   /** Preenchido pelo guard de autenticação. */
   setEscopoDados(escopo: EscopoDados): void {
     this.cls.set('escopoDados', escopo);
+  }
+
+  /** `true` só quando o usuário autenticado pode ver dados sensíveis. Use `DadosSensiveisService`. */
+  getVerDadosSensiveis(): boolean {
+    return this.cls.isActive() ? this.cls.get('verDadosSensiveis') === true : false;
+  }
+
+  /** Preenchido pelo guard de autenticação. */
+  setVerDadosSensiveis(valor: boolean): void {
+    this.cls.set('verDadosSensiveis', valor);
   }
 
   getIp(): string | undefined {

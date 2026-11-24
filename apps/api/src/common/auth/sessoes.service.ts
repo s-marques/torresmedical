@@ -51,6 +51,7 @@ export function toUsuarioAutenticado(
       ativo ? perfil.escopoDados : null,
       usuario.profissionais.map((v) => v.profissionalId),
     ),
+    verDadosSensiveis: usuario.verDadosSensiveis,
     avatarArquivoId: usuario.avatarArquivoId,
     preferencias: toPreferencias(usuario.preferencias),
   };

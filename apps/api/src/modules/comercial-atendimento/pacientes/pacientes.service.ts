@@ -26,6 +26,8 @@ import { intervaloDoPeriodo } from '../../../common/relatorios/periodo';
 import { EspecialidadesService } from '../../gestao-profissionais/especialidades/especialidades.service';
 import { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
 import { ConsentimentosPacienteService } from './consentimentos-paciente.service';
+import { mascararCpf } from './mascarar-cpf';
+import { PacientesDuplicidadeService } from './pacientes-duplicidade.service';
 import { PacientesVinculadosService } from '../../consultorio-assistencial/pacientes-vinculados/pacientes-vinculados.service';
 
 const CPF_DIGITOS = 11;
@@ -106,11 +108,7 @@ export const PACIENTE_EXPORT_DEFINITIONS: readonly ExportColumn<
 
 const STATUS_ROTULO = { NOVO: 'Novo', ATIVO: 'Ativo', INATIVO: 'Inativo' } as const;
 
-/** CPF parcialmente oculto para diferenciar homônimos sem expor o documento: `***.456.789-**`. */
-export function mascararCpf(documento: string | null): string | null {
-  if (documento?.length !== CPF_DIGITOS) return null;
-  return `***.${documento.slice(3, 6)}.${documento.slice(6, 9)}-**`;
-}
+export { mascararCpf };
 
 /** Busca do combobox: nome ou dígitos do CPF (aceita `123.456` ou `123456`). */
 function buscaPaciente(search: string | undefined): Prisma.PacienteWhereInput {
@@ -162,6 +160,7 @@ export class PacientesService extends EntidadeLookupService<
     private readonly profissionais: ProfissionaisService,
     private readonly especialidades: EspecialidadesService,
     private readonly consentimentos: ConsentimentosPacienteService,
+    private readonly duplicidade: PacientesDuplicidadeService,
   ) {
     super();
   }
@@ -203,10 +202,12 @@ export class PacientesService extends EntidadeLookupService<
   async create(input: CreatePacienteInput): Promise<PacienteDto> {
     await this.validar(input);
     this.garantirVinculoNoEscopo(input.profissionalVinculoId);
+    const candidatos = await this.duplicidade.exigirConfirmacao(input, input.duplicidadeConfirmada);
     const criado = await this.txHost.tx.paciente.create({
       data: this.dados(input),
       include: COM_ORIGEM,
     });
+    await this.duplicidade.registrarConfirmacao(criado.id, candidatos);
     return this.aposConsentimentos(criado.id, input);
   }
 
@@ -217,7 +218,13 @@ export class PacientesService extends EntidadeLookupService<
     if (input.profissionalVinculoId !== atual.profissionalVinculoId) {
       this.garantirVinculoNoEscopo(input.profissionalVinculoId);
     }
+    const candidatos = await this.duplicidade.exigirConfirmacao(
+      input,
+      input.duplicidadeConfirmada,
+      id,
+    );
     await this.txHost.tx.paciente.update({ where: { id }, data: this.dados(input) });
+    await this.duplicidade.registrarConfirmacao(id, candidatos);
     return this.aposConsentimentos(id, input);
   }
 
@@ -444,6 +451,8 @@ export class PacientesService extends EntidadeLookupService<
     const cadastro: Partial<CreatePacienteInput> = { ...input };
     delete cadastro.consentimentos;
     delete cadastro.aceitaCampanhasWhatsapp;
+    // A confirmação do alerta de duplicidade (#149) vai para a auditoria, não para a tabela.
+    delete cadastro.duplicidadeConfirmada;
     return {
       ...(cadastro as Prisma.PacienteUncheckedCreateInput),
       dataNascimento: input.dataNascimento

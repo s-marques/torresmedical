@@ -13,6 +13,8 @@ export interface UsuarioAutenticado {
   permissoes: ReadonlySet<Permissao>;
   /** De quem são os dados que o usuário vê (issue #153). */
   escopo: EscopoDados;
+  /** Perfil autorizado a ver dados sensíveis (LGPD), como o CPF dos cadastros. */
+  verDadosSensiveis: boolean;
   /** Avatar da tela Configurações (issue #30). */
   avatarArquivoId: string | null;
   /** Preferências e aparência (issue #30), com os padrões quando nunca alteradas. */

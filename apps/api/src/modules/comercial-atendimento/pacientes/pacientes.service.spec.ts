@@ -4,6 +4,7 @@ import type { ExportService } from '../../../common/export/export.service';
 import type { EspecialidadesService } from '../../gestao-profissionais/especialidades/especialidades.service';
 import type { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
 import type { ConsentimentosPacienteService } from './consentimentos-paciente.service';
+import type { PacientesDuplicidadeService } from './pacientes-duplicidade.service';
 import type { PacientesVinculadosService } from '../../consultorio-assistencial/pacientes-vinculados/pacientes-vinculados.service';
 import {
   formatarDocumento,
@@ -35,6 +36,10 @@ function setup(registros = [PACIENTE], idsNoEscopo: string[] | null = null) {
   const especialidades = { nomesPorIds: jest.fn().mockResolvedValue(new Map()) };
   const escopo = { garantirProfissional: jest.fn() };
   const consentimentos = { registrarSeMudou: jest.fn().mockResolvedValue(true) };
+  const duplicidade = {
+    exigirConfirmacao: jest.fn().mockResolvedValue([]),
+    registrarConfirmacao: jest.fn().mockResolvedValue(undefined),
+  };
   const service = new PacientesService(
     txHost,
     {} as ExportService,
@@ -43,6 +48,7 @@ function setup(registros = [PACIENTE], idsNoEscopo: string[] | null = null) {
     profissionais as unknown as ProfissionaisService,
     especialidades as unknown as EspecialidadesService,
     consentimentos as unknown as ConsentimentosPacienteService,
+    duplicidade as unknown as PacientesDuplicidadeService,
   );
   return {
     service,
@@ -53,6 +59,7 @@ function setup(registros = [PACIENTE], idsNoEscopo: string[] | null = null) {
     especialidades,
     escopo,
     consentimentos,
+    duplicidade,
   };
 }
 
@@ -372,6 +379,63 @@ describe('PacientesService', () => {
       await expect(
         service.create({ nome: 'Ana', profissionalVinculoId: ID_A } as never),
       ).rejects.toMatchObject({ status: 403 });
+    });
+  });
+
+  describe('possível duplicado (issue #149)', () => {
+    const agora = new Date();
+    const GRAVADO = { ...PACIENTE, createdAt: agora, updatedAt: agora, origemCliente: null };
+    const CANDIDATO = {
+      id: '1b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f',
+      nome: 'Outra Pessoa',
+      cpfMascarado: null,
+      dataNascimento: null,
+      motivos: ['TELEFONE' as const],
+    };
+
+    it('create: confere o duplicado, não grava o flag e registra a confirmação', async () => {
+      const { service, delegate, duplicidade } = setup([GRAVADO as never]);
+      duplicidade.exigirConfirmacao.mockResolvedValue([CANDIDATO]);
+
+      await service.create({ nome: 'Maria Teste', duplicidadeConfirmada: true } as never);
+
+      expect(duplicidade.exigirConfirmacao).toHaveBeenCalledWith(
+        expect.objectContaining({ nome: 'Maria Teste' }),
+        true,
+      );
+      expect(delegate.create.mock.calls[0][0].data).not.toHaveProperty('duplicidadeConfirmada');
+      expect(duplicidade.registrarConfirmacao).toHaveBeenCalledWith(PACIENTE.id, [CANDIDATO]);
+    });
+
+    it('create: o 409 do duplicado impede a gravação', async () => {
+      const { service, delegate, duplicidade } = setup([GRAVADO as never]);
+      duplicidade.exigirConfirmacao.mockRejectedValue(
+        Object.assign(new Error('duplicado'), { status: 409 }),
+      );
+
+      await expect(service.create({ nome: 'Maria' } as never)).rejects.toMatchObject({
+        status: 409,
+      });
+      expect(delegate.create).not.toHaveBeenCalled();
+      expect(duplicidade.registrarConfirmacao).not.toHaveBeenCalled();
+    });
+
+    it('update: ignora o próprio paciente e registra a confirmação', async () => {
+      const { service, delegate, duplicidade } = setup([GRAVADO as never]);
+      duplicidade.exigirConfirmacao.mockResolvedValue([CANDIDATO]);
+
+      await service.update(PACIENTE.id, {
+        nome: 'Maria Teste',
+        duplicidadeConfirmada: true,
+      } as never);
+
+      expect(duplicidade.exigirConfirmacao).toHaveBeenCalledWith(
+        expect.objectContaining({ nome: 'Maria Teste' }),
+        true,
+        PACIENTE.id,
+      );
+      expect(delegate.update.mock.calls[0][0].data).not.toHaveProperty('duplicidadeConfirmada');
+      expect(duplicidade.registrarConfirmacao).toHaveBeenCalledWith(PACIENTE.id, [CANDIDATO]);
     });
   });
 

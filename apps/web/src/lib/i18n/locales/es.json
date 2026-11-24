@@ -1592,6 +1592,21 @@
       }
     }
   },
+  "pacienteDuplicidade": {
+    "titulo": "Posible paciente duplicado",
+    "pergunta": "Es posible que el paciente ya esté registrado. ¿Desea abrir el registro existente?",
+    "lista": "Posibles registros",
+    "cpf": "CPF: {{cpf}}",
+    "nascimento": "Nacimiento: {{data}}",
+    "abrir": "Abrir registro existente",
+    "continuar": "Continuar registro",
+    "voltar": "Volver",
+    "motivos": {
+      "TELEFONE": "Mismo teléfono",
+      "EMAIL": "Mismo correo electrónico",
+      "NOME_NASCIMENTO": "Mismo nombre y fecha de nacimiento"
+    }
+  },
   "classificacao": {
     "titulo": "Clasificación del socio",
     "semCalculo": "Aún no calculada. El cálculo se ejecuta todos los días.",

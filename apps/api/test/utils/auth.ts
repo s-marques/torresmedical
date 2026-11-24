@@ -30,6 +30,8 @@ export interface OpcoesUsuarioTeste {
   escopoDados?: 'TODOS' | 'PROFISSIONAIS_VINCULADOS';
   /** Issue #153: profissionais vinculados ao usuário. */
   profissionalIds?: readonly string[];
+  /** Usuário autorizado a ver dados sensíveis (LGPD). */
+  verDadosSensiveis?: boolean;
 }
 
 /**
@@ -44,6 +46,7 @@ export async function criarUsuarioTeste(
     empresaId,
     escopoDados = 'TODOS',
     profissionalIds = [],
+    verDadosSensiveis = false,
   }: OpcoesUsuarioTeste = {},
 ): Promise<UsuarioTeste> {
   const prisma = app.get(PrismaService);
@@ -69,6 +72,7 @@ export async function criarUsuarioTeste(
       email: `teste.${faker.string.uuid()}@example.com`,
       senhaHash: await hashSenha(SENHA_TESTE),
       ativo,
+      verDadosSensiveis,
       profissionais: { create: profissionalIds.map((profissionalId) => ({ profissionalId })) },
     },
     include: USUARIO_COM_PERMISSOES,
