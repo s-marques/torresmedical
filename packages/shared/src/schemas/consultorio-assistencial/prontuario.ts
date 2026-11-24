@@ -207,3 +207,45 @@ export type HistoricoClinicoItem = z.infer<typeof historicoClinicoItemSchema>;
 
 export const historicoClinicoPageSchema = paginatedResponseSchema(historicoClinicoItemSchema);
 export type HistoricoClinicoPage = z.infer<typeof historicoClinicoPageSchema>;
+
+// --- Log de acesso de leitura (issue #150) ---------------------------------------------------
+
+/** O que foi aberto no prontuário. */
+export const PRONTUARIO_ACESSO_RECURSOS = [
+  'PRONTUARIO',
+  'ATENDIMENTOS',
+  'ANAMNESES',
+  'RECEITAS',
+  'HISTORICO_CLINICO',
+] as const;
+
+export const prontuarioAcessoRecursoSchema = z.enum(PRONTUARIO_ACESSO_RECURSOS, {
+  error: 'Recurso inválido',
+});
+
+export type ProntuarioAcessoRecurso = z.infer<typeof prontuarioAcessoRecursoSchema>;
+
+/** Filtros de `GET /api/consultorio-assistencial/prontuarios/acessos`. */
+export const listProntuarioAcessosQuerySchema = listRegistrosQuerySchema.extend({
+  pacienteId: z.uuid({ error: 'Paciente inválido' }).optional(),
+  usuarioId: z.string().trim().min(1).max(100).optional(),
+  recurso: prontuarioAcessoRecursoSchema.optional(),
+});
+
+export type ListProntuarioAcessosQuery = z.infer<typeof listProntuarioAcessosQuerySchema>;
+
+/** Só ids: o log nunca guarda conteúdo clínico nem dado pessoal. */
+export const prontuarioAcessoSchema = z.object({
+  id: z.uuid(),
+  usuarioId: z.string(),
+  pacienteId: z.uuid(),
+  recurso: prontuarioAcessoRecursoSchema,
+  acessadoEm: z.iso.datetime(),
+  requestId: z.string().nullable(),
+  ip: z.string().nullable(),
+});
+
+export type ProntuarioAcesso = z.infer<typeof prontuarioAcessoSchema>;
+
+export const prontuarioAcessoPageSchema = paginatedResponseSchema(prontuarioAcessoSchema);
+export type ProntuarioAcessoPage = z.infer<typeof prontuarioAcessoPageSchema>;

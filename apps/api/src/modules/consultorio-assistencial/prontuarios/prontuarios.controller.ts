@@ -9,9 +9,11 @@ import {
   atendimentoSchema,
   historicoClinicoPageSchema,
   listPacientesComRegistrosQuerySchema,
+  listProntuarioAcessosQuerySchema,
   listRegistrosQuerySchema,
   pacienteResumoProntuarioSchema,
   pacientesComRegistrosPageSchema,
+  prontuarioAcessoPageSchema,
   prescricaoPageSchema,
   prontuarioInputSchema,
   prontuarioSchema,
@@ -21,9 +23,11 @@ import {
   type CreateAtendimentoInput,
   type HistoricoClinicoItem,
   type ListPacientesComRegistrosQuery,
+  type ListProntuarioAcessosQuery,
   type ListRegistrosQuery,
   type PacienteComRegistros,
   type PacienteResumoProntuario,
+  type ProntuarioAcessoPage,
   type Prescricao,
   type Prontuario,
   type UpsertProntuarioInput,
@@ -39,6 +43,7 @@ import {
 } from '../../../common/swagger/zod-openapi';
 import { IdParam } from '../../../common/validation/id-param.decorator';
 import { ZodValidationPipe } from '../../../common/validation/zod-validation.pipe';
+import { AcessoProntuarioService } from './acesso-prontuario.service';
 import { ProntuariosService } from './prontuarios.service';
 
 /** Tela Prontuários (`/prontuarios`): busca de paciente, prontuário, atendimentos, anamneses
@@ -46,7 +51,10 @@ import { ProntuariosService } from './prontuarios.service';
 @ApiTags('Consultório / Assistencial: Prontuários')
 @Controller('consultorio-assistencial/prontuarios')
 export class ProntuariosController {
-  constructor(private readonly prontuarios: ProntuariosService) {}
+  constructor(
+    private readonly prontuarios: ProntuariosService,
+    private readonly acessos: AcessoProntuarioService,
+  ) {}
 
   @Get()
   @RequirePermission('consultorio-assistencial.prontuarios.ver')
@@ -59,6 +67,22 @@ export class ProntuariosController {
     query: ListPacientesComRegistrosQuery,
   ): Promise<Page<PacienteComRegistros>> {
     return this.prontuarios.listarComRegistros(query);
+  }
+
+  // Declarada antes de ':pacienteId' para não ser tomada como id de paciente.
+  @Get('acessos')
+  @RequirePermission('consultorio-assistencial.prontuarios-acessos.ver')
+  @ApiOperation({
+    summary: 'Log de acesso de leitura ao prontuário (quem abriu, quando), só administração',
+  })
+  @ApiZodQuery(listProntuarioAcessosQuerySchema)
+  @ApiZodResponse(200, prontuarioAcessoPageSchema)
+  @ApiErrorResponses(400, 401, 403)
+  listarAcessos(
+    @Query(new ZodValidationPipe(listProntuarioAcessosQuerySchema))
+    query: ListProntuarioAcessosQuery,
+  ): Promise<ProntuarioAcessoPage> {
+    return this.acessos.listar(query);
   }
 
   @Get(':pacienteId/paciente')
