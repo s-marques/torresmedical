@@ -1,4 +1,5 @@
 import {
+  CLASSIFICACOES_PARCEIRO,
   exportProfissionaisQuerySchema,
   listProfissionaisQuerySchema,
   profissionalPageSchema,
@@ -13,7 +14,8 @@ import {
   StethoscopeIcon,
   Trash2Icon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataGrid } from '@/components/shared/data-grid/DataGrid';
@@ -21,6 +23,7 @@ import type {
   AcaoLinha,
   ColunaGrid,
   ExportacaoGrid,
+  FiltroGrid,
   FiltroStatus,
 } from '@/components/shared/data-grid/tipos';
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -29,6 +32,7 @@ import { StatusAtivo } from '@/components/shared/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { formatarMascara } from '@/lib/forms/mascaras';
 import { AvatarProfissional } from './AvatarProfissional';
+import { ClassificacaoBadge } from './ClassificacaoBadge';
 import { DetalheProfissional } from './DetalheProfissional';
 import { formatarValor } from './formatadores';
 import { ModalBloqueios } from './ModalBloqueios';
@@ -116,6 +120,7 @@ const COLUNAS: ColunaGrid<Profissional>[] = [
  * médicos, dentistas e outros profissionais. Clicar na linha abre o detalhe.
  */
 export default function ProfissionaisPage() {
+  const { t } = useTranslation();
   const [criando, setCriando] = useState(false);
   const [detalhando, setDetalhando] = useState<Profissional | null>(null);
   const [editando, setEditando] = useState<Profissional | null>(null);
@@ -125,6 +130,32 @@ export default function ProfissionaisPage() {
   const [especialidades, setEspecialidades] = useState(false);
   const alterarStatus = useAlterarStatusProfissional();
   const excluir = useExcluirProfissional();
+
+  // A classificação do parceiro (#143) entra antes da coluna Status.
+  const colunas = useMemo((): ColunaGrid<Profissional>[] => {
+    const classificacao: ColunaGrid<Profissional> = {
+      id: 'classificacao',
+      titulo: t('classificacao.coluna'),
+      ordenavel: true,
+      celula: (p) => <ClassificacaoBadge classificacao={p.classificacao} />,
+    };
+    return [...COLUNAS.slice(0, -1), classificacao, ...COLUNAS.slice(-1)];
+  }, [t]);
+  const filtros = useMemo(
+    (): readonly FiltroGrid[] => [
+      {
+        tipo: 'select',
+        parametro: 'classificacao',
+        rotulo: t('classificacao.filtro.rotulo'),
+        rotuloTodos: t('classificacao.filtro.todas'),
+        opcoes: CLASSIFICACOES_PARCEIRO.map((valor) => ({
+          valor,
+          rotulo: t(`classificacao.rotulos.${valor}`),
+        })),
+      },
+    ],
+    [t],
+  );
 
   const acoes = (profissional: Profissional): AcaoLinha[] => [
     {
@@ -192,7 +223,8 @@ export default function ProfissionaisPage() {
         url={URL_PROFISSIONAIS}
         schema={profissionalPageSchema}
         querySchema={listProfissionaisQuerySchema}
-        colunas={COLUNAS}
+        colunas={colunas}
+        filtros={filtros}
         busca="Buscar profissionais..."
         status={STATUS}
         exportacao={EXPORTACAO}

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { AbaPainel, DashboardPainel, FiltrosPainel } from '@torres/shared';
 import { PacientesService } from '../../comercial-atendimento/pacientes/pacientes.service';
 import { IndicadoresFinanceirosService } from '../../financeiro/indicadores/indicadores.service';
+import { ProfissionaisClassificacaoService } from '../../gestao-profissionais/profissionais/profissionais-classificacao.service';
 import { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
 import { OcupacaoService } from '../ocupacao/ocupacao.service';
 import { abaComercial } from './abas/comercial';
@@ -32,6 +33,7 @@ export class DashboardService {
     private readonly pacientes: PacientesService,
     private readonly indicadores: IndicadoresFinanceirosService,
     private readonly ocupacao: OcupacaoService,
+    private readonly classificacao: ProfissionaisClassificacaoService,
   ) {}
 
   async obter(
@@ -52,13 +54,15 @@ export class DashboardService {
     empresaId?: string,
   ): Promise<DadosPainel> {
     const { base } = filtros;
-    const [profissionaisAtivos, totalPacientes, financeiro, ocupacao] = await Promise.all([
-      aba === 'comercial' ? this.profissionais.contarAtivos() : 0,
-      aba === 'pacientes' ? this.pacientes.contar() : 0,
-      // Mesma fonte da tela Financeiro > Indicadores (issue #50).
-      aba === 'financeiro' ? this.indicadores.calcular(periodo.de, periodo.ate, base) : null,
-      aba === 'ocupacao' ? this.ocupacao.calcular(filtros, periodo, empresaId) : null,
-    ]);
-    return { profissionaisAtivos, totalPacientes, financeiro, ocupacao };
+    const [profissionaisAtivos, totalPacientes, financeiro, ocupacao, parceiros] =
+      await Promise.all([
+        aba === 'comercial' ? this.profissionais.contarAtivos() : 0,
+        aba === 'pacientes' ? this.pacientes.contar() : 0,
+        // Mesma fonte da tela Financeiro > Indicadores (issue #50).
+        aba === 'financeiro' ? this.indicadores.calcular(periodo.de, periodo.ate, base) : null,
+        aba === 'ocupacao' ? this.ocupacao.calcular(filtros, periodo, empresaId) : null,
+        aba === 'executivo' ? this.classificacao.resumo() : null,
+      ]);
+    return { profissionaisAtivos, totalPacientes, financeiro, ocupacao, parceiros };
   }
 }

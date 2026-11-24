@@ -1499,5 +1499,52 @@
       "EMAIL": "Mesmo e-mail",
       "NOME_NASCIMENTO": "Mesmo nome e data de nascimento"
     }
+  },
+  "classificacao": {
+    "titulo": "Classificação do parceiro",
+    "semCalculo": "Ainda não calculada. O cálculo roda todo dia.",
+    "desde": "Nesta classificação desde {{data}}",
+    "estrategico": "Parceiro estratégico",
+    "estrategicoAjuda": "Marcado pela gerência, vale sobre as demais classes (menos Inativo).",
+    "coluna": "Classificação",
+    "filtro": {
+      "rotulo": "Classificação",
+      "todas": "Todas"
+    },
+    "rotulos": {
+      "NOVO": "Novo parceiro",
+      "ATIVO": "Parceiro ativo",
+      "ESTRATEGICO": "Parceiro estratégico",
+      "EM_EXPANSAO": "Em expansão",
+      "EM_RISCO": "Em risco",
+      "INATIVO": "Inativo"
+    },
+    "origens": {
+      "AUTOMATICO": "Cálculo diário",
+      "MANUAL": "Marcação manual"
+    },
+    "motivos": {
+      "PROFISSIONAL_INATIVO": "Profissional inativo",
+      "SEM_CONTRATO_ATIVO": "Sem contrato de sala ativo",
+      "MARCADO_ESTRATEGICO": "Marcado como estratégico pela gerência",
+      "CONTRATO_RECENTE": "Contrato iniciado há {{dias}} dias (até {{limite}})",
+      "BAIXO_USO": "{{utilizados}} de {{contratados}} períodos usados em {{janela}} dias",
+      "MAIS_PERIODOS": "Períodos contratados por semana subiram de {{semanaAnterior}} para {{semanaAtual}}",
+      "USO_ACIMA_DO_CONTRATADO": "{{utilizados}} períodos usados para {{contratados}} contratados em {{janela}} dias",
+      "USO_REGULAR": "{{utilizados}} de {{contratados}} períodos usados em {{janela}} dias"
+    },
+    "historico": {
+      "titulo": "Histórico de mudanças",
+      "vazio": "Nenhuma mudança de classificação registrada.",
+      "erro": "Não foi possível carregar o histórico.",
+      "para": "para",
+      "anterior": "Anterior",
+      "proxima": "Próxima",
+      "pagina": "Página {{pagina}} de {{total}}"
+    },
+    "mensagens": {
+      "marcado": "Profissional marcado como estratégico.",
+      "desmarcado": "Marca de estratégico removida."
+    }
   }
 }

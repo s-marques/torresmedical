@@ -283,7 +283,45 @@ Mede capacidade, contratado, utilizado e vago por sala, dia, turno e profissiona
   profissional seu e só os profissionais do vínculo; filtrar por profissional de fora dá 403.
 - A consulta usa services exportados (`AgendaOcupacaoService`, salas, contratos, bloqueios e
   `MinhaEmpresaService`). Os KPIs Taxa de Ocupação e Vacância das telas Executivo e Financeiro >
-  Indicadores seguem sem valor até serem ligados a este cálculo.
+  Indicadores seguem sem valor até serem ligados a este cálculo. O cálculo puro
+  (`calcularOcupacao`) mora em `common/ocupacao`, compartilhado com a classificação do parceiro.
+
+## Classificação automática do parceiro (Gestão Profissionais)
+
+Lê o contrato e o uso dos períodos (#139) de cada profissional e diz em que ponto da relação ele
+está (issue #143, R §25, §27, §44 e §45). Regras confirmadas pelo dev (a seção 25 do documento só
+exemplifica "Em risco"); a precedência é a ordem da lista:
+
+1. **Inativo:** profissional inativo ou sem contrato de sala ativo e vigente hoje.
+2. **Estratégico:** marcado à mão pela gerência (`PUT /profissionais/:id/estrategico`). Vale sobre
+   as classes abaixo, mas não sobre "Inativo".
+3. **Novo parceiro:** até 90 dias desde a assinatura do contrato mais antigo (sem assinatura, desde
+   o início do contrato). Quem acabou de entrar ainda não é avaliado pelo uso.
+4. **Em risco:** usou menos de 50% dos períodos contratados nos últimos 30 dias. O exemplo do
+   documento (4 contratados, 1 usado) dá "1 de 4 períodos usados em 30 dias".
+5. **Em expansão:** os períodos contratados por semana subiram em relação à semana de 30 dias antes
+   (a semana tem cada dia uma vez, então a conta não oscila com quatro ou cinco segundas no mês), ou
+   ele atendeu em mais períodos do que contratou nos últimos 30 dias.
+6. **Parceiro ativo:** o caso comum.
+
+- **Janela:** os 30 dias terminando ontem (o dia de hoje ainda está aberto). "Período" é o do
+  Painel (Sala × Dia × Turno). Os dias de funcionamento da clínica não entram: vale a clínica toda.
+- **Quando roda:** todo dia às 3h (fuso da clínica, `ProfissionaisClassificacaoAgendador`; desliga com
+  `CAMPANHAS_AGENDADOR=off`), sob demanda em `POST /profissionais/classificacao/recalcular` (só quem
+  vê a clínica toda) e na hora ao marcar ou desmarcar "Estratégico".
+- **Onde fica:** a classificação vigente, o motivo (código + números, traduzido na tela) e a data da
+  última mudança ficam no cadastro (`profissionais.classificacao*`). Só a **mudança de classe** vai
+  para `profissionais_classificacoes` (somente inserção: classe anterior e nova, motivo, origem
+  automática ou manual, quem marcou, dia de referência) e é auditada (`ProfissionalClassificacao`).
+  Mudar só os números do motivo atualiza o cadastro, sem histórico.
+- **API:** `GET /profissionais/:id/classificacoes` (histórico paginado, `profissionais.ver`);
+  `GET /profissionais` aceita `classificacao=` e `sort=classificacao:asc`.
+- **Tela:** coluna e filtro "Classificação" em Profissionais; no detalhe, a classe, o motivo, a
+  marca "Parceiro estratégico" e o histórico.
+- **Painel (aba Executivo):** KPIs "Profissionais em Risco" e "Profissionais em Expansão" e o alerta
+  "N profissional(is) com baixa utilização", com o motivo de cada um.
+- **Escopo (#153):** usuário restrito vê o histórico e as contagens só dos profissionais vinculados e
+  não dispara o recálculo da clínica toda.
 
 ## Pacientes: relacionamento e consentimentos (`/clientes`)
 

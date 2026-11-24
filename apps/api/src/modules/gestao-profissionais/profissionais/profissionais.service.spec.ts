@@ -78,6 +78,11 @@ const COMPLETO = {
   fotoArquivoId: null,
   logoReceitaArquivoId: null,
   ativo: true,
+  classificacao: null,
+  classificacaoMotivo: null,
+  classificacaoParametros: {},
+  classificacaoEm: null,
+  estrategico: false,
   createdAt: new Date('2026-10-01T10:00:00.000Z'),
   updatedAt: new Date('2026-10-02T10:00:00.000Z'),
   deletedAt: null,
@@ -191,6 +196,63 @@ describe('ProfissionaisService', () => {
         }),
       );
       expect(page.data[0]).toMatchObject({ valorConsulta: 150.5, dataNascimento: '1990-05-17' });
+    });
+
+    it('list: filtra pela classificação do parceiro e ordena por ela (#143)', async () => {
+      const { service, delegate } = setup([COMPLETO]);
+
+      await service.list({
+        page: 1,
+        pageSize: 10,
+        sort: { field: 'classificacao', direction: 'asc' },
+        search: undefined,
+        classificacao: 'EM_RISCO',
+      });
+
+      expect(delegate.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: [{ classificacao: 'asc' }, { id: 'asc' }],
+          where: expect.objectContaining({ deletedAt: null, classificacao: 'EM_RISCO' }),
+        }),
+      );
+    });
+
+    it('detalhe: traz a classificação vigente, com o motivo em texto (#143)', async () => {
+      const { service } = setup([
+        {
+          ...COMPLETO,
+          classificacao: 'EM_RISCO',
+          classificacaoMotivo: 'BAIXO_USO',
+          classificacaoParametros: { contratados: 4, utilizados: 1 },
+          classificacaoEm: new Date('2026-11-24T06:00:00.000Z'),
+          estrategico: false,
+        },
+      ]);
+
+      const dto = await service.detalhe(PROFISSIONAL.id);
+
+      expect(dto).toMatchObject({
+        classificacao: 'EM_RISCO',
+        classificacaoMotivo: 'BAIXO_USO',
+        classificacaoParametros: { contratados: 4, utilizados: 1 },
+        classificacaoMotivoTexto: '1 de 4 períodos usados em 30 dias',
+        classificacaoEm: '2026-11-24T06:00:00.000Z',
+        estrategico: false,
+      });
+    });
+
+    it('detalhe: sem classificação calculada, os campos vêm vazios', async () => {
+      const { service } = setup([COMPLETO]);
+
+      const dto = await service.detalhe(PROFISSIONAL.id);
+
+      expect(dto).toMatchObject({
+        classificacao: null,
+        classificacaoMotivo: null,
+        classificacaoMotivoTexto: null,
+        classificacaoEm: null,
+        classificacaoParametros: {},
+      });
     });
 
     it('detalhe: devolve o API Token decifrado e nunca a Secret Key', async () => {

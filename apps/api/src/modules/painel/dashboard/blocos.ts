@@ -4,6 +4,7 @@ import type {
   FormatoPainel,
   KpiPainel,
   MetaVsAtualPainel,
+  ResumoParceiros,
   SecaoPainel,
   TabelaPainel,
   VisualizacaoPainel,
@@ -21,6 +22,8 @@ export interface DadosPainel {
   financeiro: ReceitasEDespesas | null;
   /** Ocupação efetiva (issue #139); só carregada para a aba Ocupação. */
   ocupacao: OcupacaoPainel | null;
+  /** Classificação dos parceiros (issue #143); só carregada para a aba Executivo. */
+  parceiros: ResumoParceiros | null;
 }
 
 export type ConstrutorAba = (dados: DadosPainel) => SecaoPainel[];

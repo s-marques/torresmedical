@@ -57,6 +57,12 @@ function profissional(parcial: Partial<Profissional>): Profissional {
     fotoArquivoId: null,
     logoReceitaArquivoId: null,
     ativo: false,
+    classificacao: null,
+    classificacaoMotivo: null,
+    classificacaoParametros: {},
+    classificacaoMotivoTexto: null,
+    classificacaoEm: null,
+    estrategico: false,
     createdAt: AGORA,
     updatedAt: AGORA,
     ...parcial,
@@ -165,7 +171,17 @@ describe('Profissionais (/profissionais)', () => {
       within(tabela)
         .getAllByRole('columnheader')
         .map((c) => c.textContent),
-    ).toEqual(['Nome', 'Registro', 'Telefone', 'Email', 'Duração', 'Consulta', 'Status', 'Ações']);
+    ).toEqual([
+      'Nome',
+      'Registro',
+      'Telefone',
+      'Email',
+      'Duração',
+      'Consulta',
+      'Classificação',
+      'Status',
+      'Ações',
+    ]);
     expect(await screen.findByText('Ana Teste')).toBeVisible();
     expect(screen.getByText('CRM 1111/MT')).toBeVisible();
     expect(screen.getByText('(65) 99999-0001')).toBeVisible();
@@ -196,6 +212,35 @@ describe('Profissionais (/profissionais)', () => {
 
     await user.click(screen.getByRole('button', { name: 'Consulta' }));
     await waitFor(() => expect(consulta(fetchMock)).toMatchObject({ sort: 'valorConsulta:asc' }));
+  });
+
+  it('classificação do parceiro: selo na linha, ordenação e filtro (#143)', async () => {
+    const fetchMock = api({
+      rotas: {
+        [API]: () =>
+          pagina([
+            profissional({
+              classificacao: 'EM_RISCO',
+              classificacaoMotivo: 'BAIXO_USO',
+              classificacaoParametros: { contratados: 4, utilizados: 1 },
+            }),
+            profissional({ id: ID_2, nome: 'Bruno Teste', classificacao: null, ativo: true }),
+          ]),
+      },
+    });
+    const { user } = renderTela(fetchMock);
+
+    const linha = (await screen.findByText('Ana Teste')).closest('tr') as HTMLElement;
+    expect(within(linha).getByText('Em risco')).toBeVisible();
+    const outra = screen.getByText('Bruno Teste').closest('tr') as HTMLElement;
+    expect(within(outra).queryByText('Em risco')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Classificação' }));
+    await waitFor(() => expect(consulta(fetchMock)).toMatchObject({ sort: 'classificacao:asc' }));
+
+    await user.click(screen.getByRole('combobox', { name: 'Classificação' }));
+    await user.click(await screen.findByRole('option', { name: 'Em risco' }));
+    await waitFor(() => expect(consulta(fetchMock)).toMatchObject({ classificacao: 'EM_RISCO' }));
   });
 
   it('clicar na linha abre o detalhe com os campos do inventário, Fechar e Editar', async () => {

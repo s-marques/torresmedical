@@ -1606,5 +1606,52 @@
       "EMAIL": "Same e-mail",
       "NOME_NASCIMENTO": "Same name and birth date"
     }
+  },
+  "classificacao": {
+    "titulo": "Partner classification",
+    "semCalculo": "Not calculated yet. The calculation runs every day.",
+    "desde": "In this classification since {{data}}",
+    "estrategico": "Strategic partner",
+    "estrategicoAjuda": "Set by management; it overrides the other classes (except Inactive).",
+    "coluna": "Classification",
+    "filtro": {
+      "rotulo": "Classification",
+      "todas": "All"
+    },
+    "rotulos": {
+      "NOVO": "New partner",
+      "ATIVO": "Active partner",
+      "ESTRATEGICO": "Strategic partner",
+      "EM_EXPANSAO": "Expanding",
+      "EM_RISCO": "At risk",
+      "INATIVO": "Inactive"
+    },
+    "origens": {
+      "AUTOMATICO": "Daily calculation",
+      "MANUAL": "Manual change"
+    },
+    "motivos": {
+      "PROFISSIONAL_INATIVO": "Inactive professional",
+      "SEM_CONTRATO_ATIVO": "No active room contract",
+      "MARCADO_ESTRATEGICO": "Marked as strategic by management",
+      "CONTRATO_RECENTE": "Contract started {{dias}} days ago (up to {{limite}})",
+      "BAIXO_USO": "{{utilizados}} of {{contratados}} slots used in {{janela}} days",
+      "MAIS_PERIODOS": "Contracted slots per week rose from {{semanaAnterior}} to {{semanaAtual}}",
+      "USO_ACIMA_DO_CONTRATADO": "{{utilizados}} slots used for {{contratados}} contracted in {{janela}} days",
+      "USO_REGULAR": "{{utilizados}} of {{contratados}} slots used in {{janela}} days"
+    },
+    "historico": {
+      "titulo": "Change history",
+      "vazio": "No classification changes recorded.",
+      "erro": "Could not load the history.",
+      "para": "to",
+      "anterior": "Previous",
+      "proxima": "Next",
+      "pagina": "Page {{pagina}} of {{total}}"
+    },
+    "mensagens": {
+      "marcado": "Professional marked as strategic.",
+      "desmarcado": "Strategic mark removed."
+    }
   }
 }
