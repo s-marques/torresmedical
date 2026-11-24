@@ -71,6 +71,15 @@ type OnboardingComRelacoes = Prisma.ProfissionalOnboardingGetPayload<{ include: 
 
 const SOMENTE_DATA = (data: Date): string => data.toISOString().slice(0, 10);
 
+/** Compara dois onboardings pelo campo de ordenação da lista (negativo, zero ou positivo). */
+function compararPor(campo: ListOnboardingQuery['sort']['field'], a: Onboarding, b: Onboarding) {
+  if (campo === 'concluidas') return a.concluidas - b.concluidas;
+  if (campo === 'profissionalNome') {
+    return a.profissionalNome.localeCompare(b.profissionalNome, 'pt-BR');
+  }
+  return a.iniciadoEm.localeCompare(b.iniciadoEm);
+}
+
 /** Fatos de outros módulos, buscados em lote para a lista de onboardings. */
 interface Fatos {
   comAcesso: ReadonlySet<string>;
@@ -126,19 +135,10 @@ export class ProfissionaisOnboardingService {
     const filtrados = todos.filter(
       (o) => !o.completo && (query.situacao !== 'ATRASADO' || o.atrasada),
     );
-    const { field, direction } = query.sort;
-    const fator = direction === 'asc' ? 1 : -1;
-    const chave = (o: Onboarding): string | number =>
-      field === 'profissionalNome'
-        ? o.profissionalNome.toLocaleLowerCase('pt-BR')
-        : field === 'concluidas'
-          ? o.concluidas
-          : o.iniciadoEm;
-    filtrados.sort((a, b) => {
-      const [x, y] = [chave(a), chave(b)];
-      const ordem = x < y ? -1 : x > y ? 1 : 0;
-      return ordem * fator || a.id.localeCompare(b.id);
-    });
+    const fator = query.sort.direction === 'asc' ? 1 : -1;
+    filtrados.sort(
+      (a, b) => compararPor(query.sort.field, a, b) * fator || a.id.localeCompare(b.id),
+    );
     const inicio = (query.page - 1) * query.pageSize;
     return {
       data: filtrados.slice(inicio, inicio + query.pageSize),
@@ -185,7 +185,7 @@ export class ProfissionaisOnboardingService {
           include: INCLUDE,
         })
       : null;
-    if (!registro || registro.profissional === null) {
+    if (!registro) {
       throw new BusinessException(ErrorCode.NOT_FOUND, 'Onboarding não encontrado', {
         status: 404,
       });

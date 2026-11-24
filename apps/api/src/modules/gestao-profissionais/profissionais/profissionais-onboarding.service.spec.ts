@@ -227,10 +227,10 @@ describe('ProfissionaisOnboardingService', () => {
     });
 
     it('etapa pendente fica atrasada depois de 7 dias da assinatura, não antes', async () => {
-      const no_prazo = montar({ cenario: { iniciadoEm: '2026-11-17' } });
+      const noPrazo = montar({ cenario: { iniciadoEm: '2026-11-17' } });
       const vencido = montar({ cenario: { iniciadoEm: '2026-11-16' } });
 
-      const a = (await no_prazo.service.obter(PROF, AGORA))!;
+      const a = (await noPrazo.service.obter(PROF, AGORA))!;
       const b = (await vencido.service.obter(PROF, AGORA))!;
 
       expect(a.diasEmAndamento).toBe(7);
