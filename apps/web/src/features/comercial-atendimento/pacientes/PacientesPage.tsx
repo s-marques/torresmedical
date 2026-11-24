@@ -29,7 +29,7 @@ import { iniciaisDe } from './formatadores';
 import { HistoricoPaciente } from './HistoricoPaciente';
 import { ModalPaciente } from './ModalPaciente';
 import { StatusPaciente } from './StatusPaciente';
-import { URL_PACIENTES, useExcluirPaciente } from './use-pacientes';
+import { URL_PACIENTES, useAbrirPaciente, useExcluirPaciente } from './use-pacientes';
 
 const STATUS: FiltroStatus = {
   opcoes: [
@@ -190,10 +190,19 @@ export default function PacientesPage() {
   const [historico, setHistorico] = useState<Paciente | null>(null);
   const [excluindo, setExcluindo] = useState<Paciente | null>(null);
   const excluir = useExcluirPaciente();
+  const abrir = useAbrirPaciente();
   const exportacao = useExportacao({
     url: `${URL_PACIENTES}/export`,
     ...EXPORTACAO,
   });
+
+  /** Alerta de duplicidade: fecha o cadastro e mostra o paciente que já existe. */
+  async function abrirExistente(id: string) {
+    const existente = await abrir.mutateAsync(id);
+    setCriando(false);
+    setEditando(null);
+    setDetalhando(existente);
+  }
 
   const acoes = (paciente: Paciente): AcaoLinha[] => [
     {
@@ -258,8 +267,16 @@ export default function PacientesPage() {
         aoClicarLinha={setDetalhando}
         mensagemVazio="Nenhum paciente encontrado."
       />
-      {criando && <ModalPaciente onFechar={() => setCriando(false)} />}
-      {editando && <ModalPaciente paciente={editando} onFechar={() => setEditando(null)} />}
+      {criando && (
+        <ModalPaciente onFechar={() => setCriando(false)} onAbrirExistente={abrirExistente} />
+      )}
+      {editando && (
+        <ModalPaciente
+          paciente={editando}
+          onFechar={() => setEditando(null)}
+          onAbrirExistente={abrirExistente}
+        />
+      )}
       {detalhando && (
         <DetalhePaciente
           paciente={detalhando}

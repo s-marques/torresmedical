@@ -44,6 +44,7 @@ export class AuthGuard implements CanActivate {
     request.usuario = usuario;
     this.context.setUserId(usuario.id);
     this.context.setEscopoDados(usuario.escopo);
+    this.context.setVerDadosSensiveis(usuario.verDadosSensiveis);
 
     const permissoes = this.reflector.getAllAndOverride<readonly Permissao[] | undefined>(
       PERMISSION_METADATA,

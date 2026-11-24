@@ -249,6 +249,11 @@ export const pacienteInputSchema = z
       .nullish()
       .transform((valor) => valor || null)
       .refine((valor) => valor === null || /^[A-Z]{2}$/.test(valor), { error: 'UF inválida' }),
+    /**
+     * O usuário viu o alerta de possível duplicado (issue #149) e escolheu continuar. Não é gravado
+     * no paciente: vira um registro de auditoria.
+     */
+    duplicidadeConfirmada: z.boolean().optional(),
     codigoIbge: z
       .string({ error: 'Código IBGE inválido' })
       .trim()
