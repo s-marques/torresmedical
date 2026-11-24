@@ -14,6 +14,7 @@ import { formatarMascara } from '@/lib/forms/mascaras';
 import { AvatarProfissional } from './AvatarProfissional';
 import { ClassificacaoProfissional } from './ClassificacaoProfissional';
 import { ContratosProfissional } from './ContratosProfissional';
+import { HistoricoProfissional } from './HistoricoProfissional';
 import { OnboardingProfissional } from './OnboardingProfissional';
 import { DocumentosProfissional } from './DocumentosProfissional';
 import { corHex, formatarComissao, formatarValor } from './formatadores';
@@ -132,6 +133,7 @@ export function DetalheProfissional({
         <OnboardingProfissional profissionalId={p.id} />
         <DocumentosProfissional profissionalId={p.id} />
         <ContratosProfissional profissionalId={p.id} />
+        <HistoricoProfissional profissionalId={p.id} />
       </div>
     </Modal>
   );
