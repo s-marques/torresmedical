@@ -562,7 +562,7 @@ describe('Pacientes: relacionamento e consentimentos (e2e)', () => {
       const arquivo = await readFile(
         join(
           __dirname,
-          '../../prisma/migrations/20261124141555_pacientes_relacionamento_consentimentos/migration.sql',
+          '../../prisma/migrations/20261124160000_pacientes_relacionamento_consentimentos/migration.sql',
         ),
         'utf8',
       );
