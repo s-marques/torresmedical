@@ -38,5 +38,6 @@
   "CONTRATO_NAO_AGUARDA_ASSINATURA": "Only a contract awaiting signature can be signed",
   "PACIENTE_INDICACAO_INVALIDA": "The referring patient or professional is invalid",
   "PACIENTE_PROFISSIONAL_INVALIDO": "The professional is invalid",
-  "PACIENTE_ESPECIALIDADE_INVALIDA": "The specialty is invalid"
+  "PACIENTE_ESPECIALIDADE_INVALIDA": "The specialty is invalid",
+  "PACIENTE_POSSIVEL_DUPLICADO": "This patient may already be registered. Open the existing record or confirm to continue"
 }

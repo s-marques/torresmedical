@@ -1591,5 +1591,20 @@
         "edicao": "To record or revoke a consent, open the patient details."
       }
     }
+  },
+  "pacienteDuplicidade": {
+    "titulo": "Possible duplicate patient",
+    "pergunta": "This patient may already be registered. Do you want to open the existing record?",
+    "lista": "Possible records",
+    "cpf": "CPF: {{cpf}}",
+    "nascimento": "Birth date: {{data}}",
+    "abrir": "Open existing record",
+    "continuar": "Continue registration",
+    "voltar": "Go back",
+    "motivos": {
+      "TELEFONE": "Same phone",
+      "EMAIL": "Same e-mail",
+      "NOME_NASCIMENTO": "Same name and birth date"
+    }
   }
 }

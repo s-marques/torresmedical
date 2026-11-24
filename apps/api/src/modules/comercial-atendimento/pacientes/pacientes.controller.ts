@@ -21,6 +21,8 @@ import {
   pacienteResumoSchema,
   pacienteSchema,
   updatePacienteSchema,
+  verificacaoDuplicidadePacienteSchema,
+  verificarDuplicidadePacienteSchema,
   type Consentimento,
   type ConsentimentosResponse,
   type CreateConsentimentoInput,
@@ -30,6 +32,8 @@ import {
   type Paciente,
   type PacienteResumo,
   type UpdatePacienteInput,
+  type VerificacaoDuplicidadePaciente,
+  type VerificarDuplicidadePaciente,
 } from '@torres/shared';
 import { Audit } from '../../../common/audit/audit.decorator';
 import { RequirePermission } from '../../../common/auth/auth.decorators';
@@ -44,6 +48,7 @@ import {
 import { IdParam } from '../../../common/validation/id-param.decorator';
 import { ZodValidationPipe } from '../../../common/validation/zod-validation.pipe';
 import { ConsentimentosPacienteService } from './consentimentos-paciente.service';
+import { PacientesDuplicidadeService } from './pacientes-duplicidade.service';
 import { PacientesService } from './pacientes.service';
 
 const ENTITY = 'Paciente';
@@ -55,6 +60,7 @@ export class PacientesController {
   constructor(
     private readonly pacientes: PacientesService,
     private readonly consentimentos: ConsentimentosPacienteService,
+    private readonly duplicidade: PacientesDuplicidadeService,
   ) {}
 
   @Get()
@@ -120,6 +126,26 @@ export class PacientesController {
     @Body(new ZodValidationPipe(createConsentimentoSchema)) body: CreateConsentimentoInput,
   ): Promise<Consentimento> {
     return this.consentimentos.registrar(id, body);
+  }
+
+  @Post('duplicidade')
+  @HttpCode(200)
+  @RequirePermission(
+    'comercial-atendimento.pacientes.criar',
+    'comercial-atendimento.pacientes.editar',
+  )
+  @ApiOperation({
+    summary:
+      'Procura possíveis duplicados (telefone, e-mail ou nome + nascimento). Só consulta, não grava',
+  })
+  @ApiZodBody(verificarDuplicidadePacienteSchema)
+  @ApiZodResponse(200, verificacaoDuplicidadePacienteSchema)
+  @ApiErrorResponses(400, 401, 403)
+  verificarDuplicidade(
+    @Body(new ZodValidationPipe(verificarDuplicidadePacienteSchema))
+    body: VerificarDuplicidadePaciente,
+  ): Promise<VerificacaoDuplicidadePaciente> {
+    return this.duplicidade.verificar(body);
   }
 
   @Post()

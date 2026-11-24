@@ -1484,5 +1484,20 @@
         "edicao": "Para registrar ou revogar um consentimento, abra o detalhe do paciente."
       }
     }
+  },
+  "pacienteDuplicidade": {
+    "titulo": "Possível paciente duplicado",
+    "pergunta": "Paciente possivelmente já cadastrado. Deseja abrir o registro existente?",
+    "lista": "Possíveis registros",
+    "cpf": "CPF: {{cpf}}",
+    "nascimento": "Nascimento: {{data}}",
+    "abrir": "Abrir registro existente",
+    "continuar": "Continuar cadastro",
+    "voltar": "Voltar",
+    "motivos": {
+      "TELEFONE": "Mesmo telefone",
+      "EMAIL": "Mesmo e-mail",
+      "NOME_NASCIMENTO": "Mesmo nome e data de nascimento"
+    }
   }
 }
