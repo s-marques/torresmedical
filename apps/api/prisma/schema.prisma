@@ -463,6 +463,7 @@ model Profissional {
   pesquisasNps            PesquisaNps[]
   pesquisasProfissional   PesquisaProfissional[]
   documentosConhecimento  DocumentoConhecimento[]
+  documentos              ProfissionalDocumento[]
 
   baixasInsumos BaixaInsumo[]
   receitas      ContaReceber[]
@@ -499,6 +500,55 @@ model ProfissionalRqe {
   @@unique([profissionalId, especialidadeId])
   @@index([especialidadeId])
   @@map("profissionais_rqe")
+}
+
+/// Dono: gestao-profissionais. Tipo do documento do profissional (issue #141). Lista fechada.
+enum ProfissionalDocumentoTipo {
+  CONTRATO
+  DOCUMENTO_PESSOAL
+  REGISTRO_CONSELHO
+  RQE
+  LICENCA
+  CERTIFICADO
+  DOCUMENTO_SANITARIO
+  OUTRO
+
+  @@map("profissional_documento_tipo")
+}
+
+/// Situação gravada. VENCIDO e PENDENTE são calculadas na leitura.
+enum ProfissionalDocumentoSituacao {
+  ENVIADO
+  VALIDADO
+  RECUSADO
+
+  @@map("profissional_documento_situacao")
+}
+
+/// Documento do profissional com validade (issue #141). O arquivo vai em `/api/arquivos` (uso
+/// `documento-profissional`). Usuário é de configuracoes-gestao: sem FK. Exclusão lógica.
+model ProfissionalDocumento {
+  id             String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profissionalId String                        @map("profissional_id") @db.Uuid
+  tipo           ProfissionalDocumentoTipo
+  arquivoId      String                        @map("arquivo_id") @db.Uuid
+  numero         String?
+  emissao        DateTime?                     @db.Date
+  validade       DateTime?                     @db.Date
+  observacao     String?
+  situacao       ProfissionalDocumentoSituacao @default(ENVIADO)
+  motivoRecusa   String?                       @map("motivo_recusa")
+  validadoPorId  String?                       @map("validado_por_id")
+  validadoEm     DateTime?                     @map("validado_em") @db.Timestamptz(3)
+  createdAt      DateTime                      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime                      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime?                     @map("deleted_at") @db.Timestamptz(3)
+
+  profissional Profissional @relation(fields: [profissionalId], references: [id])
+
+  @@index([profissionalId, deletedAt])
+  @@index([validade])
+  @@map("profissionais_documentos")
 }
 
 /// Contato administrativo do profissional (secretária, financeiro…).

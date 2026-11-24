@@ -31,6 +31,8 @@ import { ProtocolosMaeController } from './protocolos-mae/protocolos-mae.control
 import { ProtocolosMaeService } from './protocolos-mae/protocolos-mae.service';
 import { ReceitaProfissionaisController } from './receita-profissionais/receita-profissionais.controller';
 import { ReceitaProfissionaisService } from './receita-profissionais/receita-profissionais.service';
+import { ProfissionaisDocumentosController } from './profissionais/profissionais-documentos.controller';
+import { ProfissionaisDocumentosService } from './profissionais/profissionais-documentos.service';
 import { ProfissionalAgendaService } from './profissionais/profissional-agenda.service';
 import { ProfissionaisController } from './profissionais/profissionais.controller';
 import { ProfissionaisService } from './profissionais/profissionais.service';
@@ -48,6 +50,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     criarLookupController('especialidades', EspecialidadesService),
     criarLookupController('salas', SalasService),
     ProfissionaisController,
+    ProfissionaisDocumentosController,
     EspecialidadesController,
     ServicosProfissionaisController,
     ProtocolosController,
@@ -64,6 +67,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ProfissionaisService,
     EspecialidadesService,
     ProfissionalAgendaService,
+    ProfissionaisDocumentosService,
     ServicosProfissionaisService,
     ProtocolosService,
     ProtocolosMaeService,
@@ -93,6 +97,8 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     // Bloqueios de sala e horários do profissional: a Agenda (#136) consulta antes de agendar.
     SalasBloqueiosService,
     ProfissionalAgendaService,
+    // Documentos e alertas de vencimento: onboarding (#142) e central de notificações (#160).
+    ProfissionaisDocumentosService,
     // Contratos ativos: Agenda matricial (#137) e profissionais que permitem indicação (#146).
     ContratosSalaService,
     // Receita recorrente dos Indicadores do Financeiro.
