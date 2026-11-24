@@ -1414,15 +1414,7 @@
       "usuario": "Suggestion: create the user linked to the professional.",
       "abrirUsuarios": "Open Users"
     },
-    "dias": [
-      "Sun",
-      "Mon",
-      "Tue",
-      "Wed",
-      "Thu",
-      "Fri",
-      "Sat"
-    ],
+    "dias": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     "etapas": {
       "CONTRATO_ASSINADO": "Contract signed",
       "CADASTRO_COMPLETO": "Complete profile",

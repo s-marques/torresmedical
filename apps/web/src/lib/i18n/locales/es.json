@@ -1414,15 +1414,7 @@
       "usuario": "Sugerencia: crear el usuario vinculado al profesional.",
       "abrirUsuarios": "Abrir Usuarios"
     },
-    "dias": [
-      "Dom",
-      "Lun",
-      "Mar",
-      "Mié",
-      "Jue",
-      "Vie",
-      "Sáb"
-    ],
+    "dias": ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
     "etapas": {
       "CONTRATO_ASSINADO": "Contrato firmado",
       "CADASTRO_COMPLETO": "Registro completo",
