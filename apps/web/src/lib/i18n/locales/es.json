@@ -562,6 +562,86 @@
       "confirmar": "Eliminar"
     }
   },
+  "patrimonio": {
+    "titulo": "Patrimonio",
+    "descricao": "Gestione los vehículos, inmuebles y bienes del cliente.",
+    "novo": "Nuevo Bien",
+    "editar": "Editar Bien",
+    "buscar": "Buscar bienes...",
+    "vazio": "No se encontraron bienes.",
+    "cadastrar": "Registrar",
+    "abas": {
+      "bens": "Bienes",
+      "impostos": "Impuestos/Tasas",
+      "alertas": "Alertas"
+    },
+    "resumo": {
+      "valorTotal": "Valor Total del Patrimonio",
+      "impostosPendentes": "Impuestos Pendientes",
+      "alertasProximos": "Alertas Próximas"
+    },
+    "filtroTipo": "Tipo",
+    "todos": "Todos",
+    "acoes": {
+      "editar": "Editar",
+      "excluir": "Eliminar"
+    },
+    "colunas": {
+      "descricao": "Descripción",
+      "tipo": "Tipo",
+      "valorCompra": "Valor de Compra",
+      "valorAtual": "Valor Actual",
+      "dataAquisicao": "Fecha de Adquisición",
+      "impostosPendentes": "Impuestos Pend."
+    },
+    "secoes": {
+      "veiculo": "Datos del Vehículo"
+    },
+    "campos": {
+      "produtoId": "Vincular a Producto (opcional)",
+      "descricao": "Descripción",
+      "tipo": "Tipo",
+      "valorCompra": "Valor de Compra (R$)",
+      "dataAquisicao": "Fecha de Adquisición",
+      "marca": "Marca",
+      "modelo": "Modelo",
+      "ano": "Año",
+      "placa": "Placa",
+      "renavam": "RENAVAM",
+      "financiado": "Financiado",
+      "possuiSeguro": "Tiene Seguro"
+    },
+    "ajudas": {
+      "produtoId": "Vincule a un producto registrado para rastrearlo mediante las notas de compra"
+    },
+    "placeholders": {
+      "descricao": "Ej: Corolla 2024",
+      "placa": "ABC-1D23"
+    },
+    "tipos": {
+      "AUTOMOVEL": "Automóvil",
+      "IMOVEL_URBANO": "Inmueble Urbano",
+      "IMOVEL_RURAL": "Inmueble Rural",
+      "BEM_MOVEL": "Bien Mueble"
+    },
+    "impostos": {
+      "vazio": "Seleccione un bien en la pestaña \"Bienes\" para ver sus impuestos y tasas.",
+      "irParaBens": "Ir a Bienes"
+    },
+    "alertas": {
+      "vazio": "Ninguna alerta en los próximos 30 días."
+    },
+    "sucesso": {
+      "criado": "Bien registrado.",
+      "atualizado": "Bien actualizado.",
+      "excluido": "Bien eliminado."
+    },
+    "excluir": {
+      "titulo": "Eliminar Bien",
+      "descricao": "¿Seguro que desea eliminar el bien \"{{descricao}}\"? Esta acción no se puede deshacer.",
+      "confirmar": "Eliminar"
+    }
+  },
   "coletasResiduo": {
     "titulo": "Recolecciones de Residuos",
     "descricao": "Registro de recolecciones de residuos biológicos y manifiestos de transporte.",

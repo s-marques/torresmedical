@@ -3392,6 +3392,43 @@ model InsightAiGrowth {
   @@map("insights_ai_growth")
 }
 
+/// Dono: patrimonio-pessoal. Tipo do bem (select "Tipo" da tela Patrimônio, issue #62).
+enum BemTipo {
+  AUTOMOVEL
+  IMOVEL_URBANO
+  IMOVEL_RURAL
+  BEM_MOVEL
+
+  @@map("bem_tipo")
+}
+
+/// Dono: patrimonio-pessoal. Bem do patrimônio (tela Patrimônio, `/patrimonio`, issue #62). Os
+/// campos de veículo só valem para `AUTOMOVEL`. O produto vinculado é de compras-estoque: só o id,
+/// sem FK. `valorAtual` não tem campo no modal do inventário. Exclusão lógica.
+model Bem {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  produtoId     String?   @map("produto_id") @db.Uuid
+  descricao     String
+  tipo          BemTipo   @default(AUTOMOVEL)
+  valorCompra   Decimal?  @map("valor_compra") @db.Decimal(12, 2)
+  valorAtual    Decimal?  @map("valor_atual") @db.Decimal(12, 2)
+  dataAquisicao DateTime? @map("data_aquisicao") @db.Date
+  marca         String?
+  modelo        String?
+  ano           Int?
+  placa         String?
+  renavam       String?
+  financiado    Boolean   @default(false)
+  possuiSeguro  Boolean   @default(false) @map("possui_seguro")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([descricao])
+  @@index([tipo])
+  @@map("bens")
+}
+
 /// Dono: patrimonio-pessoal. Tipo do imóvel (select "Tipo" do modal; lista do print do dev na #61).
 enum ImovelTipo {
   APARTAMENTO

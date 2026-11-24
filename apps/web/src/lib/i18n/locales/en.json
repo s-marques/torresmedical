@@ -562,6 +562,86 @@
       "confirmar": "Delete"
     }
   },
+  "patrimonio": {
+    "titulo": "Assets",
+    "descricao": "Manage the client's vehicles, properties and assets.",
+    "novo": "New Asset",
+    "editar": "Edit Asset",
+    "buscar": "Search assets...",
+    "vazio": "No assets found.",
+    "cadastrar": "Register",
+    "abas": {
+      "bens": "Assets",
+      "impostos": "Taxes/Fees",
+      "alertas": "Alerts"
+    },
+    "resumo": {
+      "valorTotal": "Total Asset Value",
+      "impostosPendentes": "Pending Taxes",
+      "alertasProximos": "Upcoming Alerts"
+    },
+    "filtroTipo": "Type",
+    "todos": "All",
+    "acoes": {
+      "editar": "Edit",
+      "excluir": "Delete"
+    },
+    "colunas": {
+      "descricao": "Description",
+      "tipo": "Type",
+      "valorCompra": "Purchase Value",
+      "valorAtual": "Current Value",
+      "dataAquisicao": "Acquisition Date",
+      "impostosPendentes": "Pending Taxes"
+    },
+    "secoes": {
+      "veiculo": "Vehicle Details"
+    },
+    "campos": {
+      "produtoId": "Link to Product (optional)",
+      "descricao": "Description",
+      "tipo": "Type",
+      "valorCompra": "Purchase Value (R$)",
+      "dataAquisicao": "Acquisition Date",
+      "marca": "Brand",
+      "modelo": "Model",
+      "ano": "Year",
+      "placa": "License Plate",
+      "renavam": "RENAVAM",
+      "financiado": "Financed",
+      "possuiSeguro": "Has Insurance"
+    },
+    "ajudas": {
+      "produtoId": "Link to a registered product to track it through purchase invoices"
+    },
+    "placeholders": {
+      "descricao": "E.g.: Corolla 2024",
+      "placa": "ABC-1D23"
+    },
+    "tipos": {
+      "AUTOMOVEL": "Car",
+      "IMOVEL_URBANO": "Urban Property",
+      "IMOVEL_RURAL": "Rural Property",
+      "BEM_MOVEL": "Movable Asset"
+    },
+    "impostos": {
+      "vazio": "Select an asset in the \"Assets\" tab to see its taxes and fees.",
+      "irParaBens": "Go to Assets"
+    },
+    "alertas": {
+      "vazio": "No alerts in the next 30 days."
+    },
+    "sucesso": {
+      "criado": "Asset registered.",
+      "atualizado": "Asset updated.",
+      "excluido": "Asset deleted."
+    },
+    "excluir": {
+      "titulo": "Delete Asset",
+      "descricao": "Are you sure you want to delete the asset \"{{descricao}}\"? This action cannot be undone.",
+      "confirmar": "Delete"
+    }
+  },
   "coletasResiduo": {
     "titulo": "Waste Collections",
     "descricao": "Record of biological waste collections and transport manifests.",
