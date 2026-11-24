@@ -20,9 +20,10 @@ const ONB_2 = '00000000-0000-4000-8000-0000000000b2';
 const CONTRATO = '00000000-0000-4000-8000-0000000000c1';
 
 function onboarding(
-  parcial: Partial<Onboarding> & { concluidas?: OnboardingEtapa[] } = {},
+  parcial: Partial<Onboarding> & { etapasConcluidas?: OnboardingEtapa[] } = {},
 ): Onboarding {
-  const { concluidas = ['CONTRATO_ASSINADO', 'SALA_DEFINIDA'], ...resto } = parcial;
+  const { etapasConcluidas: concluidas = ['CONTRATO_ASSINADO', 'SALA_DEFINIDA'], ...resto } =
+    parcial;
   const etapas = ONBOARDING_ETAPAS.map((etapa) => ({
     etapa,
     concluida: concluidas.includes(etapa),
@@ -61,7 +62,7 @@ const ATRASADO = onboarding({
   iniciadoEm: '2026-11-10',
   diasEmAndamento: 14,
   atrasada: true,
-  concluidas: ['CONTRATO_ASSINADO'],
+  etapasConcluidas: ['CONTRATO_ASSINADO'],
 });
 
 function pagina(data: Onboarding[]) {
