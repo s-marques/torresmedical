@@ -532,6 +532,13 @@ model Profissional {
   fotoArquivoId        String?                @map("foto_arquivo_id") @db.Uuid
   logoReceitaArquivoId String?                @map("logo_receita_arquivo_id") @db.Uuid
   ativo                Boolean                @default(true)
+  /// Classificação do parceiro (issue #143), calculada todo dia. Nula até o primeiro cálculo.
+  classificacao           ClassificacaoParceiro?
+  classificacaoMotivo     String?                @map("classificacao_motivo")
+  classificacaoParametros Json                   @default("{}") @map("classificacao_parametros")
+  classificacaoEm         DateTime?              @map("classificacao_em") @db.Timestamptz(3)
+  /// Parceiro estratégico, marcado pela gerência (vale sobre as classes automáticas).
+  estrategico             Boolean                @default(false)
   createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt            DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt            DateTime?              @map("deleted_at") @db.Timestamptz(3)
@@ -554,12 +561,14 @@ model Profissional {
   documentosConhecimento  DocumentoConhecimento[]
   documentos              ProfissionalDocumento[]
   onboarding              ProfissionalOnboarding?
+  classificacoes          ProfissionalClassificacao[]
 
   baixasInsumos BaixaInsumo[]
   receitas      ContaReceber[]
   bloqueiosSala SalaBloqueio[]
 
   @@index([especialidadeId])
+  @@index([classificacao])
   @@map("profissionais")
 }
 
@@ -3764,4 +3773,44 @@ model ConfiguracaoPesquisaProfissional {
   updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("configuracao_pesquisa_profissional")
+}
+
+/// Dono: gestao-profissionais. Classificação do parceiro (issue #143).
+enum ClassificacaoParceiro {
+  NOVO
+  ATIVO
+  ESTRATEGICO
+  EM_EXPANSAO
+  EM_RISCO
+  INATIVO
+
+  @@map("classificacao_parceiro")
+}
+
+enum ClassificacaoOrigem {
+  AUTOMATICO
+  MANUAL
+
+  @@map("classificacao_origem")
+}
+
+/// Dono: gestao-profissionais. Histórico das mudanças de classificação (issue #143). Só inserção.
+/// `usuario_id` é um usuário (configuracoes-gestao), sem FK; nulo no cálculo diário.
+model ProfissionalClassificacao {
+  id                     String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profissionalId         String                 @map("profissional_id") @db.Uuid
+  classificacaoAnterior  ClassificacaoParceiro? @map("classificacao_anterior")
+  classificacao          ClassificacaoParceiro
+  motivo                 String
+  parametros             Json                   @default("{}")
+  origem                 ClassificacaoOrigem
+  usuarioId              String?                @map("usuario_id")
+  /// Dia (fuso da clínica) a que o cálculo se refere.
+  referencia             DateTime               @db.Date
+  createdAt              DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  profissional Profissional @relation(fields: [profissionalId], references: [id])
+
+  @@index([profissionalId, createdAt(sort: Desc)])
+  @@map("profissionais_classificacoes")
 }

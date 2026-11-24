@@ -1414,7 +1414,15 @@
       "usuario": "Sugerencia: crear el usuario vinculado al profesional.",
       "abrirUsuarios": "Abrir Usuarios"
     },
-    "dias": ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
+    "dias": [
+      "Dom",
+      "Lun",
+      "Mar",
+      "Mié",
+      "Jue",
+      "Vie",
+      "Sáb"
+    ],
     "etapas": {
       "CONTRATO_ASSINADO": "Contrato firmado",
       "CADASTRO_COMPLETO": "Registro completo",
@@ -1590,6 +1598,53 @@
         "canalObrigatorio": "Indique dónde se dio el consentimiento.",
         "edicao": "Para registrar o revocar un consentimiento, abra el detalle del paciente."
       }
+    }
+  },
+  "classificacao": {
+    "titulo": "Clasificación del socio",
+    "semCalculo": "Aún no calculada. El cálculo se ejecuta todos los días.",
+    "desde": "En esta clasificación desde {{data}}",
+    "estrategico": "Socio estratégico",
+    "estrategicoAjuda": "Lo marca la gerencia y prevalece sobre las demás clases (excepto Inactivo).",
+    "coluna": "Clasificación",
+    "filtro": {
+      "rotulo": "Clasificación",
+      "todas": "Todas"
+    },
+    "rotulos": {
+      "NOVO": "Socio nuevo",
+      "ATIVO": "Socio activo",
+      "ESTRATEGICO": "Socio estratégico",
+      "EM_EXPANSAO": "En expansión",
+      "EM_RISCO": "En riesgo",
+      "INATIVO": "Inactivo"
+    },
+    "origens": {
+      "AUTOMATICO": "Cálculo diario",
+      "MANUAL": "Cambio manual"
+    },
+    "motivos": {
+      "PROFISSIONAL_INATIVO": "Profesional inactivo",
+      "SEM_CONTRATO_ATIVO": "Sin contrato de sala activo",
+      "MARCADO_ESTRATEGICO": "Marcado como estratégico por la gerencia",
+      "CONTRATO_RECENTE": "Contrato iniciado hace {{dias}} días (hasta {{limite}})",
+      "BAIXO_USO": "{{utilizados}} de {{contratados}} períodos usados en {{janela}} días",
+      "MAIS_PERIODOS": "Los períodos contratados por semana subieron de {{semanaAnterior}} a {{semanaAtual}}",
+      "USO_ACIMA_DO_CONTRATADO": "{{utilizados}} períodos usados para {{contratados}} contratados en {{janela}} días",
+      "USO_REGULAR": "{{utilizados}} de {{contratados}} períodos usados en {{janela}} días"
+    },
+    "historico": {
+      "titulo": "Historial de cambios",
+      "vazio": "No hay cambios de clasificación registrados.",
+      "erro": "No se pudo cargar el historial.",
+      "para": "a",
+      "anterior": "Anterior",
+      "proxima": "Siguiente",
+      "pagina": "Página {{pagina}} de {{total}}"
+    },
+    "mensagens": {
+      "marcado": "Profesional marcado como estratégico.",
+      "desmarcado": "Marca de estratégico eliminada."
     }
   }
 }

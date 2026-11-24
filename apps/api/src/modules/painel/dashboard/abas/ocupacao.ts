@@ -1,5 +1,5 @@
 import type { MatrizTurno } from '@torres/shared';
-import { percentual, type Contagem } from '../../ocupacao/calculo-ocupacao';
+import { percentual, type Contagem } from '../../../../common/ocupacao/calculo-ocupacao';
 import type { OcupacaoPainel } from '../../ocupacao/ocupacao.service';
 import {
   coluna,

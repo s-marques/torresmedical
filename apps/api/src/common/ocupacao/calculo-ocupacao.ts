@@ -7,7 +7,7 @@ import {
   type MatrizTurno,
   type SalaBloqueioTipo,
 } from '@torres/shared';
-import type { AgendamentoDaOcupacao } from '../../comercial-atendimento/agenda/agenda-ocupacao.service';
+import type { AgendamentoDaOcupacao } from '../../modules/comercial-atendimento/agenda/agenda-ocupacao.service';
 
 /**
  * Cálculo da ocupação efetiva (issue #139). Função pura: o service busca os dados nos módulos

@@ -15,8 +15,8 @@ import {
   calcularOcupacao,
   type BloqueioDaOcupacao,
   type ResultadoOcupacao,
-} from './calculo-ocupacao';
-import { diasDoPeriodo, periodoAnterior } from './periodo-anterior';
+} from '../../../common/ocupacao/calculo-ocupacao';
+import { diasDoPeriodo, periodoAnterior } from '../../../common/ocupacao/periodo-anterior';
 
 /** Todos os dias da semana, para a clínica que ainda não cadastrou o horário de funcionamento. */
 const TODOS_OS_DIAS = [0, 1, 2, 3, 4, 5, 6];

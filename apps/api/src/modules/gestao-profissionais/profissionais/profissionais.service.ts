@@ -4,6 +4,8 @@ import type {
   AgendaProfissional,
   CreateProfissionalInput,
   ExportProfissionaisQuery,
+  ClassificacaoMotivo,
+  ClassificacaoParametros,
   ListProfissionaisQuery,
   LookupItem,
   LookupQuery,
@@ -13,6 +15,7 @@ import type {
   ProfissionalExportColumn,
   UpdateProfissionalInput,
 } from '@torres/shared';
+import { textoMotivoClassificacao } from '@torres/shared';
 import type { Prisma, Profissional } from '../../../generated/prisma/client';
 import { isUuid } from '../../../common/auth/tokens';
 import { SegredosService } from '../../../common/crypto/segredos.service';
@@ -148,10 +151,26 @@ export class ProfissionaisService extends EntidadeLookupService<
     valorConsulta,
     comissao,
     dataNascimento,
+    classificacaoMotivo,
+    classificacaoParametros,
+    classificacaoEm,
     ...resto
   }: ProfissionalCompleto): ProfissionalDto {
+    const parametros = (
+      classificacaoParametros !== null &&
+      typeof classificacaoParametros === 'object' &&
+      !Array.isArray(classificacaoParametros)
+        ? classificacaoParametros
+        : {}
+    ) as ClassificacaoParametros;
     return {
       ...resto,
+      classificacaoMotivo: classificacaoMotivo as ClassificacaoMotivo | null,
+      classificacaoParametros: parametros,
+      classificacaoMotivoTexto: classificacaoMotivo
+        ? textoMotivoClassificacao(classificacaoMotivo as ClassificacaoMotivo, parametros)
+        : null,
+      classificacaoEm: classificacaoEm?.toISOString() ?? null,
       especialidadeNome: especialidade?.nome ?? null,
       profissao: resto.profissao,
       rqes: rqes.map((r) => ({
@@ -351,11 +370,12 @@ export class ProfissionaisService extends EntidadeLookupService<
   }
 
   private where(
-    query: Pick<ListProfissionaisQuery, 'search' | 'status'>,
+    query: Pick<ListProfissionaisQuery, 'search' | 'status' | 'classificacao'>,
   ): Prisma.ProfissionalWhereInput {
     return {
       ...NAO_EXCLUIDOS,
       ativo: query.status ? query.status === 'ativo' : undefined,
+      classificacao: query.classificacao,
       ...this.busca(query.search),
     };
   }

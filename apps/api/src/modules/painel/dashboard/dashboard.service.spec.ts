@@ -1,9 +1,10 @@
-import type { AbaPainel, SecaoPainel } from '@torres/shared';
+import type { AbaPainel, ResumoParceiros, SecaoPainel } from '@torres/shared';
 import { ABAS_PAINEL, dashboardPainelSchema } from '@torres/shared';
 import type { PacientesService } from '../../comercial-atendimento/pacientes/pacientes.service';
+import type { ProfissionaisClassificacaoService } from '../../gestao-profissionais/profissionais/profissionais-classificacao.service';
 import type { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
 import type { IndicadoresFinanceirosService } from '../../financeiro/indicadores/indicadores.service';
-import { calcularOcupacao } from '../ocupacao/calculo-ocupacao';
+import { calcularOcupacao } from '../../../common/ocupacao/calculo-ocupacao';
 import type { OcupacaoPainel, OcupacaoService } from '../ocupacao/ocupacao.service';
 import { DashboardService } from './dashboard.service';
 
@@ -25,6 +26,18 @@ const OCUPACAO: OcupacaoPainel = {
   profissionais: {},
 };
 
+const PARCEIROS: ResumoParceiros = {
+  total: 6,
+  porClassificacao: { NOVO: 1, ATIVO: 2, ESTRATEGICO: 0, EM_EXPANSAO: 1, EM_RISCO: 1, INATIVO: 1 },
+  emRisco: [
+    {
+      profissionalId: '11111111-1111-4111-8111-111111111111',
+      nome: 'Dra. Teste',
+      motivoTexto: '1 de 4 períodos usados em 30 dias',
+    },
+  ],
+};
+
 const FILTROS = { modo: 'mes', mes: '2026-10', base: 'recebimento' } as const;
 
 function setup() {
@@ -40,13 +53,15 @@ function setup() {
     }),
   };
   const ocupacao = { calcular: jest.fn().mockResolvedValue(OCUPACAO) };
+  const classificacao = { resumo: jest.fn().mockResolvedValue(PARCEIROS) };
   const service = new DashboardService(
     profissionais as unknown as ProfissionaisService,
     pacientes as unknown as PacientesService,
     indicadores as unknown as IndicadoresFinanceirosService,
     ocupacao as unknown as OcupacaoService,
+    classificacao as unknown as ProfissionaisClassificacaoService,
   );
-  return { service, profissionais, pacientes, indicadores, ocupacao };
+  return { service, profissionais, pacientes, indicadores, ocupacao, classificacao };
 }
 
 function valorDoKpi(secoes: SecaoPainel[], id: string): number | null | undefined {
@@ -144,7 +159,62 @@ describe('DashboardService', () => {
     const { secoes } = await service.obter('executivo', FILTROS);
 
     expect(valorDoKpi(secoes, 'faturamento-total')).toBeNull();
-    expect(secoes.flatMap((s) => s.blocos).some((b) => b.tipo === 'alerta')).toBe(false);
+  });
+
+  it('executivo: profissionais em risco e em expansão vêm da classificação (#143)', async () => {
+    const { service, classificacao } = setup();
+
+    const { secoes } = await service.obter('executivo', FILTROS);
+
+    expect(classificacao.resumo).toHaveBeenCalledTimes(1);
+    expect(valorDoKpi(secoes, 'parceiros-em-risco')).toBe(1);
+    expect(valorDoKpi(secoes, 'parceiros-em-expansao')).toBe(1);
+  });
+
+  it('executivo: alerta de baixa utilização lista quem está em risco e o motivo', async () => {
+    const { service } = setup();
+
+    const { secoes } = await service.obter('executivo', FILTROS);
+
+    const alertas = secoes.flatMap((s) => s.blocos).filter((b) => b.tipo === 'alerta');
+    expect(alertas).toHaveLength(1);
+    expect(alertas[0]).toMatchObject({
+      id: 'baixa-utilizacao',
+      titulo: '1 profissional com baixa utilização',
+      itens: [{ rotulo: 'Dra. Teste', valor: '1 de 4 períodos usados em 30 dias' }],
+    });
+  });
+
+  it('executivo: sem ninguém em risco não há alerta, e o plural vale para vários', async () => {
+    const { service, classificacao } = setup();
+    classificacao.resumo.mockResolvedValue({
+      ...PARCEIROS,
+      porClassificacao: { ...PARCEIROS.porClassificacao, EM_RISCO: 0 },
+      emRisco: [],
+    });
+    const vazio = await service.obter('executivo', FILTROS);
+    expect(vazio.secoes.flatMap((s) => s.blocos).some((b) => b.tipo === 'alerta')).toBe(false);
+
+    const outro = {
+      ...PARCEIROS.emRisco[0],
+      profissionalId: '22222222-2222-4222-8222-222222222222',
+    };
+    classificacao.resumo.mockResolvedValue({
+      ...PARCEIROS,
+      emRisco: [...PARCEIROS.emRisco, outro],
+    });
+    const dois = await service.obter('executivo', FILTROS);
+    expect(dois.secoes.flatMap((s) => s.blocos).find((b) => b.tipo === 'alerta')).toMatchObject({
+      titulo: '2 profissionais com baixa utilização',
+    });
+  });
+
+  it('as outras abas não consultam a classificação', async () => {
+    const { service, classificacao } = setup();
+
+    await service.obter('comercial', FILTROS);
+
+    expect(classificacao.resumo).not.toHaveBeenCalled();
   });
 
   it('executivo: metas da tabela Meta vs Atual', async () => {

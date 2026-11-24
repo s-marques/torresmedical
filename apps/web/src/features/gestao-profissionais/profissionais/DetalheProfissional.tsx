@@ -12,6 +12,7 @@ import { StatusAtivo } from '@/components/shared/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { formatarMascara } from '@/lib/forms/mascaras';
 import { AvatarProfissional } from './AvatarProfissional';
+import { ClassificacaoProfissional } from './ClassificacaoProfissional';
 import { ContratosProfissional } from './ContratosProfissional';
 import { OnboardingProfissional } from './OnboardingProfissional';
 import { DocumentosProfissional } from './DocumentosProfissional';
@@ -127,6 +128,7 @@ export function DetalheProfissional({
             </ul>
           </section>
         )}
+        <ClassificacaoProfissional profissional={p} />
         <OnboardingProfissional profissionalId={p.id} />
         <DocumentosProfissional profissionalId={p.id} />
         <ContratosProfissional profissionalId={p.id} />

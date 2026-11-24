@@ -1,6 +1,12 @@
 import { z } from 'zod';
 import { exportQuerySchema, listQuerySchema } from '../common/list-query';
 import { paginatedResponseSchema } from '../common/pagination';
+import {
+  classificacaoMotivoSchema,
+  classificacaoParametrosSchema,
+  classificacaoParceiroSchema,
+  profissionalClassificacaoFiltroSchema,
+} from './profissional-classificacao';
 import { cnpjValido, cpfValido } from '../comercial-atendimento/paciente';
 import { textoObrigatorio } from '../common/obrigatorio';
 
@@ -267,6 +273,7 @@ export const profissionalStatusFiltroSchema = z.enum(PROFISSIONAL_STATUS);
 
 export const PROFISSIONAL_SORT_FIELDS = [
   'nome',
+  'classificacao',
   'registro',
   'telefone',
   'email',
@@ -279,7 +286,10 @@ export const PROFISSIONAL_SORT_FIELDS = [
 export const listProfissionaisQuerySchema = listQuerySchema({
   sortFields: PROFISSIONAL_SORT_FIELDS,
   defaultSort: 'nome:asc',
-  filters: { status: profissionalStatusFiltroSchema.optional() },
+  filters: {
+    status: profissionalStatusFiltroSchema.optional(),
+    classificacao: profissionalClassificacaoFiltroSchema.optional(),
+  },
 });
 
 export type ListProfissionaisQuery = z.infer<typeof listProfissionaisQuerySchema>;
@@ -358,6 +368,16 @@ export const profissionalSchema = z.object({
   fotoArquivoId: z.uuid().nullable(),
   logoReceitaArquivoId: z.uuid().nullable(),
   ativo: z.boolean(),
+  /** Classificação do parceiro (#143); `null` até o primeiro cálculo. */
+  classificacao: classificacaoParceiroSchema.nullable(),
+  classificacaoMotivo: classificacaoMotivoSchema.nullable(),
+  classificacaoParametros: classificacaoParametrosSchema,
+  /** Motivo em português, pronto para exibir e exportar. */
+  classificacaoMotivoTexto: z.string().nullable(),
+  /** Quando o cálculo mudou a classificação pela última vez. */
+  classificacaoEm: z.iso.datetime().nullable(),
+  /** Marcado como parceiro estratégico pela gerência. */
+  estrategico: z.boolean(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });

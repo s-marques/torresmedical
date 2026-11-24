@@ -1,3 +1,4 @@
+import type { ResumoParceiros } from '@torres/shared';
 import {
   alerta,
   coluna,
@@ -24,18 +25,29 @@ function indicador(
   return { id, rotulo, meta, atual: null, formato, destacarNegativo };
 }
 
-export const abaExecutivo: ConstrutorAba = () => [
-  // Sem origem de dados ainda (contratos): o alerta só aparece quando houver itens.
-  secao(
-    'alertas',
-    null,
-    alerta(
+/** "1 profissional com baixa utilização": parceiros classificados como Em risco (#143). */
+function alertaBaixaUtilizacao(parceiros: ResumoParceiros | null) {
+  const emRisco = parceiros?.emRisco ?? [];
+  const n = emRisco.length;
+  return alerta(
+    'baixa-utilizacao',
+    `${n} ${n === 1 ? 'profissional' : 'profissionais'} com baixa utilização`,
+    'Usaram menos de 50% dos períodos contratados nos últimos 30 dias. Veja o histórico em Profissionais.',
+    emRisco.map((p) => ({ rotulo: p.nome, valor: p.motivoTexto })),
+  );
+}
+
+export const abaExecutivo: ConstrutorAba = ({ parceiros }) => [
+  // Os alertas só aparecem quando houver itens. Contratos sem cobrança ainda não tem origem de dados.
+  secao('alertas', null, [
+    ...alerta(
       'contratos-sem-cobranca',
       'Contratos ativos sem cobrança neste mês',
       'Não há parcela deste mês no Receber. Abra o contrato em Salas para gerar parcela, ou confirme que é permuta/isento.',
       [],
     ),
-  ),
+    ...alertaBaixaUtilizacao(parceiros),
+  ]),
   secao('indicadores', null, [
     kpi('faturamento-total', 'Faturamento Total', 'moeda'),
     kpi('taxa-ocupacao', 'Taxa de Ocupação', 'percentual'),
@@ -46,6 +58,20 @@ export const abaExecutivo: ConstrutorAba = () => [
     kpi('atendidos-hoje', 'Atendidos Hoje', 'inteiro'),
     kpi('no-show', 'No Show', 'inteiro', null, 'faltas no mês'),
     kpi('resultado-operacional', 'Resultado Operacional', 'moeda'),
+    kpi(
+      'parceiros-em-risco',
+      'Profissionais em Risco',
+      'inteiro',
+      parceiros?.porClassificacao.EM_RISCO ?? null,
+      'baixa utilização nos últimos 30 dias',
+    ),
+    kpi(
+      'parceiros-em-expansao',
+      'Profissionais em Expansão',
+      'inteiro',
+      parceiros?.porClassificacao.EM_EXPANSAO ?? null,
+      'mais períodos ou uso acima do contratado',
+    ),
   ]),
   secao('meta-vs-atual', null, [
     metaVsAtual('dashboard-executivo', 'Dashboard Executivo — Meta vs Atual', [

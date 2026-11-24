@@ -39,6 +39,9 @@ import { ProfissionaisDocumentosService } from './profissionais/profissionais-do
 import { ProfissionaisOnboardingController } from './profissionais/profissionais-onboarding.controller';
 import { ProfissionaisOnboardingService } from './profissionais/profissionais-onboarding.service';
 import { ProfissionalAgendaService } from './profissionais/profissional-agenda.service';
+import { ProfissionaisClassificacaoAgendador } from './profissionais/profissionais-classificacao.agendador';
+import { ProfissionaisClassificacaoController } from './profissionais/profissionais-classificacao.controller';
+import { ProfissionaisClassificacaoService } from './profissionais/profissionais-classificacao.service';
 import { ProfissionaisController } from './profissionais/profissionais.controller';
 import { ProfissionaisService } from './profissionais/profissionais.service';
 
@@ -59,6 +62,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ProfissionaisController,
     ProfissionaisDocumentosController,
     ProfissionaisOnboardingController,
+    ProfissionaisClassificacaoController,
     EspecialidadesController,
     ServicosProfissionaisController,
     ProtocolosController,
@@ -78,6 +82,8 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ProfissionalAgendaService,
     ProfissionaisDocumentosService,
     ProfissionaisOnboardingService,
+    ProfissionaisClassificacaoService,
+    ProfissionaisClassificacaoAgendador,
     ServicosProfissionaisService,
     ProtocolosService,
     ProtocolosMaeService,
@@ -110,6 +116,8 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ProfissionalAgendaService,
     // Documentos e alertas de vencimento: onboarding (#142) e central de notificações (#160).
     ProfissionaisDocumentosService,
+    // Classificação do parceiro: indicadores e alerta de baixa utilização do Painel (#143).
+    ProfissionaisClassificacaoService,
     // Contratos ativos: Agenda matricial (#137) e profissionais que permitem indicação (#146).
     ContratosSalaService,
     // Receita recorrente dos Indicadores do Financeiro.
