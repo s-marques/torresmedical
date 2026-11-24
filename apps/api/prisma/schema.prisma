@@ -2649,6 +2649,23 @@ model Prontuario {
   @@map("prontuarios")
 }
 
+/// Dono: consultorio-assistencial. Log de acesso de LEITURA ao prontuário (issue #150): quem abriu
+/// o quê e quando. Só inserção; guarda ids, nunca conteúdo clínico. A escrita fica no audit_log.
+/// Sem FK (usuário e paciente são de outros módulos, CLAUDE.md seção 3).
+model ProntuarioAcesso {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  usuarioId  String   @map("usuario_id")
+  pacienteId String   @map("paciente_id") @db.Uuid
+  recurso    String
+  acessadoEm DateTime @default(now()) @map("acessado_em") @db.Timestamptz(3)
+  requestId  String?  @map("request_id")
+  ip         String?
+
+  @@index([pacienteId, acessadoEm])
+  @@index([usuarioId, acessadoEm])
+  @@map("prontuario_acessos")
+}
+
 /// Dono: consultorio-assistencial. Atendimento clínico (aba "Atendimentos" da tela Prontuários).
 /// `horario`/`procedimentoId`/`pagamentoStatus` ficam reservados para a tela Atendimento Médico
 /// (#38, agenda do dia), que deve reaproveitar esta mesma entidade.

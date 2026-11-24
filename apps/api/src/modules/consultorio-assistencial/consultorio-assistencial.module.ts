@@ -10,6 +10,7 @@ import { EvolucaoVozService } from './evolucao-voz/evolucao-voz.service';
 import { PacientesVinculadosService } from './pacientes-vinculados/pacientes-vinculados.service';
 import { PrestadoresController } from './prestadores/prestadores.controller';
 import { PrestadoresService } from './prestadores/prestadores.service';
+import { AcessoProntuarioService } from './prontuarios/acesso-prontuario.service';
 import { ProntuariosController } from './prontuarios/prontuarios.controller';
 import { ProntuariosService } from './prontuarios/prontuarios.service';
 import { SoroterapiaController } from './soroterapia/soroterapia.controller';
@@ -45,6 +46,7 @@ import { ReceituarioBlocosService } from './receituarios/receituario-blocos.serv
   ],
   providers: [
     ProntuariosService,
+    AcessoProntuarioService,
     AtendimentoMedicoService,
     EvolucaoVozService,
     EncaminhamentosService,

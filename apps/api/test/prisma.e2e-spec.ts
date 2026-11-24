@@ -139,6 +139,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'profissionais_documentos',
       'profissionais_onboarding',
       'profissionais_rqe',
+      'prontuario_acessos',
       'prontuarios',
       'protocolo_itens',
       'protocolo_mae_semanas',

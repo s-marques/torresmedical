@@ -364,6 +364,28 @@ Cadastro do paciente como informação de gestão (issue #148, R §8 e §41).
     envio fica `FALHA` com `SEM_CONSENTIMENTO` no histórico). Revogar só campanhas não bloqueia
     confirmações.
 
+## Prontuário privativo e log de acesso (`/prontuarios`)
+
+Prontuário individual por profissional (issue #150, R §13, §14 e §37).
+
+- **Registros clínicos privativos:** atendimentos, anamneses, receitas e histórico clínico são
+  filtrados no service pelo escopo do usuário (#153). O médico só lista e abre o que é dos
+  profissionais dele; paciente sem atendimento com ele dá 403, mesmo que outro médico o atenda.
+- **Dados gerais compartilhados (decisão do dev):** alergias, medicamentos em uso, doenças crônicas,
+  cirurgias, histórico familiar e observações são um por paciente e valem para todo profissional
+  vinculado (segurança do paciente). Quem altera fica no `audit_log`.
+- **Sem acesso clínico:** Recepção, Comercial e Financeiro não recebem `consultorio-assistencial.prontuarios.*`
+  e levam 403. Administrador (escopo `TODOS`) vê tudo, com o acesso registrado.
+- **Compartilhamento autorizado entre profissionais** (encaminhamento, equipe multiprofissional) **não
+  existe**: fica para outra issue.
+- **Log de acesso de leitura:** tabela `prontuario_acessos` (só inserção, só ids: usuário, paciente,
+  recurso, data, `requestId`, IP). Cada GET de prontuário, atendimentos, anamneses, receitas e
+  histórico grava um registro, depois de o escopo liberar; 403 e 404 não gravam. A escrita continua
+  no `audit_log`.
+  `GET /api/consultorio-assistencial/prontuarios/acessos?pacienteId=&usuarioId=&recurso=&page=&pageSize=`
+  exige `consultorio-assistencial.prontuarios-acessos.ver` e escopo `TODOS` (restrito leva 403). Não há
+  tela, só a API.
+
 ## Encaminhamentos (`/encaminhamentos`)
 
 Encaminhamento de pacientes entre profissionais (issue #146, R §26), para medir o ecossistema

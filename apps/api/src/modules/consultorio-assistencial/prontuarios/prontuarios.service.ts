@@ -31,6 +31,7 @@ import { PacientesService } from '../../comercial-atendimento/pacientes/paciente
 import { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
 import { PacientesVinculadosService } from '../pacientes-vinculados/pacientes-vinculados.service';
 import { PrescricoesService } from '../receituarios/prescricoes.service';
+import { AcessoProntuarioService } from './acesso-prontuario.service';
 
 const NAO_EXCLUIDOS = { deletedAt: null } as const;
 
@@ -147,6 +148,7 @@ export class ProntuariosService {
     private readonly vinculados: PacientesVinculadosService,
     private readonly escopo: EscopoDadosService,
     private readonly prescricoes: PrescricoesService,
+    private readonly acessos: AcessoProntuarioService,
   ) {}
 
   /** Cabeçalho do paciente (nome, contato, nascimento, sexo), ao abrir a tela de detalhe. */
@@ -226,6 +228,7 @@ export class ProntuariosService {
 
   async detalheProntuario(pacienteId: string): Promise<ProntuarioDto> {
     await this.pacienteNoEscopo(pacienteId);
+    await this.acessos.registrar(pacienteId, 'PRONTUARIO');
     const registro = await this.txHost.tx.prontuario.findUnique({ where: { id: pacienteId } });
     return toProntuarioDto(pacienteId, registro);
   }
@@ -249,6 +252,7 @@ export class ProntuariosService {
     meta: PageRequest & { total: number; totalPages: number };
   }> {
     await this.pacienteNoEscopo(pacienteId);
+    await this.acessos.registrar(pacienteId, 'ATENDIMENTOS');
     const where = {
       pacienteId,
       ...NAO_EXCLUIDOS,
@@ -293,6 +297,7 @@ export class ProntuariosService {
     query: ListRegistrosQuery,
   ): Promise<{ data: Anamnese[]; meta: PageRequest & { total: number; totalPages: number } }> {
     await this.pacienteNoEscopo(pacienteId);
+    await this.acessos.registrar(pacienteId, 'ANAMNESES');
     const where = {
       pacienteId,
       ...NAO_EXCLUIDOS,
@@ -350,6 +355,7 @@ export class ProntuariosService {
     query: ListRegistrosQuery,
   ): Promise<{ data: Prescricao[]; meta: PageRequest & { total: number; totalPages: number } }> {
     await this.pacienteNoEscopo(pacienteId);
+    await this.acessos.registrar(pacienteId, 'RECEITAS');
     return this.prescricoes.doPaciente(pacienteId, query);
   }
 
@@ -366,6 +372,7 @@ export class ProntuariosService {
     meta: PageRequest & { total: number; totalPages: number };
   }> {
     await this.pacienteNoEscopo(pacienteId);
+    await this.acessos.registrar(pacienteId, 'HISTORICO_CLINICO');
     const where = {
       pacienteId,
       ...NAO_EXCLUIDOS,

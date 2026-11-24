@@ -3,6 +3,7 @@ import {
   anamneseInputSchema,
   atendimentoInputSchema,
   listPacientesComRegistrosQuerySchema,
+  listProntuarioAcessosQuerySchema,
   prontuarioInputSchema,
 } from './prontuario';
 
@@ -75,5 +76,13 @@ describe('listPacientesComRegistrosQuerySchema', () => {
     expect(listPacientesComRegistrosQuerySchema.safeParse({ sort: 'documento:asc' }).success).toBe(
       false,
     );
+  });
+});
+
+describe('log de acesso do prontuário (#150)', () => {
+  it('aceita só recursos conhecidos e paciente uuid', () => {
+    expect(listProntuarioAcessosQuerySchema.safeParse({ recurso: 'RECEITAS' }).success).toBe(true);
+    expect(listProntuarioAcessosQuerySchema.safeParse({ recurso: 'OUTRO' }).success).toBe(false);
+    expect(listProntuarioAcessosQuerySchema.safeParse({ pacienteId: 'x' }).success).toBe(false);
   });
 });

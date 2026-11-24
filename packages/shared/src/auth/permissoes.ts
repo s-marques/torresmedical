@@ -12,6 +12,8 @@ export const PERMISSOES_EXTRAS = [
   'configuracoes-gestao.auditoria.ver',
   /** Validar ou recusar documento do profissional (issue #141): perfil distinto de quem envia. */
   'gestao-profissionais.profissionais-documentos.validar',
+  /** Consulta do log de acesso de leitura ao prontuário (issue #150): só a administração. */
+  'consultorio-assistencial.prontuarios-acessos.ver',
 ] as const;
 
 /** Permissão no formato `<modulo>.<recurso>.<acao>` (CLAUDE.md, seção 3). */
