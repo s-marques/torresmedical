@@ -121,6 +121,11 @@ export interface DataGridProps<T> {
    * De/Até da `ReportPage`). Mudar o valor refaz a consulta.
    */
   consultaFixa?: Readonly<Record<string, string>>;
+  /**
+   * Refaz a consulta sozinha a cada tantos milissegundos (ex.: a lista do dia da Recepção, que
+   * recebe agendamentos de outras estações). Sem valor, só consulta ao mudar o estado do grid.
+   */
+  atualizacaoMs?: number;
   /** Placeholder da busca textual, ex.: "Buscar usuarios...". `false` esconde a busca. */
   busca?: string | false;
   status?: FiltroStatus;

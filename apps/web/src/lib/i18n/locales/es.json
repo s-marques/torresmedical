@@ -231,6 +231,7 @@
         "pacientes": "Pacientes",
         "origens-cliente": "Orígenes de Cliente",
         "agenda": "Agenda",
+        "recepcao": "Recepción",
         "confirmacoes": "Confirmaciones",
         "orcamentos": "Presupuestos",
         "vendas-pdv": "Ventas/PDV",
@@ -1280,6 +1281,55 @@
       "linkInvalido": "Este enlace no es válido.",
       "jaRespondida": "Esta encuesta ya fue respondida. ¡Gracias!",
       "expirada": "El enlace de esta encuesta expiró."
+    }
+  },
+  "recepcao": {
+    "titulo": "Recepción",
+    "descricao": "Atenciones de hoy, fila de espera y estados rápidos para llevar el día.",
+    "vazio": "Ninguna atención para hoy.",
+    "resumo": "{{data}} - {{total}} atención(es)",
+    "botaoAria": "{{status}}: {{paciente}}",
+    "filtros": {
+      "profissional": "Profesional",
+      "todosProfissionais": "Todos los profesionales",
+      "sala": "Sala",
+      "todasSalas": "Todas las salas",
+      "status": "Estado",
+      "todosStatus": "Todos los estados"
+    },
+    "colunas": {
+      "horario": "Hora",
+      "paciente": "Paciente",
+      "profissional": "Profesional",
+      "sala": "Sala",
+      "status": "Estado",
+      "chegada": "Llegada",
+      "espera": "Espera",
+      "entrada": "Entrada",
+      "fim": "Fin",
+      "acoes": "Acciones"
+    },
+    "fila": {
+      "titulo": "Fila de espera",
+      "vazia": "Nadie esperando por ahora.",
+      "chegou": "Llegó a las {{hora}}",
+      "espera": "Espera: {{tempo}}"
+    },
+    "cancelar": {
+      "titulo": "¿Cancelar la atención?",
+      "descricao": "La atención de {{paciente}} se marcará como cancelada.",
+      "confirmar": "Cancelar atención"
+    },
+    "status": {
+      "AGENDADO": "Agendado",
+      "CONFIRMADO": "Confirmado",
+      "CHECK_IN": "Llegó",
+      "AGUARDANDO": "En espera",
+      "EM_ATENDIMENTO": "En atención",
+      "ATENDIDO": "Finalizado",
+      "FALTOU": "Faltó",
+      "CANCELADO": "Canceló",
+      "REAGENDAR": "Reprogramó"
     }
   },
   "profissionalDocumentos": {

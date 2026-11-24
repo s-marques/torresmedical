@@ -32,5 +32,6 @@
   "DESTINO_SEM_INDICACAO": "The receiving professional has no active contract that allows patient referrals",
   "PESQUISA_NAO_ENCONTRADA": "Survey not found",
   "PESQUISA_JA_RESPONDIDA": "This survey was already answered",
-  "PESQUISA_EXPIRADA": "The link for this survey has expired"
+  "PESQUISA_EXPIRADA": "The link for this survey has expired",
+  "RECEPCAO_STATUS_TRAVADO": "The appointment is in progress or finished, and only the doctor can change its status"
 }

@@ -147,13 +147,16 @@ describe('AgendamentosAtendimentoService', () => {
     await expect(service.resumo('abc')).rejects.toMatchObject({ status: 404 });
   });
 
-  it('alterarStatus: grava o novo status e audita before/after', async () => {
+  it('alterarStatus: grava o novo status, o horário de entrada e audita before/after', async () => {
     const { service, agendamento, audit } = setup();
     const item = await service.alterarStatus(ID, 'EM_ATENDIMENTO');
 
     expect(item.status).toBe('EM_ATENDIMENTO');
     expect(agendamento.update).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: ID }, data: { status: 'EM_ATENDIMENTO' } }),
+      expect.objectContaining({
+        where: { id: ID },
+        data: { status: 'EM_ATENDIMENTO', entradaEm: expect.any(Date) },
+      }),
     );
     expect(audit.record).toHaveBeenCalledWith({
       action: 'UPDATE',
