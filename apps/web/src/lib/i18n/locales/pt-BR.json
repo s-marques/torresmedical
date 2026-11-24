@@ -1141,6 +1141,13 @@
     "modulo": "Compras / Estoque",
     "relatorios": "Relatórios"
   },
+  "relatoriosReceitaProfissionais": {
+    "titulo": "Relatórios de Receita Profissionais",
+    "descricao": "Prestação de contas: receita por profissional, forma de pagamento, inadimplência e mais.",
+    "painel": "Painel",
+    "modulo": "Gestão Profissionais",
+    "relatorios": "Relatórios"
+  },
   "relatoriosGestao": {
     "titulo": "Relatórios de Gestão",
     "descricao": "Log de acesso, ticket médio, ocupação de sala e LTV.",

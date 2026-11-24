@@ -1249,6 +1249,13 @@
     "modulo": "Purchasing / Inventory",
     "relatorios": "Reports"
   },
+  "relatoriosReceitaProfissionais": {
+    "titulo": "Professional Revenue Reports",
+    "descricao": "Accountability: revenue by professional, payment method, delinquency and more.",
+    "painel": "Dashboard",
+    "modulo": "Professional Management",
+    "relatorios": "Reports"
+  },
   "relatoriosGestao": {
     "titulo": "Management Reports",
     "descricao": "Access log, average ticket, room occupancy and LTV.",
