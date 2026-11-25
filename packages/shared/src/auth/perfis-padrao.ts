@@ -270,8 +270,11 @@ export const PERFIS_PADRAO: readonly PerfilPadrao[] = [
   },
 ];
 
-/** Telas que só o Administrador acessa (declaradas de propósito). Vazia por enquanto. */
-export const TELAS_SOMENTE_ADMINISTRADOR: readonly TelaId[] = [];
+/** Telas que só o Administrador acessa (declaradas de propósito). */
+export const TELAS_SOMENTE_ADMINISTRADOR: readonly TelaId[] = [
+  /** Consulta da trilha de auditoria (issue #155). */
+  'configuracoes-gestao.auditoria',
+];
 
 /** Perfis que nunca recebem permissão clínica (R §14). */
 export const PERFIS_SEM_ACESSO_CLINICO: readonly string[] = [
