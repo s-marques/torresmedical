@@ -1707,5 +1707,94 @@
     "mensagens": {
       "vinculado": "Deal linked to the professional."
     }
+  },
+  "atendimentoRegistros": {
+    "titulo": "Appointment",
+    "detalhes": "Details",
+    "editar": "Edit appointment",
+    "assinado": "Signed",
+    "naoAssinado": "Appointment not signed. Once signed, it can no longer be edited.",
+    "assinadoPor": "Signed by {{nome}} on {{data}}. Corrections are recorded as addenda.",
+    "totalAdendos_one": "{{count}} addendum",
+    "totalAdendos_other": "{{count}} addenda",
+    "acoes": {
+      "editar": "Edit",
+      "assinar": "Sign",
+      "adendo": "Add addendum",
+      "baixar": "Download",
+      "excluir": "Delete"
+    },
+    "campos": {
+      "tipo": "Type",
+      "arquivo": "File",
+      "data": "Date",
+      "descricao": "Description",
+      "texto": "Text",
+      "dataEmissao": "Issue date",
+      "senha": "Password",
+      "adendo": "Addendum",
+      "queixa": "Complaint",
+      "evolucao": "Progress",
+      "diagnostico": "Diagnosis",
+      "conduta": "Plan",
+      "observacoes": "Notes"
+    },
+    "tiposAnexo": {
+      "EXAME": "Exam",
+      "ANEXO": "Attachment"
+    },
+    "tiposDocumento": {
+      "ATESTADO": "Medical certificate",
+      "DECLARACAO": "Statement",
+      "SOLICITACAO_EXAME": "Exam request"
+    },
+    "tiposVersao": {
+      "ASSINATURA": "Signature",
+      "ADENDO": "Addendum"
+    },
+    "anexos": {
+      "titulo": "Exams and attachments",
+      "novo": "New exam or attachment",
+      "vazio": "No exams or attachments.",
+      "baixar": "Download {{nome}}",
+      "excluir": "Delete {{nome}}",
+      "confirmarExcluir": "Delete this exam or attachment?"
+    },
+    "documentos": {
+      "titulo": "Issued documents",
+      "novo": "Issue document",
+      "vazio": "No documents issued.",
+      "excluir": "Delete {{tipo}}",
+      "confirmarExcluir": "Delete this document?"
+    },
+    "versoes": {
+      "secao": "Version history",
+      "vazio": "No versions recorded.",
+      "titulo": "Version {{numero}}: {{tipo}}",
+      "verAlteracao": "See before and after",
+      "antes": "Before",
+      "depois": "After",
+      "adendoNumero": "Addendum {{numero}}",
+      "hash": "Content hash: {{hash}}"
+    },
+    "assinatura": {
+      "titulo": "Sign appointment",
+      "descricao": "Confirm with your password. Once signed, the appointment can no longer be edited: corrections are recorded as addenda.",
+      "confirmar": "Sign"
+    },
+    "adendo": {
+      "titulo": "Add addendum",
+      "descricao": "The addendum becomes a new version. The original record is not changed."
+    },
+    "mensagens": {
+      "atualizado": "Appointment updated.",
+      "assinado": "Appointment signed.",
+      "adendoCriado": "Addendum recorded.",
+      "anexoCriado": "Exam or attachment added.",
+      "anexoRemovido": "Exam or attachment deleted.",
+      "documentoCriado": "Document issued.",
+      "documentoRemovido": "Document deleted.",
+      "erroBaixar": "Could not download the file."
+    }
   }
 }

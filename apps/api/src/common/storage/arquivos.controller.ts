@@ -12,6 +12,7 @@ import {
 import { ApiBody, ApiConsumes, ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
 import {
   ARQUIVO_CAMPO,
+  ARQUIVO_USOS,
   ARQUIVO_USO_KEYS,
   arquivoConteudoQuerySchema,
   arquivoLinkSchema,
@@ -23,12 +24,19 @@ import {
 } from '@torres/shared';
 import { Audit } from '../audit/audit.decorator';
 import { Public, SomenteAutenticado } from '../auth/auth.decorators';
+import { semPermissao } from '../auth/escopo-dados.service';
 import { ApiErrorResponses, ApiZodQuery, ApiZodResponse } from '../swagger/zod-openapi';
 import { IdParam } from '../validation/id-param.decorator';
 import { ZodValidationPipe } from '../validation/zod-validation.pipe';
 import { ArquivosService, type ArquivoDto, type ArquivoRecebido } from './arquivos.service';
 
 const ENTITY = 'Arquivo';
+
+/** Arquivo clínico (uso `privado`): só o recurso dono o entrega, depois de conferir o escopo. */
+function garantirNaoPrivado(arquivo: ArquivoDto): void {
+  const config = (ARQUIVO_USOS as Record<string, { privado?: boolean } | undefined>)[arquivo.uso];
+  if (config?.privado) throw semPermissao();
+}
 
 /**
  * Serviço comum de arquivos, usado pelos formulários de várias telas: exige só o login.
@@ -69,15 +77,18 @@ export class ArquivosController {
   @ApiOperation({ summary: 'Metadados do arquivo' })
   @ApiZodResponse(200, arquivoSchema)
   @ApiErrorResponses(400, 401, 404)
-  findById(@IdParam() id: string): Promise<ArquivoDto> {
-    return this.arquivos.findById(id);
+  async findById(@IdParam() id: string): Promise<ArquivoDto> {
+    const arquivo = await this.arquivos.findById(id);
+    garantirNaoPrivado(arquivo);
+    return arquivo;
   }
 
   @Get(':id/link')
   @ApiOperation({ summary: 'URL temporária de download (para <img src> e <a href>)' })
   @ApiZodResponse(200, arquivoLinkSchema)
   @ApiErrorResponses(400, 401, 404)
-  link(@IdParam() id: string): Promise<ArquivoLink> {
+  async link(@IdParam() id: string): Promise<ArquivoLink> {
+    garantirNaoPrivado(await this.arquivos.findById(id));
     return this.arquivos.link(id);
   }
 
@@ -107,7 +118,8 @@ export class ArquivosController {
   @ApiOperation({ summary: 'Exclui (exclusão lógica)' })
   @ApiZodResponse(200, arquivoSchema)
   @ApiErrorResponses(400, 401, 404)
-  remove(@IdParam() id: string): Promise<ArquivoDto> {
+  async remove(@IdParam() id: string): Promise<ArquivoDto> {
+    garantirNaoPrivado(await this.arquivos.findById(id));
     return this.arquivos.remove(id);
   }
 }

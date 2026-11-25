@@ -1,5 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { ComercialAtendimentoModule } from '../comercial-atendimento/comercial-atendimento.module';
+import { ConfiguracoesGestaoModule } from '../configuracoes-gestao/configuracoes-gestao.module';
 import { GestaoProfissionaisModule } from '../gestao-profissionais/gestao-profissionais.module';
 import { AtendimentoMedicoController } from './atendimento-medico/atendimento-medico.controller';
 import { AtendimentoMedicoService } from './atendimento-medico/atendimento-medico.service';
@@ -11,6 +12,11 @@ import { PacientesVinculadosService } from './pacientes-vinculados/pacientes-vin
 import { PrestadoresController } from './prestadores/prestadores.controller';
 import { PrestadoresService } from './prestadores/prestadores.service';
 import { AcessoProntuarioService } from './prontuarios/acesso-prontuario.service';
+import { AtendimentoAcessoService } from './prontuarios/atendimento-acesso.service';
+import { AtendimentoAnexosService } from './prontuarios/atendimento-anexos.service';
+import { AtendimentoAssinaturaService } from './prontuarios/atendimento-assinatura.service';
+import { AtendimentoDocumentosService } from './prontuarios/atendimento-documentos.service';
+import { AtendimentoRegistrosController } from './prontuarios/atendimento-registros.controller';
 import { ProntuariosController } from './prontuarios/prontuarios.controller';
 import { ProntuariosService } from './prontuarios/prontuarios.service';
 import { SoroterapiaController } from './soroterapia/soroterapia.controller';
@@ -33,9 +39,12 @@ import { ReceituarioBlocosService } from './receituarios/receituario-blocos.serv
     forwardRef(() => ComercialAtendimentoModule),
     // O onboarding do profissional (#142) lê os atendimentos daqui, então o vínculo é circular.
     forwardRef(() => GestaoProfissionaisModule),
+    // Assinatura do atendimento: confirmação de senha e vínculo usuário-profissional (#151).
+    forwardRef(() => ConfiguracoesGestaoModule),
   ],
   controllers: [
     ProntuariosController,
+    AtendimentoRegistrosController,
     AtendimentoMedicoController,
     EvolucaoVozController,
     EncaminhamentosController,
@@ -47,6 +56,10 @@ import { ReceituarioBlocosService } from './receituarios/receituario-blocos.serv
   providers: [
     ProntuariosService,
     AcessoProntuarioService,
+    AtendimentoAcessoService,
+    AtendimentoAssinaturaService,
+    AtendimentoAnexosService,
+    AtendimentoDocumentosService,
     AtendimentoMedicoService,
     EvolucaoVozService,
     EncaminhamentosService,

@@ -1600,5 +1600,94 @@
     "mensagens": {
       "vinculado": "Negócio vinculado ao profissional."
     }
+  },
+  "atendimentoRegistros": {
+    "titulo": "Atendimento",
+    "detalhes": "Detalhes",
+    "editar": "Editar atendimento",
+    "assinado": "Assinado",
+    "naoAssinado": "Atendimento não assinado. Depois de assinado, ele não pode ser editado.",
+    "assinadoPor": "Assinado por {{nome}} em {{data}}. Correções entram como adendo.",
+    "totalAdendos_one": "{{count}} adendo",
+    "totalAdendos_other": "{{count}} adendos",
+    "acoes": {
+      "editar": "Editar",
+      "assinar": "Assinar",
+      "adendo": "Registrar adendo",
+      "baixar": "Baixar",
+      "excluir": "Excluir"
+    },
+    "campos": {
+      "tipo": "Tipo",
+      "arquivo": "Arquivo",
+      "data": "Data",
+      "descricao": "Descrição",
+      "texto": "Texto",
+      "dataEmissao": "Data de emissão",
+      "senha": "Senha",
+      "adendo": "Adendo",
+      "queixa": "Queixa",
+      "evolucao": "Evolução",
+      "diagnostico": "Diagnóstico",
+      "conduta": "Conduta",
+      "observacoes": "Observações"
+    },
+    "tiposAnexo": {
+      "EXAME": "Exame",
+      "ANEXO": "Anexo"
+    },
+    "tiposDocumento": {
+      "ATESTADO": "Atestado",
+      "DECLARACAO": "Declaração",
+      "SOLICITACAO_EXAME": "Solicitação de exame"
+    },
+    "tiposVersao": {
+      "ASSINATURA": "Assinatura",
+      "ADENDO": "Adendo"
+    },
+    "anexos": {
+      "titulo": "Exames e anexos",
+      "novo": "Novo exame ou anexo",
+      "vazio": "Nenhum exame ou anexo.",
+      "baixar": "Baixar {{nome}}",
+      "excluir": "Excluir {{nome}}",
+      "confirmarExcluir": "Excluir este exame ou anexo?"
+    },
+    "documentos": {
+      "titulo": "Documentos emitidos",
+      "novo": "Emitir documento",
+      "vazio": "Nenhum documento emitido.",
+      "excluir": "Excluir {{tipo}}",
+      "confirmarExcluir": "Excluir este documento?"
+    },
+    "versoes": {
+      "secao": "Histórico de versões",
+      "vazio": "Nenhuma versão registrada.",
+      "titulo": "Versão {{numero}}: {{tipo}}",
+      "verAlteracao": "Ver antes e depois",
+      "antes": "Antes",
+      "depois": "Depois",
+      "adendoNumero": "Adendo {{numero}}",
+      "hash": "Hash do conteúdo: {{hash}}"
+    },
+    "assinatura": {
+      "titulo": "Assinar atendimento",
+      "descricao": "Confirme com a sua senha. Depois de assinado, o atendimento não pode ser editado: correções entram como adendo.",
+      "confirmar": "Assinar"
+    },
+    "adendo": {
+      "titulo": "Registrar adendo",
+      "descricao": "O adendo vira uma nova versão. O registro original não é alterado."
+    },
+    "mensagens": {
+      "atualizado": "Atendimento atualizado.",
+      "assinado": "Atendimento assinado.",
+      "adendoCriado": "Adendo registrado.",
+      "anexoCriado": "Exame ou anexo adicionado.",
+      "anexoRemovido": "Exame ou anexo excluído.",
+      "documentoCriado": "Documento emitido.",
+      "documentoRemovido": "Documento excluído.",
+      "erroBaixar": "Não foi possível baixar o arquivo."
+    }
   }
 }

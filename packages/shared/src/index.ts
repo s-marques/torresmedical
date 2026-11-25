@@ -37,6 +37,7 @@ export * from './schemas/comercial-atendimento/tag-atendimento';
 export * from './schemas/consultorio-assistencial/atendimento-medico';
 export * from './schemas/consultorio-assistencial/prestador';
 export * from './schemas/consultorio-assistencial/prontuario';
+export * from './schemas/consultorio-assistencial/prontuario-registros';
 export * from './schemas/consultorio-assistencial/receituarios';
 export * from './schemas/consultorio-assistencial/encaminhamento';
 export * from './schemas/consultorio-assistencial/evolucao-voz';

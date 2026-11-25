@@ -14,6 +14,8 @@ export const PERMISSOES_EXTRAS = [
   'gestao-profissionais.profissionais-documentos.validar',
   /** Consulta do log de acesso de leitura ao prontuário (issue #150): só a administração. */
   'consultorio-assistencial.prontuarios-acessos.ver',
+  /** Assinar o atendimento e registrar adendo (issue #151): só o profissional, não a recepção. */
+  'consultorio-assistencial.prontuarios.assinar',
 ] as const;
 
 /** Permissão no formato `<modulo>.<recurso>.<acao>` (CLAUDE.md, seção 3). */

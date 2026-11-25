@@ -1707,5 +1707,94 @@
     "mensagens": {
       "vinculado": "Negocio vinculado al profesional."
     }
+  },
+  "atendimentoRegistros": {
+    "titulo": "Atención",
+    "detalhes": "Detalles",
+    "editar": "Editar atención",
+    "assinado": "Firmada",
+    "naoAssinado": "Atención sin firmar. Una vez firmada, ya no se puede editar.",
+    "assinadoPor": "Firmada por {{nome}} el {{data}}. Las correcciones se registran como adenda.",
+    "totalAdendos_one": "{{count}} adenda",
+    "totalAdendos_other": "{{count}} adendas",
+    "acoes": {
+      "editar": "Editar",
+      "assinar": "Firmar",
+      "adendo": "Registrar adenda",
+      "baixar": "Descargar",
+      "excluir": "Eliminar"
+    },
+    "campos": {
+      "tipo": "Tipo",
+      "arquivo": "Archivo",
+      "data": "Fecha",
+      "descricao": "Descripción",
+      "texto": "Texto",
+      "dataEmissao": "Fecha de emisión",
+      "senha": "Contraseña",
+      "adendo": "Adenda",
+      "queixa": "Motivo de consulta",
+      "evolucao": "Evolución",
+      "diagnostico": "Diagnóstico",
+      "conduta": "Conducta",
+      "observacoes": "Observaciones"
+    },
+    "tiposAnexo": {
+      "EXAME": "Examen",
+      "ANEXO": "Adjunto"
+    },
+    "tiposDocumento": {
+      "ATESTADO": "Certificado",
+      "DECLARACAO": "Declaración",
+      "SOLICITACAO_EXAME": "Solicitud de examen"
+    },
+    "tiposVersao": {
+      "ASSINATURA": "Firma",
+      "ADENDO": "Adenda"
+    },
+    "anexos": {
+      "titulo": "Exámenes y adjuntos",
+      "novo": "Nuevo examen o adjunto",
+      "vazio": "Ningún examen ni adjunto.",
+      "baixar": "Descargar {{nome}}",
+      "excluir": "Eliminar {{nome}}",
+      "confirmarExcluir": "¿Eliminar este examen o adjunto?"
+    },
+    "documentos": {
+      "titulo": "Documentos emitidos",
+      "novo": "Emitir documento",
+      "vazio": "Ningún documento emitido.",
+      "excluir": "Eliminar {{tipo}}",
+      "confirmarExcluir": "¿Eliminar este documento?"
+    },
+    "versoes": {
+      "secao": "Historial de versiones",
+      "vazio": "Ninguna versión registrada.",
+      "titulo": "Versión {{numero}}: {{tipo}}",
+      "verAlteracao": "Ver antes y después",
+      "antes": "Antes",
+      "depois": "Después",
+      "adendoNumero": "Adenda {{numero}}",
+      "hash": "Hash del contenido: {{hash}}"
+    },
+    "assinatura": {
+      "titulo": "Firmar atención",
+      "descricao": "Confirme con su contraseña. Una vez firmada, la atención ya no se puede editar: las correcciones se registran como adenda.",
+      "confirmar": "Firmar"
+    },
+    "adendo": {
+      "titulo": "Registrar adenda",
+      "descricao": "La adenda se convierte en una nueva versión. El registro original no se modifica."
+    },
+    "mensagens": {
+      "atualizado": "Atención actualizada.",
+      "assinado": "Atención firmada.",
+      "adendoCriado": "Adenda registrada.",
+      "anexoCriado": "Examen o adjunto agregado.",
+      "anexoRemovido": "Examen o adjunto eliminado.",
+      "documentoCriado": "Documento emitido.",
+      "documentoRemovido": "Documento eliminado.",
+      "erroBaixar": "No se pudo descargar el archivo."
+    }
   }
 }
