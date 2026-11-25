@@ -310,7 +310,8 @@
         "tipos-agendamento": "Tipos de Cita",
         "respostas-rapidas": "Respuestas Rápidas",
         "configuracoes": "Configuración",
-        "minha-empresa": "Mi Empresa"
+        "minha-empresa": "Mi Empresa",
+        "auditoria": "Auditoría"
       }
     }
   },
@@ -1801,5 +1802,102 @@
     "padrao": "Estándar",
     "duplicar": "Duplicar",
     "duplicado": "Perfil duplicado."
+  },
+  "auditoria": {
+    "titulo": "Auditoría",
+    "descricao": "Rastro de todo lo hecho en el sistema: quién, qué, cuándo y qué existía antes y después.",
+    "buscar": "Buscar entidad o id del registro...",
+    "vazio": "No se encontraron registros.",
+    "restrito": "Contenido clínico restringido",
+    "colunas": {
+      "data": "Fecha/hora",
+      "usuario": "Usuario",
+      "acao": "Acción",
+      "entidade": "Entidad",
+      "registro": "Registro",
+      "campos": "Campos modificados"
+    },
+    "acoes": {
+      "CREATE": "Creación",
+      "UPDATE": "Modificación",
+      "DELETE": "Eliminación",
+      "EXPORT": "Exportación"
+    },
+    "acoesLinha": {
+      "detalhes": "Ver detalles"
+    },
+    "grupos": {
+      "exclusoes": "Eliminaciones",
+      "cancelamentos": "Cancelaciones",
+      "descontos": "Descuentos",
+      "financeiro": "Finanzas",
+      "agenda": "Agenda",
+      "sala": "Sala",
+      "contrato": "Contrato",
+      "prontuario": "Historia clínica"
+    },
+    "filtros": {
+      "usuario": "Usuario",
+      "todosUsuarios": "Todos los usuarios",
+      "entidade": "Entidad",
+      "todasEntidades": "Todas las entidades",
+      "acao": "Acción",
+      "todasAcoes": "Todas las acciones",
+      "registro": "Id del registro",
+      "registroPlaceholder": "Id del registro...",
+      "periodo": "Período"
+    },
+    "detalhe": {
+      "titulo": "Detalle del registro",
+      "descricao": "Qué cambió en este registro, campo por campo.",
+      "ip": "IP",
+      "requisicao": "Solicitud",
+      "campo": "Campo",
+      "antes": "Antes",
+      "depois": "Después",
+      "semDiferencas": "No hay diferencias registradas.",
+      "restritoTitulo": "Contenido clínico restringido",
+      "restritoDescricao": "No tiene permiso para ver la historia clínica. Quién, cuándo y qué campos cambiaron siguen visibles.",
+      "camposAlterados": "Campos modificados"
+    },
+    "entidades": {
+      "ContratoSala": "Contrato de sala",
+      "ContratoSalaHora": "Horas del contrato",
+      "ContaReceber": "Cuenta por cobrar",
+      "ContaPagar": "Cuenta por pagar",
+      "Agendamento": "Cita",
+      "BloqueioAgenda": "Bloqueo de agenda",
+      "Sala": "Sala",
+      "SalaBloqueio": "Bloqueo de sala",
+      "Prontuario": "Historia clínica",
+      "Atendimento": "Atención",
+      "Anamnese": "Anamnesis",
+      "Venda": "Venta",
+      "Orcamento": "Presupuesto",
+      "Paciente": "Paciente",
+      "AuditLog": "Auditoría"
+    },
+    "campos": {
+      "nome": "Nombre",
+      "status": "Estado",
+      "ativo": "Activo",
+      "valor": "Valor",
+      "desconto": "Descuento",
+      "vencimento": "Vencimiento",
+      "valorUnitario": "Valor unitario",
+      "quantidadeMensal": "Cantidad mensual",
+      "diaVencimento": "Día de vencimiento",
+      "modalidade": "Modalidad",
+      "permuta": "Permuta",
+      "permiteIndicacao": "Permite derivaciones",
+      "participaEventos": "Participa en eventos",
+      "indiceReajuste": "Índice de reajuste",
+      "dataInicio": "Fecha de inicio",
+      "dataFim": "Fecha de fin",
+      "encerradoEm": "Finalizado el",
+      "motivoEncerramento": "Motivo de finalización",
+      "observacoes": "Observaciones",
+      "filtros": "Filtros"
+    }
   }
 }

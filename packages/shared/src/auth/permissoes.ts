@@ -8,8 +8,6 @@ export type Acao = (typeof ACOES)[number];
 
 /** Permissões que não são de uma tela do inventário. */
 export const PERMISSOES_EXTRAS = [
-  /** Consulta do audit_log (restrita ao Administrador, CLAUDE.md seção 4). */
-  'configuracoes-gestao.auditoria.ver',
   /** Validar ou recusar documento do profissional (issue #141): perfil distinto de quem envia. */
   'gestao-profissionais.profissionais-documentos.validar',
   /** Consulta do log de acesso de leitura ao prontuário (issue #150): só a administração. */

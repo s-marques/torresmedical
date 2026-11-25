@@ -127,6 +127,7 @@ const DEFINICAO = {
       respostasRapidas: ['Respostas Rápidas', '/respostas-rapidas'],
       configuracoes: ['Configurações', '/settings'],
       minhaEmpresa: ['Minha Empresa', '/settings/empresa'],
+      auditoria: ['Auditoria', '/gestao/auditoria'],
     },
   },
 } as const;
@@ -176,6 +177,8 @@ export const TELAS_FORA_DO_INVENTARIO: readonly TelaId[] = [
   'comercial-atendimento.recepcao',
   /** Onboarding do profissional a partir do contrato assinado (issue #142, R §6). */
   'gestao-profissionais.onboarding',
+  /** Consulta da trilha de auditoria (issue #155, R §15 e §41). */
+  'configuracoes-gestao.auditoria',
 ];
 
 /** Ação de permissão que libera a tela no menu. */

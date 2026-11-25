@@ -46,6 +46,7 @@ import {
   Search,
   Send,
   Settings,
+  ScrollText,
   ShieldCheck,
   ShoppingCart,
   Smile,
@@ -153,4 +154,5 @@ export const ICONES_TELA: Record<TelaId, LucideIcon> = {
   'configuracoes-gestao.respostas-rapidas': Zap,
   'configuracoes-gestao.configuracoes': Settings,
   'configuracoes-gestao.minha-empresa': Building,
+  'configuracoes-gestao.auditoria': ScrollText,
 };

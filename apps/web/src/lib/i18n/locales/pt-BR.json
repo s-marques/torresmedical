@@ -1694,5 +1694,102 @@
     "padrao": "Padrão",
     "duplicar": "Duplicar",
     "duplicado": "Perfil duplicado."
+  },
+  "auditoria": {
+    "titulo": "Auditoria",
+    "descricao": "Trilha de tudo o que foi feito no sistema: quem, o quê, quando e o que existia antes e depois.",
+    "buscar": "Buscar entidade ou id do registro...",
+    "vazio": "Nenhum registro encontrado.",
+    "restrito": "Conteúdo clínico restrito",
+    "colunas": {
+      "data": "Data/hora",
+      "usuario": "Usuário",
+      "acao": "Ação",
+      "entidade": "Entidade",
+      "registro": "Registro",
+      "campos": "Campos alterados"
+    },
+    "acoes": {
+      "CREATE": "Criação",
+      "UPDATE": "Alteração",
+      "DELETE": "Exclusão",
+      "EXPORT": "Exportação"
+    },
+    "acoesLinha": {
+      "detalhes": "Ver detalhes"
+    },
+    "grupos": {
+      "exclusoes": "Exclusões",
+      "cancelamentos": "Cancelamentos",
+      "descontos": "Descontos",
+      "financeiro": "Financeiro",
+      "agenda": "Agenda",
+      "sala": "Sala",
+      "contrato": "Contrato",
+      "prontuario": "Prontuário"
+    },
+    "filtros": {
+      "usuario": "Usuário",
+      "todosUsuarios": "Todos os usuários",
+      "entidade": "Entidade",
+      "todasEntidades": "Todas as entidades",
+      "acao": "Ação",
+      "todasAcoes": "Todas as ações",
+      "registro": "Id do registro",
+      "registroPlaceholder": "Id do registro...",
+      "periodo": "Período"
+    },
+    "detalhe": {
+      "titulo": "Detalhe do registro",
+      "descricao": "O que mudou neste registro, campo a campo.",
+      "ip": "IP",
+      "requisicao": "Requisição",
+      "campo": "Campo",
+      "antes": "Antes",
+      "depois": "Depois",
+      "semDiferencas": "Nenhuma diferença registrada.",
+      "restritoTitulo": "Conteúdo clínico restrito",
+      "restritoDescricao": "Você não tem permissão para ver o prontuário. Quem, quando e quais campos mudaram continuam visíveis.",
+      "camposAlterados": "Campos alterados"
+    },
+    "entidades": {
+      "ContratoSala": "Contrato de sala",
+      "ContratoSalaHora": "Horas do contrato",
+      "ContaReceber": "Conta a receber",
+      "ContaPagar": "Conta a pagar",
+      "Agendamento": "Agendamento",
+      "BloqueioAgenda": "Bloqueio de agenda",
+      "Sala": "Sala",
+      "SalaBloqueio": "Bloqueio de sala",
+      "Prontuario": "Prontuário",
+      "Atendimento": "Atendimento",
+      "Anamnese": "Anamnese",
+      "Venda": "Venda",
+      "Orcamento": "Orçamento",
+      "Paciente": "Paciente",
+      "AuditLog": "Auditoria"
+    },
+    "campos": {
+      "nome": "Nome",
+      "status": "Status",
+      "ativo": "Ativo",
+      "valor": "Valor",
+      "desconto": "Desconto",
+      "vencimento": "Vencimento",
+      "valorUnitario": "Valor unitário",
+      "quantidadeMensal": "Quantidade mensal",
+      "diaVencimento": "Dia de vencimento",
+      "modalidade": "Modalidade",
+      "permuta": "Permuta",
+      "permiteIndicacao": "Permite indicação",
+      "participaEventos": "Participa de eventos",
+      "indiceReajuste": "Índice de reajuste",
+      "dataInicio": "Data de início",
+      "dataFim": "Data de término",
+      "encerradoEm": "Encerrado em",
+      "motivoEncerramento": "Motivo do encerramento",
+      "observacoes": "Observações",
+      "filtros": "Filtros"
+    }
   }
 }

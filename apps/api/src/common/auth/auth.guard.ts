@@ -19,6 +19,9 @@ import type {
 export const NAO_AUTENTICADO = 'Não autenticado';
 export const SEM_PERMISSAO = 'Sem permissão';
 
+/** Quem tem esta permissão vê o conteúdo clínico, também na trilha de auditoria (issue #155). */
+export const PERMISSAO_VER_PRONTUARIO: Permissao = 'consultorio-assistencial.prontuarios.ver';
+
 /**
  * Guard global (CLAUDE.md, seção 6): toda rota exige login, exceto as `@Public()`.
  * Depois do login, a rota precisa declarar o acesso: `@RequirePermission(...)` confere a
@@ -45,6 +48,7 @@ export class AuthGuard implements CanActivate {
     this.context.setUserId(usuario.id);
     this.context.setEscopoDados(usuario.escopo);
     this.context.setVerDadosSensiveis(usuario.verDadosSensiveis);
+    this.context.setVerProntuario(usuario.permissoes.has(PERMISSAO_VER_PRONTUARIO));
 
     const permissoes = this.reflector.getAllAndOverride<readonly Permissao[] | undefined>(
       PERMISSION_METADATA,

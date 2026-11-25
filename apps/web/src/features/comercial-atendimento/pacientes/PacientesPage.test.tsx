@@ -430,6 +430,9 @@ describe('Pacientes (/clientes)', () => {
       entityId: ID_1,
       before: { nome: 'Ana Teste', cidade: null, updatedAt: 'a' },
       after: { nome: 'Ana Souza', cidade: null, updatedAt: 'b' },
+      userNome: null,
+      campos: ['nome'],
+      restrito: false,
       requestId: null,
       ip: null,
     };

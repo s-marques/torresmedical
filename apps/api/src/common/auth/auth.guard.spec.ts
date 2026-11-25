@@ -67,6 +67,7 @@ function criarGuard(usuario: UsuarioAutenticado | null = USUARIO) {
     setUserId: jest.fn(),
     setEscopoDados: jest.fn(),
     setVerDadosSensiveis: jest.fn(),
+    setVerProntuario: jest.fn(),
   } as unknown as RequestContextService;
   return { guard: new AuthGuard(new Reflector(), jwt, sessoes, requestContext), requestContext };
 }
@@ -107,6 +108,19 @@ describe('AuthGuard', () => {
     expect(requestContext.setUserId).toHaveBeenCalledWith(USUARIO.id);
     expect(requestContext.setEscopoDados).toHaveBeenCalledWith(USUARIO.escopo);
     expect(requestContext.setVerDadosSensiveis).toHaveBeenCalledWith(false);
+    expect(requestContext.setVerProntuario).toHaveBeenCalledWith(false);
+  });
+
+  it('marca no contexto quem tem a permissão de ver o prontuário', async () => {
+    const comProntuario = {
+      ...USUARIO,
+      permissoes: new Set(['consultorio-assistencial.prontuarios.ver'] as const),
+    };
+    const { guard, requestContext } = criarGuard(comProntuario);
+
+    await guard.canActivate(contexto('logado', 'Bearer valido').context);
+
+    expect(requestContext.setVerProntuario).toHaveBeenCalledWith(true);
   });
 
   it('confere a permissão: libera com ela e responde 403 sem ela', async () => {
