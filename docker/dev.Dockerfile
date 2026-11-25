@@ -9,6 +9,10 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     PATH=/pnpm:$PATH \
     npm_config_store_dir=/pnpm/store \
     CI=true
+# Cliente do PostgreSQL (pg_dump, pg_restore, psql): o backup (issue #157) roda dentro da API.
+# A versão acompanha o servidor (postgres:17).
+RUN apk add --no-cache postgresql17-client
+
 RUN corepack enable && corepack prepare pnpm@10.34.7 --activate
 
 WORKDIR /app

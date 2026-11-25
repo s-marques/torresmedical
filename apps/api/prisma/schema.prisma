@@ -4080,3 +4080,32 @@ model AlertaUsuario {
   @@index([usuarioId])
   @@map("alertas_usuarios")
 }
+
+/// Dono: configuracoes-gestao (infraestrutura em `common/backup`). Registro de cada execução de
+/// backup e de restauração de teste (issue #157, R §40). Só guarda resultado, tamanho, checksum e
+/// um código de erro estável: nunca dados pessoais nem a mensagem crua do erro.
+model BackupExecucao {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Um valor de `BACKUP_TIPOS` (`packages/shared`).
+  tipo             String
+  /// Um valor de `BACKUP_STATUS`.
+  status           String
+  /// `AGENDADO` ou `MANUAL`.
+  origem           String
+  /// Usuário que disparou a execução manual (null quando agendada).
+  usuarioId        String?   @map("usuario_id") @db.Uuid
+  iniciadoEm       DateTime  @default(now()) @map("iniciado_em") @db.Timestamptz(3)
+  finalizadoEm     DateTime? @map("finalizado_em") @db.Timestamptz(3)
+  tamanhoBytes     BigInt?   @map("tamanho_bytes")
+  arquivosCopiados Int       @default(0) @map("arquivos_copiados")
+  checksum         String?
+  destinoChave     String?   @map("destino_chave")
+  erroCodigo       String?   @map("erro_codigo")
+  detalhes         Json?
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([iniciadoEm])
+  @@index([tipo, status, iniciadoEm])
+  @@map("backup_execucoes")
+}

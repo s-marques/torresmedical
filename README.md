@@ -67,26 +67,27 @@ a homologação (`5173`) se atualiza sozinha.
 
 O `.env` nunca é commitado. O [`.env.example`](.env.example) lista as variáveis sem valores reais:
 
-| Variável                                            | Uso                                               |
-| --------------------------------------------------- | ------------------------------------------------- |
-| `WEB_PORT`                                          | Porta externa do front (padrão 5173)              |
-| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Credenciais do PostgreSQL                         |
-| `DATABASE_URL`                                      | Conexão da API com o PostgreSQL (host `postgres`) |
-| `DATABASE_URL_TEST`                                 | Banco dos testes (nome termina com `_test`)       |
-| `RABBITMQ_DEFAULT_USER`, `RABBITMQ_DEFAULT_PASS`    | Credenciais do RabbitMQ                           |
-| `RABBITMQ_URL`                                      | Conexão da API com o RabbitMQ (host `rabbitmq`)   |
-| `RABBITMQ_URL_TEST`                                 | RabbitMQ dos testes (opcional)                    |
-| `MESSAGING_*`                                       | Retry, prefetch e outbox (ver `.env.example`)     |
-| `CAMPANHAS_AGENDADOR`                               | `off` desliga o agendador de campanhas            |
-| `API_PORT`                                          | Porta interna da API (padrão 3000)                |
-| `LOG_LEVEL`                                         | Nível do log da API (`info`, `debug`…)            |
-| `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`            | Credenciais do MinIO                              |
-| `STORAGE_DRIVER`                                    | `s3` (MinIO, no Docker) ou `local` (disco)        |
-| `STORAGE_S3_*`                                      | Endpoint, bucket e chaves do S3/MinIO             |
-| `STORAGE_S3_BUCKET_TEST`                            | Bucket dos testes (nome termina com `-test`)      |
-| `STORAGE_LOCAL_DIR`                                 | Pasta do driver `local` (padrão `storage`)        |
-| `STORAGE_URL_SECRET`                                | Segredo das URLs temporárias de download          |
-| `STORAGE_URL_TTL_SECONDS`                           | Validade dessas URLs (padrão 300)                 |
+| Variável                                            | Uso                                                 |
+| --------------------------------------------------- | --------------------------------------------------- |
+| `WEB_PORT`                                          | Porta externa do front (padrão 5173)                |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Credenciais do PostgreSQL                           |
+| `DATABASE_URL`                                      | Conexão da API com o PostgreSQL (host `postgres`)   |
+| `DATABASE_URL_TEST`                                 | Banco dos testes (nome termina com `_test`)         |
+| `RABBITMQ_DEFAULT_USER`, `RABBITMQ_DEFAULT_PASS`    | Credenciais do RabbitMQ                             |
+| `RABBITMQ_URL`                                      | Conexão da API com o RabbitMQ (host `rabbitmq`)     |
+| `RABBITMQ_URL_TEST`                                 | RabbitMQ dos testes (opcional)                      |
+| `MESSAGING_*`                                       | Retry, prefetch e outbox (ver `.env.example`)       |
+| `CAMPANHAS_AGENDADOR`                               | `off` desliga o agendador de campanhas              |
+| `API_PORT`                                          | Porta interna da API (padrão 3000)                  |
+| `LOG_LEVEL`                                         | Nível do log da API (`info`, `debug`…)              |
+| `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`            | Credenciais do MinIO                                |
+| `STORAGE_DRIVER`                                    | `s3` (MinIO, no Docker) ou `local` (disco)          |
+| `STORAGE_S3_*`                                      | Endpoint, bucket e chaves do S3/MinIO               |
+| `STORAGE_S3_BUCKET_TEST`                            | Bucket dos testes (nome termina com `-test`)        |
+| `STORAGE_LOCAL_DIR`                                 | Pasta do driver `local` (padrão `storage`)          |
+| `STORAGE_URL_SECRET`                                | Segredo das URLs temporárias de download            |
+| `STORAGE_URL_TTL_SECONDS`                           | Validade dessas URLs (padrão 300)                   |
+| `BACKUP_*`                                          | Backup e restauração (seção "Backup e restauração") |
 
 ## Banco de dados (Prisma)
 
@@ -514,6 +515,82 @@ fora do inventário, em Configurações / Gestão. A gravação continua na seç
   registro e nomes dos campos), nunca o antes e depois. É auditada (`EXPORT`, entidade `AuditLog`).
 - **Escopo (#153):** a tela é da administração (escopo `TODOS`), então não há filtro por
   profissional. O filtro de usuário usa o lookup `usuarios`.
+
+## Backup e restauração (`common/backup`)
+
+Requisito do cliente (R §40, issue #157): backup automático, redundância fora do servidor, registro
+de cada execução, alerta de falha e restauração testada. Fica desligado até `BACKUP_ATIVO=on`.
+
+### O que faz
+
+| Quando (fuso de São Paulo)              | O quê                                                                                               |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Todo dia, 2h (`BACKUP_CRON`)            | `pg_dump` do banco e cópia dos arquivos novos do storage (MinIO/S3)                                 |
+| Domingo, 4h (`BACKUP_RESTAURACAO_CRON`) | **Restauração de teste** do último backup num banco descartável, com conferência                    |
+| A pedido                                | `POST /api/configuracoes-gestao/backups/executar` e `.../restauracao-teste` (202, em segundo plano) |
+
+- **Cifrado antes de sair do servidor:** AES-256-GCM, com a frase de `BACKUP_CRIPTO_CHAVE` (scrypt +
+  salt por arquivo). O destino só vê arquivos ilegíveis. **Guarde uma cópia da frase fora do
+  servidor**: sem ela não há restauração.
+- **Destino externo:** um bucket S3-compatível (`BACKUP_DESTINO_*`) em outro provedor ou servidor.
+  Estrutura: `postgres/torres-<AAAAMMDD>T<HHMMSS>Z.dump.enc` (mais um `.manifest.json` com checksum e
+  contagem de linhas por tabela) e `arquivos/<chave do storage>.enc`. Os arquivos já copiados são
+  pulados (anexos não mudam) e apagar na origem não apaga a cópia.
+- **Retenção:** guarda o último dump de cada um dos 7 dias, 4 semanas e 6 meses mais recentes
+  (`BACKUP_RETENCAO_*`). O dump mais recente nunca é apagado.
+- **Registro:** cada execução grava uma linha em `backup_execucoes` (tipo, status, origem, início,
+  fim, tamanho, checksum, arquivos copiados, chave no destino e código de erro). Consulta:
+  `GET /api/configuracoes-gestao/backups` (permissão `configuracoes-gestao.backups.ver`, só o
+  Administrador). Uma execução que a API deixou pendente por ter caído vira falha na subida.
+- **Alerta de falha:** toda falha grava um log de erro com `"alerta":"BACKUP_FALHOU"` e, se
+  `BACKUP_ALERTA_WEBHOOK_URL` estiver definida, envia um `POST` JSON
+  (`{ evento, tipo, codigo, execucaoId, ocorridoEm }`, sem dados pessoais). Aponte o webhook para o
+  canal da equipe e/ou configure o monitoramento do servidor para esse log. Códigos de falha:
+  `BACKUP_DUMP_FALHOU`, `BACKUP_ENVIO_FALHOU`, `BACKUP_ARQUIVOS_FALHOU`, `RESTAURACAO_SEM_BACKUP`,
+  `RESTAURACAO_CHECKSUM_DIVERGENTE`, `RESTAURACAO_FALHOU` e `RESTAURACAO_CONTAGEM_DIVERGENTE`.
+- **Arquivos do storage:** só são copiados com `STORAGE_DRIVER=s3`. Com o driver local (só
+  desenvolvimento) o backup cobre apenas o banco.
+- A imagem da API traz o cliente do PostgreSQL 17 (`pg_dump`, `pg_restore`, `psql`). Depois de
+  atualizar o `docker/dev.Dockerfile`, rode `docker compose up -d --build`.
+
+### Restauração de teste
+
+Baixa o último dump, confere o checksum, decifra, cria o banco `torres_restore_<timestamp>`, restaura
+com `pg_restore`, compara a contagem de linhas de **todas** as tabelas com o manifesto, baixa e
+decifra um arquivo de amostra do storage e remove o banco de teste (mesmo em caso de erro). Por
+padrão o banco de teste nasce no mesmo servidor do banco de produção; para um ambiente realmente
+separado, aponte `BACKUP_RESTAURACAO_URL` para outro servidor PostgreSQL.
+
+### Política de recuperação (RPO e RTO)
+
+> **Valores iniciais, a confirmar com o cliente** (a issue #157 deixa isso em aberto).
+
+| Item                               | Valor inicial                     |
+| ---------------------------------- | --------------------------------- |
+| **RPO** (perda máxima de dados)    | 24 h (último backup diário)       |
+| **RTO** (tempo máximo para voltar) | 4 h                               |
+| Retenção                           | 7 diários, 4 semanais e 6 mensais |
+| Teste de restauração               | semanal, automático, com registro |
+
+### Como restaurar em caso de desastre
+
+1. Suba um PostgreSQL 17 vazio e o MinIO/S3 novos; tenha em mãos a frase `BACKUP_CRIPTO_CHAVE`.
+2. Baixe do destino o `postgres/torres-*.dump.enc` mais recente (ou o da data desejada) e confira o
+   `sha256` do `.manifest.json` correspondente.
+3. Decifre o arquivo, com a frase guardada fora do servidor:
+   `BACKUP_CRIPTO_CHAVE=<frase> pnpm --filter @torres/api backup:decifrar <dump.enc> <dump>`.
+4. Rode `pg_restore --no-owner -d <banco novo> <dump>` e suba a API (as migrations pendentes são
+   aplicadas).
+5. Recopie `arquivos/*.enc` para o bucket do storage, decifrando cada um e removendo o `.enc` e o
+   prefixo `arquivos/` da chave.
+
+### Checklist antes de desligar o DrIntelli
+
+- [ ] `BACKUP_ATIVO=on` em produção, com destino **fora** do servidor principal.
+- [ ] Frase de cifra guardada em dois lugares fora do servidor.
+- [ ] Ao menos uma restauração de teste com sucesso no histórico (`GET .../backups?tipo=RESTAURACAO_TESTE`).
+- [ ] Alerta de falha chegando ao canal da equipe (teste derrubando o destino de propósito).
+- [ ] RPO, RTO e retenção confirmados pelo cliente.
 
 ## Mensageria (RabbitMQ, `common/messaging`)
 

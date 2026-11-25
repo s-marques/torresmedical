@@ -61,6 +61,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'atendimentos',
       'atividades_negocio',
       'audit_log',
+      'backup_execucoes',
       'baixas_insumos',
       'baixas_insumos_itens',
       'bandeiras',
