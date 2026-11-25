@@ -5,6 +5,8 @@ import type { RequisicaoAutenticada, UsuarioAutenticado } from './usuario-autent
 export const PUBLIC_METADATA = 'auth:public';
 export const PERMISSION_METADATA = 'auth:permission';
 export const AUTHENTICATED_METADATA = 'auth:authenticated';
+export const PERMITIR_TROCA_SENHA_METADATA = 'auth:permitir-troca-senha';
+export const EXPORTA_DADOS_PESSOAIS_METADATA = 'auth:exporta-dados-pessoais';
 
 /** Rota sem login (CLAUDE.md, seção 6). Todo o resto é protegido pelo guard global. */
 export const Public = (): MethodDecorator & ClassDecorator => SetMetadata(PUBLIC_METADATA, true);
@@ -30,3 +32,18 @@ export const CurrentUser = createParamDecorator(
   (_data: unknown, context: ExecutionContext): UsuarioAutenticado | undefined =>
     context.switchToHttp().getRequest<RequisicaoAutenticada>().usuario,
 );
+
+/**
+ * Rota liberada mesmo com a troca de senha pendente (senha provisória ou vencida, issue #156).
+ * Todas as outras respondem 403 `TROCA_SENHA_OBRIGATORIA` até o usuário trocar a senha.
+ */
+export const PermitidoComTrocaSenha = (): MethodDecorator & ClassDecorator =>
+  SetMetadata(PERMITIR_TROCA_SENHA_METADATA, true);
+
+/**
+ * Marca a exportação de dados pessoais ou clínicos (issue #156, R §41). Vale em conjunto com o
+ * `@RequirePermission('<tela>.exportar')`: além dela, o perfil precisa de
+ * `configuracoes-gestao.dados-pessoais.exportar`, senão 403.
+ */
+export const ExportaDadosPessoais = (): MethodDecorator & ClassDecorator =>
+  SetMetadata(EXPORTA_DADOS_PESSOAIS_METADATA, true);

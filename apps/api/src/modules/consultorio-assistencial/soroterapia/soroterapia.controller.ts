@@ -17,7 +17,7 @@ import {
   type SoroterapiaPacote,
 } from '@torres/shared';
 import { Audit } from '../../../common/audit/audit.decorator';
-import { RequirePermission } from '../../../common/auth/auth.decorators';
+import { ExportaDadosPessoais, RequirePermission } from '../../../common/auth/auth.decorators';
 import { toStreamableFile } from '../../../common/export/export-response';
 import type { Page } from '../../../common/pagination/paginate';
 import {
@@ -73,6 +73,7 @@ export class SoroterapiaController {
 
   @Get('em-andamento/export')
   @RequirePermission('consultorio-assistencial.soroterapia.exportar')
+  @ExportaDadosPessoais()
   @Audit({ entity: ENTITY, action: 'EXPORT' })
   @ApiOperation({ summary: 'Exporta Em Andamento em Excel ou PDF, com os filtros da listagem' })
   @ApiZodQuery(exportSoroterapiaEmAndamentoQuerySchema)
@@ -100,6 +101,7 @@ export class SoroterapiaController {
 
   @Get('historico/export')
   @RequirePermission('consultorio-assistencial.soroterapia.exportar')
+  @ExportaDadosPessoais()
   @Audit({ entity: ENTITY, action: 'EXPORT' })
   @ApiOperation({ summary: 'Exporta o Historico em Excel ou PDF, com os filtros da listagem' })
   @ApiZodQuery(exportSoroterapiaHistoricoQuerySchema)

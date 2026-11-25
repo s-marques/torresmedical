@@ -33,6 +33,7 @@ import { paginate, searchWhere, toOrderBy, type Page } from '../../../common/pag
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { ArquivosService } from '../../../common/storage/arquivos.service';
 import { ProfissionaisOnboardingService } from './profissionais-onboarding.service';
+import { AcessoProfissionalService } from './acesso-profissional.service';
 
 const COM_ESPECIALIDADE = { especialidade: { select: { nome: true } } } as const;
 const NAO_EXCLUIDOS = { deletedAt: null } as const;
@@ -112,6 +113,7 @@ export class ProfissionaisService extends EntidadeLookupService<
     private readonly segredos: SegredosService,
     private readonly arquivos: ArquivosService,
     private readonly onboarding: ProfissionaisOnboardingService,
+    private readonly acesso: AcessoProfissionalService,
   ) {
     super();
   }
@@ -258,6 +260,8 @@ export class ProfissionaisService extends EntidadeLookupService<
       data: { ativo },
       include: DETALHE,
     });
+    // Profissional inativo perde o acesso do usuário vinculado (issue #156).
+    if (!ativo) await this.acesso.avaliar(id);
     return this.toDto(alterado);
   }
 
@@ -294,6 +298,7 @@ export class ProfissionaisService extends EntidadeLookupService<
       data: { deletedAt: new Date() },
       include: DETALHE,
     });
+    await this.acesso.avaliar(id);
     return this.toDto(excluido);
   }
 

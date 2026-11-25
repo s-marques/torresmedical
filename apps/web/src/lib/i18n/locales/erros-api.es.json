@@ -49,5 +49,8 @@
   "PERFIL_PADRAO_NAO_EXCLUIVEL": "Los perfiles estándar no se pueden eliminar. Duplique el perfil para ajustarlo",
   "PERFIL_ADMINISTRADOR_PROTEGIDO": "El perfil Administrador no puede cambiar de nombre, páginas ni alcance de datos. Duplique el perfil para ajustarlo",
   "CONTA_PAGAR_POSSIVEL_DUPLICADA": "Esta cuenta puede estar ya registrada. Revise las parecidas o confirme para continuar",
-  "CONTA_PAGAR_BAIXA_DIVERGENTE": "El valor pagado es distinto del saldo del título. Indique la justificación"
+  "CONTA_PAGAR_BAIXA_DIVERGENTE": "El valor pagado es distinto del saldo del título. Indique la justificación",
+  "SENHA_FORA_DA_POLITICA": "La contraseña no cumple la política de seguridad",
+  "SENHA_ATUAL_INCORRETA": "La contraseña actual es incorrecta",
+  "TROCA_SENHA_OBRIGATORIA": "Debe cambiar su contraseña antes de continuar"
 }

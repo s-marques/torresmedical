@@ -13,6 +13,7 @@ const PERMISSOES = [
   'configuracoes-gestao.usuarios.criar',
   'configuracoes-gestao.usuarios.editar',
   'configuracoes-gestao.usuarios.exportar',
+  'configuracoes-gestao.dados-pessoais.exportar',
 ] as const;
 const INEXISTENTE = '00000000-0000-4000-8000-000000000000';
 

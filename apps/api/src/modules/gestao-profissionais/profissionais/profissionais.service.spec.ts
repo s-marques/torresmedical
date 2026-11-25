@@ -31,6 +31,7 @@ function setup(registros: unknown[] = [PROFISSIONAL], arquivo?: { uso: string })
     findById: jest.fn().mockResolvedValue(arquivo ?? { uso: 'foto-profissional' }),
   };
   const onboarding = { garantirPodeAtivar: jest.fn().mockResolvedValue(undefined) };
+  const acesso = { avaliar: jest.fn().mockResolvedValue([]) };
   return {
     service: new ProfissionaisService(
       txHost,
@@ -38,6 +39,7 @@ function setup(registros: unknown[] = [PROFISSIONAL], arquivo?: { uso: string })
       segredos,
       arquivos as unknown as ArquivosService,
       onboarding as unknown as ProfissionaisOnboardingService,
+      acesso as never,
     ),
     delegate,
     especialidade,

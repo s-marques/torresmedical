@@ -17,6 +17,8 @@ export interface UsuarioAutenticado {
   verDadosSensiveis: boolean;
   /** Avatar da tela Configurações (issue #30). */
   avatarArquivoId: string | null;
+  /** Senha provisória ou vencida: só a troca de senha é liberada (issue #156). */
+  trocarSenha: boolean;
   /** Preferências e aparência (issue #30), com os padrões quando nunca alteradas. */
   preferencias: Preferencias;
 }
@@ -35,6 +37,7 @@ export function toUsuarioSessao(usuario: UsuarioAutenticado): UsuarioSessao {
     perfil: usuario.perfil,
     permissoes: [...usuario.permissoes].sort((a, b) => a.localeCompare(b)),
     avatarArquivoId: usuario.avatarArquivoId,
+    trocarSenha: usuario.trocarSenha,
     preferencias: usuario.preferencias,
   };
 }

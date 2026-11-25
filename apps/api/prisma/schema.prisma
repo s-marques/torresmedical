@@ -26,6 +26,7 @@ model Empresa {
 
   unidades              Unidade[]
   usuarios              Usuario[]
+  politicaSeguranca     PoliticaSeguranca?
   horariosFuncionamento HorarioFuncionamento[]
 
   @@map("empresas")
@@ -94,24 +95,32 @@ model HorarioIntervalo {
 
 /// Usuário do sistema. Sem `senhaHash` não há login (até definir a senha pela redefinição).
 model Usuario {
-  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  empresaId         String    @map("empresa_id") @db.Uuid
-  perfilId          String?   @map("perfil_id") @db.Uuid
-  nome              String
-  email             String    @unique
-  telefone          String?
-  cargo             String?
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId           String    @map("empresa_id") @db.Uuid
+  perfilId            String?   @map("perfil_id") @db.Uuid
+  nome                String
+  email               String    @unique
+  telefone            String?
+  cargo               String?
   /// Hash argon2id. Nunca sai em resposta, log ou audit_log.
-  senhaHash         String?   @map("senha_hash")
+  senhaHash           String?   @map("senha_hash")
   /// Libera ver CPF, RG, endereço e e-mail dos pacientes (tela Usuários).
-  verDadosSensiveis Boolean   @default(false) @map("ver_dados_sensiveis")
-  ativo             Boolean   @default(true)
-  ultimoLoginEm     DateTime? @map("ultimo_login_em") @db.Timestamptz(3)
+  verDadosSensiveis   Boolean   @default(false) @map("ver_dados_sensiveis")
+  ativo               Boolean   @default(true)
+  ultimoLoginEm       DateTime? @map("ultimo_login_em") @db.Timestamptz(3)
+  /// Falhas de login seguidas (issue #156). Zera ao entrar ou ao redefinir a senha.
+  tentativasFalhas    Int       @default(0) @map("tentativas_falhas")
+  /// Conta bloqueada por tentativas até esta data (política de segurança).
+  bloqueadoAte        DateTime? @map("bloqueado_ate") @db.Timestamptz(3)
+  /// Senha provisória ou vencida: só a troca de senha é liberada até o usuário trocá-la.
+  trocarSenhaNoAcesso Boolean   @default(false) @map("trocar_senha_no_acesso")
+  /// Última troca da senha. Nulo nas contas anteriores à política (valem desde a criação).
+  senhaAlteradaEm     DateTime? @map("senha_alterada_em") @db.Timestamptz(3)
   /// Id do Arquivo (common/storage, uso `avatar`) da tela Configurações (issue #30). Sem FK.
-  avatarArquivoId   String?   @map("avatar_arquivo_id") @db.Uuid
-  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(3)
+  avatarArquivoId     String?   @map("avatar_arquivo_id") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(3)
 
   empresa           Empresa                @relation(fields: [empresaId], references: [id], onDelete: Restrict)
   perfil            Perfil?                @relation(fields: [perfilId], references: [id], onDelete: Restrict)
@@ -3953,6 +3962,26 @@ model ProfissionalClassificacao {
 
   @@index([profissionalId, createdAt(sort: Desc)])
   @@map("profissionais_classificacoes")
+}
+
+/// Política de segurança da empresa (issue #156): senha, bloqueio e encerramento de acesso.
+/// Sem linha = valores padrão de POLITICA_PADRAO (packages/shared). Dono: configuracoes-gestao.
+model PoliticaSeguranca {
+  empresaId                String   @id @map("empresa_id") @db.Uuid
+  tamanhoMinimo            Int      @default(8) @map("tamanho_minimo")
+  exigirMaiuscula          Boolean  @default(false) @map("exigir_maiuscula")
+  exigirSimbolo            Boolean  @default(false) @map("exigir_simbolo")
+  tentativasBloqueio       Int      @default(5) @map("tentativas_bloqueio")
+  minutosBloqueio          Int      @default(15) @map("minutos_bloqueio")
+  trocaPrimeiroAcesso      Boolean  @default(true) @map("troca_primeiro_acesso")
+  /// Nulo: a senha não expira.
+  expiracaoDias            Int?     @map("expiracao_dias")
+  carenciaProfissionalDias Int      @default(0) @map("carencia_profissional_dias")
+  updatedAt                DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@map("politica_seguranca")
 }
 
 /// Dono: painel. Alerta da central de notificações (issue #160): um contador por tipo e por dia
