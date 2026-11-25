@@ -32,6 +32,8 @@ import { ProfissionaisService } from '../../gestao-profissionais/profissionais/p
 import { PacientesVinculadosService } from '../pacientes-vinculados/pacientes-vinculados.service';
 import { PrescricoesService } from '../receituarios/prescricoes.service';
 import { AcessoProntuarioService } from './acesso-prontuario.service';
+import { AtendimentoAssinaturaService } from './atendimento-assinatura.service';
+import { toAtendimentoDto } from './atendimento.mapper';
 
 const NAO_EXCLUIDOS = { deletedAt: null } as const;
 
@@ -72,27 +74,6 @@ function toProntuarioDto(pacienteId: string, registro: ProntuarioModel | null): 
     observacoes: registro.observacoes,
     createdAt: registro.createdAt.toISOString(),
     updatedAt: registro.updatedAt.toISOString(),
-  };
-}
-
-function toAtendimentoDto(
-  atendimento: AtendimentoModel,
-  profissionalNome: string | null,
-): AtendimentoDto {
-  return {
-    id: atendimento.id,
-    pacienteId: atendimento.pacienteId,
-    profissionalId: atendimento.profissionalId,
-    profissionalNome,
-    tipo: atendimento.tipo,
-    queixa: atendimento.queixa,
-    evolucao: atendimento.evolucao,
-    diagnostico: atendimento.diagnostico,
-    conduta: atendimento.conduta,
-    observacoes: atendimento.observacoes,
-    status: atendimento.status,
-    createdAt: atendimento.createdAt.toISOString(),
-    updatedAt: atendimento.updatedAt.toISOString(),
   };
 }
 
@@ -149,6 +130,7 @@ export class ProntuariosService {
     private readonly escopo: EscopoDadosService,
     private readonly prescricoes: PrescricoesService,
     private readonly acessos: AcessoProntuarioService,
+    private readonly assinaturas: AtendimentoAssinaturaService,
   ) {}
 
   /** Cabeçalho do paciente (nome, contato, nascimento, sexo), ao abrir a tela de detalhe. */
@@ -267,9 +249,14 @@ export class ProntuariosService {
       }),
       this.txHost.tx.atendimento.count({ where }),
     ]);
-    const nomes = await this.nomesProfissionais(registros.map((r) => r.profissionalId));
+    const [nomes, resumos] = await Promise.all([
+      this.nomesProfissionais(registros.map((r) => r.profissionalId)),
+      this.assinaturas.resumos(registros),
+    ]);
     return {
-      data: registros.map((r) => toAtendimentoDto(r, nomes.get(r.profissionalId) ?? null)),
+      data: registros.map((r) =>
+        toAtendimentoDto(r, nomes.get(r.profissionalId) ?? null, resumos.get(r.id)),
+      ),
       meta: {
         page: query.page,
         pageSize: query.pageSize,

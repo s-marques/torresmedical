@@ -386,6 +386,30 @@ Prontuário individual por profissional (issue #150, R §13, §14 e §37).
   exige `consultorio-assistencial.prontuarios-acessos.ver` e escopo `TODOS` (restrito leva 403). Não há
   tela, só a API.
 
+## Prontuário: exames, anexos, assinatura e versões (`/prontuarios`)
+
+Funções fundamentais do prontuário pedidas pelo cliente (issue #151, R §13). Ficam no botão
+**Detalhes** de cada atendimento, na aba Atendimentos. Rotas em
+`/api/consultorio-assistencial/prontuarios/:pacienteId/atendimentos/:atendimentoId/...`; todas
+aplicam o escopo do profissional responsável (#153) e gravam o acesso de leitura em `prontuario_acessos`.
+
+- **Exames e anexos** (`/anexos`): PDF ou imagem (até 10 MB), com tipo (`EXAME` ou `ANEXO`), data e
+  descrição. O arquivo é enviado antes em `/api/arquivos?uso=anexo-atendimento` e vinculado aqui. O uso é
+  `privado`: `GET /api/arquivos/:id`, `/link` e `DELETE` recusam esse arquivo (403). O download é só por
+  `GET .../anexos/:anexoId/link`, que confere o escopo e devolve o link temporário assinado.
+- **Documentos emitidos** (`/documentos`): atestado, declaração e solicitação de exame (tipo, texto e data
+  de emissão). Só o registro do texto; PDF com timbre e modelos ficam para a #152.
+- **Assinatura** (`POST .../assinatura`, permissão `consultorio-assistencial.prontuarios.assinar`): confirmação
+  com a **senha do próprio usuário**, que precisa estar vinculado ao profissional responsável (decisão do dev;
+  certificado ICP-Brasil fora do escopo). A permissão separada impede que a recepção, também vinculada ao
+  profissional, assine. Assinar finaliza o atendimento. Atendimento vindo da agenda precisa ser finalizado antes
+  (`ATENDIMENTO_NAO_FINALIZADO`). Senha errada: 422 `ASSINATURA_SENHA_INVALIDA`.
+- **Registro assinado não é editado:** `PATCH .../atendimentos/:id` (só antes de assinar) e a exclusão de exames e
+  documentos respondem 409 `ATENDIMENTO_ASSINADO`. Exame e documento novos ainda podem ser acrescentados.
+- **Adendo** (`POST .../adendos`, mesma permissão de assinar): a correção vira uma nova versão (decisão do dev),
+  sem tocar no original. O histórico (`GET .../versoes`) lista a assinatura (versão 1) e cada adendo, com quem,
+  quando, o conteúdo antes e depois e o hash SHA-256. A tabela `atendimento_versoes` só aceita inserção.
+
 ## Encaminhamentos (`/encaminhamentos`)
 
 Encaminhamento de pacientes entre profissionais (issue #146, R §26), para medir o ecossistema

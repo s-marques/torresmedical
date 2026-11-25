@@ -37,6 +37,11 @@ export interface ArquivoUsoConfig {
   maxBytes: number;
   /** Permissão exigida para enviar e baixar. Preenchida com a issue de Autenticação (#79). */
   permissao?: string;
+  /**
+   * Arquivo clínico: os endpoints genéricos de /api/arquivos (metadados, link e exclusão) o
+   * recusam. O acesso é só pelo recurso dono (ex.: anexos do atendimento), que confere o escopo.
+   */
+  privado?: boolean;
 }
 
 /**
@@ -89,6 +94,12 @@ export const ARQUIVO_USOS = {
     descricao: 'Documento do profissional (contrato, registro, certificado…)',
     formatos: ['pdf', 'jpg', 'jpeg', 'png'],
     maxBytes: 10 * MB,
+  },
+  'anexo-atendimento': {
+    descricao: 'Exame ou anexo do atendimento (PDF ou imagem)',
+    formatos: ['pdf', 'jpg', 'jpeg', 'png'],
+    maxBytes: 10 * MB,
+    privado: true,
   },
   'comprovante-conta-pagar': {
     descricao: 'Comprovante de pagamento de conta a pagar',

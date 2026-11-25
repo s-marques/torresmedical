@@ -40,6 +40,12 @@
   "PACIENTE_PROFISSIONAL_INVALIDO": "The professional is invalid",
   "PACIENTE_ESPECIALIDADE_INVALIDA": "The specialty is invalid",
   "PACIENTE_POSSIVEL_DUPLICADO": "This patient may already be registered. Open the existing record or confirm to continue",
+  "ATENDIMENTO_ASSINADO": "A signed appointment cannot be changed. Add an addendum",
+  "ATENDIMENTO_JA_ASSINADO": "The appointment is already signed",
+  "ATENDIMENTO_NAO_ASSINADO": "The appointment is not signed yet: edit the record",
+  "ATENDIMENTO_NAO_FINALIZADO": "Finish the appointment before signing",
+  "ASSINATURA_SENHA_INVALIDA": "Incorrect password",
+  "ARQUIVO_USO_INVALIDO": "Invalid file for this field",
   "PERFIL_PADRAO_NAO_EXCLUIVEL": "Default profiles cannot be deleted. Duplicate the profile to adjust it",
   "PERFIL_ADMINISTRADOR_PROTEGIDO": "The Administrator profile cannot have its name, pages or data scope changed. Duplicate the profile to adjust it"
 }
