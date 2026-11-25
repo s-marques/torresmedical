@@ -7,6 +7,7 @@ export interface RequestContextStore extends ClsStore {
   ip?: string;
   escopoDados?: EscopoDados;
   verDadosSensiveis?: boolean;
+  verProntuario?: boolean;
 }
 
 /** Acesso tipado ao contexto da requisição (requestId, usuário autenticado e IP). */
@@ -45,6 +46,16 @@ export class RequestContextService {
   /** Preenchido pelo guard de autenticação. */
   setVerDadosSensiveis(valor: boolean): void {
     this.cls.set('verDadosSensiveis', valor);
+  }
+
+  /** `true` só quando o usuário tem a permissão de ver o prontuário (conteúdo clínico). */
+  getVerProntuario(): boolean {
+    return this.cls.isActive() ? this.cls.get('verProntuario') === true : false;
+  }
+
+  /** Preenchido pelo guard de autenticação. */
+  setVerProntuario(valor: boolean): void {
+    this.cls.set('verProntuario', valor);
   }
 
   getIp(): string | undefined {

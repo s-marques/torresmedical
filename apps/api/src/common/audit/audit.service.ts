@@ -1,9 +1,7 @@
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { Injectable } from '@nestjs/common';
-import type { AuditLogPage, AuditLogQuery } from '@torres/shared';
 import { Prisma, type AuditAction } from '../../generated/prisma/client';
 import { RequestContextService } from '../context/request-context.service';
-import { paginate } from '../pagination/paginate';
 import type { PrismaAdapter } from '../prisma/prisma-transaction';
 import { toAuditJson } from './audit-json';
 import { ANONYMOUS_USER_ID, SYSTEM_USER_ID } from './audit.constants';
@@ -21,8 +19,8 @@ export interface AuditRecordInput {
 }
 
 /**
- * Grava e consulta o audit_log (somente inserção). Use `record` diretamente em operações
- * sem request HTTP (filas, jobs, lote); nos endpoints, use `@Audit`.
+ * Grava o audit_log (somente inserção; a consulta fica no `AuditConsultaService`). Use `record`
+ * diretamente em operações sem request HTTP (filas, jobs, lote); nos endpoints, use `@Audit`.
  * Dentro de uma transação aberta, o registro entra nela.
  */
 @Injectable()
@@ -45,29 +43,6 @@ export class AuditService {
         ip: this.context.getIp() ?? null,
       },
     });
-  }
-
-  async findMany(query: AuditLogQuery): Promise<AuditLogPage> {
-    const where: Prisma.AuditLogWhereInput = {
-      entity: query.entity,
-      entityId: query.entityId,
-      userId: query.userId,
-      action: query.action,
-      occurredAt: query.de || query.ate ? { gte: query.de, lte: query.ate } : undefined,
-    };
-    const page = await paginate(query, {
-      findMany: (args) =>
-        this.txHost.tx.auditLog.findMany({
-          where,
-          orderBy: [{ occurredAt: 'desc' }, { id: 'desc' }],
-          ...args,
-        }),
-      count: () => this.txHost.tx.auditLog.count({ where }),
-    });
-    return {
-      ...page,
-      data: page.data.map((row) => ({ ...row, occurredAt: row.occurredAt.toISOString() })),
-    };
   }
 
   private currentUserId(): string {

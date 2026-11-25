@@ -310,7 +310,8 @@
         "tipos-agendamento": "Appointment Types",
         "respostas-rapidas": "Quick Replies",
         "configuracoes": "Settings",
-        "minha-empresa": "My Company"
+        "minha-empresa": "My Company",
+        "auditoria": "Audit"
       }
     }
   },
@@ -1801,5 +1802,102 @@
     "padrao": "Default",
     "duplicar": "Duplicate",
     "duplicado": "Profile duplicated."
+  },
+  "auditoria": {
+    "titulo": "Audit",
+    "descricao": "Trail of everything done in the system: who, what, when, and what existed before and after.",
+    "buscar": "Search entity or record id...",
+    "vazio": "No records found.",
+    "restrito": "Restricted clinical content",
+    "colunas": {
+      "data": "Date/time",
+      "usuario": "User",
+      "acao": "Action",
+      "entidade": "Entity",
+      "registro": "Record",
+      "campos": "Changed fields"
+    },
+    "acoes": {
+      "CREATE": "Creation",
+      "UPDATE": "Change",
+      "DELETE": "Deletion",
+      "EXPORT": "Export"
+    },
+    "acoesLinha": {
+      "detalhes": "View details"
+    },
+    "grupos": {
+      "exclusoes": "Deletions",
+      "cancelamentos": "Cancellations",
+      "descontos": "Discounts",
+      "financeiro": "Finance",
+      "agenda": "Schedule",
+      "sala": "Room",
+      "contrato": "Contract",
+      "prontuario": "Medical record"
+    },
+    "filtros": {
+      "usuario": "User",
+      "todosUsuarios": "All users",
+      "entidade": "Entity",
+      "todasEntidades": "All entities",
+      "acao": "Action",
+      "todasAcoes": "All actions",
+      "registro": "Record id",
+      "registroPlaceholder": "Record id...",
+      "periodo": "Period"
+    },
+    "detalhe": {
+      "titulo": "Record details",
+      "descricao": "What changed in this record, field by field.",
+      "ip": "IP",
+      "requisicao": "Request",
+      "campo": "Field",
+      "antes": "Before",
+      "depois": "After",
+      "semDiferencas": "No differences recorded.",
+      "restritoTitulo": "Restricted clinical content",
+      "restritoDescricao": "You are not allowed to view the medical record. Who, when and which fields changed remain visible.",
+      "camposAlterados": "Changed fields"
+    },
+    "entidades": {
+      "ContratoSala": "Room contract",
+      "ContratoSalaHora": "Contract hours",
+      "ContaReceber": "Receivable",
+      "ContaPagar": "Payable",
+      "Agendamento": "Appointment",
+      "BloqueioAgenda": "Schedule block",
+      "Sala": "Room",
+      "SalaBloqueio": "Room block",
+      "Prontuario": "Medical record",
+      "Atendimento": "Consultation",
+      "Anamnese": "Anamnesis",
+      "Venda": "Sale",
+      "Orcamento": "Quote",
+      "Paciente": "Patient",
+      "AuditLog": "Audit"
+    },
+    "campos": {
+      "nome": "Name",
+      "status": "Status",
+      "ativo": "Active",
+      "valor": "Amount",
+      "desconto": "Discount",
+      "vencimento": "Due date",
+      "valorUnitario": "Unit price",
+      "quantidadeMensal": "Monthly quantity",
+      "diaVencimento": "Due day",
+      "modalidade": "Modality",
+      "permuta": "Barter",
+      "permiteIndicacao": "Allows referrals",
+      "participaEventos": "Takes part in events",
+      "indiceReajuste": "Adjustment index",
+      "dataInicio": "Start date",
+      "dataFim": "End date",
+      "encerradoEm": "Ended on",
+      "motivoEncerramento": "Reason for ending",
+      "observacoes": "Notes",
+      "filtros": "Filters"
+    }
   }
 }

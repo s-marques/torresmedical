@@ -277,7 +277,10 @@ describe('Perfis de Acesso (e2e)', () => {
   });
 
   describe('perfis padrão (issue #154)', () => {
-    const OUTRAS = ['comercial-atendimento.agenda.criar', 'configuracoes-gestao.auditoria.ver'];
+    const OUTRAS = [
+      'comercial-atendimento.agenda.criar',
+      'gestao-profissionais.profissionais-documentos.validar',
+    ];
 
     it('PATCH mantém as ações das páginas que continuam e os extras', async () => {
       const perfil = await criarNoBanco('Recepção', {
@@ -299,7 +302,7 @@ describe('Perfis de Acesso (e2e)', () => {
       expect(permissoes.map((p) => p.permissao).sort()).toEqual([
         'comercial-atendimento.agenda.criar',
         'comercial-atendimento.agenda.ver',
-        'configuracoes-gestao.auditoria.ver',
+        'gestao-profissionais.profissionais-documentos.validar',
         'painel.painel.ver',
       ]);
     });

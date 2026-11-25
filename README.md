@@ -487,6 +487,34 @@ O exemplo é o `EX-01` em `/gestao/relatorios` (`modules/configuracoes-gestao/re
   - As células são formatadas pelo `tipo` da coluna (`text`, `number`, `currency`, `date`,
     `datetime`, `boolean`), como na exportação.
 
+## Auditoria: consulta da trilha (`/gestao/auditoria`)
+
+Tela geral do `audit_log` (issue #155, R §15 e §41): quem, o quê, quando, e o antes e depois. Tela
+fora do inventário, em Configurações / Gestão. A gravação continua na seção 4 do `CLAUDE.md`.
+
+- **API:** `GET /api/auditoria` (`configuracoes-gestao.auditoria.ver`) com os filtros `entity`,
+  `entityId`, `userId`, `action`, `grupo`, `de`/`ate` (dia `AAAA-MM-DD` inteiro no fuso da clínica,
+  ou instante com fuso), `search` (nome da entidade ou id), `sort` (`occurredAt`, `entity`,
+  `action`) e paginação. Filtros combinados valem todos juntos. Cada item traz `userNome`, `campos`
+  (campos alterados) e `restrito`. `GET /api/auditoria/entidades` lista as entidades com registro.
+- **Atalhos (`grupo`):** `exclusoes` (ação `DELETE`), `cancelamentos` (`UPDATE` que deixou `status`
+  em `CANCELADO`/`CANCELADA`), `descontos`, `financeiro`, `agenda`, `sala`, `contrato` e
+  `prontuario`. As entidades de cada um ficam em `AUDIT_GRUPOS_DEFINICAO`
+  (`packages/shared/src/schemas/auditoria/audit-log.ts`), uma inferência a partir do requisito:
+  ao nascer uma entidade de agenda, financeiro, sala, contrato ou prontuário, inclua-a lá.
+- **Conteúdo clínico:** em `Prontuario`, `Atendimento`, `AtendimentoEvolucao`, `AtendimentoReceita`
+  e `Anamnese` (`AUDIT_ENTIDADES_CLINICAS`), `before` e `after` só saem para quem tem
+  `consultorio-assistencial.prontuarios.ver` (decisão do dev). Sem ela, o item vem `restrito` com
+  `before`/`after` nulos; quem, quando e os nomes dos campos continuam visíveis.
+- **Diff:** `diffAuditoria(before, after)` (`@torres/shared`) lista os campos que mudaram (sem
+  `updatedAt`/`createdAt`); em criação e exclusão, todos. O modal mostra campo a campo, com o
+  rótulo traduzido (`auditoria.campos.*`; campo sem tradução aparece com o nome técnico).
+- **Exportação:** `GET /api/auditoria/export` (`configuracoes-gestao.auditoria.exportar`, só o
+  Administrador no seed), com os mesmos filtros. Exporta só metadados (data, usuário, ação, entidade,
+  registro e nomes dos campos), nunca o antes e depois. É auditada (`EXPORT`, entidade `AuditLog`).
+- **Escopo (#153):** a tela é da administração (escopo `TODOS`), então não há filtro por
+  profissional. O filtro de usuário usa o lookup `usuarios`.
+
 ## Mensageria (RabbitMQ, `common/messaging`)
 
 Regras e nomes na seção 5 do [`CLAUDE.md`](CLAUDE.md). O `MessagingModule` é global.

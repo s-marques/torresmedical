@@ -150,7 +150,7 @@ describe('PerfisAcessoService', () => {
         { perfilId: ID, permissao: 'comercial-atendimento.agenda.ver' },
         { perfilId: ID, permissao: 'comercial-atendimento.agenda.criar' },
         { perfilId: ID, permissao: 'financeiro.caixas.criar' },
-        { perfilId: ID, permissao: 'configuracoes-gestao.auditoria.ver' },
+        { perfilId: ID, permissao: 'gestao-profissionais.profissionais-documentos.validar' },
       ],
     };
 
@@ -186,7 +186,7 @@ describe('PerfisAcessoService', () => {
       expect(permissoes.create.map((p: { permissao: string }) => p.permissao).sort()).toEqual([
         'comercial-atendimento.agenda.criar',
         'comercial-atendimento.agenda.ver',
-        'configuracoes-gestao.auditoria.ver',
+        'gestao-profissionais.profissionais-documentos.validar',
         'painel.painel.ver',
       ]);
     });

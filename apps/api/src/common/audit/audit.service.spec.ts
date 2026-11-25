@@ -77,36 +77,3 @@ describe('AuditService.record', () => {
     expect(auditLog.create.mock.calls[0][0].data.userId).toBe('u-evento');
   });
 });
-
-describe('AuditService.findMany', () => {
-  it('pagina, ordena do mais recente e aplica filtros e período', async () => {
-    const { service, auditLog } = setup();
-    const occurredAt = new Date('2026-10-14T12:00:00.000Z');
-    auditLog.findMany.mockResolvedValue([{ id: 'a', occurredAt }]);
-    auditLog.count.mockResolvedValue(21);
-    const de = new Date('2026-10-01T00:00:00.000Z');
-
-    const page = await service.findMany({ page: 3, pageSize: 10, entity: 'Empresa', de });
-
-    const where = { entity: 'Empresa', occurredAt: { gte: de, lte: undefined } };
-    expect(auditLog.findMany).toHaveBeenCalledWith({
-      where: expect.objectContaining(where),
-      orderBy: [{ occurredAt: 'desc' }, { id: 'desc' }],
-      skip: 20,
-      take: 10,
-    });
-    expect(auditLog.count).toHaveBeenCalledWith({ where: expect.objectContaining(where) });
-    expect(page).toEqual({
-      data: [{ id: 'a', occurredAt: '2026-10-14T12:00:00.000Z' }],
-      meta: { page: 3, pageSize: 10, total: 21, totalPages: 3 },
-    });
-  });
-
-  it('não filtra por data quando o período não é informado', async () => {
-    const { service, auditLog } = setup();
-
-    await service.findMany({ page: 1, pageSize: 10 });
-
-    expect(auditLog.findMany.mock.calls[0][0].where.occurredAt).toBeUndefined();
-  });
-});
