@@ -94,6 +94,7 @@ export * from './schemas/gestao-profissionais/protocolo';
 export * from './schemas/gestao-profissionais/protocolo-mae';
 export * from './schemas/gestao-profissionais/receita-profissional';
 export * from './schemas/lookups/lookup';
+export * from './schemas/painel/alertas';
 export * from './schemas/painel/dashboard';
 export * from './schemas/regulatorio-qualidade/alvara-licenca';
 export * from './schemas/regulatorio-qualidade/cargo';

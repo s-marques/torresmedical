@@ -61,6 +61,7 @@ export function apiFalsa({
     const rota = rotas[caminho];
     if (rota) return rota(init, url);
     if (caminho === '/api/health') return healthOk();
+    if (caminho === '/api/painel/alertas') return json({ data: [], naoLidos: 0 });
     if (caminho === '/api/auth/refresh') return usuario ? sessaoJson(usuario) : json(ERRO_401, 401);
     if (caminho === '/api/auth/logout') return new Response(null, { status: 204 });
     return json({ statusCode: 404, code: 'NOT_FOUND', message: 'Recurso não encontrado' }, 404);
