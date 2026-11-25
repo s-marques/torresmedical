@@ -78,7 +78,7 @@ describe('exportQuerySchema', () => {
   it('exige formato válido', () => {
     expect(exportSchema.safeParse({}).error?.issues[0]).toMatchObject({
       path: ['format'],
-      message: 'Formato deve ser xlsx ou pdf',
+      message: 'Formato deve ser xlsx, pdf ou csv',
     });
   });
 });

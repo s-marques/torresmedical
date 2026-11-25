@@ -71,8 +71,10 @@ export function listQuerySchema<F extends string, E extends z.ZodRawShape>(
 
 const PAGINATION_KEYS: ReadonlySet<string> = new Set(['page', 'pageSize']);
 
-export const EXPORT_FORMATS = ['xlsx', 'pdf'] as const;
-export const exportFormatSchema = z.enum(EXPORT_FORMATS, { error: 'Formato deve ser xlsx ou pdf' });
+export const EXPORT_FORMATS = ['xlsx', 'pdf', 'csv'] as const;
+export const exportFormatSchema = z.enum(EXPORT_FORMATS, {
+  error: 'Formato deve ser xlsx, pdf ou csv',
+});
 export type ExportFormat = z.infer<typeof exportFormatSchema>;
 
 /** `columns=a,b,c`: colunas visíveis do grid, dentre as exportáveis do recurso. Padrão: todas. */

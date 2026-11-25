@@ -2777,17 +2777,17 @@ enum ModeloProntuarioProfissao {
 /// (gestao-profissionais, sem FK). As seções e campos ficam nas versões: cada alteração das seções
 /// cria uma versão nova, e `versaoAtual` aponta a que novos atendimentos usam.
 model ModeloProntuario {
-  id             String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id             String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   nome           String
   profissao      ModeloProntuarioProfissao
   /// Especialidade em texto livre (opcional): refina a profissão, ex.: "Psicologia infantil".
   especialidade  String?
-  profissionalId String?                      @map("profissional_id") @db.Uuid
-  ativo          Boolean                      @default(true)
-  versaoAtual    Int                          @default(1) @map("versao_atual")
-  createdAt      DateTime                     @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt      DateTime                     @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt      DateTime?                    @map("deleted_at") @db.Timestamptz(3)
+  profissionalId String?                   @map("profissional_id") @db.Uuid
+  ativo          Boolean                   @default(true)
+  versaoAtual    Int                       @default(1) @map("versao_atual")
+  createdAt      DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime?                 @map("deleted_at") @db.Timestamptz(3)
 
   versoes ModeloProntuarioVersao[]
 
@@ -4108,4 +4108,34 @@ model BackupExecucao {
   @@index([iniciadoEm])
   @@index([tipo, status, iniciadoEm])
   @@map("backup_execucoes")
+}
+
+/// Dono: configuracoes-gestao. Exportação em lote de uma entidade (issue #158, R §39): o pedido é
+/// gravado e um consumidor de fila gera o ZIP (CSV + arquivos). `arquivoId` é o ZIP no storage
+/// (uso `exportacao-lote`, privado), sem FK. Só guarda ids, tamanho e um código de erro estável:
+/// nunca dados pessoais nem a mensagem crua do erro.
+model ExportacaoLote {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Um valor de `EXPORTACAO_LOTE_ENTIDADES` (`packages/shared`).
+  entidade        String
+  incluirArquivos Boolean   @default(true) @map("incluir_arquivos")
+  /// Um valor de `EXPORTACAO_LOTE_STATUS`.
+  status          String    @default("PENDENTE")
+  /// Usuário que pediu a exportação (sem FK).
+  solicitadoPorId String?   @map("solicitado_por_id")
+  solicitadaEm    DateTime  @default(now()) @map("solicitada_em") @db.Timestamptz(3)
+  iniciadaEm      DateTime? @map("iniciada_em") @db.Timestamptz(3)
+  concluidaEm     DateTime? @map("concluida_em") @db.Timestamptz(3)
+  /// Fim da validade do download (24 h depois de concluída).
+  expiraEm        DateTime? @map("expira_em") @db.Timestamptz(3)
+  /// ZIP gerado (common/storage), sem FK.
+  arquivoId       String?   @map("arquivo_id") @db.Uuid
+  tamanhoBytes    Int?      @map("tamanho_bytes")
+  erroCodigo      String?   @map("erro_codigo")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([solicitadaEm])
+  @@index([entidade, status])
+  @@map("exportacoes_lote")
 }

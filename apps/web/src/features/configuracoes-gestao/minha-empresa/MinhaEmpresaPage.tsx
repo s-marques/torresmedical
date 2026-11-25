@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { usePermissao } from '@/lib/auth/use-sessao';
 import { AbaDados } from './AbaDados';
+import { AbaExportacaoDados } from './AbaExportacaoDados';
 import { AbaHorarios } from './AbaHorarios';
 import { AbaIntegracoes } from './AbaIntegracoes';
 import { AbaPlanoFaturas } from './AbaPlanoFaturas';
@@ -13,13 +15,15 @@ import { useEmpresa } from './use-minha-empresa';
 
 /**
  * Tela "Minha Empresa" (`/settings/empresa`, docs/inventario/telas/configuracoes-gestao-minha-empresa.md):
- * seis abas (Dados, Plano e Faturas, Integrações, Usuários, Unidades, Horários).
+ * abas Dados, Plano e Faturas, Integrações, Usuários, Unidades, Horários, Segurança e,
+ * com permissão, Exportação de dados (issue #158).
  */
 export default function MinhaEmpresaPage() {
   const { t } = useTranslation();
   const [aba, setAba] = useState('dados');
   const [criandoUnidade, setCriandoUnidade] = useState(false);
   const empresa = useEmpresa();
+  const veExportacao = usePermissao('configuracoes-gestao.exportacao-lote.ver');
 
   return (
     <div className="grid gap-6">
@@ -36,6 +40,7 @@ export default function MinhaEmpresaPage() {
           <TabsTrigger value="unidades">Unidades</TabsTrigger>
           <TabsTrigger value="horarios">Horários</TabsTrigger>
           <TabsTrigger value="seguranca">{t('seguranca.aba')}</TabsTrigger>
+          {veExportacao && <TabsTrigger value="exportacao">{t('exportacaoLote.aba')}</TabsTrigger>}
         </TabsList>
         <TabsContent value="dados">
           {empresa.isError && (
@@ -67,6 +72,11 @@ export default function MinhaEmpresaPage() {
         <TabsContent value="seguranca">
           <AbaSeguranca />
         </TabsContent>
+        {veExportacao && (
+          <TabsContent value="exportacao">
+            <AbaExportacaoDados />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

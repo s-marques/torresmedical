@@ -52,5 +52,9 @@
   "CONTA_PAGAR_BAIXA_DIVERGENTE": "El valor pagado es distinto del saldo del título. Indique la justificación",
   "SENHA_FORA_DA_POLITICA": "La contraseña no cumple la política de seguridad",
   "SENHA_ATUAL_INCORRETA": "La contraseña actual es incorrecta",
-  "TROCA_SENHA_OBRIGATORIA": "Debe cambiar su contraseña antes de continuar"
+  "TROCA_SENHA_OBRIGATORIA": "Debe cambiar su contraseña antes de continuar",
+  "EXPORTACAO_EM_ANDAMENTO": "Ya hay una exportación de esta entidad en curso",
+  "EXPORTACAO_INDISPONIVEL": "Esta exportación aún no está disponible",
+  "EXPORTACAO_EXPIRADA": "El enlace de esta exportación expiró. Solicite una nueva exportación",
+  "EXPORT_LIMIT_EXCEEDED": "La exportación supera el límite permitido. Refine los filtros"
 }

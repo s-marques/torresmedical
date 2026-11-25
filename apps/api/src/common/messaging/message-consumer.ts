@@ -12,6 +12,11 @@ export interface MessageConsumerOptions {
   payloadSchema?: ZodType;
   /** Sobrescreve `MESSAGING_PREFETCH` para esta fila. */
   prefetch?: number;
+  /**
+   * Tempo máximo da transação do `handle` (padrão do Prisma: 5 s). Só para consumidores pesados,
+   * como a exportação em lote, que demoram mais que isso.
+   */
+  transactionTimeoutMs?: number;
 }
 
 /**

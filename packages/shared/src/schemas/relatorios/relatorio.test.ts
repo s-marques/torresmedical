@@ -144,7 +144,7 @@ describe('exportRelatorioSchema', () => {
     });
     expect(
       mensagens(
-        schema.safeParse({ de: '2026-10-01', ate: '2026-10-31', format: 'csv', columns: 'x' }),
+        schema.safeParse({ de: '2026-10-01', ate: '2026-10-31', format: 'docx', columns: 'x' }),
       ).map(([campo]) => campo),
     ).toEqual(['format', 'columns']);
   });

@@ -145,6 +145,52 @@ export class ArquivosService {
     return { arquivo: toDto(registro), stream };
   }
 
+  /**
+   * Guarda um arquivo gerado pelo sistema (ex.: ZIP da exportação em lote), sem o fluxo de upload.
+   * O uso precisa ser `privado`: só o recurso dono entrega o arquivo.
+   */
+  async salvarGerado(entrada: {
+    uso: ArquivoUso;
+    nomeOriginal: string;
+    contentType: string;
+    conteudo: Buffer;
+    criadoPor?: string | null;
+  }): Promise<ArquivoDto> {
+    const chave = gerarChave(entrada.uso);
+    await this.storage.put(chave, entrada.conteudo, entrada.contentType);
+    try {
+      return await this.txHost.tx.arquivo.create({
+        data: {
+          uso: entrada.uso,
+          nomeOriginal: sanitizarNome(entrada.nomeOriginal),
+          contentType: entrada.contentType,
+          tamanho: entrada.conteudo.length,
+          chave,
+          criadoPor: entrada.criadoPor ?? this.context.getUserId() ?? null,
+        },
+        omit: SEM_CHAVE,
+      });
+    } catch (error) {
+      await this.storage.delete(chave).catch(() => undefined);
+      throw error;
+    }
+  }
+
+  /**
+   * Conteúdo sem link assinado, para os módulos que já conferiram o acesso (exportações, anexos
+   * do prontuário). Nunca exponha direto num endpoint sem checar permissão e escopo.
+   */
+  async ler(id: string): Promise<ConteudoArquivo> {
+    const registro = await this.txHost.tx.arquivo.findFirst({ where: { id, deletedAt: null } });
+    if (!registro) throw naoEncontrado();
+    const stream = await this.storage.get(registro.chave);
+    if (!stream) {
+      this.logger.error({ arquivoId: id }, 'Arquivo registrado sem conteúdo no storage');
+      throw naoEncontrado();
+    }
+    return { arquivo: toDto(registro), stream };
+  }
+
   /** Exclusão lógica: o objeto fica no storage (arquivos podem integrar histórico clínico). */
   async remove(id: string): Promise<ArquivoDto> {
     await this.findById(id);

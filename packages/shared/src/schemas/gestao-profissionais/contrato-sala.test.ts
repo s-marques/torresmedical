@@ -141,7 +141,7 @@ describe('listContratosSalaQuerySchema e exportação', () => {
   it('exportação usa as colunas da tabela', () => {
     const query = exportContratosSalaQuerySchema.parse({ format: 'xlsx', columns: 'sala,valor' });
     expect(query.columns).toEqual(['sala', 'valor']);
-    expect(exportContratosSalaQuerySchema.safeParse({ format: 'csv' }).success).toBe(false);
+    expect(exportContratosSalaQuerySchema.safeParse({ format: 'docx' }).success).toBe(false);
   });
 });
 

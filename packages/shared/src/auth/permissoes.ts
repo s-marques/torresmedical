@@ -22,6 +22,10 @@ export const PERMISSOES_EXTRAS = [
   'configuracoes-gestao.backups.ver',
   /** Disparar backup ou restauração de teste manualmente (issue #157). */
   'configuracoes-gestao.backups.executar',
+  /** Ver as exportações em lote e baixar os arquivos gerados (issue #158): só a administração. */
+  'configuracoes-gestao.exportacao-lote.ver',
+  /** Pedir a exportação em lote de uma entidade, com os arquivos (issue #158): só a administração. */
+  'configuracoes-gestao.exportacao-lote.executar',
 ] as const;
 
 /** Permissão no formato `<modulo>.<recurso>.<acao>` (CLAUDE.md, seção 3). */

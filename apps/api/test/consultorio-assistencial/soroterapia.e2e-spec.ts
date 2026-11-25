@@ -306,7 +306,7 @@ describe('Soroterapia (e2e)', () => {
     });
 
     it('400 com formato inválido, sem auditar', async () => {
-      await http().get(`${BASE}/historico/export`).query({ format: 'csv' }).expect(400);
+      await http().get(`${BASE}/historico/export`).query({ format: 'docx' }).expect(400);
       await expectNoAudit(prisma, { entity: 'SoroterapiaChecklist' });
     });
   });

@@ -27,10 +27,11 @@ export class ProcessedEventsService {
     consumer: string,
     envelope: MessageEnvelope,
     handler: () => Promise<void>,
+    transactionTimeoutMs?: number,
   ): Promise<ProcessResult> {
     return this.cls.run(() => {
       this.context.setUserId(envelope.userId);
-      return this.txHost.withTransaction(async (): Promise<ProcessResult> => {
+      const executar = async (): Promise<ProcessResult> => {
         const { count } = await this.txHost.tx.processedEvent.createMany({
           data: [{ eventId: envelope.eventId, consumer }],
           skipDuplicates: true,
@@ -38,7 +39,10 @@ export class ProcessedEventsService {
         if (count === 0) return 'duplicate';
         await handler();
         return 'processed';
-      });
+      };
+      return transactionTimeoutMs
+        ? this.txHost.withTransaction({ timeout: transactionTimeoutMs }, executar)
+        : this.txHost.withTransaction(executar);
     });
   }
 

@@ -16,7 +16,7 @@ const GENERATED_AT = new Intl.DateTimeFormat('pt-BR', {
   timeStyle: 'short',
 });
 
-type Doc = InstanceType<typeof PDFDocument>;
+export type Doc = InstanceType<typeof PDFDocument>;
 
 /**
  * PDF A4 com título, data de geração, tabela com cabeçalho repetido a cada página
@@ -111,7 +111,7 @@ function columnWidths(doc: Doc, table: ExportTable): number[] {
   return weights.map((weight) => (available * weight) / total);
 }
 
-function drawPageNumbers(doc: Doc): void {
+export function drawPageNumbers(doc: Doc): void {
   const range = doc.bufferedPageRange();
   for (let index = range.start; index < range.start + range.count; index++) {
     doc.switchToPage(index);
@@ -131,7 +131,7 @@ function drawPageNumbers(doc: Doc): void {
   }
 }
 
-function collect(doc: Doc): Promise<Buffer> {
+export function collect(doc: Doc): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     doc.on('data', (chunk: Buffer) => chunks.push(chunk));

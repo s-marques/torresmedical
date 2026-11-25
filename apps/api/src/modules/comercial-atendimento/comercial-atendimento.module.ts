@@ -1,4 +1,6 @@
 import { InsightsAgendaAiGrowth } from './ai-growth/insights-agenda.fonte';
+import { PacientesLoteFonte } from './pacientes/pacientes-lote.fonte';
+import { AgendamentosLoteFonte } from './agenda/agendamentos-lote.fonte';
 import { forwardRef, Module } from '@nestjs/common';
 import { criarRelatoriosController } from '../../common/relatorios/relatorios.controller';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
@@ -125,6 +127,8 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     AtendimentoWhatsappController,
   ],
   providers: [
+    PacientesLoteFonte,
+    AgendamentosLoteFonte,
     PacientesService,
     ConsentimentosPacienteService,
     PacientesDuplicidadeService,

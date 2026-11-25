@@ -1,8 +1,13 @@
-import type { Atendimento, PacienteResumoProntuario, Prontuario } from '@torres/shared';
+import {
+  PREFERENCIAS_PADRAO,
+  type Atendimento,
+  type PacienteResumoProntuario,
+  type Prontuario,
+} from '@torres/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { apiFalsa, chamadasPara, json, renderApp } from '@/test/render-app';
+import { apiFalsa, chamadasPara, json, renderApp, USUARIO_TESTE } from '@/test/render-app';
 
 vi.setConfig({ testTimeout: 20_000 });
 
@@ -113,6 +118,85 @@ describe('Prontuários (/prontuarios)', () => {
       'aria-selected',
       'true',
     );
+  });
+
+  describe('exportar prontuário (issue #158)', () => {
+    const URL_EXPORTAR = `${API}/${ID_PACIENTE}/exportar`;
+    const respostaExportacao = (nome: string) => () =>
+      new Response('arquivo', {
+        headers: { 'Content-Disposition': `attachment; filename="${nome}"` },
+      });
+
+    function prepararDownload() {
+      URL.createObjectURL = vi.fn(() => 'blob:1');
+      URL.revokeObjectURL = vi.fn();
+      vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    }
+
+    it('exporta o PDF do prontuário de todos os profissionais do acesso', async () => {
+      prepararDownload();
+      const fetchMock = api({ rotas: { [URL_EXPORTAR]: respostaExportacao('prontuario.pdf') } });
+      const { user } = renderTela(fetchMock);
+      await user.click(await screen.findByText('Lucas Zanchet Fernandes'));
+
+      await user.click(await screen.findByRole('button', { name: 'Exportar prontuário' }));
+      await user.click(await screen.findByRole('button', { name: 'Exportar' }));
+
+      await waitFor(() => expect(chamadasPara(fetchMock, URL_EXPORTAR)).toHaveLength(1));
+      const [url] = chamadasPara(fetchMock, URL_EXPORTAR)[0] as [string];
+      expect(new URL(url, 'http://localhost').searchParams.get('incluirAnexos')).toBe('false');
+      expect(new URL(url, 'http://localhost').searchParams.has('profissionalId')).toBe(false);
+    });
+
+    it('pede o ZIP com os anexos e restringe a um profissional', async () => {
+      prepararDownload();
+      const fetchMock = api({ rotas: { [URL_EXPORTAR]: respostaExportacao('prontuario.zip') } });
+      const { user } = renderTela(fetchMock);
+      await user.click(await screen.findByText('Lucas Zanchet Fernandes'));
+
+      await user.click(await screen.findByRole('button', { name: 'Exportar prontuário' }));
+      await user.click(screen.getByLabelText('Incluir exames e anexos (gera um ZIP)'));
+      await user.click(screen.getByRole('combobox', { name: 'Profissional' }));
+      await user.click(await screen.findByText('Dra. Ana Teste'));
+      await user.click(screen.getByRole('button', { name: 'Exportar' }));
+
+      await waitFor(() => expect(chamadasPara(fetchMock, URL_EXPORTAR)).toHaveLength(1));
+      const [url] = chamadasPara(fetchMock, URL_EXPORTAR)[0] as [string];
+      const params = new URL(url, 'http://localhost').searchParams;
+      expect(params.get('incluirAnexos')).toBe('true');
+      expect(params.get('profissionalId')).toBe(ID_PROFISSIONAL);
+    });
+
+    it.each([
+      'consultorio-assistencial.prontuarios.exportar',
+      'configuracoes-gestao.dados-pessoais.exportar',
+    ] as const)('sem a permissão %s, o botão não aparece', async (faltando) => {
+      const usuario = {
+        ...USUARIO_TESTE,
+        permissoes: USUARIO_TESTE.permissoes.filter((p) => p !== faltando),
+      };
+      const { user } = renderTela(api({ usuario }));
+      await user.click(await screen.findByText('Lucas Zanchet Fernandes'));
+      await screen.findByRole('heading', { name: 'Lucas Zanchet Fernandes' });
+
+      expect(screen.queryByRole('button', { name: 'Exportar prontuário' })).not.toBeInTheDocument();
+    });
+
+    it('em inglês: botão e janela traduzidos', async () => {
+      const usuario = {
+        ...USUARIO_TESTE,
+        preferencias: { ...PREFERENCIAS_PADRAO, idioma: 'en' as const },
+      };
+      const { user } = renderTela(api({ usuario }));
+      await user.click(await screen.findByText('Lucas Zanchet Fernandes'));
+
+      await user.click(await screen.findByRole('button', { name: 'Export medical record' }));
+
+      expect(await screen.findByText('Export full medical record')).toBeVisible();
+      expect(
+        screen.getByLabelText('Include exams and attachments (generates a ZIP)'),
+      ).toBeVisible();
+    });
   });
 
   it('aba Prontuário: salva os campos preenchidos', async () => {

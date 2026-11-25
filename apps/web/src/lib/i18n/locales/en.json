@@ -40,6 +40,7 @@
     "exportar": "Export",
     "excel": "Excel",
     "pdf": "PDF",
+    "csv": "CSV",
     "exportacaoInvalida": "Invalid export",
     "totalLinhas": "{{total}} row(s) in total.",
     "linhasPorPagina": "Rows per page",
@@ -2122,5 +2123,57 @@
       "escolhaProfissional": "Select the professional to see the templates.",
       "escala": "Select…"
     }
+  },
+  "exportacaoLote": {
+    "aba": "Data export",
+    "titulo": "Full data export",
+    "descricao": "Take all of the clinic's data with you: a ZIP with CSV spreadsheets and files, generated in the background and available for 24 hours.",
+    "aviso": "The file contains personal and health data (LGPD). Keep it safe and delete it when you no longer need it. Every request and download is recorded in the audit log.",
+    "entidade": "What to export",
+    "selecione": "Select the entity",
+    "incluirArquivos": "Include the files (attachments and PDFs)",
+    "solicitar": "Request export",
+    "solicitada": "Export requested. The file will be ready shortly.",
+    "baixar": "Download ZIP",
+    "historico": "Requested exports",
+    "vazio": "No exports requested",
+    "erroCarregar": "Could not load the entities to export.",
+    "expirada": "Expired",
+    "colunas": {
+      "entidade": "Entity",
+      "situacao": "Status",
+      "solicitadaEm": "Requested at",
+      "tamanho": "Size",
+      "expiraEm": "Available until"
+    },
+    "status": {
+      "PENDENTE": "Queued",
+      "PROCESSANDO": "Generating",
+      "CONCLUIDA": "Ready",
+      "FALHOU": "Failed"
+    },
+    "erros": {
+      "ARQUIVOS_ACIMA_DO_LIMITE": "The files exceed the limit of one ZIP. Request again without the files.",
+      "ENTIDADE_INDISPONIVEL": "This entity is not available for export.",
+      "ERRO_PROCESSAMENTO": "Could not generate the file. Try again."
+    },
+    "entidades": {
+      "pacientes": "Patients",
+      "profissionais": "Professionals",
+      "agendamentos": "Schedules (appointments)",
+      "prontuarios": "Medical records (with attachments)",
+      "contas-receber": "Finance: accounts receivable",
+      "contas-pagar": "Finance: accounts payable",
+      "contratos-sala": "Room contracts (with PDFs)"
+    }
+  },
+  "exportarProntuario": {
+    "botao": "Export medical record",
+    "titulo": "Export full medical record",
+    "descricao": "PDF with the record, appointments, anamneses and prescriptions. Only records from the professionals you have access to are included.",
+    "profissional": "Professional",
+    "todosProfissionais": "All professionals I have access to",
+    "incluirAnexos": "Include exams and attachments (generates a ZIP)",
+    "exportar": "Export"
   }
 }

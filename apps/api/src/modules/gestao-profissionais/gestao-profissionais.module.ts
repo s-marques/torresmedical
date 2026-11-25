@@ -1,4 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
+import { ProfissionaisLoteFonte } from './profissionais/profissionais-lote.fonte';
+import { ContratosSalaLoteFonte } from './salas/contratos-sala-lote.fonte';
 import { ConsultorioAssistencialModule } from '../consultorio-assistencial/consultorio-assistencial.module';
 import { ComercialAtendimentoModule } from '../comercial-atendimento/comercial-atendimento.module';
 import { ComprasEstoqueModule } from '../compras-estoque/compras-estoque.module';
@@ -82,6 +84,8 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     SalasBloqueiosController,
   ],
   providers: [
+    ProfissionaisLoteFonte,
+    ContratosSalaLoteFonte,
     ProfissionaisService,
     EspecialidadesService,
     ProfissionalAgendaService,

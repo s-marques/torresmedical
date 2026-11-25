@@ -422,11 +422,11 @@ describe('Unidades: padrão de API (e2e)', () => {
     it('400 para formato ou colunas inválidos, sem auditar', async () => {
       const res = await http()
         .get(`${BASE}/export`)
-        .query({ format: 'csv', columns: 'nome,senha' })
+        .query({ format: 'docx', columns: 'nome,senha' })
         .expect(400);
 
       expect(res.body.details).toEqual([
-        expect.objectContaining({ field: 'format', message: 'Formato deve ser xlsx ou pdf' }),
+        expect.objectContaining({ field: 'format', message: 'Formato deve ser xlsx, pdf ou csv' }),
         {
           field: 'columns',
           message: 'Colunas inválidas: senha. Disponíveis: nome, status, createdAt',

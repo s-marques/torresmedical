@@ -1,4 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
+import { ProntuariosLoteFonte } from './prontuarios/prontuarios-lote.fonte';
 import { ComercialAtendimentoModule } from '../comercial-atendimento/comercial-atendimento.module';
 import { ConfiguracoesGestaoModule } from '../configuracoes-gestao/configuracoes-gestao.module';
 import { GestaoProfissionaisModule } from '../gestao-profissionais/gestao-profissionais.module';
@@ -19,6 +20,7 @@ import { AtendimentoAnexosService } from './prontuarios/atendimento-anexos.servi
 import { AtendimentoAssinaturaService } from './prontuarios/atendimento-assinatura.service';
 import { AtendimentoDocumentosService } from './prontuarios/atendimento-documentos.service';
 import { AtendimentoRegistrosController } from './prontuarios/atendimento-registros.controller';
+import { ProntuarioExportacaoService } from './prontuarios/prontuario-exportacao.service';
 import { ProntuariosController } from './prontuarios/prontuarios.controller';
 import { ProntuariosService } from './prontuarios/prontuarios.service';
 import { SoroterapiaController } from './soroterapia/soroterapia.controller';
@@ -57,7 +59,9 @@ import { ReceituarioBlocosService } from './receituarios/receituario-blocos.serv
     SoroterapiaController,
   ],
   providers: [
+    ProntuariosLoteFonte,
     ProntuariosService,
+    ProntuarioExportacaoService,
     ModelosProntuarioService,
     AcessoProntuarioService,
     AtendimentoAcessoService,

@@ -457,7 +457,7 @@ describe('Relatórios de Gestão GES-01 a GES-04 (e2e)', () => {
     it('400 para formato inválido e 404 para relatório inexistente, sem auditar', async () => {
       await http()
         .get(`${LOG}/export`)
-        .query({ ...OUTUBRO, format: 'csv' })
+        .query({ ...OUTUBRO, format: 'docx' })
         .expect(400);
       await http()
         .get(`${BASE}/XX-99/export`)

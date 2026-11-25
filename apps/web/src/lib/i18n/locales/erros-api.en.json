@@ -52,5 +52,9 @@
   "CONTA_PAGAR_BAIXA_DIVERGENTE": "The amount paid differs from the bill balance. Enter the reason",
   "SENHA_FORA_DA_POLITICA": "The password does not meet the security policy",
   "SENHA_ATUAL_INCORRETA": "The current password is incorrect",
-  "TROCA_SENHA_OBRIGATORIA": "You must change your password before continuing"
+  "TROCA_SENHA_OBRIGATORIA": "You must change your password before continuing",
+  "EXPORTACAO_EM_ANDAMENTO": "An export of this entity is already in progress",
+  "EXPORTACAO_INDISPONIVEL": "This export is not available yet",
+  "EXPORTACAO_EXPIRADA": "This export link has expired. Request a new export",
+  "EXPORT_LIMIT_EXCEEDED": "The export exceeds the allowed limit. Refine the filters"
 }

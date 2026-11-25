@@ -1,4 +1,5 @@
 import { DownloadIcon, SearchIcon, Settings2Icon } from 'lucide-react';
+import type { ExportFormat } from '@torres/shared';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EntitySelect } from '@/components/shared/EntitySelect';
@@ -339,11 +340,11 @@ export function MenuColunas({ colunas }: Readonly<{ colunas: readonly ColunaOcul
   );
 }
 
-/** Botão "Exportar" com Excel e PDF. */
+/** Botão "Exportar" com Excel, PDF e CSV. */
 export function MenuExportar({
   exportando,
   onExportar,
-}: Readonly<{ exportando: boolean; onExportar: (formato: 'xlsx' | 'pdf') => void }>) {
+}: Readonly<{ exportando: boolean; onExportar: (formato: ExportFormat) => void }>) {
   const { t } = useTranslation();
   return (
     <DropdownMenu>
@@ -359,6 +360,9 @@ export function MenuExportar({
         </DropdownMenuItem>
         <DropdownMenuItem disabled={exportando} onSelect={() => onExportar('pdf')}>
           {t('grid.pdf')}
+        </DropdownMenuItem>
+        <DropdownMenuItem disabled={exportando} onSelect={() => onExportar('csv')}>
+          {t('grid.csv')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

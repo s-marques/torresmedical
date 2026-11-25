@@ -324,7 +324,7 @@ describe('Auditoria: consulta da trilha (e2e)', () => {
     });
 
     it('formato ou coluna inválidos respondem 400', async () => {
-      await http().get(`${BASE}/export`).query({ format: 'csv' }).expect(400);
+      await http().get(`${BASE}/export`).query({ format: 'docx' }).expect(400);
       await http().get(`${BASE}/export`).query({ format: 'xlsx', columns: 'antes' }).expect(400);
     });
 
