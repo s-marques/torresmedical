@@ -611,6 +611,82 @@
       "confirmar": "Eliminar"
     }
   },
+  "veiculos": {
+    "titulo": "Vehículos",
+    "descricao": "Administre los vehículos registrados.",
+    "novo": "Nuevo Vehículo",
+    "editar": "Editar Vehículo",
+    "buscar": "Buscar vehículos...",
+    "vazio": "No se encontraron vehículos.",
+    "cadastrar": "Registrar",
+    "acoes": {
+      "editar": "Editar",
+      "excluir": "Eliminar"
+    },
+    "colunas": {
+      "descricao": "Descripción",
+      "placa": "Placa",
+      "tipo": "Tipo",
+      "uso": "Uso",
+      "ipvaAnual": "Impuesto Vehicular",
+      "seguroAnual": "Seguro",
+      "financiamentoParcela": "Cuota Financ."
+    },
+    "secoes": {
+      "dados": "Datos del Vehículo",
+      "valores": "Valores e Impuestos",
+      "financiamento": "Financiamiento/Leasing"
+    },
+    "campos": {
+      "descricao": "Descripción",
+      "tipo": "Tipo",
+      "placa": "Placa",
+      "renavam": "RENAVAM",
+      "chassi": "Chasis",
+      "ano": "Año",
+      "cor": "Color",
+      "uso": "Uso",
+      "valorCompra": "Valor de Compra (R$)",
+      "dataCompra": "Fecha de Compra",
+      "ipvaAnual": "Impuesto Vehicular Anual (R$)",
+      "licenciamento": "Licencia de Circulación (R$)",
+      "seguroAnual": "Seguro Anual (R$)",
+      "vencimentoSeguro": "Vencimiento del Seguro",
+      "banco": "Banco",
+      "financiamentoParcela": "Cuota (R$)",
+      "saldoDevedor": "Saldo Deudor (R$)",
+      "vencimentoFinanciamento": "Vencimiento del Financiamiento",
+      "observacoes": "Observaciones"
+    },
+    "placeholders": {
+      "descricao": "Ej.: Corolla XEi 2024",
+      "placa": "ABC-1D23",
+      "ano": "2024",
+      "cor": "Blanco",
+      "banco": "Ej.: Bradesco, Santander",
+      "observacoes": "Notas generales sobre el vehículo"
+    },
+    "tipos": {
+      "CARRO": "Auto",
+      "MOTO": "Moto",
+      "UTILITARIO": "Utilitario"
+    },
+    "usos": {
+      "CLINICA": "Clínica",
+      "PESSOAL": "Personal",
+      "MISTO": "Mixto"
+    },
+    "sucesso": {
+      "criado": "Vehículo registrado.",
+      "atualizado": "Vehículo actualizado.",
+      "excluido": "Vehículo eliminado."
+    },
+    "excluir": {
+      "titulo": "Eliminar Vehículo",
+      "descricao": "¿Está seguro de que desea eliminar el vehículo \"{{descricao}}\"? Esta acción no se puede deshacer.",
+      "confirmar": "Eliminar"
+    }
+  },
   "patrimonio": {
     "titulo": "Patrimonio",
     "descricao": "Gestione los vehículos, inmuebles y bienes del cliente.",
