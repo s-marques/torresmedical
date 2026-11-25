@@ -26,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { apiFetch } from '@/lib/api/client';
 import { usePermissoes } from '@/lib/auth/use-sessao';
 import { i18next } from '@/lib/i18n';
@@ -91,6 +92,7 @@ export function DataGrid<T extends RowData>({
   atualizacaoMs,
 }: Readonly<DataGridProps<T>>) {
   const { t } = useTranslation();
+  const celular = useIsMobile();
   const busca = buscaInformada ?? t('grid.buscar');
   const mensagemVazio = mensagemVazioInformada ?? t('grid.nenhumResultado');
   const { estado, alterar } = useEstadoGrid({
@@ -186,47 +188,82 @@ export function DataGrid<T extends RowData>({
         </div>
       </div>
 
-      <div className="rounded-md border">
-        <Table
+      {celular ? (
+        <ListaCartoes
           aria-busy={consulta.isFetching}
           className={cn(consulta.isPlaceholderData && 'opacity-60')}
+          carregando={consulta.isPending}
+          erro={consulta.isError && !consulta.data}
+          vazio={consulta.isSuccess && linhas.length === 0}
+          mensagemVazio={mensagemVazio}
+          onTentarDeNovo={() => void consulta.refetch()}
         >
-          <TableHeader>
-            <TableRow>
-              {visiveis.map((coluna) => (
-                <Cabecalho
-                  key={coluna.id}
-                  coluna={porId.get(coluna.id)}
-                  ordenacao={estado.sort}
-                  onOrdenar={(sort) => alterar({ sort })}
-                />
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <CorpoEspecial
-              colunas={visiveis.length}
-              carregando={consulta.isPending}
-              erro={consulta.isError && !consulta.data}
-              vazio={consulta.isSuccess && linhas.length === 0}
-              mensagemVazio={mensagemVazio}
-              onTentarDeNovo={() => void consulta.refetch()}
-            />
-            {linhas.map((linha) => (
-              <TableRow
+          {linhas.map((linha) => {
+            const celulas = linha.getVisibleCells();
+            const celulaAcoes = celulas.find((celula) => celula.column.id === COLUNA_ACOES);
+            const dados = celulas.filter((celula) => celula !== celulaAcoes);
+            const celulaTitulo =
+              dados.find((celula) => porId.get(celula.column.id)?.tituloCartao) ?? dados[0];
+            return (
+              <CartaoLinha
                 key={linha.id}
-                {...(aoClicarLinha && propsDeLinhaClicavel(() => aoClicarLinha(linha.original)))}
-              >
-                {linha.getVisibleCells().map((celula) => (
-                  <TableCell key={celula.id} className={porId.get(celula.column.id)?.className}>
-                    <table.FlexRender cell={celula} />
-                  </TableCell>
+                abrir={aoClicarLinha && (() => aoClicarLinha(linha.original))}
+                titulo={celulaTitulo && <table.FlexRender cell={celulaTitulo} />}
+                acoes={celulaAcoes && <table.FlexRender cell={celulaAcoes} />}
+                campos={dados
+                  .filter((celula) => celula !== celulaTitulo)
+                  .map((celula) => ({
+                    id: celula.id,
+                    rotulo: porId.get(celula.column.id)?.titulo ?? celula.column.id,
+                    valor: <table.FlexRender cell={celula} />,
+                  }))}
+              />
+            );
+          })}
+        </ListaCartoes>
+      ) : (
+        <div className="rounded-md border">
+          <Table
+            aria-busy={consulta.isFetching}
+            className={cn(consulta.isPlaceholderData && 'opacity-60')}
+          >
+            <TableHeader>
+              <TableRow>
+                {visiveis.map((coluna) => (
+                  <Cabecalho
+                    key={coluna.id}
+                    coluna={porId.get(coluna.id)}
+                    ordenacao={estado.sort}
+                    onOrdenar={(sort) => alterar({ sort })}
+                  />
                 ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              <CorpoEspecial
+                colunas={visiveis.length}
+                carregando={consulta.isPending}
+                erro={consulta.isError && !consulta.data}
+                vazio={consulta.isSuccess && linhas.length === 0}
+                mensagemVazio={mensagemVazio}
+                onTentarDeNovo={() => void consulta.refetch()}
+              />
+              {linhas.map((linha) => (
+                <TableRow
+                  key={linha.id}
+                  {...(aoClicarLinha && propsDeLinhaClicavel(() => aoClicarLinha(linha.original)))}
+                >
+                  {linha.getVisibleCells().map((celula) => (
+                    <TableCell key={celula.id} className={porId.get(celula.column.id)?.className}>
+                      <table.FlexRender cell={celula} />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       <DataGridPaginacao
         meta={consulta.data?.meta}
@@ -247,10 +284,10 @@ function propsDeLinhaClicavel(abrir: () => void) {
   return {
     tabIndex: 0,
     className: 'cursor-pointer',
-    onClick: (evento: MouseEvent<HTMLTableRowElement>) => {
+    onClick: (evento: MouseEvent<HTMLElement>) => {
       if (!(evento.target as HTMLElement).closest(INTERATIVOS)) abrir();
     },
-    onKeyDown: (evento: KeyboardEvent<HTMLTableRowElement>) => {
+    onKeyDown: (evento: KeyboardEvent<HTMLElement>) => {
       if (evento.key === 'Enter' && evento.target === evento.currentTarget) abrir();
     },
   };
@@ -328,7 +365,6 @@ function CorpoEspecial({
   mensagemVazio: string;
   onTentarDeNovo: () => void;
 }>) {
-  const { t } = useTranslation();
   if (carregando) {
     return Array.from({ length: LINHAS_CARREGANDO }, (_, i) => (
       <TableRow key={i} aria-hidden>
@@ -342,18 +378,102 @@ function CorpoEspecial({
   return (
     <TableRow>
       <TableCell colSpan={colunas} className="h-24 text-center">
-        {erro ? (
-          <div role="alert" className="flex flex-col items-center gap-2 text-sm text-destructive">
-            {t('grid.erroCarregar')}
-            <Button type="button" variant="outline" size="sm" onClick={onTentarDeNovo}>
-              {t('comum.tentarNovamente')}
-            </Button>
-          </div>
-        ) : (
-          <EmptyState titulo={mensagemVazio} className="py-4" />
-        )}
+        <MensagemEstado erro={erro} mensagemVazio={mensagemVazio} onTentarDeNovo={onTentarDeNovo} />
       </TableCell>
     </TableRow>
+  );
+}
+
+function MensagemEstado({
+  erro,
+  mensagemVazio,
+  onTentarDeNovo,
+}: Readonly<{ erro: boolean; mensagemVazio: string; onTentarDeNovo: () => void }>) {
+  const { t } = useTranslation();
+  if (!erro) return <EmptyState titulo={mensagemVazio} className="py-4" />;
+  return (
+    <div role="alert" className="flex flex-col items-center gap-2 text-sm text-destructive">
+      {t('grid.erroCarregar')}
+      <Button type="button" variant="outline" size="sm" onClick={onTentarDeNovo}>
+        {t('comum.tentarNovamente')}
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * Visão de celular (abaixo de 768 px, issue #161): cada linha vira um cartão, em vez de uma tabela
+ * que obrigaria a rolar na horizontal. Os estados de carregamento, erro e vazio são os da tabela.
+ */
+function ListaCartoes({
+  carregando,
+  erro,
+  vazio,
+  mensagemVazio,
+  onTentarDeNovo,
+  className,
+  children,
+  ...resto
+}: Readonly<{
+  carregando: boolean;
+  erro: boolean;
+  vazio: boolean;
+  mensagemVazio: string;
+  onTentarDeNovo: () => void;
+  className?: string;
+  'aria-busy': boolean;
+  children: ReactNode;
+}>) {
+  if (carregando) {
+    return (
+      <div className="grid gap-2" aria-hidden>
+        {Array.from({ length: LINHAS_CARREGANDO }, (_, i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
+      </div>
+    );
+  }
+  if (erro || vazio) {
+    return (
+      <div className="rounded-md border p-4 text-center">
+        <MensagemEstado erro={erro} mensagemVazio={mensagemVazio} onTentarDeNovo={onTentarDeNovo} />
+      </div>
+    );
+  }
+  return (
+    <ul className={cn('grid gap-2', className)} {...resto}>
+      {children}
+    </ul>
+  );
+}
+
+interface CartaoLinhaProps {
+  titulo: ReactNode;
+  acoes?: ReactNode;
+  campos: { id: string; rotulo: string; valor: ReactNode }[];
+  abrir?: () => void;
+}
+
+/** A primeira coluna vira o título do cartão; as demais, pares "rótulo: valor". */
+function CartaoLinha({ titulo, acoes, campos, abrir }: Readonly<CartaoLinhaProps>) {
+  const { className: clicavel, ...propsClique } = abrir ? propsDeLinhaClicavel(abrir) : {};
+  return (
+    <li className={cn('rounded-md border p-3', clicavel)} {...propsClique}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 font-medium break-words">{titulo}</div>
+        {acoes}
+      </div>
+      {campos.length > 0 && (
+        <dl className="mt-2 grid gap-1 text-sm">
+          {campos.map(({ id, rotulo, valor }) => (
+            <div key={id} className="flex items-start justify-between gap-3">
+              <dt className="shrink-0 text-muted-foreground">{rotulo}</dt>
+              <dd className="min-w-0 text-right break-words">{valor}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </li>
   );
 }
 
@@ -365,7 +485,13 @@ function AcoesDaLinha({ acoes }: Readonly<{ acoes: AcaoLinha[] }>) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button type="button" variant="ghost" size="icon-sm" aria-label={t('comum.acoes')}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="max-md:size-11"
+          aria-label={t('comum.acoes')}
+        >
           <MoreHorizontalIcon aria-hidden />
         </Button>
       </DropdownMenuTrigger>

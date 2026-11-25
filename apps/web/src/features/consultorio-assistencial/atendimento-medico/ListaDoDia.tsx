@@ -72,6 +72,7 @@ export function ListaDoDia({ data, onData, onAbrir }: Readonly<ListaDoDiaProps>)
       },
       {
         id: 'pacienteNome',
+        tituloCartao: true,
         titulo: 'Paciente',
         ordenavel: 'paciente',
         celula: (linha) => <span className="font-medium">{linha.pacienteNome}</span>,

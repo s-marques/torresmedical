@@ -41,7 +41,11 @@ export default function PainelPage() {
         }
       />
 
-      <div role="tablist" aria-label="Abas do dashboard" className="flex gap-1 border-b">
+      <div
+        role="tablist"
+        aria-label="Abas do dashboard"
+        className="flex gap-1 overflow-x-auto border-b"
+      >
         {ABAS_PAINEL.map((aba) => (
           <button
             key={aba}
@@ -51,7 +55,7 @@ export default function PainelPage() {
             aria-selected={aba === filtros.aba}
             aria-controls="painel-aba"
             className={cn(
-              '-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors',
+              '-mb-px shrink-0 border-b-2 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors',
               aba === filtros.aba
                 ? 'border-primary text-foreground'
                 : 'border-transparent text-muted-foreground hover:text-foreground',

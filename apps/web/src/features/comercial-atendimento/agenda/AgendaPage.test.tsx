@@ -3,6 +3,7 @@ import { PERMISSOES, PREFERENCIAS_PADRAO } from '@torres/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { matchMediaStub } from '@/test/match-media';
 import { apiFalsa, chamadasPara, json, renderApp, USUARIO_TESTE } from '@/test/render-app';
 
 const API = '/api/comercial-atendimento/agendamentos';
@@ -208,6 +209,16 @@ describe('Agenda: visão Semana', () => {
     falhar = false;
     await user.click(screen.getByRole('button', { name: 'Tentar de novo' }));
     expect(await screen.findByRole('button', { name: /Ana Paciente Teste/ })).toBeVisible();
+  });
+});
+
+describe('Agenda no celular (issue #161)', () => {
+  it('abre na visão Dia, porque a semana de 7 colunas não cabe', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => matchMediaStub(query, true));
+    renderTela();
+
+    expect(await screen.findByRole('heading', { name: '22 de outubro de 2026' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Dia' })).toHaveAttribute('aria-pressed', 'true');
   });
 });
 

@@ -240,6 +240,38 @@ seção 3). Exemplos funcionando em **`/dev/componentes`**: a página existe só
 - **Testes de grid** usam MSW: `usarMsw()` e `servidorMsw.use(http.get('/api/...', …))`
   (`src/test/msw.ts`). Não misture com `apiFalsa`/`renderApp` no mesmo arquivo.
 
+## Uso pelo celular (web responsivo)
+
+O sistema abre no navegador do celular, sem aplicativo (issue #161, R §42). Abaixo de 768 px o
+menu vira drawer (#74) e as telas se adaptam; a largura de referência é 360 a 414 px.
+
+- **Telas validadas:** login, Dashboard, Agenda (dia), Recepção, Atendimento Médico (lista, detalhe e
+  abas), Pacientes (lista e detalhe), Contas a Pagar, Contas a Receber, Negócios e Atividades,
+  inclusive os formulários "Novo…" e as abas do Dashboard.
+- **`DataGrid`:** no celular cada linha vira um **cartão** (título + campos "rótulo: valor" + menu
+  de ações), sem rolagem horizontal. A primeira coluna visível é o título; marque outra com
+  `tituloCartao: true` na coluna quando a identificação não for a primeira (ex.: nome do paciente em
+  vez do horário). A ordenação por cabeçalho só existe na tabela (desktop).
+- **Regras de layout:** o conteúdo largo rola dentro do próprio container, nunca a página.
+  Um `grid` sem colunas declaradas usa uma trilha `minmax(0, 1fr)` (regra em `index.css`); barras de
+  abas rolam na horizontal; textos longos quebram em vez de `truncate`.
+- **Toque:** botões `default` e `sm` têm 40 px de altura abaixo de 768 px, e o menu "⋯" de ações, 44 px.
+- **Agenda:** abre na visão **Dia** no celular (a semana de 7 colunas não cabe). O modo Matriz fica
+  fora do escopo do celular.
+- **Teste de layout** (Playwright, Chromium real; o jsdom não calcula layout): `e2e/` em `apps/web`.
+  Verifica, em 360 e 414 px, que a página não rola na horizontal e que os botões principais têm
+  tamanho de toque. A API é simulada por rota (`e2e/api-falsa.ts`), com linhas geradas do schema Zod
+  (`e2e/amostra.ts`), então não precisa de banco. No CI roda no job "Layout no celular".
+
+  ```bash
+  pnpm --filter @torres/shared build
+  pnpm --filter @torres/web exec playwright install chromium   # uma vez
+  pnpm --filter @torres/web test:layout
+  ```
+
+  Tela nova que deva funcionar no celular: acrescente-a em `TELAS` de `e2e/celular.spec.ts`
+  (e a fixture em `e2e/fixtures.ts`, se ela listar dados).
+
 ## Agenda matricial (`/agenda?modo=matriz`)
 
 Visão **Matriz** da Agenda (issue #137): Sala × Dia × Horário × Profissional, só leitura. Junta o

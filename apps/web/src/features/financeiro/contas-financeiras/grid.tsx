@@ -50,6 +50,7 @@ export function colunasContaFinanceira<C extends ContaFinanceiraGrid>(
     {
       id: 'descricao',
       titulo: 'Descricao',
+      tituloCartao: true,
       ordenavel: true,
       exportavel: true,
       ocultavel: false,
