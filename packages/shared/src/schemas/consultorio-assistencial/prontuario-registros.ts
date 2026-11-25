@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { erroObrigatorio, textoObrigatorio } from '../common/obrigatorio';
+import { modeloRespostasSchema } from './modelo-prontuario';
 
 /**
  * Exames, anexos, documentos emitidos, assinatura e versões do atendimento (issue #151).
@@ -122,6 +123,8 @@ export const atendimentoAtualizacaoSchema = z.strictObject({
   diagnostico: textoClinico('Diagnóstico'),
   conduta: textoClinico('Conduta'),
   observacoes: textoClinico('Observações'),
+  /** Respostas do modelo de prontuário (issue #152); substitui as respostas anteriores. */
+  respostas: modeloRespostasSchema.optional(),
 });
 
 export type AtendimentoAtualizacaoFormulario = z.input<typeof atendimentoAtualizacaoSchema>;
@@ -169,6 +172,8 @@ export const atendimentoSnapshotSchema = z.object({
   diagnostico: z.string().nullable(),
   conduta: z.string().nullable(),
   observacoes: z.string().nullable(),
+  /** Respostas do modelo (issue #152); ausente nos registros anteriores a ele. */
+  respostas: modeloRespostasSchema.nullish(),
   adendos: z.array(z.string()),
 });
 

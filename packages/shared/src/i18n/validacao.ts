@@ -94,6 +94,15 @@ export const VALIDACAO_PT_BR = {
     diaDuplicado: 'Dia da semana repetido',
     diaInvalido: 'Dia da semana inválido',
   },
+  modelo: {
+    chaveInvalida: 'Chave inválida. Use letras minúsculas, números e _, começando por letra',
+    chaveDuplicada: 'Já existe um campo com esta chave no modelo',
+    listaMinOpcoes: 'Informe ao menos 2 opções',
+    opcaoDuplicada: 'Opção repetida',
+    faixaInvalida: 'O valor máximo deve ser maior que o mínimo',
+    secaoSemCampos: 'Adicione ao menos um campo à seção',
+    semSecoes: 'Adicione ao menos uma seção',
+  },
 };
 
 /** Formato que os outros idiomas precisam seguir (mesmas chaves). */

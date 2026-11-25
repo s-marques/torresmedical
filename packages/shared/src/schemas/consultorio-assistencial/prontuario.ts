@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { listQuerySchema } from '../common/list-query';
 import { paginatedResponseSchema } from '../common/pagination';
 import { pacienteSexoSchema } from '../comercial-atendimento/paciente';
+import { atendimentoModeloSchema, modeloRespostasSchema } from './modelo-prontuario';
 
 const textoOpcional = (max: number, rotulo: string) =>
   z
@@ -116,6 +117,13 @@ export const atendimentoInputSchema = z.strictObject({
   conduta: textoOpcional(TEXTO_CLINICO_MAX, 'Conduta'),
   observacoes: textoOpcional(TEXTO_CLINICO_MAX, 'Observações'),
   status: atendimentoStatusSchema.default('EM_ANDAMENTO'),
+  /** Modelo de prontuário usado (issue #152); a versão atual dele é gravada no atendimento. */
+  modeloId: z
+    .union([z.literal('').transform(() => null), z.uuid({ error: 'Modelo inválido' })])
+    .nullish()
+    .transform((valor) => valor ?? null),
+  /** Respostas dos campos do modelo (chave do campo → valor). */
+  respostas: modeloRespostasSchema.nullish().transform((valor) => valor ?? null),
 });
 
 export type AtendimentoFormulario = z.input<typeof atendimentoInputSchema>;
@@ -133,6 +141,9 @@ export const atendimentoSchema = z.object({
   conduta: z.string().nullable(),
   observacoes: z.string().nullable(),
   status: atendimentoStatusSchema,
+  /** Versão do modelo usada e respostas (issue #152); `null` no atendimento sem modelo. */
+  modelo: atendimentoModeloSchema.nullable(),
+  respostas: modeloRespostasSchema.nullable(),
   /** Registro assinado não é editado: correções entram como adendo (issue #151). */
   assinadoEm: z.iso.datetime().nullable(),
   assinadoPorNome: z.string().nullable(),

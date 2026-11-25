@@ -14,6 +14,7 @@ import { formatarDataHora } from '@/lib/formatar';
 import { ModalAdendoAtendimento } from './ModalAdendoAtendimento';
 import { ModalAssinarAtendimento } from './ModalAssinarAtendimento';
 import { ModalEditarAtendimento } from './ModalEditarAtendimento';
+import { RespostasDoModelo } from './CamposDoModelo';
 import { SecaoAnexos, SecaoDocumentos, SecaoVersoes } from './SecoesAtendimento';
 
 const CAMPOS = ['queixa', 'evolucao', 'diagnostico', 'conduta', 'observacoes'] as const;
@@ -104,6 +105,10 @@ export function ModalDetalheAtendimento({
             <span className="text-sm text-muted-foreground">{atendimento.profissionalNome}</span>
           )}
         </div>
+
+        {atendimento.modelo && (
+          <RespostasDoModelo modelo={atendimento.modelo} respostas={atendimento.respostas} />
+        )}
 
         <dl className="grid gap-2 text-sm">
           {CAMPOS.filter((campo) => atendimento[campo]).map((campo) => (

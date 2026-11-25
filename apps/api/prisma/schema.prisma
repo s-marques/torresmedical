@@ -2748,9 +2748,70 @@ model Atendimento {
   documentos  AtendimentoDocumento[]
   versoes     AtendimentoVersao[]
 
+  /// Versão do modelo de prontuário usada (issue #152). Fica fixa: alterar o modelo cria outra
+  /// versão e este atendimento continua apontando para a que usou.
+  modeloVersaoId String?                 @map("modelo_versao_id") @db.Uuid
+  /// Respostas dos campos do modelo: chave do campo → valor (texto, número ou null).
+  respostas      Json?
+  modeloVersao   ModeloProntuarioVersao? @relation(fields: [modeloVersaoId], references: [id], onDelete: Restrict)
+
   @@index([pacienteId])
   @@index([profissionalId])
+  @@index([modeloVersaoId])
   @@map("atendimentos")
+}
+
+enum ModeloProntuarioProfissao {
+  MEDICO
+  PSICOLOGO
+  NUTRICIONISTA
+  FISIOTERAPEUTA
+  BIOMEDICO
+  OUTRA
+
+  @@map("modelo_prontuario_profissao")
+}
+
+/// Dono: consultorio-assistencial. Modelo de prontuário por profissão/especialidade (issue #152).
+/// `profissionalId` nulo = modelo padrão da clínica; preenchido = modelo do próprio profissional
+/// (gestao-profissionais, sem FK). As seções e campos ficam nas versões: cada alteração das seções
+/// cria uma versão nova, e `versaoAtual` aponta a que novos atendimentos usam.
+model ModeloProntuario {
+  id             String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome           String
+  profissao      ModeloProntuarioProfissao
+  /// Especialidade em texto livre (opcional): refina a profissão, ex.: "Psicologia infantil".
+  especialidade  String?
+  profissionalId String?                      @map("profissional_id") @db.Uuid
+  ativo          Boolean                      @default(true)
+  versaoAtual    Int                          @default(1) @map("versao_atual")
+  createdAt      DateTime                     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime                     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime?                    @map("deleted_at") @db.Timestamptz(3)
+
+  versoes ModeloProntuarioVersao[]
+
+  @@index([profissionalId])
+  @@index([profissao])
+  @@map("modelos_prontuario")
+}
+
+/// Dono: consultorio-assistencial. Versão imutável das seções de um modelo de prontuário (#152).
+/// Só inserção: o atendimento aponta para a versão usada. `nome` é o nome do modelo na época.
+model ModeloProntuarioVersao {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  modeloId  String   @map("modelo_id") @db.Uuid
+  numero    Int
+  nome      String
+  /// Seções e campos (ver `modeloSecoesSchema` em packages/shared).
+  secoes    Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  modelo       ModeloProntuario @relation(fields: [modeloId], references: [id], onDelete: Restrict)
+  atendimentos Atendimento[]
+
+  @@unique([modeloId, numero])
+  @@map("modelos_prontuario_versoes")
 }
 
 enum AtendimentoAnexoTipo {

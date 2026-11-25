@@ -6,11 +6,15 @@ import {
   atendimentoInputSchema,
   type AtendimentoFormulario,
 } from '@torres/shared';
+import { useWatch } from 'react-hook-form';
 import { FormAcoes } from '@/components/shared/form/FormAcoes';
 import { FormField } from '@/components/shared/form/FormField';
 import { FormLayout } from '@/components/shared/form/FormLayout';
 import { useFormulario } from '@/components/shared/form/use-formulario';
 import { Modal } from '@/components/shared/Modal';
+import { conferirRespostas } from './respostas-modelo';
+import { SecaoModeloAtendimento } from './SecaoModeloAtendimento';
+import { useModelosDoProfissional } from './use-modelos-prontuario';
 import { useCriarAtendimento } from './use-prontuarios';
 
 const ID_FORMULARIO = 'form-atendimento';
@@ -42,8 +46,17 @@ export function ModalAtendimento({ pacienteId, onFechar }: Readonly<ModalAtendim
       conduta: '',
       observacoes: '',
       status: 'EM_ANDAMENTO',
+      modeloId: '',
+      respostas: {},
     } as unknown as AtendimentoFormulario,
   });
+
+  // Modelos de prontuário (#152): os padrão e os do profissional escolhido.
+  const profissionalId = useWatch({ control: form.control, name: 'profissionalId' }) || null;
+  const modeloId = useWatch({ control: form.control, name: 'modeloId' }) || null;
+  const modelos = useModelosDoProfissional(profissionalId);
+  const lista = profissionalId ? (modelos.data?.data ?? []) : null;
+  const modelo = lista?.find((m) => m.id === modeloId) ?? null;
 
   return (
     <Modal
@@ -61,7 +74,24 @@ export function ModalAtendimento({ pacienteId, onFechar }: Readonly<ModalAtendim
         acoes={null}
         colunas={2}
         onSubmit={async (valores) => {
-          await criar.mutateAsync(valores);
+          // Com modelo, os campos fixos não são usados; as respostas valem pelo modelo.
+          if (
+            modelo &&
+            !conferirRespostas(
+              form,
+              modelo.secoes,
+              valores.respostas,
+              valores.status === 'FINALIZADO',
+            )
+          ) {
+            return;
+          }
+          // O modelo só vale se ainda está na lista do profissional escolhido.
+          await criar.mutateAsync({
+            ...valores,
+            modeloId: modelo?.id ?? null,
+            respostas: modelo ? valores.respostas : null,
+          });
           onFechar();
         }}
       >
@@ -73,36 +103,46 @@ export function ModalAtendimento({ pacienteId, onFechar }: Readonly<ModalAtendim
           obrigatorio
         />
         <FormField name="tipo" label="Tipo" tipo="select" opcoes={OPCOES_TIPO} />
-        <FormField
-          name="queixa"
-          label="Queixa"
-          tipo="textarea"
-          placeholder="Queixa principal do paciente…"
-          className="col-span-full"
-        />
-        <FormField
-          name="evolucao"
-          label="Evolução"
-          tipo="textarea"
-          placeholder="Evolução do quadro clínico…"
-          className="col-span-full"
-        />
-        <FormField
-          name="diagnostico"
-          label="Diagnóstico"
-          tipo="textarea"
-          placeholder="Diagnóstico…"
-        />
-        <FormField name="conduta" label="Conduta" tipo="textarea" placeholder="Conduta adotada…" />
-        <FormField
-          name="observacoes"
-          label="Observações"
-          tipo="textarea"
-          placeholder="Observações adicionais…"
-          className="col-span-full"
-        />
+        <SecaoModeloAtendimento modelos={lista} modelo={modelo} />
+        {!modelo && <CamposFixos />}
         <FormField name="status" label="Status" tipo="select" opcoes={OPCOES_STATUS} />
       </FormLayout>
     </Modal>
+  );
+}
+
+/** Campos fixos do atendimento (sem modelo de prontuário). */
+function CamposFixos() {
+  return (
+    <>
+      <FormField
+        name="queixa"
+        label="Queixa"
+        tipo="textarea"
+        placeholder="Queixa principal do paciente…"
+        className="col-span-full"
+      />
+      <FormField
+        name="evolucao"
+        label="Evolução"
+        tipo="textarea"
+        placeholder="Evolução do quadro clínico…"
+        className="col-span-full"
+      />
+      <FormField
+        name="diagnostico"
+        label="Diagnóstico"
+        tipo="textarea"
+        placeholder="Diagnóstico…"
+      />
+      <FormField name="conduta" label="Conduta" tipo="textarea" placeholder="Conduta adotada…" />
+      <FormField
+        name="observacoes"
+        label="Observações"
+        tipo="textarea"
+        placeholder="Observações adicionais…"
+        className="col-span-full"
+      />
+    </>
   );
 }

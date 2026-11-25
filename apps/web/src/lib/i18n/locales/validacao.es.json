@@ -69,5 +69,14 @@
     "diasObrigatorio": "Seleccione al menos un día de la semana",
     "diaDuplicado": "Día de la semana repetido",
     "diaInvalido": "Día de la semana inválido"
+  },
+  "modelo": {
+    "chaveInvalida": "Clave inválida. Use minúsculas, números y _, comenzando con una letra",
+    "chaveDuplicada": "Ya existe un campo con esta clave en la plantilla",
+    "listaMinOpcoes": "Informe al menos 2 opciones",
+    "opcaoDuplicada": "Opción repetida",
+    "faixaInvalida": "El máximo debe ser mayor que el mínimo",
+    "secaoSemCampos": "Agregue al menos un campo a la sección",
+    "semSecoes": "Agregue al menos una sección"
   }
 }

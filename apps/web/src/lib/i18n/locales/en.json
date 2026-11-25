@@ -2025,5 +2025,102 @@
       "editar": "Edit",
       "excluir": "Delete"
     }
+  },
+  "modelosProntuario": {
+    "titulo": "Record templates",
+    "descricao": "Templates by profession and specialty, used when recording the appointment.",
+    "visao": {
+      "pacientes": "Patients",
+      "modelos": "Templates"
+    },
+    "novo": "New template",
+    "novoPadrao": "New default template",
+    "editar": "Edit template",
+    "editarPadrao": "Edit default template",
+    "busca": "Search templates...",
+    "vazio": "No templates found.",
+    "colunas": {
+      "nome": "Name",
+      "profissao": "Profession",
+      "especialidade": "Specialty",
+      "tipo": "Type",
+      "versao": "Version",
+      "status": "Status"
+    },
+    "tipoPadrao": "Clinic default",
+    "tipoProprio": "Professional: {{nome}}",
+    "status": {
+      "ativo": "Active",
+      "inativo": "Inactive"
+    },
+    "filtros": {
+      "profissao": "Profession",
+      "todasProfissoes": "All professions",
+      "tipo": "Type",
+      "todosTipos": "All types",
+      "padrao": "Clinic default",
+      "proprio": "Professionals"
+    },
+    "profissoes": {
+      "MEDICO": "Physician",
+      "PSICOLOGO": "Psychologist",
+      "NUTRICIONISTA": "Nutritionist",
+      "FISIOTERAPEUTA": "Physiotherapist",
+      "BIOMEDICO": "Biomedical scientist",
+      "OUTRA": "Other"
+    },
+    "tiposCampo": {
+      "TEXTO": "Text",
+      "NUMERO": "Number",
+      "LISTA": "List",
+      "DATA": "Date",
+      "ESCALA": "Scale"
+    },
+    "campos": {
+      "nome": "Name",
+      "profissao": "Profession",
+      "especialidade": "Specialty",
+      "profissional": "Professional",
+      "ativo": "Active template",
+      "secoes": "Sections and fields",
+      "tituloSecao": "Section title",
+      "rotulo": "Label",
+      "chave": "Key",
+      "tipo": "Type",
+      "obrigatorio": "Required",
+      "opcoes": "Options (one per line)",
+      "min": "Minimum",
+      "max": "Maximum"
+    },
+    "acoes": {
+      "editar": "Edit",
+      "excluir": "Delete",
+      "adicionarSecao": "Add section",
+      "removerSecao": "Remove section {{numero}}",
+      "adicionarCampo": "Add field",
+      "removerCampo": "Remove field {{numero}}"
+    },
+    "secao": "Section {{numero}}",
+    "campo": "Field {{numero}}",
+    "aviso": "Changing the name or the sections creates a new version. Appointments already recorded keep the version they used.",
+    "versaoAtual": "Current version: {{numero}}",
+    "excluir": {
+      "titulo": "Delete template",
+      "descricao": "Are you sure you want to delete the template \"{{nome}}\"? Appointments already recorded with it do not change."
+    },
+    "mensagens": {
+      "criado": "Template created.",
+      "atualizado": "Template updated.",
+      "excluido": "Template deleted."
+    },
+    "atendimento": {
+      "modelo": "Record template",
+      "semModelo": "No template (default fields)",
+      "modeloUsado": "Template: {{nome}} (version {{versao}})",
+      "respostas": "Template answers",
+      "semResposta": "Not provided",
+      "escolhaProfissional": "Select the professional to see the templates.",
+      "escala": "Select…"
+    }
   }
 }

@@ -37,6 +37,7 @@ export * from './schemas/comercial-atendimento/pesquisa-profissional';
 export * from './schemas/comercial-atendimento/recepcao';
 export * from './schemas/comercial-atendimento/tag-atendimento';
 export * from './schemas/consultorio-assistencial/atendimento-medico';
+export * from './schemas/consultorio-assistencial/modelo-prontuario';
 export * from './schemas/consultorio-assistencial/prestador';
 export * from './schemas/consultorio-assistencial/prontuario';
 export * from './schemas/consultorio-assistencial/prontuario-registros';

@@ -16,6 +16,8 @@ export const PERMISSOES_EXTRAS = [
   'consultorio-assistencial.prontuarios.assinar',
   /** Exportar dados pessoais ou clínicos em Excel/PDF (issue #156, R §41): além de <tela>.exportar. */
   'configuracoes-gestao.dados-pessoais.exportar',
+  /** Criar, alterar e excluir os modelos de prontuário padrão da clínica (issue #152): gerência. */
+  'consultorio-assistencial.modelos-prontuario.gerir',
 ] as const;
 
 /** Permissão no formato `<modulo>.<recurso>.<acao>` (CLAUDE.md, seção 3). */

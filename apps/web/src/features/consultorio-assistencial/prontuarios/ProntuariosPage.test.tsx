@@ -154,6 +154,8 @@ describe('Prontuários (/prontuarios)', () => {
             conduta: null,
             observacoes: null,
             status: 'EM_ANDAMENTO',
+            modelo: null,
+            respostas: null,
             assinadoEm: null,
             assinadoPorNome: null,
             totalAdendos: 0,

@@ -7,6 +7,7 @@ import type {
   AtendimentoVersao as VersaoDto,
   AtendimentoVersaoLista,
   CreateAdendoInput,
+  ModeloRespostas,
   UpdateAtendimentoInput,
 } from '@torres/shared';
 import type {
@@ -16,10 +17,11 @@ import type {
 import { semPermissao } from '../../../common/auth/escopo-dados.service';
 import { isUuid } from '../../../common/auth/tokens';
 import { RequestContextService } from '../../../common/context/request-context.service';
-import { BusinessException } from '../../../common/errors/api.exception';
+import { BusinessException, ValidationException } from '../../../common/errors/api.exception';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { UsuariosLookupService } from '../../configuracoes-gestao/usuarios/usuarios.service';
 import { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
+import { ModelosProntuarioService } from '../modelos-prontuario/modelos-prontuario.service';
 import { AtendimentoAcessoService, atendimentoAssinado } from './atendimento-acesso.service';
 import { hashDoSnapshot, snapshotDoAtendimento, toAtendimentoDto } from './atendimento.mapper';
 
@@ -54,6 +56,7 @@ export class AtendimentoAssinaturaService {
     private readonly usuarios: UsuariosLookupService,
     private readonly profissionais: ProfissionaisService,
     private readonly contexto: RequestContextService,
+    private readonly modelos: ModelosProntuarioService,
   ) {}
 
   /** Corrige o conteúdo de um atendimento ainda não assinado. */
@@ -64,9 +67,16 @@ export class AtendimentoAssinaturaService {
   ): Promise<AtendimentoDto> {
     const atual = await this.acesso.carregar(pacienteId, atendimentoId);
     if (atual.assinadoEm) throw atendimentoAssinado();
+    const { respostas, ...campos } = input;
     const alterado = await this.txHost.tx.atendimento.update({
       where: { id: atual.id },
-      data: input,
+      data: {
+        ...campos,
+        // Enquanto não assinado, só o tipo e a chave conferem; os obrigatórios valem ao assinar.
+        ...(respostas === undefined
+          ? {}
+          : { respostas: await this.respostasValidas(atual, respostas) }),
+      },
     });
     return this.paraDto(alterado);
   }
@@ -94,6 +104,8 @@ export class AtendimentoAssinaturaService {
         { status: 409 },
       );
     }
+
+    await this.exigirRespostasCompletas(atual);
 
     const agora = new Date();
     const depois = snapshotDoAtendimento(atual, []);
@@ -205,11 +217,48 @@ export class AtendimentoAssinaturaService {
   // --- Internos ----------------------------------------------------------------------------
 
   private async paraDto(atendimento: AtendimentoModel): Promise<AtendimentoDto> {
-    const [resumo, profissional] = await Promise.all([
+    const [resumo, profissional, versoes] = await Promise.all([
       this.resumos([atendimento]),
       this.profissionais.detalhe(atendimento.profissionalId).catch(() => null),
+      this.modelos.versoesPorId([atendimento.modeloVersaoId]),
     ]);
-    return toAtendimentoDto(atendimento, profissional?.nome ?? null, resumo.get(atendimento.id));
+    return toAtendimentoDto(
+      atendimento,
+      profissional?.nome ?? null,
+      resumo.get(atendimento.id),
+      versoes.get(atendimento.modeloVersaoId ?? '') ?? null,
+    );
+  }
+
+  /** Versão do modelo que o atendimento usou, ou `null` quando foi registrado sem modelo. */
+  private async modeloDoAtendimento(atendimento: AtendimentoModel) {
+    const versoes = await this.modelos.versoesPorId([atendimento.modeloVersaoId]);
+    return versoes.get(atendimento.modeloVersaoId ?? '') ?? null;
+  }
+
+  /** Respostas enviadas na edição, conferidas com a versão do modelo gravada no atendimento. */
+  private async respostasValidas(
+    atendimento: AtendimentoModel,
+    respostas: ModeloRespostas,
+  ): Promise<ModeloRespostas> {
+    const modelo = await this.modeloDoAtendimento(atendimento);
+    if (!modelo) {
+      throw new ValidationException([
+        { field: 'respostas', message: 'Este atendimento não usa modelo de prontuário.' },
+      ]);
+    }
+    return this.modelos.conferirRespostas(modelo.secoes, respostas, false);
+  }
+
+  /** Antes de assinar, os campos obrigatórios do modelo precisam estar preenchidos. */
+  private async exigirRespostasCompletas(atendimento: AtendimentoModel): Promise<void> {
+    const modelo = await this.modeloDoAtendimento(atendimento);
+    if (!modelo) return;
+    this.modelos.conferirRespostas(
+      modelo.secoes,
+      (atendimento.respostas as ModeloRespostas | null) ?? {},
+      true,
+    );
   }
 
   /** Só o usuário vinculado ao profissional responsável assina ou escreve adendo (403). */

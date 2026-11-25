@@ -2025,5 +2025,102 @@
       "editar": "Editar",
       "excluir": "Eliminar"
     }
+  },
+  "modelosProntuario": {
+    "titulo": "Plantillas de historia clínica",
+    "descricao": "Plantillas por profesión y especialidad, usadas al registrar la atención.",
+    "visao": {
+      "pacientes": "Pacientes",
+      "modelos": "Plantillas"
+    },
+    "novo": "Nueva plantilla",
+    "novoPadrao": "Nueva plantilla estándar",
+    "editar": "Editar plantilla",
+    "editarPadrao": "Editar plantilla estándar",
+    "busca": "Buscar plantillas...",
+    "vazio": "No se encontraron plantillas.",
+    "colunas": {
+      "nome": "Nombre",
+      "profissao": "Profesión",
+      "especialidade": "Especialidad",
+      "tipo": "Tipo",
+      "versao": "Versión",
+      "status": "Estado"
+    },
+    "tipoPadrao": "Estándar de la clínica",
+    "tipoProprio": "Del profesional: {{nome}}",
+    "status": {
+      "ativo": "Activo",
+      "inativo": "Inactivo"
+    },
+    "filtros": {
+      "profissao": "Profesión",
+      "todasProfissoes": "Todas las profesiones",
+      "tipo": "Tipo",
+      "todosTipos": "Todos los tipos",
+      "padrao": "Estándar de la clínica",
+      "proprio": "De los profesionales"
+    },
+    "profissoes": {
+      "MEDICO": "Médico",
+      "PSICOLOGO": "Psicólogo",
+      "NUTRICIONISTA": "Nutricionista",
+      "FISIOTERAPEUTA": "Fisioterapeuta",
+      "BIOMEDICO": "Biomédico",
+      "OUTRA": "Otra"
+    },
+    "tiposCampo": {
+      "TEXTO": "Texto",
+      "NUMERO": "Número",
+      "LISTA": "Lista",
+      "DATA": "Fecha",
+      "ESCALA": "Escala"
+    },
+    "campos": {
+      "nome": "Nombre",
+      "profissao": "Profesión",
+      "especialidade": "Especialidad",
+      "profissional": "Profesional",
+      "ativo": "Plantilla activa",
+      "secoes": "Secciones y campos",
+      "tituloSecao": "Título de la sección",
+      "rotulo": "Etiqueta",
+      "chave": "Clave",
+      "tipo": "Tipo",
+      "obrigatorio": "Obligatorio",
+      "opcoes": "Opciones (una por línea)",
+      "min": "Mínimo",
+      "max": "Máximo"
+    },
+    "acoes": {
+      "editar": "Editar",
+      "excluir": "Eliminar",
+      "adicionarSecao": "Agregar sección",
+      "removerSecao": "Quitar sección {{numero}}",
+      "adicionarCampo": "Agregar campo",
+      "removerCampo": "Quitar campo {{numero}}"
+    },
+    "secao": "Sección {{numero}}",
+    "campo": "Campo {{numero}}",
+    "aviso": "Cambiar el nombre o las secciones crea una nueva versión. Las atenciones ya registradas mantienen la versión que usaron.",
+    "versaoAtual": "Versión actual: {{numero}}",
+    "excluir": {
+      "titulo": "Eliminar plantilla",
+      "descricao": "¿Seguro que desea eliminar la plantilla \"{{nome}}\"? Las atenciones ya registradas con ella no cambian."
+    },
+    "mensagens": {
+      "criado": "Plantilla creada.",
+      "atualizado": "Plantilla actualizada.",
+      "excluido": "Plantilla eliminada."
+    },
+    "atendimento": {
+      "modelo": "Plantilla de historia clínica",
+      "semModelo": "Sin plantilla (campos estándar)",
+      "modeloUsado": "Plantilla: {{nome}} (versión {{versao}})",
+      "respostas": "Respuestas de la plantilla",
+      "semResposta": "No informado",
+      "escolhaProfissional": "Seleccione el profesional para ver las plantillas.",
+      "escala": "Seleccione…"
+    }
   }
 }

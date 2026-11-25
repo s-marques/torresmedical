@@ -1,14 +1,50 @@
 import type { TransactionHost } from '@nestjs-cls/transactional';
+import type { AtendimentoModelo } from '@torres/shared';
 import type { RequestContextService } from '../../../common/context/request-context.service';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
+import type { EscopoDadosService } from '../../../common/auth/escopo-dados.service';
 import type { UsuariosLookupService } from '../../configuracoes-gestao/usuarios/usuarios.service';
 import type { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
+import { ModelosProntuarioService } from '../modelos-prontuario/modelos-prontuario.service';
 import type { AtendimentoAcessoService } from './atendimento-acesso.service';
 import { AtendimentoAssinaturaService } from './atendimento-assinatura.service';
 
 const PACIENTE = '2b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 const ATENDIMENTO = '3b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 const USUARIO = '4b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
+const VERSAO = '6b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
+
+const MODELO: AtendimentoModelo = {
+  modeloId: '7b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f',
+  versaoId: VERSAO,
+  nome: 'Anamnese',
+  versao: 2,
+  secoes: [
+    {
+      titulo: 'Avaliação',
+      campos: [
+        {
+          chave: 'queixa',
+          rotulo: 'Queixa',
+          tipo: 'TEXTO',
+          obrigatorio: true,
+          opcoes: null,
+          min: null,
+          max: null,
+        },
+        {
+          chave: 'dor',
+          rotulo: 'Dor',
+          tipo: 'ESCALA',
+          obrigatorio: false,
+          opcoes: null,
+          min: 0,
+          max: 10,
+        },
+      ],
+    },
+  ],
+};
 
 function atendimento(extra: Record<string, unknown> = {}) {
   return {
@@ -38,6 +74,7 @@ function setup({
   senhaOk = true,
   userId = USUARIO as string | null,
   versoes = [] as { numero: number; texto: string | null }[],
+  modelo = null as AtendimentoModelo | null,
 } = {}) {
   const tx = {
     atendimento: { update: jest.fn().mockImplementation(({ data }) => ({ ...atual, ...data })) },
@@ -61,12 +98,21 @@ function setup({
   };
   const profissionais = { detalhe: jest.fn().mockResolvedValue({ nome: 'Dr. Fictício' }) };
   const contexto = { getUserId: () => userId ?? undefined };
+  const modelos = new ModelosProntuarioService(
+    { tx } as unknown as TransactionHost<PrismaAdapter>,
+    {} as ProfissionaisService,
+    {} as EscopoDadosService,
+  );
+  jest
+    .spyOn(modelos, 'versoesPorId')
+    .mockResolvedValue(new Map(modelo ? [[modelo.versaoId, modelo]] : []));
   const service = new AtendimentoAssinaturaService(
     { tx } as unknown as TransactionHost<PrismaAdapter>,
     acesso as unknown as AtendimentoAcessoService,
     usuarios as unknown as UsuariosLookupService,
     profissionais as unknown as ProfissionaisService,
     contexto as unknown as RequestContextService,
+    modelos,
   );
   return { service, tx, usuarios };
 }
@@ -153,6 +199,57 @@ describe('AtendimentoAssinaturaService', () => {
         assinado.service.atualizar(PACIENTE, ATENDIMENTO, { queixa: 'Nova' }),
       ).rejects.toMatchObject({ status: 409, code: 'ATENDIMENTO_ASSINADO' });
       expect(assinado.tx.atendimento.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('atendimento com modelo de prontuário (#152)', () => {
+    const comModelo = (extra: Record<string, unknown> = {}) =>
+      atendimento({ modeloVersaoId: VERSAO, respostas: { queixa: 'Dor' }, ...extra });
+
+    it('atualiza as respostas conferidas com a versão gravada no atendimento', async () => {
+      const { service, tx } = setup({ atual: comModelo(), modelo: MODELO });
+      await service.atualizar(PACIENTE, ATENDIMENTO, { respostas: { queixa: '  ', dor: '7' } });
+      expect(tx.atendimento.update.mock.calls[0][0].data).toEqual({
+        respostas: { queixa: null, dor: 7 },
+      });
+    });
+
+    it('recusa resposta inválida e atendimento sem modelo (400)', async () => {
+      const { service, tx } = setup({ atual: comModelo(), modelo: MODELO });
+      await expect(
+        service.atualizar(PACIENTE, ATENDIMENTO, { respostas: { dor: 11, outra: 'x' } }),
+      ).rejects.toMatchObject({
+        status: 400,
+        details: expect.arrayContaining([
+          expect.objectContaining({ field: 'respostas.dor' }),
+          expect.objectContaining({ field: 'respostas.outra' }),
+        ]),
+      });
+      expect(tx.atendimento.update).not.toHaveBeenCalled();
+
+      await expect(
+        setup().service.atualizar(PACIENTE, ATENDIMENTO, { respostas: { queixa: 'x' } }),
+      ).rejects.toMatchObject({ status: 400 });
+    });
+
+    it('só assina com os campos obrigatórios preenchidos; o hash cobre as respostas', async () => {
+      const incompleto = setup({ atual: comModelo({ respostas: {} }), modelo: MODELO });
+      await expect(
+        incompleto.service.assinar(PACIENTE, ATENDIMENTO, { senha: 'x' }),
+      ).rejects.toMatchObject({
+        status: 400,
+        details: [expect.objectContaining({ field: 'respostas.queixa' })],
+      });
+      expect(incompleto.tx.atendimento.update).not.toHaveBeenCalled();
+
+      const completo = setup({ atual: comModelo(), modelo: MODELO });
+      const dto = await completo.service.assinar(PACIENTE, ATENDIMENTO, { senha: 'x' });
+      expect(dto.modelo).toMatchObject({ nome: 'Anamnese', versao: 2 });
+      const semModelo = setup();
+      await semModelo.service.assinar(PACIENTE, ATENDIMENTO, { senha: 'x' });
+      expect(completo.tx.atendimento.update.mock.calls[0][0].data.assinaturaHash).not.toBe(
+        semModelo.tx.atendimento.update.mock.calls[0][0].data.assinaturaHash,
+      );
     });
   });
 

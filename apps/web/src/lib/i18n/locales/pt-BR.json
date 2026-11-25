@@ -1917,5 +1917,102 @@
       "editar": "Editar",
       "excluir": "Excluir"
     }
+  },
+  "modelosProntuario": {
+    "titulo": "Modelos de prontuário",
+    "descricao": "Modelos por profissão e especialidade, usados ao registrar o atendimento.",
+    "visao": {
+      "pacientes": "Pacientes",
+      "modelos": "Modelos"
+    },
+    "novo": "Novo modelo",
+    "novoPadrao": "Novo modelo padrão",
+    "editar": "Editar modelo",
+    "editarPadrao": "Editar modelo padrão",
+    "busca": "Buscar modelos...",
+    "vazio": "Nenhum modelo encontrado.",
+    "colunas": {
+      "nome": "Nome",
+      "profissao": "Profissão",
+      "especialidade": "Especialidade",
+      "tipo": "Tipo",
+      "versao": "Versão",
+      "status": "Status"
+    },
+    "tipoPadrao": "Padrão da clínica",
+    "tipoProprio": "Do profissional: {{nome}}",
+    "status": {
+      "ativo": "Ativo",
+      "inativo": "Inativo"
+    },
+    "filtros": {
+      "profissao": "Profissão",
+      "todasProfissoes": "Todas as profissões",
+      "tipo": "Tipo",
+      "todosTipos": "Todos os tipos",
+      "padrao": "Padrão da clínica",
+      "proprio": "Dos profissionais"
+    },
+    "profissoes": {
+      "MEDICO": "Médico",
+      "PSICOLOGO": "Psicólogo",
+      "NUTRICIONISTA": "Nutricionista",
+      "FISIOTERAPEUTA": "Fisioterapeuta",
+      "BIOMEDICO": "Biomédico",
+      "OUTRA": "Outra"
+    },
+    "tiposCampo": {
+      "TEXTO": "Texto",
+      "NUMERO": "Número",
+      "LISTA": "Lista",
+      "DATA": "Data",
+      "ESCALA": "Escala"
+    },
+    "campos": {
+      "nome": "Nome",
+      "profissao": "Profissão",
+      "especialidade": "Especialidade",
+      "profissional": "Profissional",
+      "ativo": "Modelo ativo",
+      "secoes": "Seções e campos",
+      "tituloSecao": "Título da seção",
+      "rotulo": "Rótulo",
+      "chave": "Chave",
+      "tipo": "Tipo",
+      "obrigatorio": "Obrigatório",
+      "opcoes": "Opções (uma por linha)",
+      "min": "Mínimo",
+      "max": "Máximo"
+    },
+    "acoes": {
+      "editar": "Editar",
+      "excluir": "Excluir",
+      "adicionarSecao": "Adicionar seção",
+      "removerSecao": "Remover seção {{numero}}",
+      "adicionarCampo": "Adicionar campo",
+      "removerCampo": "Remover campo {{numero}}"
+    },
+    "secao": "Seção {{numero}}",
+    "campo": "Campo {{numero}}",
+    "aviso": "Alterar o nome ou as seções cria uma nova versão. Os atendimentos já registrados continuam com a versão que usaram.",
+    "versaoAtual": "Versão atual: {{numero}}",
+    "excluir": {
+      "titulo": "Excluir modelo",
+      "descricao": "Tem certeza que deseja excluir o modelo \"{{nome}}\"? Os atendimentos já registrados com ele não mudam."
+    },
+    "mensagens": {
+      "criado": "Modelo criado.",
+      "atualizado": "Modelo atualizado.",
+      "excluido": "Modelo excluído."
+    },
+    "atendimento": {
+      "modelo": "Modelo de prontuário",
+      "semModelo": "Sem modelo (campos padrão)",
+      "modeloUsado": "Modelo: {{nome}} (versão {{versao}})",
+      "respostas": "Respostas do modelo",
+      "semResposta": "Não informado",
+      "escolhaProfissional": "Selecione o profissional para ver os modelos.",
+      "escala": "Selecione…"
+    }
   }
 }

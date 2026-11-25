@@ -5,6 +5,7 @@ import type { PrismaClient } from '../src/generated/prisma/client';
 import { applySeedEntidades, buildSeedEntidades, type SeedEntidades } from './seed-entidades';
 import { applySeedCrm, buildSeedCrm, type SeedCrm } from './seed-crm';
 import { applySeedLotes, buildSeedLotes, type SeedLote } from './seed-lotes';
+import { applySeedModelosProntuario } from './seed-modelos-prontuario';
 import { applySeedWhatsapp, buildSeedWhatsapp, type SeedWhatsapp } from './seed-whatsapp';
 
 /**
@@ -192,6 +193,7 @@ export async function applySeed(prisma: PrismaClient, senhaAdmin: string): Promi
       await applySeedWhatsapp(tx, whatsapp);
       await applySeedCrm(tx, crm);
       await applySeedLotes(tx, lotes);
+      await applySeedModelosProntuario(tx);
     },
     { timeout: 60_000 },
   );

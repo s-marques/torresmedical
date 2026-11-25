@@ -10,6 +10,7 @@ import {
   type HistoricoClinicoItem,
   type ListPacientesComRegistrosQuery,
   type ListRegistrosQuery,
+  type ModeloSecoes,
   type Paciente as PacienteApiDto,
   type PacienteComRegistros,
   type PacienteResumoProntuario,
@@ -29,6 +30,10 @@ import { ValidationException } from '../../../common/errors/api.exception';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { PacientesService } from '../../comercial-atendimento/pacientes/pacientes.service';
 import { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
+import {
+  ModelosProntuarioService,
+  toAtendimentoModelo,
+} from '../modelos-prontuario/modelos-prontuario.service';
 import { PacientesVinculadosService } from '../pacientes-vinculados/pacientes-vinculados.service';
 import { PrescricoesService } from '../receituarios/prescricoes.service';
 import { AcessoProntuarioService } from './acesso-prontuario.service';
@@ -131,6 +136,7 @@ export class ProntuariosService {
     private readonly prescricoes: PrescricoesService,
     private readonly acessos: AcessoProntuarioService,
     private readonly assinaturas: AtendimentoAssinaturaService,
+    private readonly modelos: ModelosProntuarioService,
   ) {}
 
   /** Cabeçalho do paciente (nome, contato, nascimento, sexo), ao abrir a tela de detalhe. */
@@ -249,13 +255,19 @@ export class ProntuariosService {
       }),
       this.txHost.tx.atendimento.count({ where }),
     ]);
-    const [nomes, resumos] = await Promise.all([
+    const [nomes, resumos, versoes] = await Promise.all([
       this.nomesProfissionais(registros.map((r) => r.profissionalId)),
       this.assinaturas.resumos(registros),
+      this.modelos.versoesPorId(registros.map((r) => r.modeloVersaoId)),
     ]);
     return {
       data: registros.map((r) =>
-        toAtendimentoDto(r, nomes.get(r.profissionalId) ?? null, resumos.get(r.id)),
+        toAtendimentoDto(
+          r,
+          nomes.get(r.profissionalId) ?? null,
+          resumos.get(r.id),
+          versoes.get(r.modeloVersaoId ?? '') ?? null,
+        ),
       ),
       meta: {
         page: query.page,
@@ -275,8 +287,37 @@ export class ProntuariosService {
     this.escopo.garantirProfissional(input.profissionalId);
     await this.pacientes.detalhe(pacienteId);
     const profissional = await this.profissionais.detalhe(input.profissionalId);
-    const criado = await this.txHost.tx.atendimento.create({ data: { pacienteId, ...input } });
-    return toAtendimentoDto(criado, profissional.nome);
+
+    // Modelo de prontuário (#152): o atendimento guarda a versão atual do modelo e as respostas.
+    const { modeloId, respostas, ...dados } = input;
+    if (!modeloId && respostas && Object.keys(respostas).length > 0) {
+      throw new ValidationException([{ field: 'modeloId', message: 'Selecione o modelo.' }]);
+    }
+    const versao = modeloId
+      ? await this.modelos.versaoParaAtendimento(modeloId, input.profissionalId)
+      : null;
+    const respostasValidas = versao
+      ? this.modelos.conferirRespostas(
+          versao.secoes as unknown as ModeloSecoes,
+          respostas ?? {},
+          dados.status === 'FINALIZADO',
+        )
+      : null;
+
+    const criado = await this.txHost.tx.atendimento.create({
+      data: {
+        pacienteId,
+        ...dados,
+        modeloVersaoId: versao?.id ?? null,
+        respostas: respostasValidas ?? undefined,
+      },
+    });
+    return toAtendimentoDto(
+      criado,
+      profissional.nome,
+      undefined,
+      versao ? toAtendimentoModelo(versao) : null,
+    );
   }
 
   async listarAnamneses(

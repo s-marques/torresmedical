@@ -69,5 +69,14 @@
     "diasObrigatorio": "Select at least one day of the week",
     "diaDuplicado": "Repeated day of the week",
     "diaInvalido": "Invalid day of the week"
+  },
+  "modelo": {
+    "chaveInvalida": "Invalid key. Use lowercase letters, numbers and _, starting with a letter",
+    "chaveDuplicada": "A field with this key already exists in the template",
+    "listaMinOpcoes": "Enter at least 2 options",
+    "opcaoDuplicada": "Repeated option",
+    "faixaInvalida": "The maximum must be greater than the minimum",
+    "secaoSemCampos": "Add at least one field to the section",
+    "semSecoes": "Add at least one section"
   }
 }
