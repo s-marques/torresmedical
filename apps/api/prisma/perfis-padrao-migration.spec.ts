@@ -14,16 +14,20 @@ import {
  * Recepção, Comercial e Financeiro nunca recebem permissão clínica, nem por SQL.
  */
 const PASTA = join(__dirname, 'migrations');
-const pasta = readdirSync(PASTA).find((nome) => nome.endsWith('_perfis_padrao'));
-const sql = readFileSync(join(PASTA, pasta ?? '', 'migration.sql'), 'utf8');
+// A migration original e as que só acrescentam permissões (`_perfis_padrao_*`).
+const pastas = readdirSync(PASTA).filter((nome) => /_perfis_padrao(_|$)/.test(nome));
+const pasta = pastas.find((nome) => nome.endsWith('_perfis_padrao'));
+const sqls = pastas.map((nome) => readFileSync(join(PASTA, nome, 'migration.sql'), 'utf8'));
 
 const PARES = /^\s*\('([^']+)', '([^']+)'\),?$/gm;
 
 function permissoesNoSql(): Map<string, string[]> {
   const porPerfil = new Map<string, string[]>();
-  const bloco = sql.slice(sql.indexOf('INSERT INTO "perfis_permissoes"'));
-  for (const [, perfil = '', permissao = ''] of bloco.matchAll(PARES)) {
-    porPerfil.set(perfil, [...(porPerfil.get(perfil) ?? []), permissao]);
+  for (const sql of sqls) {
+    const bloco = sql.slice(sql.indexOf('INSERT INTO "perfis_permissoes"'));
+    for (const [, perfil = '', permissao = ''] of bloco.matchAll(PARES)) {
+      porPerfil.set(perfil, [...new Set([...(porPerfil.get(perfil) ?? []), permissao])]);
+    }
   }
   return porPerfil;
 }
