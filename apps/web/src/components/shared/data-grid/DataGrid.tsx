@@ -22,6 +22,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -89,6 +90,7 @@ export function DataGrid<T extends RowData>({
   tamanhosPagina = TAMANHOS_PAGINA,
   resumo,
   atualizacaoMs,
+  rodape,
 }: Readonly<DataGridProps<T>>) {
   const { t } = useTranslation();
   const busca = buscaInformada ?? t('grid.buscar');
@@ -225,6 +227,14 @@ export function DataGrid<T extends RowData>({
               </TableRow>
             ))}
           </TableBody>
+          {rodape && consulta.data?.totais && (
+            <RodapeTotais
+              colunas={visiveis.map((coluna) => coluna.id)}
+              rotulo={rodape.rotulo}
+              celulas={rodape.celulas(consulta.data.totais)}
+              porId={porId}
+            />
+          )}
         </Table>
       </div>
 
@@ -254,6 +264,30 @@ function propsDeLinhaClicavel(abrir: () => void) {
       if (evento.key === 'Enter' && evento.target === evento.currentTarget) abrir();
     },
   };
+}
+
+function RodapeTotais<T>({
+  colunas,
+  rotulo,
+  celulas,
+  porId,
+}: Readonly<{
+  colunas: readonly string[];
+  rotulo: string;
+  celulas: Readonly<Record<string, ReactNode>>;
+  porId: ReadonlyMap<string, ColunaGrid<T>>;
+}>) {
+  return (
+    <TableFooter>
+      <TableRow>
+        {colunas.map((id, indice) => (
+          <TableCell key={id} className={cn('font-semibold', porId.get(id)?.className)}>
+            {indice === 0 ? rotulo : celulas[id]}
+          </TableCell>
+        ))}
+      </TableRow>
+    </TableFooter>
+  );
 }
 
 function montarDefinicoes<T extends RowData>(

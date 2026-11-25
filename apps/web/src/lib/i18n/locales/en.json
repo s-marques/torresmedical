@@ -82,7 +82,8 @@
     "carregandoRelatorios": "Loading reports",
     "selecione": "Select a report",
     "selecioneDescricao": "Choose the report and the period to see the result.",
-    "nenhumRegistro": "No records in the period."
+    "nenhumRegistro": "No records in the period.",
+    "total": "Total"
   },
   "erros": {
     "semPermissao": "No permission",

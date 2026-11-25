@@ -82,7 +82,8 @@
     "carregandoRelatorios": "Cargando informes",
     "selecione": "Seleccione un informe",
     "selecioneDescricao": "Elija el informe y el período para ver el resultado.",
-    "nenhumRegistro": "Ningún registro en el período."
+    "nenhumRegistro": "Ningún registro en el período.",
+    "total": "Total"
   },
   "erros": {
     "semPermissao": "Sin permiso",

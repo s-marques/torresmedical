@@ -1,8 +1,9 @@
 import type { LinhaRelatorio, RelatorioResumo, TipoColunaRelatorio } from '@torres/shared';
+import type { ReactNode } from 'react';
 import { formatarData, formatarDataHora } from '@/lib/formatar';
 import { formatarMoeda } from '@/lib/forms/mascaras';
 import { formatoNumero, i18next } from '@/lib/i18n';
-import type { ColunaGrid } from '../data-grid/tipos';
+import type { ColunaGrid, DataGridProps, FiltroGrid } from '../data-grid/tipos';
 
 const FORMATOS: Readonly<Record<TipoColunaRelatorio, (valor: unknown) => string>> = {
   text: String,
@@ -32,4 +33,29 @@ export function colunasDoRelatorio(relatorio: RelatorioResumo): ColunaGrid<Linha
     celula: (linha) => formatarValorRelatorio(coluna.tipo, linha[coluna.id]),
     className: NUMERICOS.has(coluna.tipo) ? 'text-right tabular-nums' : undefined,
   }));
+}
+
+/** Filtros extras do `DataGrid` a partir do catálogo; `rotuloTodos` é o texto da opção sem filtro. */
+export function filtrosDoRelatorio(relatorio: RelatorioResumo, rotuloTodos: string): FiltroGrid[] {
+  return relatorio.filtros.map((filtro) =>
+    filtro.tipo === 'entidade' ? { ...filtro, rotuloTodos } : filtro,
+  );
+}
+
+/** Rodapé de totais: só relatórios que têm colunas somadas mandam `totais` na resposta. */
+export function rodapeDoRelatorio(
+  relatorio: RelatorioResumo,
+  rotulo: string,
+): DataGridProps<LinhaRelatorio>['rodape'] {
+  const tipos = new Map(relatorio.colunas.map((coluna) => [coluna.id, coluna.tipo]));
+  return {
+    rotulo,
+    celulas: (totais) =>
+      Object.fromEntries(
+        Object.entries(totais).map(([id, valor]): [string, ReactNode] => [
+          id,
+          formatarValorRelatorio(tipos.get(id) ?? 'text', valor),
+        ]),
+      ),
+  };
 }
