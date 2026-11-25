@@ -121,13 +121,14 @@ beforeEach(() => {
 });
 
 describe('ReportPage', () => {
-  it('mostra a linha de total no rodapé, formatada pelo tipo da coluna', async () => {
-    TOTAIS['EX-02'] = { valor: '1234.5' };
-    renderizar(comPeriodo('EX-02'));
+  it('mostra a linha de total no rodapé, com o rótulo na 1ª coluna e o valor formatado', async () => {
+    TOTAIS['EX-01'] = { createdAt: '2026-10-05T15:30:00.000Z' };
+    renderizar(comPeriodo('EX-01'));
 
-    const rodape = await screen.findByText('Total');
-    const celulas = within(rodape.closest('tr') as HTMLElement).getAllByRole('cell');
-    expect(celulas.map((c) => c.textContent?.replaceAll(' ', ' '))).toEqual(['Total']);
+    const rodape = (await screen.findByText('Total')).closest('tr') as HTMLElement;
+    const celulas = within(rodape).getAllByRole('cell');
+    expect(celulas).toHaveLength(2);
+    expect(celulas[1]?.textContent).toMatch(/^05\/10\/2026/);
   });
 
   it('sem totais na resposta, não mostra rodapé', async () => {
