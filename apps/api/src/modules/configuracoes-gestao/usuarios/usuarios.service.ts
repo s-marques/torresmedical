@@ -12,7 +12,7 @@ import type {
   UpdateUsuarioInput,
 } from '@torres/shared';
 import { Prisma } from '../../../generated/prisma/client';
-import { hashSenha } from '../../../common/auth/senhas';
+import { hashSenha, verificarSenha } from '../../../common/auth/senhas';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
 import { ExportService, selectColumns } from '../../../common/export/export.service';
@@ -184,6 +184,24 @@ export class UsuariosLookupService extends EntidadeLookupService<
       select: { profissionalId: true },
     });
     return new Set(vinculos.map((v) => v.profissionalId));
+  }
+
+  /** O usuário ativo está vinculado ao profissional (tela Usuários, `usuarios_profissionais`)? */
+  async vinculadoAoProfissional(usuarioId: string, profissionalId: string): Promise<boolean> {
+    const vinculo = await this.txHost.tx.usuarioProfissional.findFirst({
+      where: { usuarioId, profissionalId, usuario: { ativo: true, deletedAt: null } },
+      select: { usuarioId: true },
+    });
+    return vinculo !== null;
+  }
+
+  /** Confere a senha do usuário ativo (confirmação de assinatura). Nunca devolve o hash. */
+  async confirmarSenha(usuarioId: string, senha: string): Promise<boolean> {
+    const usuario = await this.txHost.tx.usuario.findFirst({
+      where: { id: usuarioId, ativo: true, deletedAt: null },
+      select: { senhaHash: true },
+    });
+    return verificarSenha(senha, usuario?.senhaHash ?? null);
   }
 }
 

@@ -2695,6 +2695,12 @@ model Atendimento {
   iniciadoEm      DateTime?         @map("iniciado_em") @db.Timestamptz(3)
   /// Fim do atendimento ("Finalizar").
   finalizadoEm    DateTime?         @map("finalizado_em") @db.Timestamptz(3)
+  /// Assinatura (issue #151): depois de assinado o conteúdo não é editado; correção vira adendo.
+  assinadoEm      DateTime?         @map("assinado_em") @db.Timestamptz(3)
+  /// Usuário que assinou (usuário vinculado ao profissional responsável), sem FK.
+  assinadoPorId   String?           @map("assinado_por_id") @db.Uuid
+  /// SHA-256 do conteúdo clínico no momento da assinatura.
+  assinaturaHash  String?           @map("assinatura_hash")
   createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt       DateTime?         @map("deleted_at") @db.Timestamptz(3)
@@ -2702,10 +2708,96 @@ model Atendimento {
   evolucoes   AtendimentoEvolucao[]
   receitas    AtendimentoReceita[]
   prescricoes Prescricao[]
+  anexos      AtendimentoAnexo[]
+  documentos  AtendimentoDocumento[]
+  versoes     AtendimentoVersao[]
 
   @@index([pacienteId])
   @@index([profissionalId])
   @@map("atendimentos")
+}
+
+enum AtendimentoAnexoTipo {
+  EXAME
+  ANEXO
+
+  @@map("atendimento_anexo_tipo")
+}
+
+enum AtendimentoDocumentoTipo {
+  ATESTADO
+  DECLARACAO
+  SOLICITACAO_EXAME
+
+  @@map("atendimento_documento_tipo")
+}
+
+enum AtendimentoVersaoTipo {
+  ASSINATURA
+  ADENDO
+
+  @@map("atendimento_versao_tipo")
+}
+
+/// Dono: consultorio-assistencial. Exame ou anexo do atendimento (issue #151). O arquivo fica no
+/// storage (common/storage, uso "anexo-atendimento"), nunca público: o download é por link temporário.
+model AtendimentoAnexo {
+  id            String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  atendimentoId String                @map("atendimento_id") @db.Uuid
+  tipo          AtendimentoAnexoTipo
+  /// Arquivo (common/storage), sem FK.
+  arquivoId     String                @map("arquivo_id") @db.Uuid
+  data          DateTime              @db.Date
+  descricao     String?
+  /// Usuário que anexou. Sem FK: aceita "system".
+  criadoPorId   String?               @map("criado_por_id")
+  createdAt     DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt     DateTime?             @map("deleted_at") @db.Timestamptz(3)
+
+  atendimento Atendimento @relation(fields: [atendimentoId], references: [id], onDelete: Restrict)
+
+  @@index([atendimentoId])
+  @@map("atendimento_anexos")
+}
+
+/// Dono: consultorio-assistencial. Documento emitido no atendimento: atestado, declaração ou
+/// solicitação de exame (issue #151). Guarda o texto; PDF com timbre e modelos ficam na #152.
+model AtendimentoDocumento {
+  id            String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  atendimentoId String                   @map("atendimento_id") @db.Uuid
+  tipo          AtendimentoDocumentoTipo
+  texto         String
+  dataEmissao   DateTime                 @map("data_emissao") @db.Date
+  criadoPorId   String?                  @map("criado_por_id")
+  createdAt     DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt     DateTime?                @map("deleted_at") @db.Timestamptz(3)
+
+  atendimento Atendimento @relation(fields: [atendimentoId], references: [id], onDelete: Restrict)
+
+  @@index([atendimentoId])
+  @@map("atendimento_documentos")
+}
+
+/// Dono: consultorio-assistencial. Histórico de versões do atendimento assinado (issue #151):
+/// a assinatura (versão 1) e cada adendo. Só inserção; guarda o antes/depois e o hash do conteúdo.
+model AtendimentoVersao {
+  id            String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  atendimentoId String                @map("atendimento_id") @db.Uuid
+  numero        Int
+  tipo          AtendimentoVersaoTipo
+  /// Usuário que assinou ou escreveu o adendo, sem FK.
+  usuarioId     String                @map("usuario_id") @db.Uuid
+  /// Texto do adendo (null na assinatura).
+  texto         String?
+  antes         Json?
+  depois        Json
+  hash          String
+  createdAt     DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  atendimento Atendimento @relation(fields: [atendimentoId], references: [id], onDelete: Restrict)
+
+  @@unique([atendimentoId, numero])
+  @@map("atendimento_versoes")
 }
 
 enum EvolucaoTipo {

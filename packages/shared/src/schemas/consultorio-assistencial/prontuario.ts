@@ -133,6 +133,11 @@ export const atendimentoSchema = z.object({
   conduta: z.string().nullable(),
   observacoes: z.string().nullable(),
   status: atendimentoStatusSchema,
+  /** Registro assinado não é editado: correções entram como adendo (issue #151). */
+  assinadoEm: z.iso.datetime().nullable(),
+  assinadoPorNome: z.string().nullable(),
+  /** Quantidade de adendos depois da assinatura. */
+  totalAdendos: z.number().int().min(0),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });
@@ -217,6 +222,10 @@ export const PRONTUARIO_ACESSO_RECURSOS = [
   'ANAMNESES',
   'RECEITAS',
   'HISTORICO_CLINICO',
+  /** Exames e anexos, documentos e versões do atendimento (issue #151). */
+  'ANEXOS',
+  'DOCUMENTOS',
+  'VERSOES',
 ] as const;
 
 export const prontuarioAcessoRecursoSchema = z.enum(PRONTUARIO_ACESSO_RECURSOS, {
