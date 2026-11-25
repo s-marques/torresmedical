@@ -13,6 +13,8 @@ import { ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
 import { z } from 'zod';
 import {
   baixarContaPagarSchema,
+  recusarContaPagarSchema,
+  type RecusarContaPagarInput,
   contaPagarBaixaSchema,
   contaPagarDivergenciaPageSchema,
   contaPagarPageSchema,
@@ -210,6 +212,35 @@ export class ContasPagarController {
     @Body(new ZodValidationPipe(baixarContaPagarSchema)) body: BaixarContaPagarInput,
   ): Promise<ContaPagar> {
     return this.contasPagar.baixar(id, body);
+  }
+
+  @Post(':id/aprovar')
+  @RequirePermission('financeiro.contas-pagar.aprovar')
+  @HttpCode(200)
+  @Audit({ entity: ENTITY, action: 'UPDATE' })
+  @ApiOperation({
+    summary:
+      'Aprova a conta aguardando aprovação (libera a baixa). Quem lançou não aprova a própria',
+  })
+  @ApiZodResponse(200, contaPagarSchema)
+  @ApiErrorResponses(400, 401, 403, 404, 422)
+  aprovar(@IdParam() id: string): Promise<ContaPagar> {
+    return this.contasPagar.aprovar(id);
+  }
+
+  @Post(':id/recusar')
+  @RequirePermission('financeiro.contas-pagar.aprovar')
+  @HttpCode(200)
+  @Audit({ entity: ENTITY, action: 'UPDATE' })
+  @ApiOperation({ summary: 'Recusa a conta aguardando aprovação, com motivo obrigatório' })
+  @ApiZodBody(recusarContaPagarSchema)
+  @ApiZodResponse(200, contaPagarSchema)
+  @ApiErrorResponses(400, 401, 403, 404, 422)
+  recusar(
+    @IdParam() id: string,
+    @Body(new ZodValidationPipe(recusarContaPagarSchema)) body: RecusarContaPagarInput,
+  ): Promise<ContaPagar> {
+    return this.contasPagar.recusar(id, body);
   }
 
   @Post(':id/cancelar-baixa')

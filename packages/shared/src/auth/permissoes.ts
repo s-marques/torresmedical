@@ -26,6 +26,8 @@ export const PERMISSOES_EXTRAS = [
   'configuracoes-gestao.exportacao-lote.ver',
   /** Pedir a exportação em lote de uma entidade, com os arquivos (issue #158): só a administração. */
   'configuracoes-gestao.exportacao-lote.executar',
+  /** Aprovar ou recusar conta a pagar antes da baixa (issue #164, R §16): gerência, não quem lança. */
+  'financeiro.contas-pagar.aprovar',
 ] as const;
 
 /** Permissão no formato `<modulo>.<recurso>.<acao>` (CLAUDE.md, seção 3). */

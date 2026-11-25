@@ -66,6 +66,48 @@ export function statusExibicaoContaPagar(
   return statusExibicaoContaFinanceira(conta);
 }
 
+/**
+ * Aprovação financeira da conta antes da baixa (issue #164, R §16): Lançada → Aprovada, ou
+ * Recusada. Fica à parte de `status` (Pendente/Pago/Cancelado). Só conta Aprovada recebe baixa.
+ */
+export const CONTA_PAGAR_APROVACOES = ['LANCADA', 'APROVADA', 'RECUSADA'] as const;
+export const contaPagarAprovacaoSchema = z.enum(CONTA_PAGAR_APROVACOES, {
+  error: 'Situação de aprovação inválida',
+});
+export type ContaPagarAprovacao = (typeof CONTA_PAGAR_APROVACOES)[number];
+
+export const CONTA_PAGAR_ROTULO_APROVACAO: Readonly<Record<ContaPagarAprovacao, string>> = {
+  LANCADA: 'Aguardando aprovação',
+  APROVADA: 'Aprovada',
+  RECUSADA: 'Recusada',
+};
+
+/** Código do 422 da baixa de conta que ainda não foi aprovada. */
+export const CONTA_PAGAR_NAO_APROVADA = 'CONTA_PAGAR_NAO_APROVADA';
+/** Código do 422 quando quem lançou a conta tenta aprová-la (ou recusá-la). */
+export const CONTA_PAGAR_APROVADOR_IGUAL_LANCADOR = 'CONTA_PAGAR_APROVADOR_IGUAL_LANCADOR';
+/** Código do 422 de aprovar ou recusar conta que não está aguardando aprovação. */
+export const CONTA_PAGAR_APROVACAO_INVALIDA = 'CONTA_PAGAR_APROVACAO_INVALIDA';
+
+export const CONTA_PAGAR_MOTIVO_RECUSA_MAX = 500;
+
+/** `POST /api/financeiro/contas-pagar/:id/recusar`: o motivo é obrigatório. */
+export const recusarContaPagarSchema = z.strictObject({
+  motivo: z
+    .string({ error: erroObrigatorio('Motivo') })
+    .trim()
+    .min(1, { error: erroObrigatorio('Motivo') })
+    .max(CONTA_PAGAR_MOTIVO_RECUSA_MAX, {
+      error: () =>
+        traduzirValidacao('validacao.campoMax', {
+          campo: 'Motivo',
+          count: CONTA_PAGAR_MOTIVO_RECUSA_MAX,
+        }),
+    }),
+});
+export type RecusarContaPagarInput = z.output<typeof recusarContaPagarSchema>;
+export type RecusarContaPagarFormulario = z.input<typeof recusarContaPagarSchema>;
+
 /** Competência contábil: mês/ano (`AAAA-MM`). Opcional; vazio vira `null`. */
 export const competenciaOpcional = z
   .string({ error: () => traduzirValidacao('validacao.formatoInvalido') })
@@ -116,7 +158,10 @@ export const CONTA_PAGAR_SORT_FIELDS = [
 export const listContasPagarQuerySchema = listQuerySchema({
   sortFields: CONTA_PAGAR_SORT_FIELDS,
   defaultSort: 'dataVencimento:asc',
-  filters: filtrosContaFinanceira(contaPagarFiltroStatusSchema),
+  filters: {
+    ...filtrosContaFinanceira(contaPagarFiltroStatusSchema),
+    aprovacao: contaPagarAprovacaoSchema.optional(),
+  },
 });
 export type ListContasPagarQuery = z.infer<typeof listContasPagarQuerySchema>;
 
@@ -143,6 +188,13 @@ export const contaPagarSchema = z.object({
   beneficiarioId: z.uuid().nullable(),
   beneficiarioNome: z.string().nullable(),
   status: contaPagarStatusSchema,
+  aprovacao: contaPagarAprovacaoSchema,
+  /** Quem aprovou (nome) e quando; `null` enquanto não aprovada. */
+  aprovadoPorNome: z.string().nullable(),
+  aprovadoEm: z.iso.datetime().nullable(),
+  recusadoPorNome: z.string().nullable(),
+  recusadoEm: z.iso.datetime().nullable(),
+  motivoRecusa: z.string().nullable(),
   /** Soma das baixas não canceladas. */
   valorPago: decimal,
   /** Competência contábil (`AAAA-MM`). */

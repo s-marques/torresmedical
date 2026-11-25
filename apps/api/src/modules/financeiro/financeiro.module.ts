@@ -4,6 +4,7 @@ import { ContasPagarLoteFonte } from './contas-pagar/contas-pagar-lote.fonte';
 import { forwardRef, Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { ComprasEstoqueModule } from '../compras-estoque/compras-estoque.module';
+import { ConfiguracoesGestaoModule } from '../configuracoes-gestao/configuracoes-gestao.module';
 import { GestaoProfissionaisModule } from '../gestao-profissionais/gestao-profissionais.module';
 import { RegulatorioQualidadeModule } from '../regulatorio-qualidade/regulatorio-qualidade.module';
 import { BandeirasController } from './bandeiras/bandeiras.controller';
@@ -34,6 +35,7 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
   imports: [
     forwardRef(() => ComprasEstoqueModule),
     forwardRef(() => GestaoProfissionaisModule),
+    forwardRef(() => ConfiguracoesGestaoModule),
     RegulatorioQualidadeModule,
   ],
   controllers: [

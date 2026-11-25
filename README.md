@@ -467,6 +467,35 @@ em `packages/shared/src/menu/menu.ts`).
 - **Relatório:** por profissional, enviados, recebidos e conversão (atendidos ÷ total, em %). Usuário
   restrito vê só as linhas dos próprios profissionais.
 
+## Contas a Pagar: aprovação antes da baixa (`/pagar`)
+
+Não há baixa sem confirmação de quem tem alçada (issue #164, R §16). A aprovação é um campo à parte
+de `status` (Pendente/Pago/Cancelado): `aprovacao` = `LANCADA` (aguardando), `APROVADA` ou
+`RECUSADA`. Regras confirmadas pelo dev:
+
+- **Quem aprova:** só quem tem `financeiro.contas-pagar.aprovar` (Administrador e Gerência; o
+  Financeiro lança e dá baixa, sem aprovar). **Quem lançou não aprova nem recusa a própria conta**
+  (422 `CONTA_PAGAR_APROVADOR_IGUAL_LANCADOR`), mesmo com a permissão. Quem lançou é `lancadoPorId`;
+  ao reenviar uma conta (ver abaixo), vale quem a reenviou.
+- **Baixa só de conta aprovada:** `POST /:id/baixar` em conta não aprovada responde 422
+  `CONTA_PAGAR_NAO_APROVADA`. O mesmo vale para marcar a conta como "Pago" pelo campo Status do modal
+  de edição ou criá-la já paga.
+- **API:** `POST /:id/aprovar` e `POST /:id/recusar` (corpo `{ motivo }`, obrigatório), ambos
+  auditados como `UPDATE` de `ContaPagar`; só conta pendente e aguardando aprovação (422
+  `CONTA_PAGAR_APROVACAO_INVALIDA`). A resposta traz quem aprovou ou recusou (nome), quando e o
+  motivo. `GET /contas-pagar?aprovacao=LANCADA|APROVADA|RECUSADA` filtra a lista.
+- **Reenvio:** editar conta recusada a devolve para aprovação (limpa a recusa). Em conta aprovada e
+  ainda não paga, mudar valor, vencimento, beneficiário ou documento também desfaz a aprovação; mudar
+  só descrição, observação ou outros campos não.
+- **Contas existentes:** a migration marca como `APROVADA` (sem aprovador) o que já estava lançado,
+  para não travar a baixa. As novas nascem `LANCADA`.
+- **Alerta (#160):** `CONTAS_PAGAR_AGUARDANDO_APROVACAO`, visível a quem tem a permissão de aprovar;
+  abre `/pagar?status=PENDENTE&aprovacao=LANCADA`.
+- **Tela:** coluna e filtro "Aprovação", ações Aprovar e Recusar no menu da linha e no detalhe, "Editar
+  Baixa" e "Baixar" só para conta aprovada.
+- **Fora do escopo (sem decisão do cliente):** limite de valor por aprovador e aprovação automática
+  de contas recorrentes (o sistema ainda não tem contas recorrentes).
+
 ## Relatórios (`ReportPage` + `common/relatorios`)
 
 As 7 telas de Relatórios usam a mesma estrutura: seletor de relatório, período De/Até e o

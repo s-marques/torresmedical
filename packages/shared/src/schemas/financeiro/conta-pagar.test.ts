@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   baixarContaPagarSchema,
+  CONTA_PAGAR_APROVACOES,
+  CONTA_PAGAR_ROTULO_APROVACAO,
+  recusarContaPagarSchema,
   createContaPagarSchema,
   listContasPagarQuerySchema,
   statusExibicaoContaPagar,
@@ -104,5 +107,33 @@ describe('baixarContaPagarSchema', () => {
       formaPagamentoId: null,
       contaBancariaId: null,
     });
+  });
+});
+
+describe('aprovação da conta a pagar (#164)', () => {
+  it('recusar exige o motivo, sem espaços nas pontas e com limite', () => {
+    expect(recusarContaPagarSchema.safeParse({}).error?.issues[0]?.message).toBe(
+      'Motivo é obrigatório.',
+    );
+    expect(recusarContaPagarSchema.safeParse({ motivo: '   ' }).success).toBe(false);
+    expect(recusarContaPagarSchema.parse({ motivo: '  Valor errado ' })).toEqual({
+      motivo: 'Valor errado',
+    });
+    expect(recusarContaPagarSchema.safeParse({ motivo: 'x'.repeat(501) }).success).toBe(false);
+    expect(recusarContaPagarSchema.safeParse({ motivo: 'ok', extra: 1 }).success).toBe(false);
+  });
+
+  it('a listagem aceita o filtro de aprovação e rejeita valor desconhecido', () => {
+    expect(listContasPagarQuerySchema.parse({ aprovacao: 'LANCADA' }).aprovacao).toBe('LANCADA');
+    expect(listContasPagarQuerySchema.parse({}).aprovacao).toBeUndefined();
+    expect(listContasPagarQuerySchema.safeParse({ aprovacao: 'OUTRA' }).success).toBe(false);
+  });
+
+  it('os rótulos cobrem todas as situações', () => {
+    expect(CONTA_PAGAR_APROVACOES.map((a) => CONTA_PAGAR_ROTULO_APROVACAO[a])).toEqual([
+      'Aguardando aprovação',
+      'Aprovada',
+      'Recusada',
+    ]);
   });
 });

@@ -56,5 +56,8 @@
   "EXPORTACAO_EM_ANDAMENTO": "An export of this entity is already in progress",
   "EXPORTACAO_INDISPONIVEL": "This export is not available yet",
   "EXPORTACAO_EXPIRADA": "This export link has expired. Request a new export",
-  "EXPORT_LIMIT_EXCEEDED": "The export exceeds the allowed limit. Refine the filters"
+  "EXPORT_LIMIT_EXCEEDED": "The export exceeds the allowed limit. Refine the filters",
+  "CONTA_PAGAR_NAO_APROVADA": "The payable must be approved before it is paid",
+  "CONTA_PAGAR_APROVADOR_IGUAL_LANCADOR": "Whoever entered the payable cannot approve or reject it",
+  "CONTA_PAGAR_APROVACAO_INVALIDA": "Only a pending payable awaiting approval can be approved or rejected"
 }

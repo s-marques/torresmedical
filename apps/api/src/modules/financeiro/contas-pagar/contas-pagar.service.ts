@@ -8,16 +8,22 @@ import {
   type ContaPagarBaixa,
   type ContaPagarExportColumn,
   type ContaPagarStatus,
+  CONTA_PAGAR_APROVACAO_INVALIDA,
+  CONTA_PAGAR_APROVADOR_IGUAL_LANCADOR,
   CONTA_PAGAR_BAIXA_DIVERGENTE,
+  CONTA_PAGAR_NAO_APROVADA,
   type CreateContaPagarInput,
   type ExportContasPagarQuery,
   type ListContasPagarQuery,
+  type RecusarContaPagarInput,
   type UpdateContaPagarInput,
 } from '@torres/shared';
 import { Prisma } from '../../../generated/prisma/client';
+import { UsuariosService } from '../../configuracoes-gestao/usuarios/usuarios.service';
 import { FornecedoresService } from '../../compras-estoque/fornecedores/fornecedores.service';
 import { FuncionariosService } from '../../regulatorio-qualidade/funcionarios/funcionarios.service';
 import { CentrosCustoService } from '../centros-custo/centros-custo.service';
+import { RequestContextService } from '../../../common/context/request-context.service';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
 import { ExportService, selectColumns } from '../../../common/export/export.service';
@@ -102,6 +108,8 @@ export class ContasPagarService {
     private readonly funcionarios: FuncionariosService,
     private readonly centrosCusto: CentrosCustoService,
     private readonly duplicidade: ContasPagarDuplicidadeService,
+    private readonly usuarios: UsuariosService,
+    private readonly contexto: RequestContextService,
   ) {}
 
   async list(query: ListContasPagarQuery): Promise<Page<ContaPagar>> {
@@ -112,21 +120,24 @@ export class ContasPagarService {
         this.txHost.tx.contaPagar.findMany({ where, orderBy, include: INCLUDE, ...p }),
       count: () => this.txHost.tx.contaPagar.count({ where }),
     });
-    const data = await Promise.all(page.data.map((c) => this.toContaPagar(c)));
+    const nomes = await this.nomesDecisores(page.data);
+    const data = await Promise.all(page.data.map((c) => this.toContaPagar(c, nomes)));
     return { ...page, data };
   }
 
   async findById(id: string): Promise<ContaPagar> {
     const conta = await this.buscarAtiva(id);
-    return this.toContaPagar(conta);
+    return this.toContaPagar(conta, await this.nomesDecisores([conta]));
   }
 
   async create(input: CreateContaPagarInput): Promise<ContaPagar> {
     await this.validarBeneficiario(input.beneficiarioTipo, input.beneficiarioId);
     await this.validarCentroCusto(input.centroCustoId);
+    // Conta nova nasce aguardando aprovação: não pode ser criada já paga (issue #164).
+    this.exigirAprovadaParaPago(input.status, 'LANCADA');
     const candidatos = await this.duplicidade.exigirConfirmacao(input, input.duplicidadeConfirmada);
     const conta = await this.txHost.tx.contaPagar.create({
-      data: this.dados(input),
+      data: { ...this.dados(input), lancadoPorId: this.contexto.getUserId() ?? null },
       include: INCLUDE,
     });
     await this.duplicidade.registrarConfirmacao(conta.id, candidatos);
@@ -134,9 +145,11 @@ export class ContasPagarService {
   }
 
   async update(id: string, input: UpdateContaPagarInput): Promise<ContaPagar> {
-    await this.buscarAtiva(id);
+    const atual = await this.buscarAtiva(id);
     await this.validarBeneficiario(input.beneficiarioTipo, input.beneficiarioId);
     await this.validarCentroCusto(input.centroCustoId);
+    const reenviar = this.exigeNovaAprovacao(atual, input);
+    this.exigirAprovadaParaPago(input.status, reenviar ? 'LANCADA' : atual.aprovacao, atual.status);
     const candidatos = await this.duplicidade.exigirConfirmacao(
       input,
       input.duplicidadeConfirmada,
@@ -144,11 +157,22 @@ export class ContasPagarService {
     );
     const conta = await this.txHost.tx.contaPagar.update({
       where: { id },
-      data: this.dados(input),
+      data: {
+        ...this.dados(input),
+        ...(reenviar && {
+          aprovacao: 'LANCADA' as const,
+          lancadoPorId: this.contexto.getUserId() ?? null,
+          aprovadoPorId: null,
+          aprovadoEm: null,
+          recusadoPorId: null,
+          recusadoEm: null,
+          motivoRecusa: null,
+        }),
+      },
       include: INCLUDE,
     });
     await this.duplicidade.registrarConfirmacao(id, candidatos);
-    return this.toContaPagar(conta);
+    return this.toContaPagar(conta, await this.nomesDecisores([conta]));
   }
 
   /** Exclusão lógica: histórico financeiro. */
@@ -184,6 +208,12 @@ export class ContasPagarService {
     if (conta.status === 'PAGO') {
       throw new BusinessException(ErrorCode.BUSINESS_RULE, 'Esta conta já está paga.');
     }
+    if (conta.aprovacao !== 'APROVADA') {
+      throw new BusinessException(
+        CONTA_PAGAR_NAO_APROVADA,
+        'A conta precisa ser aprovada antes da baixa.',
+      );
+    }
     if (input.formaPagamentoId) await this.buscarFormaPagamento(input.formaPagamentoId);
     if (input.contaBancariaId) await this.buscarContaBancaria(input.contaBancariaId);
 
@@ -205,6 +235,42 @@ export class ContasPagarService {
       },
     });
     return this.recalcularStatus(id);
+  }
+
+  /** Aprova a conta aguardando aprovação (issue #164). Quem lançou não aprova a própria. */
+  async aprovar(id: string): Promise<ContaPagar> {
+    const usuarioId = this.exigirDecisor(await this.buscarAtiva(id));
+    const conta = await this.txHost.tx.contaPagar.update({
+      where: { id },
+      data: {
+        aprovacao: 'APROVADA',
+        aprovadoPorId: usuarioId,
+        aprovadoEm: new Date(),
+        recusadoPorId: null,
+        recusadoEm: null,
+        motivoRecusa: null,
+      },
+      include: INCLUDE,
+    });
+    return this.toContaPagar(conta, await this.nomesDecisores([conta]));
+  }
+
+  /** Recusa a conta aguardando aprovação, com motivo. Editar a conta a reenvia para aprovação. */
+  async recusar(id: string, input: RecusarContaPagarInput): Promise<ContaPagar> {
+    const usuarioId = this.exigirDecisor(await this.buscarAtiva(id));
+    const conta = await this.txHost.tx.contaPagar.update({
+      where: { id },
+      data: {
+        aprovacao: 'RECUSADA',
+        recusadoPorId: usuarioId,
+        recusadoEm: new Date(),
+        motivoRecusa: input.motivo,
+        aprovadoPorId: null,
+        aprovadoEm: null,
+      },
+      include: INCLUDE,
+    });
+    return this.toContaPagar(conta, await this.nomesDecisores([conta]));
   }
 
   /** "Cancelar Baixa": exclusão lógica da baixa mais recente e recálculo do status. */
@@ -235,7 +301,8 @@ export class ContasPagarService {
       orderBy: this.orderBy(query.sort),
       include: INCLUDE,
     });
-    const data = await Promise.all(rows.map((c) => this.toContaPagar(c)));
+    const nomes = await this.nomesDecisores(rows);
+    const data = await Promise.all(rows.map((c) => this.toContaPagar(c, nomes)));
     return this.exportService.export({
       format: query.format,
       title: 'Contas a Pagar',
@@ -243,6 +310,64 @@ export class ContasPagarService {
       columns: selectColumns(CONTA_PAGAR_EXPORT_DEFINITIONS, query.columns),
       rows: data,
     });
+  }
+
+  /** Devolve o usuário logado se ele pode decidir sobre a conta; senão, erro de negócio. */
+  private exigirDecisor(conta: ContaPagarComRelacoes): string {
+    if (conta.status !== 'PENDENTE' || conta.aprovacao !== 'LANCADA') {
+      throw new BusinessException(
+        CONTA_PAGAR_APROVACAO_INVALIDA,
+        'Só uma conta pendente e aguardando aprovação pode ser aprovada ou recusada.',
+      );
+    }
+    const usuarioId = this.contexto.getUserId();
+    if (!usuarioId || usuarioId === conta.lancadoPorId) {
+      throw new BusinessException(
+        CONTA_PAGAR_APROVADOR_IGUAL_LANCADOR,
+        'Quem lançou a conta não pode aprová-la nem recusá-la.',
+      );
+    }
+    return usuarioId;
+  }
+
+  /**
+   * A aprovação vale para o que foi aprovado: mudar valor, vencimento, beneficiário ou documento de
+   * conta aprovada ainda não paga a devolve para aprovação. Conta recusada, ao ser editada, é
+   * reenviada.
+   */
+  private exigeNovaAprovacao(atual: ContaPagarComRelacoes, input: UpdateContaPagarInput): boolean {
+    if (atual.aprovacao === 'RECUSADA') return true;
+    if (atual.aprovacao !== 'APROVADA' || atual.status !== 'PENDENTE') return false;
+    const beneficiarioAtual = atual.fornecedorId ?? atual.funcionarioId;
+    return (
+      !atual.valor.equals(new Prisma.Decimal(input.valor)) ||
+      atual.dataVencimento.toISOString().slice(0, 10) !== input.dataVencimento ||
+      atual.beneficiarioTipo !== input.beneficiarioTipo ||
+      beneficiarioAtual !== input.beneficiarioId ||
+      (atual.documento ?? null) !== (input.documento ?? null)
+    );
+  }
+
+  /** "Pago" só pela baixa, que exige conta aprovada: o campo Status do modal não contorna isso. */
+  private exigirAprovadaParaPago(
+    status: ContaPagarStatus,
+    aprovacao: string,
+    statusAtual?: ContaPagarStatus,
+  ): void {
+    if (status === 'PAGO' && statusAtual !== 'PAGO' && aprovacao !== 'APROVADA') {
+      throw new BusinessException(
+        CONTA_PAGAR_NAO_APROVADA,
+        'A conta precisa ser aprovada antes de ser marcada como paga.',
+      );
+    }
+  }
+
+  /** `id → nome` de quem aprovou ou recusou as contas, numa consulta só. */
+  private nomesDecisores(
+    contas: readonly { aprovadoPorId?: string | null; recusadoPorId?: string | null }[],
+  ): Promise<ReadonlyMap<string, string>> {
+    const ids = contas.flatMap((c) => [c.aprovadoPorId, c.recusadoPorId]).filter((id) => !!id);
+    return this.usuarios.nomesPorIds(ids as string[]);
   }
 
   /** Recalcula o total pago e o status (Pago quando atinge o valor; Pendente caso contrário). */
@@ -341,7 +466,10 @@ export class ContasPagarService {
     return nomeBeneficiario(this.fornecedores, this.funcionarios, tipo, beneficiarioId);
   }
 
-  private async toContaPagar(conta: ContaPagarComRelacoes): Promise<ContaPagar> {
+  private async toContaPagar(
+    conta: ContaPagarComRelacoes,
+    nomes: ReadonlyMap<string, string> = new Map(),
+  ): Promise<ContaPagar> {
     const beneficiarioId = conta.fornecedorId ?? conta.funcionarioId;
     return {
       ...camposContaFinanceira(conta),
@@ -349,6 +477,12 @@ export class ContasPagarService {
       beneficiarioId,
       beneficiarioNome: await this.nomeBeneficiario(conta.beneficiarioTipo, beneficiarioId),
       status: conta.status,
+      aprovacao: conta.aprovacao,
+      aprovadoPorNome: (conta.aprovadoPorId && nomes.get(conta.aprovadoPorId)) || null,
+      aprovadoEm: conta.aprovadoEm?.toISOString() ?? null,
+      recusadoPorNome: (conta.recusadoPorId && nomes.get(conta.recusadoPorId)) || null,
+      recusadoEm: conta.recusadoEm?.toISOString() ?? null,
+      motivoRecusa: conta.motivoRecusa,
       valorPago: somaBaixas(conta.baixas).toString(),
       competencia: conta.competencia,
       centroCustoId: conta.centroCustoId,
@@ -379,8 +513,14 @@ export class ContasPagarService {
   }
 
   private where(
-    query: Pick<ListContasPagarQuery, 'search' | 'status' | 'vencimentoDe' | 'vencimentoAte'>,
+    query: Pick<
+      ListContasPagarQuery,
+      'search' | 'status' | 'vencimentoDe' | 'vencimentoAte' | 'aprovacao'
+    >,
   ): Prisma.ContaPagarWhereInput {
-    return whereContaFinanceira<ContaPagarStatus, Prisma.ContaPagarWhereInput>(query);
+    return {
+      ...whereContaFinanceira<ContaPagarStatus, Prisma.ContaPagarWhereInput>(query),
+      aprovacao: query.aprovacao,
+    };
   }
 }

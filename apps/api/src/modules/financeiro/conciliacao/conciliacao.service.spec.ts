@@ -29,6 +29,13 @@ const PAGAR = {
   competencia: null,
   centroCustoId: null,
   documentoArquivoId: null,
+  aprovacao: 'APROVADA' as const,
+  lancadoPorId: null,
+  aprovadoPorId: null,
+  aprovadoEm: null,
+  recusadoPorId: null,
+  recusadoEm: null,
+  motivoRecusa: null,
   baixas: [{ dataPagamento: new Date('2026-10-05T00:00:00.000Z') }],
 };
 const RECEBER = {

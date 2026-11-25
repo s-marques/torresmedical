@@ -1,4 +1,6 @@
 import type { TransactionHost } from '@nestjs-cls/transactional';
+import type { RequestContextService } from '../../../common/context/request-context.service';
+import type { UsuariosService } from '../../configuracoes-gestao/usuarios/usuarios.service';
 import { Prisma } from '../../../generated/prisma/client';
 import type { ExportService } from '../../../common/export/export.service';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
@@ -10,6 +12,8 @@ import { CONTA_PAGAR_EXPORT_DEFINITIONS, ContasPagarService } from './contas-pag
 
 const ID = '0b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 const FORNECEDOR_ID = '1c9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
+const LANCADOR_ID = '3e9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
+const APROVADOR_ID = '4f9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 const CENTRO_ID = '2d9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 const CONTA = {
   id: ID,
@@ -28,6 +32,13 @@ const CONTA = {
   competencia: null,
   centroCustoId: null,
   documentoArquivoId: null,
+  aprovacao: 'APROVADA' as 'LANCADA' | 'APROVADA' | 'RECUSADA',
+  lancadoPorId: LANCADOR_ID as string | null,
+  aprovadoPorId: null as string | null,
+  aprovadoEm: null as Date | null,
+  recusadoPorId: null as string | null,
+  recusadoEm: null as Date | null,
+  motivoRecusa: null as string | null,
   documento: null,
   totalParcelas: 1,
   status: 'PENDENTE' as const,
@@ -72,6 +83,10 @@ function setup() {
     exigirConfirmacao: jest.fn().mockResolvedValue([]),
     registrarConfirmacao: jest.fn().mockResolvedValue(undefined),
   };
+  const usuarios = {
+    nomesPorIds: jest.fn().mockResolvedValue(new Map([[APROVADOR_ID, 'Gerente Teste']])),
+  };
+  const contexto = { getUserId: jest.fn().mockReturnValue(APROVADOR_ID) };
   const service = new ContasPagarService(
     txHost,
     exportService as unknown as ExportService,
@@ -79,8 +94,12 @@ function setup() {
     funcionarios as unknown as FuncionariosService,
     centrosCusto as unknown as CentrosCustoService,
     duplicidade as unknown as ContasPagarDuplicidadeService,
+    usuarios as unknown as UsuariosService,
+    contexto as unknown as RequestContextService,
   );
   return {
+    usuarios,
+    contexto,
     service,
     contaPagar,
     contaPagarBaixa,
@@ -470,5 +489,150 @@ describe('ContasPagarService: centro de custo, anexo e duplicidade (#163)', () =
       ID,
     );
     expect(duplicidade.registrarConfirmacao).toHaveBeenCalledWith(ID, []);
+  });
+});
+
+describe('ContasPagarService: aprovação antes da baixa (#164)', () => {
+  const aguardando = { ...CONTA, aprovacao: 'LANCADA' as const };
+
+  it('baixar recusa conta que não foi aprovada e nada é gravado', async () => {
+    for (const aprovacao of ['LANCADA', 'RECUSADA'] as const) {
+      const { service, contaPagar, contaPagarBaixa } = setup();
+      contaPagar.findFirst.mockResolvedValue({ ...CONTA, aprovacao });
+      await expect(service.baixar(ID, BAIXA)).rejects.toMatchObject({
+        code: 'CONTA_PAGAR_NAO_APROVADA',
+      });
+      expect(contaPagarBaixa.create).not.toHaveBeenCalled();
+    }
+  });
+
+  it('aprovar grava quem aprovou e quando, e devolve o nome do aprovador', async () => {
+    const { service, contaPagar } = setup();
+    contaPagar.findFirst.mockResolvedValue(aguardando);
+    contaPagar.update.mockResolvedValue({
+      ...CONTA,
+      aprovacao: 'APROVADA',
+      aprovadoPorId: APROVADOR_ID,
+      aprovadoEm: new Date('2026-11-05T10:00:00.000Z'),
+    });
+    const conta = await service.aprovar(ID);
+    expect(contaPagar.update.mock.calls[0][0].data).toMatchObject({
+      aprovacao: 'APROVADA',
+      aprovadoPorId: APROVADOR_ID,
+      aprovadoEm: expect.any(Date),
+      motivoRecusa: null,
+    });
+    expect(conta).toMatchObject({
+      aprovacao: 'APROVADA',
+      aprovadoPorNome: 'Gerente Teste',
+      aprovadoEm: '2026-11-05T10:00:00.000Z',
+    });
+  });
+
+  it('quem lançou a conta não aprova nem recusa a própria', async () => {
+    const { service, contaPagar, contexto } = setup();
+    contaPagar.findFirst.mockResolvedValue(aguardando);
+    contexto.getUserId.mockReturnValue(LANCADOR_ID);
+    await expect(service.aprovar(ID)).rejects.toMatchObject({
+      code: 'CONTA_PAGAR_APROVADOR_IGUAL_LANCADOR',
+    });
+    await expect(service.recusar(ID, { motivo: 'Valor errado' })).rejects.toMatchObject({
+      code: 'CONTA_PAGAR_APROVADOR_IGUAL_LANCADOR',
+    });
+    expect(contaPagar.update).not.toHaveBeenCalled();
+  });
+
+  it('só conta pendente e aguardando aprovação pode ser aprovada ou recusada', async () => {
+    const { service, contaPagar } = setup();
+    for (const conta of [
+      { ...CONTA, aprovacao: 'APROVADA' as const },
+      { ...aguardando, aprovacao: 'RECUSADA' as const },
+      { ...aguardando, status: 'PAGO' as never },
+      { ...aguardando, status: 'CANCELADO' as never },
+    ]) {
+      contaPagar.findFirst.mockResolvedValue(conta);
+      await expect(service.aprovar(ID)).rejects.toMatchObject({
+        code: 'CONTA_PAGAR_APROVACAO_INVALIDA',
+      });
+    }
+  });
+
+  it('recusar grava o motivo e quem recusou', async () => {
+    const { service, contaPagar } = setup();
+    contaPagar.findFirst.mockResolvedValue(aguardando);
+    await service.recusar(ID, { motivo: 'Boleto em duplicidade' });
+    expect(contaPagar.update.mock.calls[0][0].data).toMatchObject({
+      aprovacao: 'RECUSADA',
+      recusadoPorId: APROVADOR_ID,
+      recusadoEm: expect.any(Date),
+      motivoRecusa: 'Boleto em duplicidade',
+    });
+  });
+
+  it('create grava quem lançou e a conta nasce aguardando aprovação', async () => {
+    const { service, contaPagar, contexto } = setup();
+    contexto.getUserId.mockReturnValue(LANCADOR_ID);
+    await service.create(NOVA_CONTA);
+    const { data } = contaPagar.create.mock.calls[0][0];
+    expect(data.lancadoPorId).toBe(LANCADOR_ID);
+    expect(data.aprovacao).toBeUndefined();
+  });
+
+  it('create e update recusam o status Pago em conta que não foi aprovada', async () => {
+    const { service, contaPagar } = setup();
+    await expect(service.create({ ...NOVA_CONTA, status: 'PAGO' })).rejects.toMatchObject({
+      code: 'CONTA_PAGAR_NAO_APROVADA',
+    });
+    contaPagar.findFirst.mockResolvedValue(aguardando);
+    await expect(service.update(ID, { ...NOVA_CONTA, status: 'PAGO' })).rejects.toMatchObject({
+      code: 'CONTA_PAGAR_NAO_APROVADA',
+    });
+    expect(contaPagar.create).not.toHaveBeenCalled();
+    expect(contaPagar.update).not.toHaveBeenCalled();
+  });
+
+  it('update de conta aprovada que muda o valor devolve a conta para aprovação', async () => {
+    const { service, contaPagar, contexto } = setup();
+    contexto.getUserId.mockReturnValue(LANCADOR_ID);
+    contaPagar.findFirst.mockResolvedValue({ ...CONTA, aprovadoPorId: APROVADOR_ID });
+    await service.update(ID, { ...NOVA_CONTA, valor: 450 });
+    expect(contaPagar.update.mock.calls[0][0].data).toMatchObject({
+      aprovacao: 'LANCADA',
+      lancadoPorId: LANCADOR_ID,
+      aprovadoPorId: null,
+      aprovadoEm: null,
+    });
+  });
+
+  it('update de conta aprovada que não muda o que foi aprovado mantém a aprovação', async () => {
+    const { service, contaPagar } = setup();
+    await service.update(ID, { ...NOVA_CONTA, observacoes: 'Só uma observação' });
+    expect(contaPagar.update.mock.calls[0][0].data.aprovacao).toBeUndefined();
+  });
+
+  it('update de conta recusada a reenvia para aprovação, limpando o motivo', async () => {
+    const { service, contaPagar } = setup();
+    contaPagar.findFirst.mockResolvedValue({
+      ...CONTA,
+      aprovacao: 'RECUSADA',
+      motivoRecusa: 'Valor errado',
+    });
+    await service.update(ID, NOVA_CONTA);
+    expect(contaPagar.update.mock.calls[0][0].data).toMatchObject({
+      aprovacao: 'LANCADA',
+      motivoRecusa: null,
+      recusadoPorId: null,
+    });
+  });
+
+  it('list filtra por situação de aprovação', async () => {
+    const { service, contaPagar } = setup();
+    await service.list({
+      page: 1,
+      pageSize: 10,
+      sort: { field: 'dataVencimento', direction: 'asc' },
+      aprovacao: 'LANCADA',
+    } as never);
+    expect(contaPagar.findMany.mock.calls[0][0].where).toMatchObject({ aprovacao: 'LANCADA' });
   });
 });

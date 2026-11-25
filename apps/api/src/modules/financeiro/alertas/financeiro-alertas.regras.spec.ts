@@ -11,12 +11,21 @@ function criar(quantidade = 3) {
 }
 
 describe('FinanceiroAlertasRegras', () => {
-  it('expõe os três tipos do financeiro', () => {
+  it('expõe os tipos do financeiro', () => {
     expect(Object.keys(criar().porTipo)).toEqual([
       'CONTAS_PAGAR_VENCENDO',
       'CONTAS_PAGAR_VENCIDAS',
+      'CONTAS_PAGAR_AGUARDANDO_APROVACAO',
       'RECEBIVEIS_VENCIDOS',
     ]);
+  });
+
+  it('contas a pagar aguardando aprovação: pendentes lançadas, não excluídas (issue #164)', async () => {
+    const { porTipo, contaPagar } = criar(4);
+    await expect(porTipo.CONTAS_PAGAR_AGUARDANDO_APROVACAO?.contar(HOJE)).resolves.toBe(4);
+    expect(contaPagar.count).toHaveBeenCalledWith({
+      where: { deletedAt: null, status: 'PENDENTE', aprovacao: 'LANCADA' },
+    });
   });
 
   it('contas a pagar que vencem hoje: pendentes, não excluídas, vencimento = hoje', async () => {
