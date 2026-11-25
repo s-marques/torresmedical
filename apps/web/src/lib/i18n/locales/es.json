@@ -165,6 +165,14 @@
     "buscarTelaDescricao": "Escriba el nombre de la pantalla para ir a ella",
     "buscarTelaPlaceholder": "Buscar pantalla…",
     "nenhumaTela": "No se encontró ninguna pantalla.",
+    "buscando": "Buscando…",
+    "buscaTipos": {
+      "PACIENTE": "Pacientes",
+      "PROFISSIONAL": "Profesionales",
+      "CONTRATO": "Contratos",
+      "FORNECEDOR": "Proveedores",
+      "LEAD": "Leads"
+    },
     "tema": "Tema",
     "notificacoes": "Notificaciones",
     "nenhumaNotificacao": "No hay notificaciones",

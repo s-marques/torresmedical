@@ -8,6 +8,7 @@ import type {
   LookupItem,
   LookupQuery,
   UpdateFornecedorInput,
+  ItemBusca,
 } from '@torres/shared';
 import type { Fornecedor, Prisma } from '../../../generated/prisma/client';
 import {
@@ -104,6 +105,27 @@ export class FornecedoresService extends EntidadeLookupService<
       columns: selectColumns(FORNECEDOR_EXPORT_DEFINITIONS, query.columns),
       rows,
     });
+  }
+
+  /** Busca global do ⌘K (issue #159): razão social, nome fantasia, CNPJ/CPF e e-mail. */
+  async buscaGlobal(termo: string, limite: number): Promise<ItemBusca[]> {
+    const digitos = termo.replaceAll(/\D/g, '');
+    const texto = searchWhere(termo, ['nome', 'nomeFantasia', 'documento', 'email']);
+    const fornecedores = await this.txHost.tx.fornecedor.findMany({
+      where: {
+        ...NAO_EXCLUIDOS,
+        OR: [...(texto?.OR ?? []), ...(digitos ? [{ documento: { contains: digitos } }] : [])],
+      },
+      orderBy: [{ nome: 'asc' }, { id: 'asc' }],
+      take: limite,
+      select: { id: true, nome: true, nomeFantasia: true },
+    });
+    return fornecedores.map((f) => ({
+      id: f.id,
+      titulo: f.nome,
+      descricao: f.nomeFantasia,
+      rota: `/fornecedores?search=${encodeURIComponent(termo)}`,
+    }));
   }
 
   private where(

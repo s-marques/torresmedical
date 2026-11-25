@@ -334,6 +334,8 @@ export type ExportContratosSalaQuery = z.infer<typeof exportContratosSalaQuerySc
 
 export const contratoSalaSchema = z.object({
   id: z.uuid(),
+  /** Número do contrato (busca global, issue #159). */
+  numero: z.number().int().positive(),
   modalidade: contratoModalidadeSchema,
   salaId: z.uuid(),
   salaNome: z.string(),

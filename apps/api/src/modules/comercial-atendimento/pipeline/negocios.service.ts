@@ -13,6 +13,7 @@ import {
   type Quadro,
   type QuadroQuery,
   type Responsavel,
+  type ItemBusca,
 } from '@torres/shared';
 import { Prisma } from '../../../generated/prisma/client';
 import type { EstagioPipeline } from '../../../generated/prisma/client';
@@ -439,6 +440,25 @@ export class NegociosService {
     }
     if (input.responsavelId) await this.usuarios.garantirAtivo(input.responsavelId, 'Responsável');
     if (input.origemClienteId) await this.origens.findById(input.origemClienteId);
+  }
+
+  /**
+   * Busca global do ⌘K (issue #159): negócios em aberto (leads) pelo título ou pelo contato
+   * (nome, CPF, telefone, CRM). Não aplica o escopo: quem chama já o aplicou.
+   */
+  async buscaGlobal(termo: string, limite: number): Promise<ItemBusca[]> {
+    const negocios = await this.txHost.tx.negocio.findMany({
+      where: { ...NAO_EXCLUIDOS, status: 'ABERTO', ...(await this.whereBusca(termo)) },
+      orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+      take: limite,
+      select: { id: true, titulo: true },
+    });
+    return negocios.map((n) => ({
+      id: n.id,
+      titulo: n.titulo,
+      descricao: null,
+      rota: `/negocios?search=${encodeURIComponent(termo)}`,
+    }));
   }
 
   /** "Buscar cliente (nome, tel, CPF, CNPJ)": título do negócio ou contato (paciente/profissional). */

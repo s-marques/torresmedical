@@ -192,6 +192,8 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     IndicadoresGestaoService,
     // Eventos do CRM na linha do tempo do profissional (#144).
     NegociosHistoricoService,
+    // Leads (negócios em aberto) na busca global do ⌘K (#159).
+    NegociosService,
   ],
 })
 export class ComercialAtendimentoModule {}

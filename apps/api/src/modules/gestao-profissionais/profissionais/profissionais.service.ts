@@ -14,6 +14,7 @@ import type {
   ProfissionalCor,
   ProfissionalExportColumn,
   UpdateProfissionalInput,
+  ItemBusca,
 } from '@torres/shared';
 import { textoMotivoClassificacao } from '@torres/shared';
 import type { Prisma, Profissional } from '../../../generated/prisma/client';
@@ -372,6 +373,33 @@ export class ProfissionaisService extends EntidadeLookupService<
       take: limite,
     });
     return profissionais.map((p) => p.id);
+  }
+
+  /**
+   * Busca global do ⌘K (issue #159): nome, CRM (registro), e-mail, telefone e CNPJ. `escopoIds`
+   * restringe aos profissionais do escopo do usuário (`null` = todos).
+   */
+  async buscaGlobal(
+    termo: string,
+    limite: number,
+    escopoIds: readonly string[] | null,
+  ): Promise<ItemBusca[]> {
+    const profissionais = await this.txHost.tx.profissional.findMany({
+      where: {
+        ...NAO_EXCLUIDOS,
+        ...(escopoIds === null ? {} : { id: { in: [...escopoIds] } }),
+        ...this.busca(termo),
+      },
+      orderBy: [{ nome: 'asc' }, { id: 'asc' }],
+      take: limite,
+      select: { id: true, nome: true, registro: true },
+    });
+    return profissionais.map((p) => ({
+      id: p.id,
+      titulo: p.nome,
+      descricao: p.registro,
+      rota: `/profissionais?search=${encodeURIComponent(termo)}`,
+    }));
   }
 
   private where(

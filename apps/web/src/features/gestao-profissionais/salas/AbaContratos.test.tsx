@@ -32,6 +32,7 @@ const ID_3 = '00000000-0000-4000-8000-0000000000b3';
 function contrato(parcial: Partial<ContratoSala>): ContratoSala {
   return {
     id: ID_1,
+    numero: 1,
     modalidade: 'TURNO',
     salaId: SALA_ID,
     salaNome: 'Sala Azul',
