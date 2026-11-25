@@ -36,6 +36,8 @@ import { ReceitaProfissionaisController } from './receita-profissionais/receita-
 import { ReceitaProfissionaisService } from './receita-profissionais/receita-profissionais.service';
 import { ProfissionaisDocumentosController } from './profissionais/profissionais-documentos.controller';
 import { ProfissionaisDocumentosService } from './profissionais/profissionais-documentos.service';
+import { ProfissionaisHistoricoController } from './profissionais/profissionais-historico.controller';
+import { ProfissionaisHistoricoService } from './profissionais/profissionais-historico.service';
 import { ProfissionaisOnboardingController } from './profissionais/profissionais-onboarding.controller';
 import { ProfissionaisOnboardingService } from './profissionais/profissionais-onboarding.service';
 import { ProfissionalAgendaService } from './profissionais/profissional-agenda.service';
@@ -62,6 +64,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ProfissionaisController,
     ProfissionaisDocumentosController,
     ProfissionaisOnboardingController,
+    ProfissionaisHistoricoController,
     ProfissionaisClassificacaoController,
     EspecialidadesController,
     ServicosProfissionaisController,
@@ -82,6 +85,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ProfissionalAgendaService,
     ProfissionaisDocumentosService,
     ProfissionaisOnboardingService,
+    ProfissionaisHistoricoService,
     ProfissionaisClassificacaoService,
     ProfissionaisClassificacaoAgendador,
     ServicosProfissionaisService,

@@ -4,6 +4,10 @@ import {
   atividadeNegocioInputSchema,
   atividadeNegocioSchema,
   moverNegocioSchema,
+  negocioProfissionalInputSchema,
+  negocioVinculavelPageSchema,
+  negocioVinculavelQuerySchema,
+  negocioVinculoSchema,
   negocioInputSchema,
   negocioSchema,
   perderNegocioSchema,
@@ -13,6 +17,9 @@ import {
   type AtividadeNegocio,
   type AtividadeNegocioInput,
   type MoverNegocioInput,
+  type NegocioProfissionalInput,
+  type NegocioVinculavelQuery,
+  type NegocioVinculo,
   type Negocio,
   type NegocioInput,
   type PerderNegocioInput,
@@ -31,6 +38,7 @@ import {
 import { IdParam } from '../../../common/validation/id-param.decorator';
 import { ZodValidationPipe } from '../../../common/validation/zod-validation.pipe';
 import { AtividadesService } from '../atividades/atividades.service';
+import { NegociosHistoricoService } from './negocios-historico.service';
 import { NegociosService } from './negocios.service';
 
 const ENTITY = 'Negocio';
@@ -42,6 +50,7 @@ export class NegociosController {
   constructor(
     private readonly negocios: NegociosService,
     private readonly atividades: AtividadesService,
+    private readonly historico: NegociosHistoricoService,
   ) {}
 
   @Get('quadro')
@@ -66,6 +75,20 @@ export class NegociosController {
     return this.negocios.responsaveis();
   }
 
+  @Get('negocios/vinculaveis')
+  @RequirePermission('comercial-atendimento.pipeline.ver')
+  @ApiOperation({
+    summary: 'Negócios abertos ou ganhos ainda sem profissional ligado ("Vincular negócio", #144)',
+  })
+  @ApiZodQuery(negocioVinculavelQuerySchema)
+  @ApiZodResponse(200, negocioVinculavelPageSchema)
+  @ApiErrorResponses(400, 401, 403)
+  vinculaveis(
+    @Query(new ZodValidationPipe(negocioVinculavelQuerySchema)) query: NegocioVinculavelQuery,
+  ) {
+    return this.historico.vinculaveis(query);
+  }
+
   @Get('negocios/:id')
   @RequirePermission('comercial-atendimento.pipeline.ver')
   @ApiOperation({ summary: 'Detalhe do negócio, com a próxima ação' })
@@ -73,6 +96,22 @@ export class NegociosController {
   @ApiErrorResponses(400, 401, 403, 404)
   findById(@IdParam() id: string): Promise<Negocio> {
     return this.negocios.findById(id);
+  }
+
+  @Patch('negocios/:id/profissional')
+  @RequirePermission('comercial-atendimento.pipeline.editar')
+  @Audit({ entity: ENTITY })
+  @ApiOperation({
+    summary: 'Liga o negócio ao profissional quando o lead vira contrato (null desfaz, #144)',
+  })
+  @ApiZodBody(negocioProfissionalInputSchema)
+  @ApiZodResponse(200, negocioVinculoSchema)
+  @ApiErrorResponses(400, 401, 403, 404)
+  vincularProfissional(
+    @IdParam() id: string,
+    @Body(new ZodValidationPipe(negocioProfissionalInputSchema)) body: NegocioProfissionalInput,
+  ): Promise<NegocioVinculo> {
+    return this.historico.vincular(id, body.profissionalId);
   }
 
   @Post('negocios')
