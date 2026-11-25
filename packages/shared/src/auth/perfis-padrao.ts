@@ -252,7 +252,8 @@ export const PERFIS_PADRAO: readonly PerfilPadrao[] = [
     descricao: 'Agenda e prontuário dos pacientes vinculados ao médico',
     escopoDados: 'PROFISSIONAIS_VINCULADOS',
     telas: MEDICO,
-    extras: [],
+    // Só o médico assina o atendimento e registra adendo (issue #151).
+    extras: ['consultorio-assistencial.prontuarios.assinar'],
   },
   {
     nome: PERFIL_FINANCEIRO,
