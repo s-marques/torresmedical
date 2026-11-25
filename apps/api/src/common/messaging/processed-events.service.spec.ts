@@ -12,7 +12,9 @@ function setup(inseridos = 1) {
   };
   const txHost = {
     tx: { processedEvent },
-    withTransaction: jest.fn((fn: () => Promise<unknown>) => fn()),
+    withTransaction: jest.fn((a: unknown, b?: () => Promise<unknown>) =>
+      (typeof a === 'function' ? (a as () => Promise<unknown>) : (b as () => Promise<unknown>))(),
+    ),
   } as unknown as TransactionHost<PrismaAdapter>;
   const cls = { run: jest.fn((fn: () => unknown) => fn()) } as unknown as ClsService;
   const context = { setUserId: jest.fn() } as unknown as RequestContextService;
@@ -41,6 +43,16 @@ describe('ProcessedEventsService', () => {
       data: [{ eventId: envelope.eventId, consumer: 'financeiro.titulos' }],
       skipDuplicates: true,
     });
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('usa o timeout da transação do consumidor pesado, quando informado', async () => {
+    const { service, txHost } = setup();
+    const handler = jest.fn().mockResolvedValue(undefined);
+
+    await service.runOnce('configuracoes-gestao.exportacao', envelope, handler, 600_000);
+
+    expect(txHost.withTransaction).toHaveBeenCalledWith({ timeout: 600_000 }, expect.any(Function));
     expect(handler).toHaveBeenCalledTimes(1);
   });
 

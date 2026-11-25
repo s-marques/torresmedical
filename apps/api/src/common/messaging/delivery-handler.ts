@@ -69,7 +69,12 @@ export class DeliveryHandler {
 
     let result: 'processed' | 'duplicate';
     try {
-      result = await this.processedEvents.runOnce(queue, envelope, () => instance.handle(envelope));
+      result = await this.processedEvents.runOnce(
+        queue,
+        envelope,
+        () => instance.handle(envelope),
+        options.transactionTimeoutMs,
+      );
     } catch (err) {
       if (attempt >= this.config.maxAttempts) {
         return this.deadLetter(channel, message, log, errorType(err));

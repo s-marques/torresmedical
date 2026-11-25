@@ -237,6 +237,8 @@ export const PRONTUARIO_ACESSO_RECURSOS = [
   'ANEXOS',
   'DOCUMENTOS',
   'VERSOES',
+  /** Exportação do prontuário completo em PDF (issue #158). */
+  'EXPORTACAO',
 ] as const;
 
 export const prontuarioAcessoRecursoSchema = z.enum(PRONTUARIO_ACESSO_RECURSOS, {
@@ -269,3 +271,20 @@ export type ProntuarioAcesso = z.infer<typeof prontuarioAcessoSchema>;
 
 export const prontuarioAcessoPageSchema = paginatedResponseSchema(prontuarioAcessoSchema);
 export type ProntuarioAcessoPage = z.infer<typeof prontuarioAcessoPageSchema>;
+
+// --- Exportação do prontuário completo (issue #158) --------------------------------------------
+
+/**
+ * Filtros de `GET /api/consultorio-assistencial/prontuarios/:pacienteId/exportar`.
+ * `profissionalId`: só os registros desse profissional (padrão: todos os do escopo do usuário).
+ * `incluirAnexos`: devolve um ZIP com o PDF e os arquivos anexados (padrão: só o PDF).
+ */
+export const exportProntuarioQuerySchema = z.object({
+  profissionalId: z.uuid({ error: 'Profissional inválido' }).optional(),
+  incluirAnexos: z
+    .enum(['true', 'false'], { error: 'Informe true ou false' })
+    .default('false')
+    .transform((valor) => valor === 'true'),
+});
+
+export type ExportProntuarioQuery = z.infer<typeof exportProntuarioQuerySchema>;

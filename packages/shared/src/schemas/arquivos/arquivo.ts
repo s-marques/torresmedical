@@ -27,6 +27,7 @@ export const ARQUIVO_FORMATOS = {
   mp3: { rotulo: 'MP3', mimes: ['audio/mpeg', 'audio/mp3'] },
   ogg: { rotulo: 'OGG', mimes: ['audio/ogg', 'audio/opus', 'application/ogg'] },
   mp4: { rotulo: 'MP4', mimes: ['video/mp4'] },
+  zip: { rotulo: 'ZIP', mimes: ['application/zip', 'application/x-zip-compressed'] },
 } as const satisfies Record<string, { rotulo: string; mimes: readonly [string, ...string[]] }>;
 
 export type ArquivoFormato = keyof typeof ARQUIVO_FORMATOS;
@@ -115,6 +116,12 @@ export const ARQUIVO_USOS = {
     descricao: 'Documento da Base de Conhecimento',
     formatos: ['pdf', 'txt', 'md', 'docx'],
     maxBytes: 10 * MB,
+  },
+  'exportacao-lote': {
+    descricao: 'ZIP gerado pela exportação em lote (issue #158)',
+    formatos: ['zip'],
+    maxBytes: 500 * MB,
+    privado: true,
   },
 } as const satisfies Record<string, ArquivoUsoConfig>;
 

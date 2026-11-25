@@ -705,6 +705,38 @@ como `PoliticaSeguranca`). Sem registro, valem os padrões de `POLITICA_PADRAO`
   `perfis_padrao_exportar_dados_pessoais`). O **relatório de exportações** é o atalho "Exportações" da
   tela Auditoria (`GET /api/auditoria?grupo=exportacoes`): quem exportou o quê e quando.
 
+## Exportação completa de dados (CSV, prontuário em PDF e lote)
+
+Issue #158 (R §39): a clínica precisa conseguir levar todos os seus dados. Três partes:
+
+- **CSV em qualquer grid.** `format=csv` vale em todo `GET .../export` (mesma query, filtros e colunas
+  de Excel e PDF), pelo `ExportService`. O arquivo é UTF-8 com BOM, separador `;`, números com vírgula
+  decimal e datas como no grid. Texto que começa com `= + - @` ganha um apóstrofo (CSV injection).
+  O teto de 10 mil linhas do grid continua valendo (422 `EXPORT_LIMIT_EXCEEDED`).
+- **Prontuário completo do paciente.** `GET /api/consultorio-assistencial/prontuarios/:pacienteId/exportar`
+  devolve o PDF com o prontuário, atendimentos (evoluções, receitas, documentos, anexos e adendos),
+  anamneses e prescrições. `?profissionalId=` restringe a um profissional e `?incluirAnexos=true`
+  devolve um ZIP com o PDF e os arquivos (até 100 MB de anexos). Segue o escopo por profissional
+  (#150, #153): só entram registros dos profissionais do usuário e fora do escopo é 403. Exige
+  `prontuarios.exportar` e `dados-pessoais.exportar`, grava `audit_log` `EXPORT` e o log de acesso
+  (`recurso EXPORTACAO`). Botão **Exportar prontuário** no cabeçalho da tela Prontuários.
+- **Exportação em lote por entidade.** Aba **Exportação de dados** em Minha Empresa (só administração:
+  `configuracoes-gestao.exportacao-lote.ver/executar` e `dados-pessoais.exportar`; perfil com escopo
+  restrito recebe 403). `POST /api/configuracoes-gestao/exportacoes-lote` grava o pedido
+  (`ExportacaoLote`, auditado) e publica `configuracoes-gestao.exportacao-lote.gerar`; o consumidor
+  `configuracoes-gestao.gerar-exportacao-lote` monta o ZIP (CSVs, `LEIAME.txt`, arquivos e o índice
+  `arquivos.csv`), guarda no storage (uso `exportacao-lote`, privado) e marca a conclusão. O download
+  (`GET .../:id/download`) exige login e permissão, é auditado (`EXPORT`) e vale por 24 horas
+  (depois, 410). Idempotente (só o pedido `PENDENTE` é processado), com um pedido por entidade por vez
+  (409) e falha com código estável (`ARQUIVOS_ACIMA_DO_LIMITE` acima de 200 MB de arquivos).
+
+Cada módulo dono registra a sua **fonte** (`FonteExportacaoLote`, em `common/export`): pacientes,
+agendamentos, profissionais, contratos de sala (com PDFs), contas a receber, contas a pagar e
+prontuários (com anexos). Para incluir uma entidade nova, estenda `FonteExportacaoLoteBase`, registre
+o provider no módulo e acrescente o id em `EXPORTACAO_LOTE_ENTIDADES` (`packages/shared`). O consumidor
+roda sem o teto de linhas (`ExportService.semLimite`) e com a transação de até 15 minutos
+(`transactionTimeoutMs` do `@MessageConsumer`).
+
 ## Scripts (na raiz)
 
 ```bash

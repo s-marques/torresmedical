@@ -67,7 +67,7 @@ describe('auxiliares', () => {
     expect(formatoDoArquivo('a.webp', 'avatar')).toBeUndefined();
     expect(acceptDoUso('extrato-conciliacao')).toBe('.ofx,.csv');
     expect(arquivoUsoConfig('avatar')).toBe(ARQUIVO_USOS.avatar);
-    expect(ARQUIVO_MAX_BYTES).toBe(16 * MB);
+    expect(ARQUIVO_MAX_BYTES).toBe(500 * MB);
   });
 });
 

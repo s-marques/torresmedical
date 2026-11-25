@@ -40,6 +40,7 @@
     "exportar": "Exportar",
     "excel": "Excel",
     "pdf": "PDF",
+    "csv": "CSV",
     "exportacaoInvalida": "Exportación no válida",
     "totalLinhas": "{{total}} fila(s) en total.",
     "linhasPorPagina": "Filas por página",
@@ -2122,5 +2123,57 @@
       "escolhaProfissional": "Seleccione el profesional para ver las plantillas.",
       "escala": "Seleccione…"
     }
+  },
+  "exportacaoLote": {
+    "aba": "Exportación de datos",
+    "titulo": "Exportación completa de datos",
+    "descricao": "Lleve todos los datos de la clínica: un ZIP con planillas CSV y archivos, generado en segundo plano y disponible por 24 horas.",
+    "aviso": "El archivo contiene datos personales y de salud (LGPD). Guárdelo con seguridad y bórrelo cuando ya no lo necesite. Cada solicitud y cada descarga quedan registradas en la auditoría.",
+    "entidade": "Qué exportar",
+    "selecione": "Seleccione la entidad",
+    "incluirArquivos": "Incluir los archivos (adjuntos y PDFs)",
+    "solicitar": "Solicitar exportación",
+    "solicitada": "Exportación solicitada. El archivo estará listo en instantes.",
+    "baixar": "Descargar ZIP",
+    "historico": "Exportaciones solicitadas",
+    "vazio": "Ninguna exportación solicitada",
+    "erroCarregar": "No fue posible cargar las entidades para exportar.",
+    "expirada": "Expirada",
+    "colunas": {
+      "entidade": "Entidad",
+      "situacao": "Estado",
+      "solicitadaEm": "Solicitada el",
+      "tamanho": "Tamaño",
+      "expiraEm": "Disponible hasta"
+    },
+    "status": {
+      "PENDENTE": "En cola",
+      "PROCESSANDO": "Generando",
+      "CONCLUIDA": "Lista",
+      "FALHOU": "Falló"
+    },
+    "erros": {
+      "ARQUIVOS_ACIMA_DO_LIMITE": "Los archivos superan el límite de un ZIP. Solicite de nuevo sin los archivos.",
+      "ENTIDADE_INDISPONIVEL": "Esta entidad no está disponible para exportación.",
+      "ERRO_PROCESSAMENTO": "No fue posible generar el archivo. Inténtelo de nuevo."
+    },
+    "entidades": {
+      "pacientes": "Pacientes",
+      "profissionais": "Profesionales",
+      "agendamentos": "Agendas (citas)",
+      "prontuarios": "Historias clínicas (con adjuntos)",
+      "contas-receber": "Finanzas: cuentas por cobrar",
+      "contas-pagar": "Finanzas: cuentas por pagar",
+      "contratos-sala": "Contratos de sala (con PDFs)"
+    }
+  },
+  "exportarProntuario": {
+    "botao": "Exportar historia clínica",
+    "titulo": "Exportar historia clínica completa",
+    "descricao": "PDF con la historia clínica, atenciones, anamnesis y prescripciones. Solo entran los registros de los profesionales a los que tiene acceso.",
+    "profissional": "Profesional",
+    "todosProfissionais": "Todos los profesionales a los que tengo acceso",
+    "incluirAnexos": "Incluir exámenes y adjuntos (genera un ZIP)",
+    "exportar": "Exportar"
   }
 }

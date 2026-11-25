@@ -99,6 +99,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'envios_confirmacao',
       'especialidades',
       'estagios_pipeline',
+      'exportacoes_lote',
       'formas_pagamento',
       'fornecedores',
       'funcionarios',

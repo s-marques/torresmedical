@@ -38,6 +38,7 @@ const ASSINATURAS: Readonly<Record<ArquivoFormato, Assinatura>> = {
   mp3: algum(ascii('ID3'), frameMpeg),
   ogg: ascii('OggS'),
   mp4: ascii('ftyp', 4),
+  zip: comeca([0x50, 0x4b]),
   ofx: texto,
   csv: texto,
   xml: texto,

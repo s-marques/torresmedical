@@ -21,6 +21,7 @@ import { AbaHistoricoClinico } from './AbaHistoricoClinico';
 import { AbaProntuario } from './AbaProntuario';
 import { AbaReceitas } from './AbaReceitas';
 import { CardPacientesComRegistros } from './CardPacientesComRegistros';
+import { BotaoExportarProntuario } from './BotaoExportarProntuario';
 import { PacienteHeaderProntuario } from './PacienteHeaderProntuario';
 import { useHistoricoClinico, usePacienteResumo } from './use-prontuarios';
 
@@ -120,7 +121,10 @@ function DetalhePaciente({
 
   return (
     <div className="grid gap-4">
-      <PacienteHeaderProntuario paciente={paciente} />
+      <PacienteHeaderProntuario
+        paciente={paciente}
+        acoes={<BotaoExportarProntuario pacienteId={pacienteId} />}
+      />
       <div
         role="tablist"
         aria-label="Seções do prontuário"

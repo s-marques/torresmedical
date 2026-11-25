@@ -471,6 +471,29 @@ describe('DataGrid', () => {
       expect((clique.mock.contexts[0] as HTMLAnchorElement).download).toBe('unidades.xlsx');
     });
 
+    it('exporta em CSV com os mesmos filtros da listagem', async () => {
+      URL.createObjectURL = vi.fn(() => 'blob:1');
+      URL.revokeObjectURL = vi.fn();
+      vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+      servidorMsw.use(
+        http.get(`${URL_LISTA}/export`, ({ request }) => {
+          (pedidos.export ??= []).push(new URL(request.url).searchParams);
+          return new HttpResponse('csv', {
+            headers: { 'Content-Disposition': 'attachment; filename="unidades.csv"' },
+          });
+        }),
+      );
+      const { user } = renderizar({}, '/lista?page=2&sort=nome:asc&status=ativo&search=centro');
+      await screen.findByText('Unidade 11');
+
+      await user.click(botao('Exportar'));
+      await user.click(await screen.findByRole('menuitem', { name: 'CSV' }));
+
+      await waitFor(() =>
+        expect(ultimo('export')).toMatchObject({ format: 'csv', search: 'centro' }),
+      );
+    });
+
     it('não envia exportação inválida para o schema', async () => {
       const { user } = renderizar({
         colunas: [{ id: 'empresaId', titulo: 'Empresa', exportavel: true }],

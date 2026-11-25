@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Post, Put, Query } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, Put, Query, StreamableFile } from '@nestjs/common';
+import { ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
 import {
   anamneseInputSchema,
   anamnesePageSchema,
@@ -7,6 +7,7 @@ import {
   atendimentoInputSchema,
   atendimentoPageSchema,
   atendimentoSchema,
+  exportProntuarioQuerySchema,
   historicoClinicoPageSchema,
   listPacientesComRegistrosQuerySchema,
   listProntuarioAcessosQuerySchema,
@@ -21,6 +22,7 @@ import {
   type Atendimento,
   type CreateAnamneseInput,
   type CreateAtendimentoInput,
+  type ExportProntuarioQuery,
   type HistoricoClinicoItem,
   type ListPacientesComRegistrosQuery,
   type ListProntuarioAcessosQuery,
@@ -33,7 +35,8 @@ import {
   type UpsertProntuarioInput,
 } from '@torres/shared';
 import { Audit } from '../../../common/audit/audit.decorator';
-import { RequirePermission } from '../../../common/auth/auth.decorators';
+import { ExportaDadosPessoais, RequirePermission } from '../../../common/auth/auth.decorators';
+import { toStreamableFile } from '../../../common/export/export-response';
 import type { Page } from '../../../common/pagination/paginate';
 import {
   ApiErrorResponses,
@@ -44,6 +47,7 @@ import {
 import { IdParam } from '../../../common/validation/id-param.decorator';
 import { ZodValidationPipe } from '../../../common/validation/zod-validation.pipe';
 import { AcessoProntuarioService } from './acesso-prontuario.service';
+import { ProntuarioExportacaoService } from './prontuario-exportacao.service';
 import { ProntuariosService } from './prontuarios.service';
 
 /** Tela Prontuários (`/prontuarios`): busca de paciente, prontuário, atendimentos, anamneses
@@ -54,6 +58,7 @@ export class ProntuariosController {
   constructor(
     private readonly prontuarios: ProntuariosService,
     private readonly acessos: AcessoProntuarioService,
+    private readonly exportacao: ProntuarioExportacaoService,
   ) {}
 
   @Get()
@@ -83,6 +88,24 @@ export class ProntuariosController {
     query: ListProntuarioAcessosQuery,
   ): Promise<ProntuarioAcessoPage> {
     return this.acessos.listar(query);
+  }
+
+  @Get(':pacienteId/exportar')
+  @RequirePermission('consultorio-assistencial.prontuarios.exportar')
+  @ExportaDadosPessoais()
+  @Audit({ entity: 'Prontuario', action: 'EXPORT', idParam: 'pacienteId' })
+  @ApiOperation({
+    summary:
+      'Prontuário completo em PDF (ou ZIP com os anexos), só dos profissionais do escopo do usuário',
+  })
+  @ApiZodQuery(exportProntuarioQuerySchema)
+  @ApiProduces('application/pdf', 'application/zip')
+  @ApiErrorResponses(400, 401, 403, 404, 422)
+  async exportar(
+    @IdParam('pacienteId') pacienteId: string,
+    @Query(new ZodValidationPipe(exportProntuarioQuerySchema)) query: ExportProntuarioQuery,
+  ): Promise<StreamableFile> {
+    return toStreamableFile(await this.exportacao.exportar(pacienteId, query));
   }
 
   @Get(':pacienteId/paciente')

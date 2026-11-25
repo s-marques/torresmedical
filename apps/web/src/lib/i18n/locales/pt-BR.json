@@ -40,6 +40,7 @@
     "exportar": "Exportar",
     "excel": "Excel",
     "pdf": "PDF",
+    "csv": "CSV",
     "exportacaoInvalida": "Exportação inválida",
     "totalLinhas": "{{total}} linha(s) no total.",
     "linhasPorPagina": "Linhas por página",
@@ -2014,5 +2015,57 @@
       "escolhaProfissional": "Selecione o profissional para ver os modelos.",
       "escala": "Selecione…"
     }
+  },
+  "exportacaoLote": {
+    "aba": "Exportação de dados",
+    "titulo": "Exportação completa de dados",
+    "descricao": "Leve todos os dados da clínica: um ZIP com planilhas CSV e arquivos, gerado em segundo plano e disponível por 24 horas.",
+    "aviso": "O arquivo contém dados pessoais e de saúde (LGPD). Guarde com segurança e apague quando não precisar mais. Cada pedido e cada download ficam registrados na auditoria.",
+    "entidade": "O que exportar",
+    "selecione": "Selecione a entidade",
+    "incluirArquivos": "Incluir os arquivos (anexos e PDFs)",
+    "solicitar": "Solicitar exportação",
+    "solicitada": "Exportação solicitada. O arquivo fica pronto em instantes.",
+    "baixar": "Baixar ZIP",
+    "historico": "Exportações solicitadas",
+    "vazio": "Nenhuma exportação solicitada",
+    "erroCarregar": "Não foi possível carregar as entidades para exportar.",
+    "expirada": "Expirada",
+    "colunas": {
+      "entidade": "Entidade",
+      "situacao": "Situação",
+      "solicitadaEm": "Solicitada em",
+      "tamanho": "Tamanho",
+      "expiraEm": "Disponível até"
+    },
+    "status": {
+      "PENDENTE": "Na fila",
+      "PROCESSANDO": "Gerando",
+      "CONCLUIDA": "Pronta",
+      "FALHOU": "Falhou"
+    },
+    "erros": {
+      "ARQUIVOS_ACIMA_DO_LIMITE": "Os arquivos passam do limite de um ZIP. Solicite de novo sem os arquivos.",
+      "ENTIDADE_INDISPONIVEL": "Esta entidade não está disponível para exportação.",
+      "ERRO_PROCESSAMENTO": "Não foi possível gerar o arquivo. Tente novamente."
+    },
+    "entidades": {
+      "pacientes": "Pacientes",
+      "profissionais": "Profissionais",
+      "agendamentos": "Agendas (agendamentos)",
+      "prontuarios": "Prontuários (com anexos)",
+      "contas-receber": "Financeiro: contas a receber",
+      "contas-pagar": "Financeiro: contas a pagar",
+      "contratos-sala": "Contratos de sala (com PDFs)"
+    }
+  },
+  "exportarProntuario": {
+    "botao": "Exportar prontuário",
+    "titulo": "Exportar prontuário completo",
+    "descricao": "PDF com o prontuário, atendimentos, anamneses e prescrições. Só entram os registros dos profissionais do seu acesso.",
+    "profissional": "Profissional",
+    "todosProfissionais": "Todos os profissionais do meu acesso",
+    "incluirAnexos": "Incluir exames e anexos (gera um ZIP)",
+    "exportar": "Exportar"
   }
 }

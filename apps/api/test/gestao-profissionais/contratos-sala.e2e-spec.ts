@@ -580,7 +580,7 @@ describe('Contratos de salas (e2e)', () => {
         permissoes: ['gestao-profissionais.salas.ver'],
       });
       await comUsuario(app, leitor).get(`${BASE}/export`).query({ format: 'xlsx' }).expect(403);
-      await http().get(`${BASE}/export`).query({ format: 'csv' }).expect(400);
+      await http().get(`${BASE}/export`).query({ format: 'docx' }).expect(400);
     });
   });
 });

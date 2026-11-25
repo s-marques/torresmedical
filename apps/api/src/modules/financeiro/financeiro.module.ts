@@ -1,4 +1,6 @@
 import { FinanceiroAlertasRegras } from './alertas/financeiro-alertas.regras';
+import { ContasReceberLoteFonte } from './contas-receber/contas-receber-lote.fonte';
+import { ContasPagarLoteFonte } from './contas-pagar/contas-pagar-lote.fonte';
 import { forwardRef, Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { ComprasEstoqueModule } from '../compras-estoque/compras-estoque.module';
@@ -49,6 +51,8 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
     criarLookupController('centros-custo', CentrosCustoService),
   ],
   providers: [
+    ContasReceberLoteFonte,
+    ContasPagarLoteFonte,
     FormasPagamentoService,
     BandeirasService,
     CaixasService,

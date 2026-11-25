@@ -66,6 +66,17 @@ describe('ExportService', () => {
     expect(file.buffer.subarray(0, 5).toString()).toBe('%PDF-');
   });
 
+  it('gera csv com o nome e o tipo do arquivo', async () => {
+    const file = await service.export(
+      { format: 'csv', title: 'Unidades', filename: 'unidades', columns: COLUMNS, rows: ROWS },
+      NOW,
+    );
+
+    expect(file.contentType).toBe('text/csv; charset=utf-8');
+    expect(file.filename).toBe('unidades-2026-10-13.csv');
+    expect(file.buffer.toString('utf8').split('\r\n')[1]).toBe('Ação;10,5;13/10/2026, 23:30');
+  });
+
   it('pdf com muitas linhas quebra página; sem linhas, informa vazio', async () => {
     const muitas = Array.from(
       { length: 200 },

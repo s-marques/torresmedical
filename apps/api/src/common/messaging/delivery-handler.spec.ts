@@ -70,7 +70,12 @@ describe('DeliveryHandler', () => {
 
     await expect(handler.handle(channel, msg, entry)).resolves.toBe('processed');
 
-    expect(processed.runOnce).toHaveBeenCalledWith(QUEUE, envelope, expect.any(Function));
+    expect(processed.runOnce).toHaveBeenCalledWith(
+      QUEUE,
+      envelope,
+      expect.any(Function),
+      undefined,
+    );
     expect(consumidor.handle).toHaveBeenCalledWith(envelope);
     expect(channel.ack).toHaveBeenCalledWith(msg);
   });

@@ -92,6 +92,7 @@ export class ContasPagarController {
   @ApiProduces(
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'application/pdf',
+    'text/csv',
   )
   @ApiErrorResponses(400, 401, 403, 422)
   async export(
@@ -124,6 +125,7 @@ export class ContasPagarController {
   @ApiProduces(
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'application/pdf',
+    'text/csv',
   )
   @ApiErrorResponses(400, 401, 403, 422)
   async exportDivergencias(

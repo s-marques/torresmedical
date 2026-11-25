@@ -3,6 +3,9 @@ import { ComercialAtendimentoModule } from '../comercial-atendimento/comercial-a
 import { GestaoProfissionaisModule } from '../gestao-profissionais/gestao-profissionais.module';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { criarRelatoriosController } from '../../common/relatorios/relatorios.controller';
+import { ExportacaoLoteController } from './exportacao-lote/exportacao-lote.controller';
+import { ExportacaoLoteService } from './exportacao-lote/exportacao-lote.service';
+import { GerarExportacaoLoteConsumer } from './exportacao-lote/gerar-exportacao-lote.consumer';
 import { AiGrowthController } from './ai-growth/ai-growth.controller';
 import { AiGrowthService } from './ai-growth/ai-growth.service';
 import { AnalisarAiGrowthConsumer } from './ai-growth/analisar-ai-growth.consumer';
@@ -88,6 +91,7 @@ const SERVICES = [
     AgenteAlertasDestinosController,
     AgenteRegrasController,
     AiGrowthController,
+    ExportacaoLoteController,
     CanaisWhatsappController,
     PerfisAcessoController,
     UsuariosController,
@@ -100,7 +104,13 @@ const SERVICES = [
     criarLookupController('usuarios', UsuariosLookupService),
     criarRelatoriosController('configuracoes-gestao.relatorios', RelatoriosGestao),
   ],
-  providers: [...SERVICES, RelatoriosGestao, AnalisarAiGrowthConsumer],
+  providers: [
+    ...SERVICES,
+    ExportacaoLoteService,
+    RelatoriosGestao,
+    AnalisarAiGrowthConsumer,
+    GerarExportacaoLoteConsumer,
+  ],
   exports: SERVICES,
 })
 export class ConfiguracoesGestaoModule {}

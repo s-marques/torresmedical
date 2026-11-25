@@ -1,4 +1,5 @@
 import { PACIENTE_SEXO_ROTULOS, type PacienteResumoProntuario } from '@torres/shared';
+import type { ReactNode } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatarData } from '@/lib/formatar';
@@ -15,10 +16,15 @@ function iniciais(nome: string): string {
 
 export interface PacienteHeaderProntuarioProps {
   paciente: PacienteResumoProntuario;
+  /** Ações do cabeçalho, à direita (ex.: exportar o prontuário). */
+  acoes?: ReactNode;
 }
 
 /** Cabeçalho do paciente ao abrir o prontuário: avatar, nome e dados de contato. */
-export function PacienteHeaderProntuario({ paciente }: Readonly<PacienteHeaderProntuarioProps>) {
+export function PacienteHeaderProntuario({
+  paciente,
+  acoes,
+}: Readonly<PacienteHeaderProntuarioProps>) {
   const contato = [paciente.email, paciente.celular ?? paciente.telefone].filter(Boolean);
 
   return (
@@ -39,6 +45,7 @@ export function PacienteHeaderProntuario({ paciente }: Readonly<PacienteHeaderPr
             {paciente.sexo && <span>Sexo: {PACIENTE_SEXO_ROTULOS[paciente.sexo]}</span>}
           </div>
         </div>
+        {acoes && <div className="ml-auto">{acoes}</div>}
       </CardContent>
     </Card>
   );
