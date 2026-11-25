@@ -1,3 +1,4 @@
+import { FinanceiroAlertasRegras } from './alertas/financeiro-alertas.regras';
 import { forwardRef, Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { ComprasEstoqueModule } from '../compras-estoque/compras-estoque.module';
@@ -60,8 +61,11 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
     ContasReceberService,
     ConciliacaoService,
     IndicadoresFinanceirosService,
+    FinanceiroAlertasRegras,
   ],
   exports: [
+    // Regras de alerta de contas a pagar e a receber: central de notificações (#160).
+    FinanceiroAlertasRegras,
     FormasPagamentoService,
     PlanoContasService,
     ContasReceberService,

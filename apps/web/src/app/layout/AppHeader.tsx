@@ -1,4 +1,4 @@
-import { Bell, LogOut, Monitor, Moon, Search, Sun } from 'lucide-react';
+import { LogOut, Monitor, Moon, Search, Sun } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AvatarUsuario } from '@/components/shared/AvatarUsuario';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { MenuAlertas } from '@/features/painel/alertas/MenuAlertas';
 import { useAtualizarPreferencias } from '@/hooks/use-atualizar-preferencias';
 import { THEME_PARA_TEMA } from '@/lib/aparencia';
 import { usePermissao } from '@/lib/auth/use-sessao';
@@ -47,7 +48,7 @@ export function AppHeader({ onOpenSearch }: Readonly<AppHeaderProps>) {
       <div className="ml-auto flex items-center gap-1">
         <ApiStatus />
         <ThemeMenu />
-        <NotificationsMenu />
+        <MenuAlertas />
         <UserMenu />
       </div>
     </header>
@@ -113,26 +114,6 @@ function ThemeMenu() {
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-function NotificationsMenu() {
-  const { t } = useTranslation();
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label={t('layout.notificacoes')}>
-          <Bell aria-hidden />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72">
-        <DropdownMenuLabel>{t('layout.notificacoes')}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <p className="px-2 py-6 text-center text-sm text-muted-foreground">
-          {t('layout.nenhumaNotificacao')}
-        </p>
       </DropdownMenuContent>
     </DropdownMenu>
   );
