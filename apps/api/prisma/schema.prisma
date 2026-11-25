@@ -180,6 +180,8 @@ model Perfil {
   descricao   String?
   /// Restringe agenda, pacientes, prontuário e salas aos profissionais vinculados ao usuário.
   escopoDados EscopoDados @default(TODOS) @map("escopo_dados")
+  /// Perfil padrão do sistema (issue #154): pode ser copiado e ajustado, mas não excluído.
+  padrao      Boolean     @default(false)
   ativo       Boolean     @default(true)
   createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)

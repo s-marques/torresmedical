@@ -39,5 +39,7 @@
   "PACIENTE_INDICACAO_INVALIDA": "The referring patient or professional is invalid",
   "PACIENTE_PROFISSIONAL_INVALIDO": "The professional is invalid",
   "PACIENTE_ESPECIALIDADE_INVALIDA": "The specialty is invalid",
-  "PACIENTE_POSSIVEL_DUPLICADO": "This patient may already be registered. Open the existing record or confirm to continue"
+  "PACIENTE_POSSIVEL_DUPLICADO": "This patient may already be registered. Open the existing record or confirm to continue",
+  "PERFIL_PADRAO_NAO_EXCLUIVEL": "Default profiles cannot be deleted. Duplicate the profile to adjust it",
+  "PERFIL_ADMINISTRADOR_PROTEGIDO": "The Administrator profile cannot have its name, pages or data scope changed. Duplicate the profile to adjust it"
 }

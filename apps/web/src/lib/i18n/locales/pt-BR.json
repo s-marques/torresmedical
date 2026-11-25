@@ -1600,5 +1600,10 @@
     "mensagens": {
       "vinculado": "Negócio vinculado ao profissional."
     }
+  },
+  "perfisAcesso": {
+    "padrao": "Padrão",
+    "duplicar": "Duplicar",
+    "duplicado": "Perfil duplicado."
   }
 }

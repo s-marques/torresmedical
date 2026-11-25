@@ -1707,5 +1707,10 @@
     "mensagens": {
       "vinculado": "Deal linked to the professional."
     }
+  },
+  "perfisAcesso": {
+    "padrao": "Default",
+    "duplicar": "Duplicate",
+    "duplicado": "Profile duplicated."
   }
 }

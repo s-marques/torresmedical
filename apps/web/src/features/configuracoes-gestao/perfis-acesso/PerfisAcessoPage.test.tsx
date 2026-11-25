@@ -1,4 +1,4 @@
-import { PERMISSOES, type Perfil } from '@torres/shared';
+import { PERMISSOES, PREFERENCIAS_PADRAO, type Perfil } from '@torres/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -15,6 +15,7 @@ function perfil(parcial: Partial<Perfil>): Perfil {
     descricao: 'Acesso para recepcionistas',
     paginasPermitidas: ['painel.painel'],
     escopoDados: 'TODOS',
+    padrao: false,
     ativo: true,
     createdAt: '2026-10-14T12:00:00.000Z',
     updatedAt: '2026-10-14T12:00:00.000Z',
@@ -213,5 +214,74 @@ describe('Perfis de Acesso (/perfis)', () => {
     expect(screen.queryByRole('button', { name: 'Novo Perfil' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Exportar' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Ações' })).not.toBeInTheDocument();
+  });
+
+  describe('perfis padrão (issue #154)', () => {
+    const PADRAO = perfil({ id: ID_2, nome: 'Gerência', descricao: null, padrao: true });
+    const comPadrao = (
+      rotas: NonNullable<NonNullable<Parameters<typeof apiFalsa>[0]>['rotas']> = {},
+    ) => api({ rotas: { [API]: () => pagina([perfil({}), PADRAO]), ...rotas } });
+
+    it('mostra a marca Padrão e não oferece Excluir no perfil padrão', async () => {
+      const { user } = renderTela(comPadrao());
+
+      const linha = (await screen.findByText('Gerência')).closest('tr') as HTMLElement;
+      expect(within(linha).getByText('Padrão')).toBeVisible();
+      await user.click(within(linha).getByRole('button', { name: 'Ações' }));
+      expect(await screen.findByRole('menuitem', { name: 'Duplicar' })).toBeVisible();
+      expect(screen.queryByRole('menuitem', { name: 'Excluir' })).not.toBeInTheDocument();
+
+      const comum = (await screen.findByText('Recepção')).closest('tr') as HTMLElement;
+      expect(within(comum).queryByText('Padrão')).not.toBeInTheDocument();
+    });
+
+    it('Duplicar envia POST /:id/duplicar e atualiza a grid', async () => {
+      let duplicados = 0;
+      const { user } = renderTela(
+        comPadrao({
+          [`${API}/${ID_2}/duplicar`]: () => {
+            duplicados += 1;
+            return json(perfil({ id: ID_1, nome: 'Cópia de Gerência' }));
+          },
+        }),
+      );
+
+      await abrirMenu(user, 'Gerência', 'Duplicar');
+
+      await waitFor(() => expect(duplicados).toBe(1));
+      expect(await screen.findByText('Perfil duplicado.')).toBeVisible();
+    });
+
+    it('sem permissão de criar, não oferece Duplicar', async () => {
+      const permissoes = PERMISSOES.filter(
+        (p) =>
+          p === 'configuracoes-gestao.perfis-acesso.ver' ||
+          p === 'configuracoes-gestao.perfis-acesso.editar',
+      );
+      const { user } = renderTela(
+        api({
+          usuario: { ...USUARIO_TESTE, permissoes },
+          rotas: { [API]: () => pagina([PADRAO]) },
+        }),
+      );
+
+      const linha = (await screen.findByText('Gerência')).closest('tr') as HTMLElement;
+      await user.click(within(linha).getByRole('button', { name: 'Ações' }));
+      expect(screen.queryByRole('menuitem', { name: 'Duplicar' })).not.toBeInTheDocument();
+    });
+
+    it('em inglês, traduz a marca e a ação', async () => {
+      const { user } = renderTela(
+        api({
+          usuario: { ...USUARIO_TESTE, preferencias: { ...PREFERENCIAS_PADRAO, idioma: 'en' } },
+          rotas: { [API]: () => pagina([PADRAO]) },
+        }),
+      );
+
+      const linha = (await screen.findByText('Gerência')).closest('tr') as HTMLElement;
+      expect(within(linha).getByText('Default')).toBeVisible();
+      await user.click(within(linha).getByRole('button', { name: /Actions/ }));
+      expect(await screen.findByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
+    });
   });
 });

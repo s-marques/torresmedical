@@ -6,6 +6,7 @@ import {
 } from '@torres/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { i18next } from '@/lib/i18n';
 import { apiFetch } from '@/lib/api/client';
 import { META_FORMULARIO } from '@/lib/api/query-client';
 
@@ -42,6 +43,13 @@ export function useEditarPerfil(id: string) {
   return useMutationPerfil((dados: UpdatePerfilInput) => chamar(`/${id}`, 'PATCH', dados), {
     formulario: true,
     sucesso: 'Perfil atualizado.',
+  });
+}
+
+/** Copia o perfil (inclusive um padrão) com todas as permissões; a gerência ajusta a cópia. */
+export function useDuplicarPerfil() {
+  return useMutationPerfil((id: string) => chamar(`/${id}/duplicar`, 'POST'), {
+    sucesso: i18next.t('perfisAcesso.duplicado'),
   });
 }
 

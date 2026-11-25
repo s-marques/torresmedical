@@ -1,5 +1,5 @@
 import { fakerPT_BR as faker } from '@faker-js/faker';
-import { PERMISSOES } from '@torres/shared';
+import { PERFIL_ADMINISTRADOR, PERFIS_PADRAO, permissoesDoPerfilPadrao } from '@torres/shared';
 import { hashSenha } from '../src/common/auth/senhas';
 import type { PrismaClient } from '../src/generated/prisma/client';
 import { applySeedEntidades, buildSeedEntidades, type SeedEntidades } from './seed-entidades';
@@ -140,7 +140,8 @@ export function buildSeedData(agora: Date = new Date()): SeedData {
 
 /**
  * Idempotente: pode rodar várias vezes (upsert pelos ids determinísticos). O perfil
- * Administrador recebe de novo todo o catálogo de permissões, inclusive as novas.
+ * Administrador recebe de novo todo o catálogo de permissões, inclusive as novas; os demais
+ * perfis padrão ganham as permissões que faltam, sem remover ajustes da gerência.
  */
 export async function applySeed(prisma: PrismaClient, senhaAdmin: string): Promise<SeedData> {
   const data = buildSeedData();
@@ -156,16 +157,32 @@ export async function applySeed(prisma: PrismaClient, senhaAdmin: string): Promi
       for (const usuario of usuarios) {
         await tx.usuario.upsert({ where: { id: usuario.id }, create: usuario, update: usuario });
       }
-      await tx.perfil.upsert({
-        where: { id: perfilAdmin.id },
-        create: perfilAdmin,
-        update: perfilAdmin,
-      });
-      await tx.perfilPermissao.deleteMany({ where: { perfilId: perfilAdmin.id } });
-      await tx.perfilPermissao.createMany({
-        data: PERMISSOES.map((permissao) => ({ perfilId: perfilAdmin.id, permissao })),
-      });
-      const usuarioAdmin = { ...admin, senhaHash, ativo: true };
+      // Os perfis padrão já existem após a migration `perfis_padrao` (id próprio): busca pelo nome.
+      let perfilAdminId = perfilAdmin.id;
+      for (const padrao of PERFIS_PADRAO) {
+        const perfil = await tx.perfil.upsert({
+          where: { nome: padrao.nome },
+          create: {
+            ...(padrao.nome === PERFIL_ADMINISTRADOR ? { id: perfilAdmin.id } : {}),
+            nome: padrao.nome,
+            descricao: padrao.descricao,
+            escopoDados: padrao.escopoDados,
+            padrao: true,
+          },
+          update: { padrao: true, deletedAt: null },
+        });
+        const permissoes = permissoesDoPerfilPadrao(padrao).map((permissao) => ({
+          perfilId: perfil.id,
+          permissao,
+        }));
+        if (padrao.nome === PERFIL_ADMINISTRADOR) {
+          perfilAdminId = perfil.id;
+          // O Administrador sempre recebe de novo todo o catálogo, inclusive as novas permissões.
+          await tx.perfilPermissao.deleteMany({ where: { perfilId: perfil.id } });
+        }
+        await tx.perfilPermissao.createMany({ data: permissoes, skipDuplicates: true });
+      }
+      const usuarioAdmin = { ...admin, perfilId: perfilAdminId, senhaHash, ativo: true };
       await tx.usuario.upsert({
         where: { id: admin.id },
         create: usuarioAdmin,

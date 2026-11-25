@@ -39,5 +39,7 @@
   "PACIENTE_INDICACAO_INVALIDA": "El paciente o profesional que recomendó no es válido",
   "PACIENTE_PROFISSIONAL_INVALIDO": "El profesional no es válido",
   "PACIENTE_ESPECIALIDADE_INVALIDA": "La especialidad no es válida",
-  "PACIENTE_POSSIVEL_DUPLICADO": "Es posible que el paciente ya esté registrado. Abra el registro existente o confirme para continuar"
+  "PACIENTE_POSSIVEL_DUPLICADO": "Es posible que el paciente ya esté registrado. Abra el registro existente o confirme para continuar",
+  "PERFIL_PADRAO_NAO_EXCLUIVEL": "Los perfiles estándar no se pueden eliminar. Duplique el perfil para ajustarlo",
+  "PERFIL_ADMINISTRADOR_PROTEGIDO": "El perfil Administrador no puede cambiar de nombre, páginas ni alcance de datos. Duplique el perfil para ajustarlo"
 }

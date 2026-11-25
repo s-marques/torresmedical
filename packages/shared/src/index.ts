@@ -1,6 +1,7 @@
 import './zod-pt-br';
 
 export * from './auth/permissoes';
+export * from './auth/perfis-padrao';
 export * from './i18n/validacao';
 export * from './menu/menu';
 export * from './schemas/arquivos/arquivo';
