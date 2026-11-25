@@ -3958,3 +3958,39 @@ model PoliticaSeguranca {
 
   @@map("politica_seguranca")
 }
+
+/// Dono: painel. Alerta da central de notificações (issue #160): um contador por tipo e por dia
+/// ("3 contas vencidas"), gerado pelo job diário. Dado derivado: guarda só a quantidade e o dia,
+/// nunca ids nem dados pessoais. Quem vê cada tipo é decidido pelo catálogo de `packages/shared`.
+model Alerta {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Um valor de `TIPOS_ALERTA` (`packages/shared`).
+  tipo       String
+  data       DateTime @db.Date
+  quantidade Int
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  usuarios AlertaUsuario[]
+
+  @@unique([tipo, data])
+  @@index([data])
+  @@map("alertas")
+}
+
+/// Dono: painel. Estado do alerta para cada usuário: lido e resolvido são pessoais.
+model AlertaUsuario {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  alertaId    String    @map("alerta_id") @db.Uuid
+  usuarioId   String    @map("usuario_id") @db.Uuid
+  lidoEm      DateTime? @map("lido_em") @db.Timestamptz(3)
+  resolvidoEm DateTime? @map("resolvido_em") @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  alerta Alerta @relation(fields: [alertaId], references: [id], onDelete: Cascade)
+
+  @@unique([alertaId, usuarioId])
+  @@index([usuarioId])
+  @@map("alertas_usuarios")
+}

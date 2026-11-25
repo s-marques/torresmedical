@@ -48,6 +48,8 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'agente_instrucoes',
       'agente_instrucoes_extras',
       'agente_regras',
+      'alertas',
+      'alertas_usuarios',
       'analises_ai_growth',
       'anamneses',
       'arquivos',
