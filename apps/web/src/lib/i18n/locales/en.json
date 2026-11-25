@@ -1654,6 +1654,60 @@
       "desmarcado": "Strategic mark removed."
     }
   },
+  "historicoProfissional": {
+    "titulo": "Relationship history",
+    "erroCarregar": "Could not load the history.",
+    "vazio": "No events recorded for this professional.",
+    "vincular": "Link CRM deal",
+    "filtroTipo": "Filter by event type",
+    "carregando": "Loading…",
+    "porAutor": "by {{nome}}",
+    "abrir": "Open {{destino}}",
+    "tipos": {
+      "TODOS": "All",
+      "CRM": "CRM",
+      "CONTRATO": "Contract",
+      "ONBOARDING": "Onboarding",
+      "ATENDIMENTO": "Appointment"
+    },
+    "eventos": {
+      "LEAD_CRIADO": "Lead created",
+      "PRIMEIRO_CONTATO": "First contact",
+      "VISITA_REALIZADA": "Visit made",
+      "PROPOSTA_ENVIADA": "Proposal sent",
+      "CONTRATO_FECHADO": "Contract closed in CRM",
+      "ATIVIDADE_CONCLUIDA": "Activity completed",
+      "CONTRATO_ASSINADO": "Contract signed",
+      "CONTRATO_ENCERRADO": "Contract ended",
+      "CONTRATO_CANCELADO": "Contract cancelled",
+      "ONBOARDING_INICIADO": "Onboarding started",
+      "RECEPCAO_ORIENTADA": "Front desk briefed",
+      "PRIMEIRO_ATENDIMENTO": "First appointment"
+    },
+    "destinos": {
+      "/negocios": "Deals",
+      "/atividades": "Activities",
+      "/salas": "Rooms"
+    },
+    "modal": {
+      "titulo": "Link CRM deal",
+      "descricao": "Choose the deal of the lead that became this professional. The CRM history will then appear on the timeline.",
+      "busca": "Search deal by title",
+      "vazio": "No deals available to link.",
+      "erro": "Could not search the deals.",
+      "acao": "Link",
+      "estagio": "Stage: {{estagio}}",
+      "status": {
+        "ABERTO": "Open",
+        "GANHO": "Won",
+        "PERDIDO": "Lost"
+      },
+      "fechar": "Close"
+    },
+    "mensagens": {
+      "vinculado": "Deal linked to the professional."
+    }
+  },
   "atendimentoRegistros": {
     "titulo": "Appointment",
     "detalhes": "Details",

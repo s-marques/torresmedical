@@ -1654,6 +1654,60 @@
       "desmarcado": "Marca de estratégico eliminada."
     }
   },
+  "historicoProfissional": {
+    "titulo": "Historial de la relación",
+    "erroCarregar": "No se pudo cargar el historial.",
+    "vazio": "No hay eventos registrados para este profesional.",
+    "vincular": "Vincular negocio del CRM",
+    "filtroTipo": "Filtrar por tipo de evento",
+    "carregando": "Cargando…",
+    "porAutor": "por {{nome}}",
+    "abrir": "Abrir {{destino}}",
+    "tipos": {
+      "TODOS": "Todos",
+      "CRM": "CRM",
+      "CONTRATO": "Contrato",
+      "ONBOARDING": "Onboarding",
+      "ATENDIMENTO": "Atención"
+    },
+    "eventos": {
+      "LEAD_CRIADO": "Lead creado",
+      "PRIMEIRO_CONTATO": "Primer contacto",
+      "VISITA_REALIZADA": "Visita realizada",
+      "PROPOSTA_ENVIADA": "Propuesta enviada",
+      "CONTRATO_FECHADO": "Contrato cerrado en el CRM",
+      "ATIVIDADE_CONCLUIDA": "Actividad completada",
+      "CONTRATO_ASSINADO": "Contrato firmado",
+      "CONTRATO_ENCERRADO": "Contrato finalizado",
+      "CONTRATO_CANCELADO": "Contrato cancelado",
+      "ONBOARDING_INICIADO": "Onboarding iniciado",
+      "RECEPCAO_ORIENTADA": "Recepción orientada",
+      "PRIMEIRO_ATENDIMENTO": "Primera atención"
+    },
+    "destinos": {
+      "/negocios": "Negocios",
+      "/atividades": "Actividades",
+      "/salas": "Salas"
+    },
+    "modal": {
+      "titulo": "Vincular negocio del CRM",
+      "descricao": "Elija el negocio del lead que se convirtió en este profesional. El historial del CRM pasará a aparecer en la línea de tiempo.",
+      "busca": "Buscar negocio por título",
+      "vazio": "No hay negocios disponibles para vincular.",
+      "erro": "No se pudieron buscar los negocios.",
+      "acao": "Vincular",
+      "estagio": "Etapa: {{estagio}}",
+      "status": {
+        "ABERTO": "Abierto",
+        "GANHO": "Ganado",
+        "PERDIDO": "Perdido"
+      },
+      "fechar": "Cerrar"
+    },
+    "mensagens": {
+      "vinculado": "Negocio vinculado al profesional."
+    }
+  },
   "atendimentoRegistros": {
     "titulo": "Atención",
     "detalhes": "Detalles",

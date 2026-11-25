@@ -2979,6 +2979,9 @@ model Negocio {
   /// Contato: paciente (comercial-atendimento) ou profissional (gestao-profissionais), sem FK.
   contatoTipo            NegocioContatoTipo? @map("contato_tipo")
   contatoId              String?             @map("contato_id") @db.Uuid
+  /// Profissional (gestao-profissionais, sem FK) a que o lead se ligou ao virar contrato (issue #144).
+  /// Além dele, o negócio com contato do tipo PROFISSIONAL também entra na linha do tempo.
+  profissionalId         String?             @map("profissional_id") @db.Uuid
   /// Usuário (configuracoes-gestao), sem FK.
   responsavelId          String?             @map("responsavel_id") @db.Uuid
   previsaoFechamento     DateTime?           @map("previsao_fechamento") @db.Date
@@ -3006,6 +3009,7 @@ model Negocio {
   @@index([pipelineId, status])
   @@index([estagioId])
   @@index([contatoId])
+  @@index([profissionalId])
   @@index([origemClienteId])
   @@map("negocios")
 }

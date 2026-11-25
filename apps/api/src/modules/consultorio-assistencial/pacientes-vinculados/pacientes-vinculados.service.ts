@@ -34,6 +34,19 @@ export class PacientesVinculadosService {
     return new Set(grupos.map((g) => g.profissionalId));
   }
 
+  /**
+   * Quando o profissional fez o primeiro atendimento finalizado (issue #144); `null` se ainda
+   * não houve. Não aplica o escopo: quem chama já aplicou o seu.
+   */
+  async primeiroAtendimentoFinalizado(profissionalId: string): Promise<Date | null> {
+    const atendimento = await this.txHost.tx.atendimento.findFirst({
+      where: { profissionalId, status: 'FINALIZADO', deletedAt: null },
+      orderBy: [{ finalizadoEm: { sort: 'asc', nulls: 'last' } }, { createdAt: 'asc' }],
+      select: { finalizadoEm: true, createdAt: true },
+    });
+    return atendimento ? (atendimento.finalizadoEm ?? atendimento.createdAt) : null;
+  }
+
   /** Ids dos pacientes visíveis; `null` = todos (usuário sem restrição). */
   async idsNoEscopo(): Promise<string[] | null> {
     const profissionalIds = this.escopo.profissionalIds();

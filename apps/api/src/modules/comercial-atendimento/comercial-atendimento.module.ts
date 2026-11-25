@@ -67,6 +67,7 @@ import { NegociosController } from './pipeline/negocios.controller';
 import { NegociosListaController } from './pipeline/negocios-lista.controller';
 import { NegociosListaService } from './pipeline/negocios-lista.service';
 import { NegociosLookupService } from './pipeline/negocios-lookup.service';
+import { NegociosHistoricoService } from './pipeline/negocios-historico.service';
 import { NegociosService } from './pipeline/negocios.service';
 import { IndicadoresGestaoService } from './indicadores-gestao/indicadores-gestao.service';
 import { ConsentimentosPacienteService } from './pacientes/consentimentos-paciente.service';
@@ -145,6 +146,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     TagsAtendimentoService,
     CrmConfigService,
     NegociosService,
+    NegociosHistoricoService,
     NegociosListaService,
     NegociosLookupService,
     AtividadesService,
@@ -184,6 +186,8 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     AgendaOcupacaoService,
     // Relatórios GES-02 e GES-04 de Configurações / Gestão.
     IndicadoresGestaoService,
+    // Eventos do CRM na linha do tempo do profissional (#144).
+    NegociosHistoricoService,
   ],
 })
 export class ComercialAtendimentoModule {}
