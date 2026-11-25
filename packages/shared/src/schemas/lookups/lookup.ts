@@ -22,6 +22,7 @@ export const LOOKUP_ENTIDADES = [
   'funcionarios',
   'cargos',
   'formas-pagamento',
+  'centros-custo',
   'tipos-agendamento',
   'salas',
   'origens-cliente',
@@ -85,6 +86,7 @@ export const lookupQuerySchemas = {
       .enum(FINALIDADES_PAGAMENTO, { error: 'Finalidade deve ser receber ou pagar' })
       .optional(),
   }),
+  'centros-custo': lookupQuerySchema({}),
   'tipos-agendamento': lookupQuerySchema({}),
   salas: lookupQuerySchema({}),
   'origens-cliente': lookupQuerySchema({}),
@@ -195,6 +197,8 @@ export const LOOKUP_PERMISSOES: Readonly<Record<LookupEntidade, PermissoesLookup
     'gestao-profissionais.receita-profissionais',
     'gestao-profissionais.salas',
   ),
+  /** Centro de custo da conta a pagar (issue #163). */
+  'centros-custo': telas('financeiro.contas-pagar'),
   'tipos-agendamento': telas(
     'configuracoes-gestao.tipos-agendamento',
     'comercial-atendimento.agenda',

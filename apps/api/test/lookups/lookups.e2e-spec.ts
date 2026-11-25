@@ -76,6 +76,7 @@ function configs(prisma: PrismaService, empresaId: string): Record<LookupEntidad
       criar: (data) =>
         prisma.formaPagamento.create({ data: { ...data, finalidade: 'RECEBER', tipo: 'PIX' } }),
     },
+    'centros-custo': { criar: (data) => prisma.centroCusto.create({ data }) },
     salas: { criar: (data) => prisma.sala.create({ data }) },
     'tipos-agendamento': {
       criar: (data) => prisma.tipoAgendamento.create({ data: { ...data, duracaoMinutos: 30 } }),

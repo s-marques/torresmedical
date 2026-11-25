@@ -73,6 +73,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'canais_whatsapp_usuarios',
       'cargos',
       'categorias',
+      'centros_custo',
       'coletas_residuo',
       'comissoes',
       'compra_itens',

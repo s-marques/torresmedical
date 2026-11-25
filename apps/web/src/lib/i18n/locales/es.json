@@ -1946,5 +1946,84 @@
       "observacoes": "Observaciones",
       "filtros": "Filtros"
     }
+  },
+  "contasPagar": {
+    "competencia": "Competencia",
+    "centroCusto": "Centro de Costo",
+    "centroCustoPlaceholder": "Seleccione (opcional)",
+    "anexoDocumento": "Documento adjunto (boleto, factura o NF)",
+    "anexoAtual": "Ver documento adjunto",
+    "anexoSubstituir": "Enviar otro archivo reemplaza el actual.",
+    "abas": {
+      "rotulo": "Secciones de Cuentas por Pagar",
+      "contas": "Cuentas",
+      "divergencias": "Divergencias",
+      "centrosCusto": "Centros de Costo"
+    },
+    "duplicidade": {
+      "titulo": "Posible cuenta duplicada",
+      "pergunta": "Ya existe una cuenta parecida registrada. Revise antes de continuar.",
+      "lista": "Cuentas parecidas",
+      "item": "#{{numero}} · {{descricao}}",
+      "detalhe": "{{beneficiario}} · {{valor}} · vence el {{data}}",
+      "semBeneficiario": "Sin beneficiario",
+      "continuar": "Registrar de todos modos",
+      "voltar": "Volver",
+      "motivos": {
+        "MESMO_TITULO": "Mismo proveedor, valor y vencimiento",
+        "MESMO_DOCUMENTO": "Mismo número de documento"
+      }
+    },
+    "baixa": {
+      "justificativa": "Justificación de la divergencia",
+      "justificativaAjuda": "El valor pagado es distinto del saldo del título ({{esperado}}). Indique el motivo para registrar el pago."
+    },
+    "detalhe": {
+      "competencia": "Competencia",
+      "centroCusto": "Centro de Costo",
+      "documento": "Documento adjunto",
+      "verDocumento": "Abrir",
+      "baixaDivergencia": "Divergencia",
+      "baixaJustificativa": "Justificación"
+    },
+    "divergencias": {
+      "descricao": "Pagos con valor distinto del saldo del título.",
+      "busca": "Pagos con divergencia",
+      "vazio": "Ninguna divergencia registrada.",
+      "pagamento": "Pago",
+      "colunas": {
+        "numero": "#",
+        "descricao": "Descripción",
+        "beneficiario": "Proveedor / Empleado",
+        "valor": "Valor del título",
+        "valorPago": "Valor pagado",
+        "divergencia": "Divergencia",
+        "justificativa": "Justificación",
+        "dataPagamento": "Fecha del pago"
+      }
+    },
+    "centrosCusto": {
+      "descricao": "Registre los centros de costo usados para clasificar las cuentas por pagar.",
+      "novo": "Nuevo Centro de Costo",
+      "modalNovo": "Nuevo Centro de Costo",
+      "modalEditar": "Editar Centro de Costo",
+      "nome": "Nombre",
+      "placeholderNome": "Ej: Administrativo, Clínico...",
+      "busca": "Buscar centros de costo...",
+      "vazio": "Ningún centro de costo encontrado.",
+      "status": "Estado",
+      "ativo": "Activo",
+      "inativo": "Inactivo",
+      "desativar": "Desactivar",
+      "ativar": "Activar",
+      "excluirTitulo": "Eliminar Centro de Costo",
+      "excluirDescricao": "¿Seguro que desea eliminar el centro de costo \"{{nome}}\"? Las cuentas ya registradas conservan el nombre.",
+      "criado": "Centro de costo registrado.",
+      "atualizado": "Centro de costo actualizado.",
+      "excluido": "Centro de costo eliminado.",
+      "cadastrar": "Registrar",
+      "editar": "Editar",
+      "excluir": "Eliminar"
+    }
   }
 }

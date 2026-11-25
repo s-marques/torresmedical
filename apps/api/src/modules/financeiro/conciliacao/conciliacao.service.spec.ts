@@ -26,6 +26,9 @@ const PAGAR = {
   fornecedorId: null,
   funcionarioId: null,
   status: 'PAGO' as 'PAGO' | 'PENDENTE' | 'CANCELADO',
+  competencia: null,
+  centroCustoId: null,
+  documentoArquivoId: null,
   baixas: [{ dataPagamento: new Date('2026-10-05T00:00:00.000Z') }],
 };
 const RECEBER = {

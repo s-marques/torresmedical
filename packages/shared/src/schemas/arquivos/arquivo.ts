@@ -106,6 +106,11 @@ export const ARQUIVO_USOS = {
     formatos: ['pdf', 'jpg', 'jpeg', 'png'],
     maxBytes: 10 * MB,
   },
+  'documento-conta-pagar': {
+    descricao: 'Boleto, fatura ou NF de conta a pagar',
+    formatos: ['pdf', 'jpg', 'jpeg', 'png'],
+    maxBytes: 10 * MB,
+  },
   'base-conhecimento': {
     descricao: 'Documento da Base de Conhecimento',
     formatos: ['pdf', 'txt', 'md', 'docx'],

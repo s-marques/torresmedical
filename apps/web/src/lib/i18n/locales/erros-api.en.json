@@ -48,6 +48,8 @@
   "ARQUIVO_USO_INVALIDO": "Invalid file for this field",
   "PERFIL_PADRAO_NAO_EXCLUIVEL": "Default profiles cannot be deleted. Duplicate the profile to adjust it",
   "PERFIL_ADMINISTRADOR_PROTEGIDO": "The Administrator profile cannot have its name, pages or data scope changed. Duplicate the profile to adjust it",
+  "CONTA_PAGAR_POSSIVEL_DUPLICADA": "This payable may already be recorded. Check the similar ones or confirm to continue",
+  "CONTA_PAGAR_BAIXA_DIVERGENTE": "The amount paid differs from the bill balance. Enter the reason",
   "SENHA_FORA_DA_POLITICA": "The password does not meet the security policy",
   "SENHA_ATUAL_INCORRETA": "The current password is incorrect",
   "TROCA_SENHA_OBRIGATORIA": "You must change your password before continuing"

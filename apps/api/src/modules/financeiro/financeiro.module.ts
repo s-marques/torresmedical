@@ -8,11 +8,15 @@ import { BandeirasController } from './bandeiras/bandeiras.controller';
 import { BandeirasService } from './bandeiras/bandeiras.service';
 import { CaixasController } from './caixas/caixas.controller';
 import { CaixasService } from './caixas/caixas.service';
+import { CentrosCustoController } from './centros-custo/centros-custo.controller';
+import { CentrosCustoService } from './centros-custo/centros-custo.service';
 import { ConciliacaoController } from './conciliacao/conciliacao.controller';
 import { ConciliacaoService } from './conciliacao/conciliacao.service';
 import { ContasBancariasController } from './contas-bancarias/contas-bancarias.controller';
 import { ContasBancariasService } from './contas-bancarias/contas-bancarias.service';
 import { ContasPagarController } from './contas-pagar/contas-pagar.controller';
+import { ContasPagarDivergenciasService } from './contas-pagar/contas-pagar-divergencias.service';
+import { ContasPagarDuplicidadeService } from './contas-pagar/contas-pagar-duplicidade.service';
 import { ContasPagarService } from './contas-pagar/contas-pagar.service';
 import { ContasReceberController } from './contas-receber/contas-receber.controller';
 import { ContasReceberService } from './contas-receber/contas-receber.service';
@@ -34,6 +38,7 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
     FormasPagamentoController,
     BandeirasController,
     CaixasController,
+    CentrosCustoController,
     PlanoContasController,
     ContasBancariasController,
     ContasPagarController,
@@ -41,14 +46,18 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
     ConciliacaoController,
     IndicadoresFinanceirosController,
     criarLookupController('formas-pagamento', FormasPagamentoService),
+    criarLookupController('centros-custo', CentrosCustoService),
   ],
   providers: [
     FormasPagamentoService,
     BandeirasService,
     CaixasService,
+    CentrosCustoService,
     PlanoContasService,
     ContasBancariasService,
     ContasPagarService,
+    ContasPagarDuplicidadeService,
+    ContasPagarDivergenciasService,
     ContasReceberService,
     ConciliacaoService,
     IndicadoresFinanceirosService,

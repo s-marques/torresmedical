@@ -1946,5 +1946,84 @@
       "observacoes": "Notes",
       "filtros": "Filters"
     }
+  },
+  "contasPagar": {
+    "competencia": "Accounting period",
+    "centroCusto": "Cost Center",
+    "centroCustoPlaceholder": "Select (optional)",
+    "anexoDocumento": "Attached document (invoice, bill or receipt)",
+    "anexoAtual": "View attached document",
+    "anexoSubstituir": "Uploading another file replaces the current one.",
+    "abas": {
+      "rotulo": "Accounts Payable sections",
+      "contas": "Accounts",
+      "divergencias": "Discrepancies",
+      "centrosCusto": "Cost Centers"
+    },
+    "duplicidade": {
+      "titulo": "Possible duplicate payable",
+      "pergunta": "A similar payable has already been recorded. Check before continuing.",
+      "lista": "Similar payables",
+      "item": "#{{numero}} · {{descricao}}",
+      "detalhe": "{{beneficiario}} · {{valor}} · due {{data}}",
+      "semBeneficiario": "No payee",
+      "continuar": "Record anyway",
+      "voltar": "Back",
+      "motivos": {
+        "MESMO_TITULO": "Same supplier, amount and due date",
+        "MESMO_DOCUMENTO": "Same document number"
+      }
+    },
+    "baixa": {
+      "justificativa": "Reason for the discrepancy",
+      "justificativaAjuda": "The amount paid differs from the bill balance ({{esperado}}). Enter the reason to record the payment."
+    },
+    "detalhe": {
+      "competencia": "Accounting period",
+      "centroCusto": "Cost Center",
+      "documento": "Attached document",
+      "verDocumento": "Open",
+      "baixaDivergencia": "Discrepancy",
+      "baixaJustificativa": "Reason"
+    },
+    "divergencias": {
+      "descricao": "Payments whose amount differs from the bill balance.",
+      "busca": "Payments with discrepancy",
+      "vazio": "No discrepancies recorded.",
+      "pagamento": "Payment",
+      "colunas": {
+        "numero": "#",
+        "descricao": "Description",
+        "beneficiario": "Supplier / Employee",
+        "valor": "Bill amount",
+        "valorPago": "Amount paid",
+        "divergencia": "Discrepancy",
+        "justificativa": "Reason",
+        "dataPagamento": "Payment date"
+      }
+    },
+    "centrosCusto": {
+      "descricao": "Register the cost centers used to classify accounts payable.",
+      "novo": "New Cost Center",
+      "modalNovo": "New Cost Center",
+      "modalEditar": "Edit Cost Center",
+      "nome": "Name",
+      "placeholderNome": "E.g. Administrative, Clinical...",
+      "busca": "Search cost centers...",
+      "vazio": "No cost centers found.",
+      "status": "Status",
+      "ativo": "Active",
+      "inativo": "Inactive",
+      "desativar": "Deactivate",
+      "ativar": "Activate",
+      "excluirTitulo": "Delete Cost Center",
+      "excluirDescricao": "Are you sure you want to delete the cost center \"{{nome}}\"? Payables already recorded keep its name.",
+      "criado": "Cost center registered.",
+      "atualizado": "Cost center updated.",
+      "excluido": "Cost center deleted.",
+      "cadastrar": "Register",
+      "editar": "Edit",
+      "excluir": "Delete"
+    }
   }
 }

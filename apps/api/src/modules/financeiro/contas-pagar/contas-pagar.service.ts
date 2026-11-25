@@ -8,6 +8,7 @@ import {
   type ContaPagarBaixa,
   type ContaPagarExportColumn,
   type ContaPagarStatus,
+  CONTA_PAGAR_BAIXA_DIVERGENTE,
   type CreateContaPagarInput,
   type ExportContasPagarQuery,
   type ListContasPagarQuery,
@@ -16,12 +17,15 @@ import {
 import { Prisma } from '../../../generated/prisma/client';
 import { FornecedoresService } from '../../compras-estoque/fornecedores/fornecedores.service';
 import { FuncionariosService } from '../../regulatorio-qualidade/funcionarios/funcionarios.service';
+import { CentrosCustoService } from '../centros-custo/centros-custo.service';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
 import { ExportService, selectColumns } from '../../../common/export/export.service';
 import type { ExportFile } from '../../../common/export/export.types';
 import { paginate, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
+import { ContasPagarDuplicidadeService } from './contas-pagar-duplicidade.service';
+import { nomeBeneficiario } from './nome-beneficiario';
 import {
   camposContaFinanceira,
   colunasExportContaFinanceira,
@@ -34,6 +38,7 @@ import {
 
 const INCLUDE = {
   ...INCLUDE_CONTA_FINANCEIRA,
+  centroCusto: { select: { nome: true } },
   baixas: { where: { deletedAt: null }, select: { valorPago: true } },
 } as const;
 
@@ -67,6 +72,8 @@ export function toContaPagarBaixa(baixa: ContaPagarBaixaComRelacoes): ContaPagar
     documento: baixa.documento,
     observacoes: baixa.observacoes,
     comprovanteArquivoId: baixa.comprovanteArquivoId,
+    divergencia: baixa.divergencia?.toString() ?? null,
+    justificativaDivergencia: baixa.justificativaDivergencia,
     createdAt: baixa.createdAt.toISOString(),
   };
 }
@@ -93,6 +100,8 @@ export class ContasPagarService {
     private readonly exportService: ExportService,
     private readonly fornecedores: FornecedoresService,
     private readonly funcionarios: FuncionariosService,
+    private readonly centrosCusto: CentrosCustoService,
+    private readonly duplicidade: ContasPagarDuplicidadeService,
   ) {}
 
   async list(query: ListContasPagarQuery): Promise<Page<ContaPagar>> {
@@ -114,21 +123,31 @@ export class ContasPagarService {
 
   async create(input: CreateContaPagarInput): Promise<ContaPagar> {
     await this.validarBeneficiario(input.beneficiarioTipo, input.beneficiarioId);
+    await this.validarCentroCusto(input.centroCustoId);
+    const candidatos = await this.duplicidade.exigirConfirmacao(input, input.duplicidadeConfirmada);
     const conta = await this.txHost.tx.contaPagar.create({
       data: this.dados(input),
       include: INCLUDE,
     });
+    await this.duplicidade.registrarConfirmacao(conta.id, candidatos);
     return this.toContaPagar(conta);
   }
 
   async update(id: string, input: UpdateContaPagarInput): Promise<ContaPagar> {
     await this.buscarAtiva(id);
     await this.validarBeneficiario(input.beneficiarioTipo, input.beneficiarioId);
+    await this.validarCentroCusto(input.centroCustoId);
+    const candidatos = await this.duplicidade.exigirConfirmacao(
+      input,
+      input.duplicidadeConfirmada,
+      id,
+    );
     const conta = await this.txHost.tx.contaPagar.update({
       where: { id },
       data: this.dados(input),
       include: INCLUDE,
     });
+    await this.duplicidade.registrarConfirmacao(id, candidatos);
     return this.toContaPagar(conta);
   }
 
@@ -168,8 +187,22 @@ export class ContasPagarService {
     if (input.formaPagamentoId) await this.buscarFormaPagamento(input.formaPagamentoId);
     if (input.contaBancariaId) await this.buscarContaBancaria(input.contaBancariaId);
 
+    const { divergencia, justificativaDivergencia } = await this.divergenciaDaBaixa(conta, input);
     await this.txHost.tx.contaPagarBaixa.create({
-      data: { contaPagarId: id, ...input, dataPagamento: new Date(input.dataPagamento) },
+      data: {
+        contaPagarId: id,
+        dataPagamento: new Date(input.dataPagamento),
+        valorPago: input.valorPago,
+        juros: input.juros,
+        desconto: input.desconto,
+        formaPagamentoId: input.formaPagamentoId,
+        contaBancariaId: input.contaBancariaId,
+        documento: input.documento,
+        observacoes: input.observacoes,
+        comprovanteArquivoId: input.comprovanteArquivoId,
+        divergencia,
+        justificativaDivergencia,
+      },
     });
     return this.recalcularStatus(id);
   }
@@ -264,21 +297,48 @@ export class ContasPagarService {
     else await this.funcionarios.findById(beneficiarioId);
   }
 
-  /** Nome do beneficiário pelo módulo dono; `null` se o cadastro foi excluído depois. */
-  private async nomeBeneficiario(
+  /** Centro de custo opcional; quando informado, precisa existir e estar ativo. */
+  private async validarCentroCusto(centroCustoId: string | null): Promise<void> {
+    if (!centroCustoId) return;
+    const centro = await this.centrosCusto.findById(centroCustoId);
+    if (!centro.ativo) {
+      throw new BusinessException(ErrorCode.BUSINESS_RULE, 'Centro de custo inativo.');
+    }
+  }
+
+  /**
+   * Divergência da baixa: valor pago menos o saldo do título (juros e desconto são campos à
+   * parte e não entram na conta). Qualquer diferença exige justificativa e entra no relatório.
+   */
+  private async divergenciaDaBaixa(
+    conta: ContaPagarComRelacoes,
+    input: BaixarContaPagarInput,
+  ): Promise<{ divergencia: Prisma.Decimal | null; justificativaDivergencia: string | null }> {
+    const anteriores = await this.txHost.tx.contaPagarBaixa.findMany({
+      where: { contaPagarId: conta.id, deletedAt: null },
+      select: { valorPago: true },
+    });
+    const saldo = conta.valor.sub(somaBaixas(anteriores));
+    const diferenca = new Prisma.Decimal(input.valorPago).sub(saldo);
+    // Pagar menos de propósito (checkbox "Pagamento parcial") não é divergência.
+    const parcialIntencional = input.pagamentoParcial && diferenca.isNegative();
+    if (diferenca.isZero() || parcialIntencional)
+      return { divergencia: null, justificativaDivergencia: null };
+    if (!input.justificativaDivergencia) {
+      throw new BusinessException(
+        CONTA_PAGAR_BAIXA_DIVERGENTE,
+        'O valor pago é diferente do saldo do título. Informe a justificativa.',
+      );
+    }
+    return { divergencia: diferenca, justificativaDivergencia: input.justificativaDivergencia };
+  }
+
+  /** Nome do beneficiário pelo módulo dono; nulo se o cadastro foi excluído depois. */
+  private nomeBeneficiario(
     tipo: ContaPagar['beneficiarioTipo'],
     beneficiarioId: string | null,
   ): Promise<string | null> {
-    if (!beneficiarioId) return null;
-    try {
-      const registro =
-        tipo === 'FORNECEDOR'
-          ? await this.fornecedores.findById(beneficiarioId)
-          : await this.funcionarios.findById(beneficiarioId);
-      return registro.nome;
-    } catch {
-      return null;
-    }
+    return nomeBeneficiario(this.fornecedores, this.funcionarios, tipo, beneficiarioId);
   }
 
   private async toContaPagar(conta: ContaPagarComRelacoes): Promise<ContaPagar> {
@@ -290,11 +350,17 @@ export class ContasPagarService {
       beneficiarioNome: await this.nomeBeneficiario(conta.beneficiarioTipo, beneficiarioId),
       status: conta.status,
       valorPago: somaBaixas(conta.baixas).toString(),
+      competencia: conta.competencia,
+      centroCustoId: conta.centroCustoId,
+      centroCustoNome: conta.centroCusto?.nome ?? null,
+      documentoArquivoId: conta.documentoArquivoId,
     };
   }
 
   private dados(input: CreateContaPagarInput): Prisma.ContaPagarUncheckedCreateInput {
+    // A confirmação do alerta de duplicidade (#163) vai para a auditoria, não para a tabela.
     const { beneficiarioTipo, beneficiarioId, dataVencimento, ...resto } = input;
+    delete resto.duplicidadeConfirmada;
     return {
       ...resto,
       beneficiarioTipo,

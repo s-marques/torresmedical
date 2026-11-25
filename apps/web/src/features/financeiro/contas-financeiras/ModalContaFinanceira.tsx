@@ -12,6 +12,7 @@ export interface ModalContaFinanceiraProps<TIn extends FieldValues, TOut> {
   editando: boolean;
   form: UseFormReturn<TIn, unknown, TOut>;
   formId: string;
+  /** Devolver `false` mantém o modal aberto (ex.: o usuário ainda vai confirmar um alerta). */
   onSubmit: (valores: TOut) => Promise<unknown>;
   onFechar: () => void;
   /** Formas de pagamento oferecidas: as de pagar ou as de receber. */
@@ -62,7 +63,8 @@ export function ModalContaFinanceira<TIn extends FieldValues, TOut>({
         acoes={null}
         colunas={2}
         onSubmit={async (valores) => {
-          await onSubmit(valores);
+          const resultado = await onSubmit(valores);
+          if (resultado === false) return;
           onFechar();
         }}
       >

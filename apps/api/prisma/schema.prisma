@@ -2437,6 +2437,20 @@ enum PlanoContaTipo {
 }
 
 /// Dono: financeiro. Conta contábil em árvore (tela Plano de Contas, `/plano-contas`).
+/// Centro de custo das contas a pagar (issue #163): cadastro simples.
+model CentroCusto {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String
+  ativo     Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  contasPagar ContaPagar[]
+
+  @@map("centros_custo")
+}
+
 model PlanoConta {
   id         String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   codigo     String         @unique
@@ -2566,35 +2580,42 @@ enum ContaPagarStatus {
 /// pelos services exportados de cada módulo (CLAUDE.md, seção 3). Exclusão lógica: histórico
 /// financeiro.
 model ContaPagar {
-  id               String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                 String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   /// Número exibido na coluna "#".
-  numero           Int                        @unique @default(autoincrement())
-  descricao        String
-  beneficiarioTipo ContaPagarBeneficiarioTipo @default(FORNECEDOR) @map("beneficiario_tipo")
+  numero             Int                        @unique @default(autoincrement())
+  descricao          String
+  beneficiarioTipo   ContaPagarBeneficiarioTipo @default(FORNECEDOR) @map("beneficiario_tipo")
   /// Preenchido quando beneficiarioTipo = FORNECEDOR (sem FK).
-  fornecedorId     String?                    @map("fornecedor_id") @db.Uuid
+  fornecedorId       String?                    @map("fornecedor_id") @db.Uuid
   /// Preenchido quando beneficiarioTipo = FUNCIONARIO (sem FK).
-  funcionarioId    String?                    @map("funcionario_id") @db.Uuid
-  valor            Decimal                    @db.Decimal(12, 2)
-  dataVencimento   DateTime                   @map("data_vencimento") @db.Date
-  formaPagamentoId String?                    @map("forma_pagamento_id") @db.Uuid
-  planoContaId     String?                    @map("plano_conta_id") @db.Uuid
-  documento        String?
-  totalParcelas    Int                        @default(1) @map("total_parcelas")
-  status           ContaPagarStatus           @default(PENDENTE)
-  observacoes      String?
-  createdAt        DateTime                   @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt        DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt        DateTime?                  @map("deleted_at") @db.Timestamptz(3)
+  funcionarioId      String?                    @map("funcionario_id") @db.Uuid
+  valor              Decimal                    @db.Decimal(12, 2)
+  dataVencimento     DateTime                   @map("data_vencimento") @db.Date
+  formaPagamentoId   String?                    @map("forma_pagamento_id") @db.Uuid
+  planoContaId       String?                    @map("plano_conta_id") @db.Uuid
+  documento          String?
+  totalParcelas      Int                        @default(1) @map("total_parcelas")
+  status             ContaPagarStatus           @default(PENDENTE)
+  observacoes        String?
+  /// Competência contábil (`AAAA-MM`).
+  competencia        String?                    @db.VarChar(7)
+  centroCustoId      String?                    @map("centro_custo_id") @db.Uuid
+  /// Boleto, fatura ou NF enviado em `/api/arquivos` (uso `documento-conta-pagar`), sem FK.
+  documentoArquivoId String?                    @map("documento_arquivo_id") @db.Uuid
+  createdAt          DateTime                   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt          DateTime?                  @map("deleted_at") @db.Timestamptz(3)
 
   formaPagamento FormaPagamento?   @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
   planoConta     PlanoConta?       @relation(fields: [planoContaId], references: [id], onDelete: Restrict)
+  centroCusto    CentroCusto?      @relation(fields: [centroCustoId], references: [id], onDelete: Restrict)
   baixas         ContaPagarBaixa[]
 
   @@index([fornecedorId])
   @@index([funcionarioId])
   @@index([formaPagamentoId])
   @@index([planoContaId])
+  @@index([centroCustoId])
   @@index([status])
   @@index([dataVencimento])
   @@map("contas_pagar")
@@ -2603,26 +2624,30 @@ model ContaPagar {
 /// Dono: financeiro. Baixa (pagamento total ou parcial) de uma conta a pagar. "Cancelar Baixa"
 /// exclui logicamente a baixa mais recente, sem apagar o histórico, e recalcula o status.
 model ContaPagarBaixa {
-  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contaPagarId         String    @map("conta_pagar_id") @db.Uuid
-  dataPagamento        DateTime  @map("data_pagamento") @db.Date
-  valorPago            Decimal   @map("valor_pago") @db.Decimal(12, 2)
-  juros                Decimal   @default(0) @db.Decimal(12, 2)
-  desconto             Decimal   @default(0) @db.Decimal(12, 2)
-  formaPagamentoId     String?   @map("forma_pagamento_id") @db.Uuid
-  contaBancariaId      String?   @map("conta_bancaria_id") @db.Uuid
-  documento            String?
-  observacoes          String?
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contaPagarId             String    @map("conta_pagar_id") @db.Uuid
+  dataPagamento            DateTime  @map("data_pagamento") @db.Date
+  valorPago                Decimal   @map("valor_pago") @db.Decimal(12, 2)
+  juros                    Decimal   @default(0) @db.Decimal(12, 2)
+  desconto                 Decimal   @default(0) @db.Decimal(12, 2)
+  formaPagamentoId         String?   @map("forma_pagamento_id") @db.Uuid
+  contaBancariaId          String?   @map("conta_bancaria_id") @db.Uuid
+  documento                String?
+  observacoes              String?
   /// Arquivo enviado em `/api/arquivos` (uso `comprovante-conta-pagar`), sem FK.
-  comprovanteArquivoId String?   @map("comprovante_arquivo_id") @db.Uuid
-  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  deletedAt            DateTime? @map("deleted_at") @db.Timestamptz(3)
+  comprovanteArquivoId     String?   @map("comprovante_arquivo_id") @db.Uuid
+  /// Valor pago menos o saldo do título; nulo quando não houve divergência.
+  divergencia              Decimal?  @db.Decimal(12, 2)
+  justificativaDivergencia String?   @map("justificativa_divergencia")
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt                DateTime? @map("deleted_at") @db.Timestamptz(3)
 
   contaPagar     ContaPagar      @relation(fields: [contaPagarId], references: [id], onDelete: Cascade)
   formaPagamento FormaPagamento? @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
   contaBancaria  ContaBancaria?  @relation(fields: [contaBancariaId], references: [id], onDelete: Restrict)
 
   @@index([contaPagarId])
+  @@index([divergencia])
   @@map("contas_pagar_baixas")
 }
 

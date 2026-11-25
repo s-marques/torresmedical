@@ -14,19 +14,29 @@ import { z } from 'zod';
 import {
   baixarContaPagarSchema,
   contaPagarBaixaSchema,
+  contaPagarDivergenciaPageSchema,
   contaPagarPageSchema,
   contaPagarSchema,
   createContaPagarSchema,
   exportContasPagarQuerySchema,
+  exportDivergenciasContaPagarQuerySchema,
   listContasPagarQuerySchema,
+  listDivergenciasContaPagarQuerySchema,
   updateContaPagarSchema,
+  verificacaoDuplicidadeContaPagarSchema,
+  verificarDuplicidadeContaPagarSchema,
   type BaixarContaPagarInput,
   type ContaPagar,
   type ContaPagarBaixa,
+  type ContaPagarDivergencia,
   type CreateContaPagarInput,
   type ExportContasPagarQuery,
+  type ExportDivergenciasContaPagarQuery,
   type ListContasPagarQuery,
+  type ListDivergenciasContaPagarQuery,
   type UpdateContaPagarInput,
+  type VerificacaoDuplicidadeContaPagar,
+  type VerificarDuplicidadeContaPagar,
 } from '@torres/shared';
 import { Audit } from '../../../common/audit/audit.decorator';
 import { RequirePermission } from '../../../common/auth/auth.decorators';
@@ -40,6 +50,8 @@ import {
 } from '../../../common/swagger/zod-openapi';
 import { IdParam } from '../../../common/validation/id-param.decorator';
 import { ZodValidationPipe } from '../../../common/validation/zod-validation.pipe';
+import { ContasPagarDivergenciasService } from './contas-pagar-divergencias.service';
+import { ContasPagarDuplicidadeService } from './contas-pagar-duplicidade.service';
 import { ContasPagarService } from './contas-pagar.service';
 
 const ENTITY = 'ContaPagar';
@@ -48,7 +60,11 @@ const ENTITY = 'ContaPagar';
 @ApiTags('Financeiro: Contas a Pagar')
 @Controller('financeiro/contas-pagar')
 export class ContasPagarController {
-  constructor(private readonly contasPagar: ContasPagarService) {}
+  constructor(
+    private readonly contasPagar: ContasPagarService,
+    private readonly divergencias: ContasPagarDivergenciasService,
+    private readonly duplicidade: ContasPagarDuplicidadeService,
+  ) {}
 
   @Get()
   @RequirePermission('financeiro.contas-pagar.ver')
@@ -82,6 +98,56 @@ export class ContasPagarController {
     @Query(new ZodValidationPipe(exportContasPagarQuerySchema)) query: ExportContasPagarQuery,
   ): Promise<StreamableFile> {
     return toStreamableFile(await this.contasPagar.export(query));
+  }
+
+  // Antes de ":id" para "divergencias" não ser tratado como id.
+  @Get('divergencias')
+  @RequirePermission('financeiro.contas-pagar.ver')
+  @ApiOperation({
+    summary: 'Relatório de divergências: baixas com valor pago diferente do saldo do título',
+  })
+  @ApiZodQuery(listDivergenciasContaPagarQuerySchema)
+  @ApiZodResponse(200, contaPagarDivergenciaPageSchema)
+  @ApiErrorResponses(400, 401, 403)
+  listDivergencias(
+    @Query(new ZodValidationPipe(listDivergenciasContaPagarQuerySchema))
+    query: ListDivergenciasContaPagarQuery,
+  ): Promise<Page<ContaPagarDivergencia>> {
+    return this.divergencias.list(query);
+  }
+
+  @Get('divergencias/export')
+  @RequirePermission('financeiro.contas-pagar.exportar')
+  @Audit({ entity: 'ContaPagarDivergencia', action: 'EXPORT' })
+  @ApiOperation({ summary: 'Exporta o relatório de divergências em Excel ou PDF' })
+  @ApiZodQuery(exportDivergenciasContaPagarQuerySchema)
+  @ApiProduces(
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/pdf',
+  )
+  @ApiErrorResponses(400, 401, 403, 422)
+  async exportDivergencias(
+    @Query(new ZodValidationPipe(exportDivergenciasContaPagarQuerySchema))
+    query: ExportDivergenciasContaPagarQuery,
+  ): Promise<StreamableFile> {
+    return toStreamableFile(await this.divergencias.export(query));
+  }
+
+  @Post('duplicidade')
+  @RequirePermission('financeiro.contas-pagar.criar', 'financeiro.contas-pagar.editar')
+  @HttpCode(200)
+  @ApiOperation({
+    summary:
+      'Verifica possível duplicidade (mesmo fornecedor, valor e vencimento, ou mesmo documento)',
+  })
+  @ApiZodBody(verificarDuplicidadeContaPagarSchema)
+  @ApiZodResponse(200, verificacaoDuplicidadeContaPagarSchema)
+  @ApiErrorResponses(400, 401, 403)
+  verificarDuplicidade(
+    @Body(new ZodValidationPipe(verificarDuplicidadeContaPagarSchema))
+    body: VerificarDuplicidadeContaPagar,
+  ): Promise<VerificacaoDuplicidadeContaPagar> {
+    return this.duplicidade.verificar(body);
   }
 
   @Get(':id')
