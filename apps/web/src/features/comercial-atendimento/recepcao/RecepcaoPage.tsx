@@ -73,6 +73,7 @@ export default function RecepcaoPage() {
       },
       {
         id: 'pacienteNome',
+        tituloCartao: true,
         titulo: t('recepcao.colunas.paciente'),
         ordenavel: 'paciente',
         celula: (linha) => <span className="font-medium">{linha.pacienteNome}</span>,

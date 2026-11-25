@@ -14,9 +14,10 @@ export function AppLayout() {
   return (
     <SidebarProvider>
       <AppSidebar permissoes={permissoes} />
-      <SidebarInset>
+      {/* min-w-0: sem ele, um filho largo (tabela, abas) estica a página e gera rolagem horizontal. */}
+      <SidebarInset className="min-w-0">
         <AppHeader onOpenSearch={() => setBuscaAberta(true)} />
-        <div className="flex-1 p-4 md:p-6">
+        <div className="min-w-0 flex-1 p-4 md:p-6">
           <Outlet />
         </div>
       </SidebarInset>

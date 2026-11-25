@@ -24,6 +24,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // Os testes de layout (e2e/, Playwright) rodam à parte: pnpm test:layout.
+    include: ['src/**/*.test.{ts,tsx}'],
     restoreMocks: true,
     // Cada worker jsdom ocupa centenas de MB: sem limite, o Vitest abre um por núcleo e esgota a RAM.
     maxWorkers: 4,

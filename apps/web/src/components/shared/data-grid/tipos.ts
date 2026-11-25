@@ -20,6 +20,11 @@ export interface ColunaGrid<T> {
   ocultavel?: boolean;
   /** Começa oculta. */
   oculta?: boolean;
+  /**
+   * No celular cada linha vira um cartão (issue #161). Esta coluna vira o título do cartão; sem
+   * nenhuma marcada, vale a primeira coluna visível.
+   */
+  tituloCartao?: boolean;
   className?: string;
 }
 

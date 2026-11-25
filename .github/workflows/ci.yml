@@ -176,6 +176,43 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  # Layout no celular (issue #161): Chromium real em 360 e 414 px, com a API simulada por rota.
+  testes-layout:
+    name: Layout no celular (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Build do shared
+        run: pnpm --filter @torres/shared build
+
+      - name: Instalar o Chromium
+        run: pnpm --filter @torres/web exec playwright install --with-deps chromium
+
+      - name: Testes de layout
+        run: pnpm --filter @torres/web test:layout
+
+      - name: Publicar relatório em caso de falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: layout-celular-resultados
+          path: apps/web/test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
   sonar:
     name: SonarQube Cloud
     needs: [verificacao, testes-api, testes-web]

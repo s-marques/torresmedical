@@ -13,6 +13,7 @@ import { http, HttpResponse } from 'msw';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { aplicarIdioma } from '@/lib/i18n';
+import { matchMediaStub } from '../../../test/match-media';
 import { servidorMsw, usarMsw } from '../../../test/msw';
 import { StatusAtivo } from '../StatusBadge';
 import { DataGrid } from './DataGrid';
@@ -122,6 +123,75 @@ beforeEach(() => {
   pedidos = {};
   sessao.permissoes = PERMISSOES;
   responderLista();
+});
+
+describe('DataGrid no celular (issue #161)', () => {
+  beforeEach(() => {
+    vi.stubGlobal('matchMedia', (query: string) => matchMediaStub(query, true));
+  });
+
+  it('mostra cada linha como cartão, com a primeira coluna de título e as demais como campos', async () => {
+    renderizar();
+
+    expect(await screen.findByText('Unidade 1')).toBeInTheDocument();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    const cartoes = screen.getAllByRole('listitem');
+    expect(cartoes).toHaveLength(10);
+    expect(within(cartoes[0]!).getByText('Unidade 1')).toBeInTheDocument();
+    expect(within(cartoes[0]!).getByText('Status')).toBeInTheDocument();
+    expect(within(cartoes[0]!).getByText('Empresa')).toBeInTheDocument();
+    // Coluna oculta por padrão continua oculta.
+    expect(within(cartoes[0]!).queryByText('Criado em')).not.toBeInTheDocument();
+    expect(screen.getByText('25 linha(s) no total.')).toBeInTheDocument();
+  });
+
+  it('usa a coluna marcada com `tituloCartao` como título', async () => {
+    const colunas = COLUNAS.map((c) => (c.id === 'status' ? { ...c, tituloCartao: true } : c));
+    renderizar({ colunas });
+
+    await screen.findByText('Unidade 1');
+    const primeiro = screen.getAllByRole('listitem')[0]!;
+    const [titulo] = primeiro.querySelectorAll('.font-medium');
+    expect(titulo).toHaveTextContent('Ativo');
+    expect(within(primeiro).getByText('Nome')).toBeInTheDocument();
+  });
+
+  it('abre o menu de ações e o clique no cartão sem disputar o clique do botão', async () => {
+    const aoClicarLinha = vi.fn();
+    const onSelect = vi.fn();
+    const { user } = renderizar({
+      aoClicarLinha,
+      acoes: () => [{ rotulo: 'Editar', onSelect }],
+    });
+
+    await screen.findByText('Unidade 1');
+    const primeiro = screen.getAllByRole('listitem')[0]!;
+    await user.click(within(primeiro).getByRole('button', { name: 'Ações' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Editar' }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(aoClicarLinha).not.toHaveBeenCalled();
+
+    await user.click(within(primeiro).getByText('Unidade 1'));
+    expect(aoClicarLinha).toHaveBeenCalledWith(expect.objectContaining({ nome: 'Unidade 1' }));
+  });
+
+  it('mostra a mensagem de lista vazia', async () => {
+    responderLista(0);
+    renderizar();
+
+    expect(await screen.findByText('Nenhuma unidade encontrada.')).toBeInTheDocument();
+    expect(screen.queryByRole('listitem')).not.toBeInTheDocument();
+  });
+
+  it('mostra o erro com "Tentar novamente"', async () => {
+    servidorMsw.use(http.get(URL_LISTA, () => HttpResponse.json({}, { status: 500 })));
+    renderizar();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não foi possível carregar os dados.',
+    );
+    expect(screen.getByRole('button', { name: 'Tentar novamente' })).toBeInTheDocument();
+  });
 });
 
 describe('DataGrid', () => {
