@@ -18,6 +18,10 @@ export const PERMISSOES_EXTRAS = [
   'configuracoes-gestao.dados-pessoais.exportar',
   /** Criar, alterar e excluir os modelos de prontuário padrão da clínica (issue #152): gerência. */
   'consultorio-assistencial.modelos-prontuario.gerir',
+  /** Histórico de backups e restaurações de teste (issue #157, R §40): só a administração. */
+  'configuracoes-gestao.backups.ver',
+  /** Disparar backup ou restauração de teste manualmente (issue #157). */
+  'configuracoes-gestao.backups.executar',
 ] as const;
 
 /** Permissão no formato `<modulo>.<recurso>.<acao>` (CLAUDE.md, seção 3). */
