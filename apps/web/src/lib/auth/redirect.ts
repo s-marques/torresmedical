@@ -1,4 +1,4 @@
-const TELAS_DE_AUTH = ['/login', '/esqueci-senha', '/redefinir-senha'];
+const TELAS_DE_AUTH = ['/login', '/esqueci-senha', '/redefinir-senha', '/trocar-senha'];
 
 /**
  * Para onde ir depois do login. Só caminhos internos (`/...`): nada de `//outro-site` ou URL

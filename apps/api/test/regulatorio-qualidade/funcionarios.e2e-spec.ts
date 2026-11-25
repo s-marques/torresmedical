@@ -16,6 +16,7 @@ const PERMISSOES = [
   'regulatorio-qualidade.funcionarios.editar',
   'regulatorio-qualidade.funcionarios.excluir',
   'regulatorio-qualidade.funcionarios.exportar',
+  'configuracoes-gestao.dados-pessoais.exportar',
 ] as const;
 const INEXISTENTE = '00000000-0000-4000-8000-000000000000';
 const MSG_NOME = 'Nome é obrigatório.';

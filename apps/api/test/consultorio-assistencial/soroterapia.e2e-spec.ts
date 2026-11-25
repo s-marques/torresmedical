@@ -16,6 +16,7 @@ const BASE = '/api/consultorio-assistencial/soroterapia';
 const PERMISSOES = [
   'consultorio-assistencial.soroterapia.ver',
   'consultorio-assistencial.soroterapia.exportar',
+  'configuracoes-gestao.dados-pessoais.exportar',
 ] as const;
 const ROTAS = ['fila-dia', 'pacotes', 'em-andamento', 'historico'] as const;
 const MINUTO_MS = 60_000;

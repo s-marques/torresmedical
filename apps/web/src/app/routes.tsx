@@ -5,12 +5,16 @@ import { RotaProtegida } from './layout/RotaProtegida';
 import { EsqueciSenhaPage } from './pages/auth/EsqueciSenhaPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RedefinirSenhaPage } from './pages/auth/RedefinirSenhaPage';
+import { TrocarSenhaPage } from './pages/auth/TrocarSenhaPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PageErrorPage } from './pages/PageErrorPage';
 import { PaginaDaTela } from './pages/PaginaDaTela';
 
 /** Página pública da pesquisa do profissional (link com token recebido pelo WhatsApp, sem login). */
 export const ROTA_RESPONDER_PESQUISA_PROFISSIONAL = '/pesquisa-profissional/responder';
+
+/** Troca de senha do usuário logado; também é o destino enquanto a senha for provisória ou vencida. */
+export const ROTA_TROCAR_SENHA = '/trocar-senha';
 
 /** Página de exemplos dos componentes compartilhados: só em desenvolvimento, fora do menu. */
 export const ROTA_EXEMPLOS = '/dev/componentes';
@@ -48,6 +52,7 @@ export const ROTAS: RouteObject[] = [
     element: <RotaProtegida />,
     errorElement: <PageErrorPage />,
     children: [
+      { path: ROTA_TROCAR_SENHA, element: <TrocarSenhaPage />, errorElement: <PageErrorPage /> },
       {
         element: <AppLayout />,
         children: [

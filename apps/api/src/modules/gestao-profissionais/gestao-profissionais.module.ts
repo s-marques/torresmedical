@@ -41,6 +41,8 @@ import { ProfissionaisHistoricoService } from './profissionais/profissionais-his
 import { ProfissionaisOnboardingController } from './profissionais/profissionais-onboarding.controller';
 import { ProfissionaisOnboardingService } from './profissionais/profissionais-onboarding.service';
 import { ProfissionalAgendaService } from './profissionais/profissional-agenda.service';
+import { AcessoProfissionalAgendador } from './profissionais/acesso-profissional.agendador';
+import { AcessoProfissionalService } from './profissionais/acesso-profissional.service';
 import { ProfissionaisClassificacaoAgendador } from './profissionais/profissionais-classificacao.agendador';
 import { ProfissionaisClassificacaoController } from './profissionais/profissionais-classificacao.controller';
 import { ProfissionaisClassificacaoService } from './profissionais/profissionais-classificacao.service';
@@ -88,6 +90,8 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ProfissionaisHistoricoService,
     ProfissionaisClassificacaoService,
     ProfissionaisClassificacaoAgendador,
+    AcessoProfissionalService,
+    AcessoProfissionalAgendador,
     ServicosProfissionaisService,
     ProtocolosService,
     ProtocolosMaeService,

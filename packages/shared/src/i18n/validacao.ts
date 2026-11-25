@@ -65,6 +65,14 @@ export const VALIDACAO_PT_BR = {
     credenciaisInvalidas: 'E-mail ou senha inválidos',
     linkInvalido: 'Link de redefinição inválido',
     senhasNaoConferem: 'As senhas não conferem',
+    senhaMaiuscula: 'A senha deve ter ao menos uma letra maiúscula',
+    senhaSimbolo: 'A senha deve ter ao menos um símbolo (ex.: ! @ # $ %)',
+    senhaIgualAtual: 'A senha nova deve ser diferente da atual',
+  },
+  politica: {
+    entre: 'Informe um valor entre {{min}} e {{max}}',
+    numeroInvalido: 'Informe um número inteiro',
+    booleano: 'Valor inválido',
   },
   periodo: {
     informeDataInicial: 'Informe a data inicial',

@@ -7,6 +7,7 @@ export * from './menu/menu';
 export * from './schemas/arquivos/arquivo';
 export * from './schemas/auditoria/audit-log';
 export * from './schemas/auth/auth';
+export * from './schemas/auth/politica-seguranca';
 export * from './schemas/common/api-error';
 export * from './schemas/common/list-query';
 export * from './schemas/common/obrigatorio';

@@ -37,6 +37,7 @@ const USUARIO: UsuarioAutenticado = {
   escopo: { tipo: 'PROFISSIONAIS', profissionalIds: [] },
   verDadosSensiveis: false,
   avatarArquivoId: null,
+  trocarSenha: false,
   preferencias: PREFERENCIAS_PADRAO,
 };
 

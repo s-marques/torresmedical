@@ -28,6 +28,7 @@ import { PacientesService } from '../../comercial-atendimento/pacientes/paciente
 import { ContasReceberService } from '../../financeiro/contas-receber/contas-receber.service';
 import { FormasPagamentoService } from '../../financeiro/formas-pagamento/formas-pagamento.service';
 import { ProfissionaisService } from '../profissionais/profissionais.service';
+import { AcessoProfissionalService } from '../profissionais/acesso-profissional.service';
 import { competenciaAtual } from './competencia-cobranca';
 import type { SalaEmUsoVerificador } from './sala-em-uso';
 
@@ -94,6 +95,7 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
     private readonly exportService: ExportService,
     private readonly contasReceber: ContasReceberService,
     private readonly escopo: EscopoDadosService,
+    private readonly acesso: AcessoProfissionalService,
   ) {}
 
   async emUso(ids: readonly string[]): Promise<ReadonlySet<string>> {
@@ -301,6 +303,8 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       .map((c) => c.contaReceberId)
       .filter((v): v is string => v !== null);
     await this.contasReceber.cancelarPendentesComVencimentoApos(contaReceberIds, data);
+    // Sem outro contrato com acesso, o usuário do profissional é desativado (issue #156).
+    if (alterado.profissionalId) await this.acesso.avaliar(alterado.profissionalId);
     return this.toDto(
       alterado,
       await this.resolverNomes([alterado]),

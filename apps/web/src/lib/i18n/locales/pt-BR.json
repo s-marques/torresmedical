@@ -111,7 +111,37 @@
     "redefinirDescricao": "Crie uma senha com letras e números",
     "senhaNova": "Senha nova",
     "confirmeSenha": "Confirme a senha",
-    "alterarSenha": "Alterar senha"
+    "alterarSenha": "Alterar senha",
+    "trocarSenhaTitulo": "Trocar senha",
+    "trocarSenhaDescricao": "Defina uma senha nova para continuar usando o sistema",
+    "senhaAtual": "Senha atual",
+    "regrasTitulo": "A senha nova deve ter:",
+    "regraTamanho": "No mínimo {{min}} caracteres",
+    "regraLetrasNumeros": "Letras e números",
+    "regraMaiuscula": "Ao menos uma letra maiúscula",
+    "regraSimbolo": "Ao menos um símbolo (ex.: ! @ # $ %)"
+  },
+  "seguranca": {
+    "aba": "Segurança",
+    "titulo": "Política de segurança",
+    "descricao": "Regras de senha, bloqueio por tentativas e encerramento de acesso (LGPD).",
+    "secaoSenha": "Senha",
+    "secaoBloqueio": "Bloqueio por tentativas",
+    "secaoAcesso": "Encerramento de acesso",
+    "tamanhoMinimo": "Tamanho mínimo da senha",
+    "exigirMaiuscula": "Exigir letra maiúscula",
+    "exigirSimbolo": "Exigir símbolo",
+    "trocaPrimeiroAcesso": "Trocar a senha no primeiro acesso",
+    "trocaPrimeiroAcessoAjuda": "Vale para usuário novo e para senha redefinida por um administrador.",
+    "expiracaoDias": "Expiração da senha (dias)",
+    "expiracaoDiasAjuda": "Deixe vazio para a senha não expirar.",
+    "tentativasBloqueio": "Tentativas de login até bloquear",
+    "minutosBloqueio": "Duração do bloqueio (minutos)",
+    "carenciaProfissionalDias": "Acesso do profissional após o fim do contrato (dias)",
+    "carenciaProfissionalDiasAjuda": "0 encerra o acesso no dia do encerramento. Valores maiores permitem, por exemplo, consultar prontuários.",
+    "salvar": "Salvar política",
+    "salva": "Política de segurança salva.",
+    "erroCarregar": "Não foi possível carregar a política de segurança."
   },
   "paginas": {
     "emConstrucao": "Em construção",
@@ -1741,7 +1771,8 @@
       "agenda": "Agenda",
       "sala": "Sala",
       "contrato": "Contrato",
-      "prontuario": "Prontuário"
+      "prontuario": "Prontuário",
+      "exportacoes": "Exportações"
     },
     "filtros": {
       "usuario": "Usuário",
@@ -1782,7 +1813,8 @@
       "Venda": "Venda",
       "Orcamento": "Orçamento",
       "Paciente": "Paciente",
-      "AuditLog": "Auditoria"
+      "AuditLog": "Auditoria",
+      "PoliticaSeguranca": "Política de segurança"
     },
     "campos": {
       "nome": "Nome",

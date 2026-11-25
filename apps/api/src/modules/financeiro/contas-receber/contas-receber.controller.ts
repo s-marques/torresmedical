@@ -24,7 +24,7 @@ import {
   type UpdateContaReceberInput,
 } from '@torres/shared';
 import { Audit } from '../../../common/audit/audit.decorator';
-import { RequirePermission } from '../../../common/auth/auth.decorators';
+import { ExportaDadosPessoais, RequirePermission } from '../../../common/auth/auth.decorators';
 import { toStreamableFile } from '../../../common/export/export-response';
 import type { Page } from '../../../common/pagination/paginate';
 import {
@@ -63,6 +63,7 @@ export class ContasReceberController {
   // Antes de ":id" para "export" não ser tratado como id.
   @Get('export')
   @RequirePermission('financeiro.contas-receber.exportar')
+  @ExportaDadosPessoais()
   @Audit({ entity: ENTITY, action: 'EXPORT' })
   @ApiOperation({
     summary: 'Exporta em Excel ou PDF com os mesmos filtros e ordenação da listagem',

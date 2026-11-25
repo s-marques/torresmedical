@@ -53,6 +53,7 @@ export function toUsuarioAutenticado(
     ),
     verDadosSensiveis: usuario.verDadosSensiveis,
     avatarArquivoId: usuario.avatarArquivoId,
+    trocarSenha: usuario.trocarSenhaNoAcesso,
     preferencias: toPreferencias(usuario.preferencias),
   };
 }
@@ -134,6 +135,14 @@ export class SessoesService {
   async revogarTodas(usuarioId: string): Promise<void> {
     await this.txHost.tx.sessao.updateMany({
       where: { usuarioId, revogadaEm: null },
+      data: { revogadaEm: new Date() },
+    });
+  }
+
+  /** Encerra as sessões do usuário, menos a sessão informada (troca de senha: quem trocou continua logado). */
+  async revogarOutras(usuarioId: string, sessaoId: string): Promise<void> {
+    await this.txHost.tx.sessao.updateMany({
+      where: { usuarioId, revogadaEm: null, id: { not: sessaoId } },
       data: { revogadaEm: new Date() },
     });
   }

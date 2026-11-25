@@ -238,7 +238,10 @@ export const PERFIS_PADRAO: readonly PerfilPadrao[] = [
     descricao: 'Indicadores, contratos, ocupação, financeiro e gestão',
     escopoDados: 'TODOS',
     telas: GERENCIA,
-    extras: ['gestao-profissionais.profissionais-documentos.validar'],
+    extras: [
+      'gestao-profissionais.profissionais-documentos.validar',
+      'configuracoes-gestao.dados-pessoais.exportar',
+    ],
   },
   {
     nome: PERFIL_RECEPCAO,
@@ -260,7 +263,7 @@ export const PERFIS_PADRAO: readonly PerfilPadrao[] = [
     descricao: 'Financeiro, documentos e contratos necessários',
     escopoDados: 'TODOS',
     telas: FINANCEIRO,
-    extras: [],
+    extras: ['configuracoes-gestao.dados-pessoais.exportar'],
   },
   {
     nome: PERFIL_COMERCIAL,

@@ -111,7 +111,37 @@
     "redefinirDescricao": "Cree una contraseña con letras y números",
     "senhaNova": "Contraseña nueva",
     "confirmeSenha": "Confirme la contraseña",
-    "alterarSenha": "Cambiar contraseña"
+    "alterarSenha": "Cambiar contraseña",
+    "trocarSenhaTitulo": "Cambiar contraseña",
+    "trocarSenhaDescricao": "Defina una contraseña nueva para seguir usando el sistema",
+    "senhaAtual": "Contraseña actual",
+    "regrasTitulo": "La contraseña nueva debe tener:",
+    "regraTamanho": "Al menos {{min}} caracteres",
+    "regraLetrasNumeros": "Letras y números",
+    "regraMaiuscula": "Al menos una letra mayúscula",
+    "regraSimbolo": "Al menos un símbolo (p. ej., ! @ # $ %)"
+  },
+  "seguranca": {
+    "aba": "Seguridad",
+    "titulo": "Política de seguridad",
+    "descricao": "Reglas de contraseña, bloqueo por intentos fallidos y cierre de acceso (LGPD).",
+    "secaoSenha": "Contraseña",
+    "secaoBloqueio": "Bloqueo por intentos fallidos",
+    "secaoAcesso": "Cierre de acceso",
+    "tamanhoMinimo": "Longitud mínima de la contraseña",
+    "exigirMaiuscula": "Exigir letra mayúscula",
+    "exigirSimbolo": "Exigir símbolo",
+    "trocaPrimeiroAcesso": "Cambiar la contraseña en el primer acceso",
+    "trocaPrimeiroAcessoAjuda": "Vale para usuarios nuevos y para contraseñas restablecidas por un administrador.",
+    "expiracaoDias": "Vencimiento de la contraseña (días)",
+    "expiracaoDiasAjuda": "Déjelo vacío para que la contraseña no venza.",
+    "tentativasBloqueio": "Intentos de inicio de sesión hasta bloquear",
+    "minutosBloqueio": "Duración del bloqueo (minutos)",
+    "carenciaProfissionalDias": "Acceso del profesional tras el fin del contrato (días)",
+    "carenciaProfissionalDiasAjuda": "0 cierra el acceso el día de la terminación. Valores mayores permiten, por ejemplo, consultar historiales.",
+    "salvar": "Guardar política",
+    "salva": "Política de seguridad guardada.",
+    "erroCarregar": "No se pudo cargar la política de seguridad."
   },
   "paginas": {
     "emConstrucao": "En construcción",
@@ -1849,7 +1879,8 @@
       "agenda": "Agenda",
       "sala": "Sala",
       "contrato": "Contrato",
-      "prontuario": "Historia clínica"
+      "prontuario": "Historia clínica",
+      "exportacoes": "Exportaciones"
     },
     "filtros": {
       "usuario": "Usuario",
@@ -1890,7 +1921,8 @@
       "Venda": "Venta",
       "Orcamento": "Presupuesto",
       "Paciente": "Paciente",
-      "AuditLog": "Auditoría"
+      "AuditLog": "Auditoría",
+      "PoliticaSeguranca": "Política de seguridad"
     },
     "campos": {
       "nome": "Nombre",

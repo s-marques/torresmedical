@@ -31,7 +31,7 @@ import {
   type UpdateEncaminhamentoInput,
 } from '@torres/shared';
 import { Audit } from '../../../common/audit/audit.decorator';
-import { RequirePermission } from '../../../common/auth/auth.decorators';
+import { ExportaDadosPessoais, RequirePermission } from '../../../common/auth/auth.decorators';
 import { toStreamableFile } from '../../../common/export/export-response';
 import {
   ApiErrorResponses,
@@ -68,6 +68,7 @@ export class EncaminhamentosController {
   // As rotas fixas vêm antes de ":id" para não serem tratadas como id.
   @Get('export')
   @RequirePermission('consultorio-assistencial.encaminhamentos.exportar')
+  @ExportaDadosPessoais()
   @Audit({ entity: ENTITY, action: 'EXPORT' })
   @ApiOperation({ summary: 'Exporta em Excel ou PDF com os mesmos filtros da listagem' })
   @ApiZodQuery(exportEncaminhamentosQuerySchema)

@@ -4,6 +4,7 @@ import {
   type LoginInput,
   type RedefinirSenhaInput,
   type Sessao,
+  type TrocarSenhaInput,
   type UsuarioSessao,
 } from '@torres/shared';
 import { apiFetch, configurarAutenticacao } from '../api/client';
@@ -124,6 +125,15 @@ export async function pedirRedefinicaoSenha(dados: EsqueciSenhaInput): Promise<v
 
 export async function redefinirSenha(dados: RedefinirSenhaInput): Promise<void> {
   await apiFetch('/api/auth/redefinir-senha', { method: 'POST', body: dados, autenticar: false });
+}
+
+/**
+ * Troca a própria senha (issue #156). As outras sessões caem no servidor; esta continua, e a
+ * troca pendente deixa de valer na hora.
+ */
+export async function trocarSenha(dados: TrocarSenhaInput): Promise<void> {
+  await apiFetch('/api/auth/trocar-senha', { method: 'POST', body: dados });
+  atualizarUsuarioSessao(() => ({ trocarSenha: false }));
 }
 
 configurarAutenticacao({ token: () => accessToken, renovar: renovarSessao });

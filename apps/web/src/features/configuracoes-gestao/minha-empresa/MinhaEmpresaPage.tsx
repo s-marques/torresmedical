@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AbaDados } from './AbaDados';
 import { AbaHorarios } from './AbaHorarios';
 import { AbaIntegracoes } from './AbaIntegracoes';
 import { AbaPlanoFaturas } from './AbaPlanoFaturas';
+import { AbaSeguranca } from './AbaSeguranca';
 import { AbaUnidades } from './AbaUnidades';
 import { AbaUsuarios } from './AbaUsuarios';
 import { useEmpresa } from './use-minha-empresa';
@@ -14,6 +16,7 @@ import { useEmpresa } from './use-minha-empresa';
  * seis abas (Dados, Plano e Faturas, Integrações, Usuários, Unidades, Horários).
  */
 export default function MinhaEmpresaPage() {
+  const { t } = useTranslation();
   const [aba, setAba] = useState('dados');
   const [criandoUnidade, setCriandoUnidade] = useState(false);
   const empresa = useEmpresa();
@@ -32,6 +35,7 @@ export default function MinhaEmpresaPage() {
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
           <TabsTrigger value="unidades">Unidades</TabsTrigger>
           <TabsTrigger value="horarios">Horários</TabsTrigger>
+          <TabsTrigger value="seguranca">{t('seguranca.aba')}</TabsTrigger>
         </TabsList>
         <TabsContent value="dados">
           {empresa.isError && (
@@ -59,6 +63,9 @@ export default function MinhaEmpresaPage() {
         </TabsContent>
         <TabsContent value="horarios">
           <AbaHorarios />
+        </TabsContent>
+        <TabsContent value="seguranca">
+          <AbaSeguranca />
         </TabsContent>
       </Tabs>
     </div>

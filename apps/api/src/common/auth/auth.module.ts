@@ -7,12 +7,14 @@ import { AuthController } from './auth.controller';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 import { DadosSensiveisService } from './dados-sensiveis.service';
+import { EncerramentoAcessoService } from './encerramento-acesso.service';
 import { EscopoDadosService } from './escopo-dados.service';
 import { throttlerOptions } from './auth.throttle';
 import {
   NOTIFICADOR_REDEFINICAO_SENHA,
   NotificadorRedefinicaoSenhaPendente,
 } from './notificador-redefinicao-senha';
+import { PoliticaSegurancaService } from './politica-seguranca.service';
 import { SessoesService } from './sessoes.service';
 
 /**
@@ -39,10 +41,19 @@ import { SessoesService } from './sessoes.service';
     { provide: NOTIFICADOR_REDEFINICAO_SENHA, useClass: NotificadorRedefinicaoSenhaPendente },
     { provide: APP_GUARD, useClass: AuthGuard },
     AuthService,
+    PoliticaSegurancaService,
+    EncerramentoAcessoService,
     SessoesService,
     EscopoDadosService,
     DadosSensiveisService,
   ],
-  exports: [AuthService, EscopoDadosService, DadosSensiveisService],
+  exports: [
+    AuthService,
+    EscopoDadosService,
+    DadosSensiveisService,
+    PoliticaSegurancaService,
+    EncerramentoAcessoService,
+    SessoesService,
+  ],
 })
 export class AuthModule {}

@@ -587,6 +587,47 @@ Regras e nomes na seção 5 do [`CLAUDE.md`](CLAUDE.md). O `MessagingModule` é 
 - **Sessão:** o access token (15 min) fica só em memória. O refresh token vai em cookie
   httpOnly e muda a cada uso. Em HTTP sem TLS, use `AUTH_COOKIE_SECURE=false`.
 
+## Segurança e LGPD (política de senhas, exportação e encerramento de acesso)
+
+Issue #156 (R §41). A política fica na tela **Minha Empresa > aba Segurança** (`GET/PUT
+/api/configuracoes-gestao/politica-seguranca`, permissões `minha-empresa.ver/editar`, auditada
+como `PoliticaSeguranca`). Sem registro, valem os padrões de `POLITICA_PADRAO`
+(`packages/shared`), confirmados pelo dev.
+
+- **Senha:** `senhaNovaSchema` mantém o piso fixo (8 a 128 caracteres, letras e números). A
+  política soma tamanho mínimo (8 a 64), maiúscula e símbolo, validados por
+  `PoliticaSegurancaService.garantirSenhaValida` no cadastro e na redefinição de senha do usuário,
+  na redefinição por link e na troca. A recusa é 400 `SENHA_FORA_DA_POLITICA`, com uma mensagem por
+  regra no campo.
+- **Bloqueio:** ao atingir `tentativasBloqueio` falhas seguidas (padrão 5), a conta fica bloqueada por
+  `minutosBloqueio` (padrão 15) e a ação é auditada (`motivo: TENTATIVAS_DE_LOGIN`). Bloqueada, a
+  conta responde igual a senha errada (`CREDENCIAIS_INVALIDAS`), mesmo com a senha certa, para não
+  revelar que ela existe. Redefinir a senha (link ou administrador) desbloqueia. O rate limit por IP
+  continua valendo.
+- **Primeiro acesso e expiração:** senha definida ou redefinida por um administrador é provisória
+  (`trocaPrimeiroAcesso`, padrão ligado). Com `expiracaoDias` (padrão vazio = não expira), a senha
+  mais antiga que o prazo vira troca pendente no login. Com a troca pendente, todas as rotas
+  respondem 403 `TROCA_SENHA_OBRIGATORIA`, menos as marcadas com `@PermitidoComTrocaSenha()`
+  (`/auth/me`, `/auth/regras-senha` e `/auth/trocar-senha`); o front leva para `/trocar-senha`.
+  `POST /api/auth/trocar-senha` pede a senha atual e derruba as outras sessões.
+- **Encerramento de acesso do profissional:** o `AcessoProfissionalService`
+  (`gestao-profissionais`) reavalia o profissional ao encerrar ou cancelar um contrato, ao inativá-lo
+  ou excluí-lo e todo dia às 2h (`AcessoProfissionalAgendador`, desligado com
+  `CAMPANHAS_AGENDADOR=off`). Sem contrato que dê acesso, os usuários vinculados são desativados, as
+  sessões revogadas e o `audit_log` registra (`motivo`). Dão acesso: contrato ativo sem data final ou
+  ainda vigente, contrato aguardando assinatura e contrato encerrado ou cancelado até
+  `carenciaProfissionalDias` depois do encerramento (padrão 0 = acaba no dia). Profissional que nunca
+  teve contrato não é governado pela regra; usuário ligado a mais de um profissional só perde o
+  acesso quando nenhum deles o mantém. O funcionário desligado fica para uma issue própria, porque
+  `Funcionario` ainda não tem vínculo com `Usuario`.
+- **Exportação:** além de `<tela>.exportar`, as exportações de dados pessoais ou clínicos exigem
+  `configuracoes-gestao.dados-pessoais.exportar` (403 sem ela). Marque o endpoint com
+  `@ExportaDadosPessoais()`; hoje valem Pacientes, Profissionais, Funcionários, Usuários,
+  Encaminhamentos, Prescrições, Soroterapia, Contas a Receber e Contratos de sala. Os perfis padrão
+  Administrador, Gerência e Financeiro recebem a permissão (migration
+  `perfis_padrao_exportar_dados_pessoais`). O **relatório de exportações** é o atalho "Exportações" da
+  tela Auditoria (`GET /api/auditoria?grupo=exportacoes`): quem exportou o quê e quando.
+
 ## Scripts (na raiz)
 
 ```bash

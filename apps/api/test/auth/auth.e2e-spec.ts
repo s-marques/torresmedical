@@ -89,7 +89,10 @@ describe('Autenticação (e2e)', () => {
     it('a senha e o hash nunca aparecem na resposta', async () => {
       const res = await login().expect(200);
 
-      expect(JSON.stringify(res.body)).not.toMatch(/senha|argon2|Hash/i);
+      // `trocarSenha` é só o aviso de troca pendente (issue #156), não dado da senha.
+      expect(JSON.stringify(res.body).replaceAll('trocarSenha', '')).not.toMatch(
+        /senha|argon2|Hash/i,
+      );
     });
 
     it.each([
@@ -136,6 +139,10 @@ describe('Autenticação (e2e)', () => {
       const res = await login().expect(429);
 
       expect(res.body).toMatchObject({ statusCode: 429, code: 'TOO_MANY_REQUESTS' });
+      // As 5 falhas também bloquearam a conta (política padrão): só entra com o bloqueio vencido.
+      ip = '10.255.0.1';
+      await login().expect(401);
+      await prisma.usuario.update({ where: { id: usuario.id }, data: { bloqueadoAte: null } });
       ip = '10.255.0.1';
       await login().expect(200);
     });
@@ -343,7 +350,9 @@ describe('Autenticação (e2e)', () => {
         entityId: usuario.id,
         userId: usuario.id,
       });
-      expect(JSON.stringify([registro.before, registro.after])).not.toMatch(/senha|argon2/i);
+      expect(
+        JSON.stringify([registro.before, registro.after]).replaceAll('trocarSenhaNoAcesso', ''),
+      ).not.toMatch(/senha|argon2/i);
 
       const reuso = await redefinir(token).expect(400);
       expect(reuso.body).toMatchObject({

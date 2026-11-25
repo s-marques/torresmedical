@@ -70,20 +70,34 @@ function montarTxHost(opcoes: { usuarios?: UsuarioFake[]; perfis?: unknown[] } =
 }
 
 const exportServiceFalso = { ensureWithinLimit: jest.fn(), export: jest.fn() } as never;
+const politicaFalsa = {
+  garantirSenhaValida: jest.fn().mockResolvedValue(undefined),
+  obter: jest.fn().mockResolvedValue({ trocaPrimeiroAcesso: true }),
+};
+const sessoesFalsas = { revogarTodas: jest.fn().mockResolvedValue(undefined) };
+
+function novoService(txHost: TransactionHost<PrismaAdapter>): UsuariosService {
+  return new UsuariosService(
+    txHost,
+    exportServiceFalso,
+    politicaFalsa as never,
+    sessoesFalsas as never,
+  );
+}
 
 describe('UsuariosService', () => {
   it('404 quando não existe', async () => {
     const { txHost } = montarTxHost({ usuarios: [] });
 
-    await expect(
-      new UsuariosService(txHost, exportServiceFalso).findByIdDto(USUARIO.id),
-    ).rejects.toMatchObject({ message: 'Usuário não encontrado' });
+    await expect(novoService(txHost).findByIdDto(USUARIO.id)).rejects.toMatchObject({
+      message: 'Usuário não encontrado',
+    });
   });
 
   it('nunca retorna senhaHash', async () => {
     const { txHost } = montarTxHost();
 
-    const dto = await new UsuariosService(txHost, exportServiceFalso).findByIdDto(USUARIO.id);
+    const dto = await novoService(txHost).findByIdDto(USUARIO.id);
 
     expect(dto).not.toHaveProperty('senhaHash');
     expect(dto.perfilNome).toBeNull();
@@ -104,7 +118,7 @@ describe('UsuariosService', () => {
     it('herda a empresa do criador e grava o hash da senha, sem a senha em texto puro', async () => {
       const { txHost, usuarioDelegate } = montarTxHost();
 
-      await new UsuariosService(txHost, exportServiceFalso).create(ENTRADA, CRIADOR_ID);
+      await novoService(txHost).create(ENTRADA, CRIADOR_ID);
 
       expect(usuarioDelegate.findUniqueOrThrow).toHaveBeenCalledWith({
         where: { id: CRIADOR_ID },
@@ -125,10 +139,7 @@ describe('UsuariosService', () => {
       const { txHost } = montarTxHost();
 
       await expect(
-        new UsuariosService(txHost, exportServiceFalso).create(
-          { ...ENTRADA, email: USUARIO.email },
-          CRIADOR_ID,
-        ),
+        novoService(txHost).create({ ...ENTRADA, email: USUARIO.email }, CRIADOR_ID),
       ).rejects.toMatchObject({ message: 'Já existe um usuário com este email' });
     });
 
@@ -136,10 +147,7 @@ describe('UsuariosService', () => {
       const { txHost } = montarTxHost({ perfis: [] });
 
       await expect(
-        new UsuariosService(txHost, exportServiceFalso).create(
-          { ...ENTRADA, perfilId: PERFIL_ID },
-          CRIADOR_ID,
-        ),
+        novoService(txHost).create({ ...ENTRADA, perfilId: PERFIL_ID }, CRIADOR_ID),
       ).rejects.toMatchObject({ message: 'Perfil não encontrado' });
     });
   });
@@ -148,7 +156,7 @@ describe('UsuariosService', () => {
     it('converte status em ativo e não altera a senha', async () => {
       const { txHost, usuarioDelegate } = montarTxHost();
 
-      await new UsuariosService(txHost, exportServiceFalso).update(USUARIO.id, {
+      await novoService(txHost).update(USUARIO.id, {
         nome: 'Ana Luiza Cardoso',
         email: USUARIO.email,
         telefone: null,
@@ -172,7 +180,7 @@ describe('UsuariosService', () => {
       const { txHost } = montarTxHost({ usuarios: [] });
 
       await expect(
-        new UsuariosService(txHost, exportServiceFalso).update(USUARIO.id, {
+        novoService(txHost).update(USUARIO.id, {
           nome: 'X',
           email: 'x@example.com',
           telefone: null,
@@ -202,7 +210,7 @@ describe('UsuariosService', () => {
     it('create conecta cada profissional informado', async () => {
       const { txHost, usuarioDelegate } = montarTxHost();
 
-      await new UsuariosService(txHost, exportServiceFalso).create(
+      await novoService(txHost).create(
         {
           nome: 'Carlos',
           email: 'carlos@example.com',
@@ -226,7 +234,7 @@ describe('UsuariosService', () => {
 
     it('update substitui todos os vínculos (lista vazia remove)', async () => {
       const { txHost, usuarioDelegate } = montarTxHost();
-      const service = new UsuariosService(txHost, exportServiceFalso);
+      const service = novoService(txHost);
 
       await service.update(USUARIO.id, { ...EDICAO, profissionalIds: [PROF_A] });
       await service.update(USUARIO.id, { ...EDICAO, profissionalIds: [] });
@@ -251,7 +259,7 @@ describe('UsuariosService', () => {
       );
 
       await expect(
-        new UsuariosService(txHost, exportServiceFalso).update(USUARIO.id, {
+        novoService(txHost).update(USUARIO.id, {
           ...EDICAO,
           profissionalIds: [PROF_A],
         }),
@@ -266,7 +274,7 @@ describe('UsuariosService', () => {
       usuarioDelegate.update.mockRejectedValueOnce(new Error('falha'));
 
       await expect(
-        new UsuariosService(txHost, exportServiceFalso).update(USUARIO.id, {
+        novoService(txHost).update(USUARIO.id, {
           ...EDICAO,
           profissionalIds: [],
         }),
@@ -280,7 +288,7 @@ describe('UsuariosService', () => {
       };
       const { txHost } = montarTxHost({ usuarios: [comVinculo] });
 
-      const dto = await new UsuariosService(txHost, exportServiceFalso).findByIdDto(USUARIO.id);
+      const dto = await novoService(txHost).findByIdDto(USUARIO.id);
 
       expect(dto.profissionais).toEqual([{ id: PROF_A, nome: 'Dra. Teste' }]);
     });
@@ -290,7 +298,7 @@ describe('UsuariosService', () => {
     it('grava um novo hash sem expor a senha', async () => {
       const { txHost, usuarioDelegate } = montarTxHost();
 
-      await new UsuariosService(txHost, exportServiceFalso).resetarSenha(USUARIO.id, {
+      await novoService(txHost).resetarSenha(USUARIO.id, {
         senha: 'nova-senha-123',
       });
 
@@ -303,7 +311,7 @@ describe('UsuariosService', () => {
       const { txHost } = montarTxHost({ usuarios: [] });
 
       await expect(
-        new UsuariosService(txHost, exportServiceFalso).resetarSenha(USUARIO.id, {
+        novoService(txHost).resetarSenha(USUARIO.id, {
           senha: 'nova-senha-123',
         }),
       ).rejects.toMatchObject({ message: 'Usuário não encontrado' });

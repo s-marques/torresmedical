@@ -23,6 +23,7 @@ const PERMISSOES = [
   'comercial-atendimento.pacientes.editar',
   'comercial-atendimento.pacientes.excluir',
   'comercial-atendimento.pacientes.exportar',
+  'configuracoes-gestao.dados-pessoais.exportar',
 ] as const;
 const INEXISTENTE = '00000000-0000-4000-8000-000000000000';
 const DIA_MS = 86_400_000;
