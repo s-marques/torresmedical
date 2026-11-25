@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { colunasDoRelatorio, formatarValorRelatorio } from './colunas-relatorio';
+import {
+  colunasDoRelatorio,
+  filtrosDoRelatorio,
+  formatarValorRelatorio,
+  rodapeDoRelatorio,
+} from './colunas-relatorio';
 import { aplicarSelecao, dataLocal, periodoPadrao } from './use-selecao-relatorio';
 
 describe('formatarValorRelatorio', () => {
@@ -47,6 +52,42 @@ describe('colunasDoRelatorio', () => {
       ['valor', false, true, 'text-right tabular-nums'],
     ]);
     expect(colunas[1]?.celula?.({ valor: '2' })).toMatch(/^R\$\s2,00$/);
+  });
+});
+
+describe('filtrosDoRelatorio e rodapeDoRelatorio', () => {
+  const relatorio = {
+    id: 'X-01',
+    nome: 'X',
+    colunas: [
+      { id: 'nome', titulo: 'Nome', tipo: 'text' as const, ordenavel: true },
+      { id: 'valor', titulo: 'Valor', tipo: 'currency' as const, ordenavel: false },
+    ],
+    filtros: [
+      { tipo: 'select' as const, parametro: 'status', rotulo: 'Status', opcoes: [] },
+      {
+        tipo: 'entidade' as const,
+        parametro: 'profissionalId',
+        rotulo: 'Profissional',
+        entidade: 'profissionais' as const,
+      },
+    ],
+  };
+
+  it('filtro de entidade ganha o texto "Todos"; select segue igual', () => {
+    const filtros = filtrosDoRelatorio(relatorio, 'Todos');
+
+    expect(filtros[0]).toEqual(relatorio.filtros[0]);
+    expect(filtros[1]).toEqual({ ...relatorio.filtros[1], rotuloTodos: 'Todos' });
+  });
+
+  it('rodapé formata os totais pelo tipo da coluna', () => {
+    const rodape = rodapeDoRelatorio(relatorio, 'Total');
+
+    expect(rodape?.rotulo).toBe('Total');
+    expect(String(rodape?.celulas({ valor: '10.5' }).valor).replaceAll(/\s/g, ' ')).toBe(
+      'R$ 10,50',
+    );
   });
 });
 

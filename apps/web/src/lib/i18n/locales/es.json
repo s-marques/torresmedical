@@ -1251,7 +1251,7 @@
     "relatorios": "Informes"
   },
   "relatoriosReceitaProfissionais": {
-    "titulo": "Informes de Ingresos de Profesionales",
+    "titulo": "Informes - Ingresos de Profesionales",
     "descricao": "Rendición de cuentas: ingresos por profesional, forma de pago, morosidad y más.",
     "painel": "Panel",
     "modulo": "Gestión de Profesionales",

@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { ReportPage } from '@/components/shared/report-page/ReportPage';
 
 /**
- * Relatórios de Receita Profissionais (`/receita-profissionais/relatorios`, docs/inventario/telas/gestao-profissionais-relatorios.md).
+ * Relatórios - Receita Profissionais (`/receita-profissionais/relatorios`, docs/inventario/telas/gestao-profissionais-relatorios.md).
  * Os relatórios RP-01 a RP-13 vêm da API (`RelatoriosReceitaProfissionais`).
  */
 export default function RelatoriosReceitaProfissionaisPage() {

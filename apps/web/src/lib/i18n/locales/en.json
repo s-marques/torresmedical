@@ -1251,7 +1251,7 @@
     "relatorios": "Reports"
   },
   "relatoriosReceitaProfissionais": {
-    "titulo": "Professional Revenue Reports",
+    "titulo": "Reports - Professional Revenue",
     "descricao": "Accountability: revenue by professional, payment method, delinquency and more.",
     "painel": "Dashboard",
     "modulo": "Professional Management",

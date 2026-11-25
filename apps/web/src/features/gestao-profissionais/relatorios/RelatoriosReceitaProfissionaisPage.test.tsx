@@ -11,13 +11,13 @@ const RELATORIOS = [
   { id: 'RP-13', nome: 'Consultas por Profissional e Forma de Pagamento' },
 ].map((r) => ({ ...r, colunas: [], filtros: [] }));
 
-describe('Relatórios de Receita Profissionais (/receita-profissionais/relatorios)', () => {
+describe('Relatórios - Receita Profissionais (/receita-profissionais/relatorios)', () => {
   it('abre a ReportPage com o seletor de relatórios', async () => {
     const fetchMock = apiFalsa({ rotas: { [CATALOGO]: () => json({ data: RELATORIOS }) } });
     renderApp('/receita-profissionais/relatorios', fetchMock);
 
     expect(
-      await screen.findByRole('heading', { name: 'Relatórios de Receita Profissionais' }),
+      await screen.findByRole('heading', { name: 'Relatórios - Receita Profissionais' }),
     ).toBeVisible();
     expect(await screen.findByText('Selecione um relatório')).toBeInTheDocument();
     expect(chamadasPara(fetchMock, CATALOGO)).toHaveLength(1);
@@ -32,7 +32,7 @@ describe('Relatórios de Receita Profissionais (/receita-profissionais/relatorio
     renderApp('/receita-profissionais/relatorios', fetchMock);
 
     expect(
-      await screen.findByRole('heading', { name: 'Professional Revenue Reports' }),
+      await screen.findByRole('heading', { name: 'Reports - Professional Revenue' }),
     ).toBeVisible();
   });
 
