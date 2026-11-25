@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { traduzirValidacao } from '../../i18n/validacao';
 import { exportQuerySchema, listQuerySchema } from '../common/list-query';
 import { erroObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
@@ -65,6 +66,16 @@ export function statusExibicaoContaPagar(
   return statusExibicaoContaFinanceira(conta);
 }
 
+/** Competência contábil: mês/ano (`AAAA-MM`). Opcional; vazio vira `null`. */
+export const competenciaOpcional = z
+  .string({ error: () => traduzirValidacao('validacao.formatoInvalido') })
+  .trim()
+  .nullish()
+  .transform((valor) => valor || null)
+  .refine((valor) => valor === null || /^\d{4}-(0[1-9]|1[0-2])$/.test(valor), {
+    error: () => traduzirValidacao('validacao.formatoInvalido'),
+  });
+
 /**
  * `POST`/`PATCH /api/financeiro/contas-pagar` (modais "Nova Conta a Pagar" e "Editar Conta a
  * Pagar"). `beneficiarioId` é o fornecedor ou o funcionário, conforme `beneficiarioTipo` (o
@@ -75,6 +86,15 @@ export const contaPagarInputSchema = z.strictObject({
   beneficiarioTipo: contaPagarBeneficiarioTipoSchema.default('FORNECEDOR'),
   beneficiarioId: idOpcional('Beneficiário'),
   status: contaPagarStatusSchema.default('PENDENTE'),
+  competencia: competenciaOpcional,
+  centroCustoId: idOpcional('Centro de custo'),
+  /** Arquivo do boleto, fatura ou NF enviado em `/api/arquivos` (uso `documento-conta-pagar`). */
+  documentoArquivoId: idOpcional('Anexo do documento'),
+  /**
+   * O usuário viu o alerta de possível duplicidade (issue #163) e escolheu continuar. Não é
+   * gravado na conta: vira um registro de auditoria.
+   */
+  duplicidadeConfirmada: z.boolean().optional(),
 });
 
 export type ContaPagarFormulario = z.input<typeof contaPagarInputSchema>;
@@ -125,6 +145,12 @@ export const contaPagarSchema = z.object({
   status: contaPagarStatusSchema,
   /** Soma das baixas não canceladas. */
   valorPago: decimal,
+  /** Competência contábil (`AAAA-MM`). */
+  competencia: z.string().nullable(),
+  centroCustoId: z.uuid().nullable(),
+  centroCustoNome: z.string().nullable(),
+  /** Arquivo do boleto, fatura ou NF (link em `/api/arquivos/:id/link`). */
+  documentoArquivoId: z.uuid().nullable(),
 });
 export type ContaPagar = z.infer<typeof contaPagarSchema>;
 
@@ -150,6 +176,21 @@ const valorAdicional = (rotulo: string) =>
     .max(CONTA_FINANCEIRA_VALOR_MAX, { error: `${rotulo} inválido` })
     .default(0);
 
+export const CONTA_PAGAR_JUSTIFICATIVA_MAX = 500;
+
+const justificativaDivergenciaOpcional = z
+  .string({ error: 'Justificativa inválida' })
+  .trim()
+  .max(CONTA_PAGAR_JUSTIFICATIVA_MAX, {
+    error: () =>
+      traduzirValidacao('validacao.campoMax', {
+        campo: 'Justificativa',
+        count: CONTA_PAGAR_JUSTIFICATIVA_MAX,
+      }),
+  })
+  .nullish()
+  .transform((valor) => valor || null);
+
 /**
  * `POST /api/financeiro/contas-pagar/:id/baixar` (modal "Baixar Conta a Pagar"). O checkbox
  * "Pagamento parcial" só controla se `valorPago` fica editável no front: a API sempre aceita o
@@ -165,6 +206,16 @@ export const baixarContaPagarSchema = z.strictObject({
   documento: documentoContaFinanceira,
   observacoes: observacoesContaFinanceira,
   comprovanteArquivoId: idOpcional('Comprovante'),
+  /**
+   * Obrigatória quando o valor pago difere do saldo do título: o service recusa a baixa sem ela
+   * (issue #163).
+   */
+  justificativaDivergencia: justificativaDivergenciaOpcional,
+  /**
+   * Marcado no checkbox "Pagamento parcial": pagar menos que o saldo é intencional e não conta
+   * como divergência. Não é gravado na baixa.
+   */
+  pagamentoParcial: z.boolean().default(false),
 });
 export type BaixarContaPagarFormulario = z.input<typeof baixarContaPagarSchema>;
 export type BaixarContaPagarInput = z.output<typeof baixarContaPagarSchema>;
@@ -183,6 +234,128 @@ export const contaPagarBaixaSchema = z.object({
   documento: z.string().nullable(),
   observacoes: z.string().nullable(),
   comprovanteArquivoId: z.uuid().nullable(),
+  /** Valor pago menos o saldo do título; `null` quando não houve divergência. */
+  divergencia: decimal.nullable(),
+  justificativaDivergencia: z.string().nullable(),
   createdAt: z.iso.datetime(),
 });
 export type ContaPagarBaixa = z.infer<typeof contaPagarBaixaSchema>;
+
+// --- Duplicidade (issue #163) ---
+
+/** Por que um título existente parece o mesmo que está sendo lançado. */
+export const CONTA_PAGAR_DUPLICIDADE_MOTIVOS = ['MESMO_TITULO', 'MESMO_DOCUMENTO'] as const;
+export const contaPagarDuplicidadeMotivoSchema = z.enum(CONTA_PAGAR_DUPLICIDADE_MOTIVOS);
+export type ContaPagarDuplicidadeMotivo = z.infer<typeof contaPagarDuplicidadeMotivoSchema>;
+
+export const CONTA_PAGAR_DUPLICIDADE_MOTIVO_ROTULOS: Readonly<
+  Record<ContaPagarDuplicidadeMotivo, string>
+> = {
+  MESMO_TITULO: 'Mesmo fornecedor, valor e vencimento',
+  MESMO_DOCUMENTO: 'Mesmo número de documento',
+};
+
+/** Código do 409 de `POST`/`PATCH` quando há possível duplicidade e o envio não foi confirmado. */
+export const CONTA_PAGAR_POSSIVEL_DUPLICADA = 'CONTA_PAGAR_POSSIVEL_DUPLICADA';
+/** Código do 422 da baixa com valor diferente do saldo do título e sem justificativa. */
+export const CONTA_PAGAR_BAIXA_DIVERGENTE = 'CONTA_PAGAR_BAIXA_DIVERGENTE';
+
+/**
+ * Corpo de `POST /api/financeiro/contas-pagar/duplicidade`: os campos que identificam o título.
+ * Com `contaPagarId` (edição) a própria conta fica de fora.
+ */
+export const verificarDuplicidadeContaPagarSchema = z.strictObject({
+  contaPagarId: z.uuid().nullish(),
+  beneficiarioTipo: contaPagarBeneficiarioTipoSchema.default('FORNECEDOR'),
+  beneficiarioId: idOpcional('Beneficiário'),
+  valor: z.number().positive().max(CONTA_FINANCEIRA_VALOR_MAX).nullish(),
+  dataVencimento: z
+    .union([z.literal(''), z.iso.date()])
+    .nullish()
+    .transform((valor) => valor || null),
+  documento: documentoContaFinanceira,
+});
+export type VerificarDuplicidadeContaPagarInput = z.input<
+  typeof verificarDuplicidadeContaPagarSchema
+>;
+export type VerificarDuplicidadeContaPagar = z.output<typeof verificarDuplicidadeContaPagarSchema>;
+
+export const contaPagarPossivelDuplicadaSchema = z.object({
+  id: z.uuid(),
+  numero: z.number().int(),
+  descricao: z.string(),
+  beneficiarioNome: z.string().nullable(),
+  valor: decimal,
+  dataVencimento: z.iso.date(),
+  documento: z.string().nullable(),
+  status: contaPagarStatusSchema,
+  motivos: z.array(contaPagarDuplicidadeMotivoSchema).min(1),
+});
+export type ContaPagarPossivelDuplicada = z.infer<typeof contaPagarPossivelDuplicadaSchema>;
+
+export const verificacaoDuplicidadeContaPagarSchema = z.object({
+  candidatos: z.array(contaPagarPossivelDuplicadaSchema),
+});
+export type VerificacaoDuplicidadeContaPagar = z.infer<
+  typeof verificacaoDuplicidadeContaPagarSchema
+>;
+
+// --- Relatório de divergências (issue #163) ---
+
+export const CONTA_PAGAR_DIVERGENCIA_SORT_FIELDS = [
+  'dataPagamento',
+  'divergencia',
+  'valorPago',
+] as const;
+
+/** `GET /api/financeiro/contas-pagar/divergencias`: baixas com valor diferente do saldo do título. */
+export const listDivergenciasContaPagarQuerySchema = listQuerySchema({
+  sortFields: CONTA_PAGAR_DIVERGENCIA_SORT_FIELDS,
+  defaultSort: 'dataPagamento:desc',
+  filters: {
+    pagamentoDe: z.iso.date({ error: 'Data inválida' }).optional(),
+    pagamentoAte: z.iso.date({ error: 'Data inválida' }).optional(),
+  },
+});
+export type ListDivergenciasContaPagarQuery = z.infer<typeof listDivergenciasContaPagarQuerySchema>;
+
+export const CONTA_PAGAR_DIVERGENCIA_EXPORT_COLUMNS = [
+  'numero',
+  'descricao',
+  'beneficiario',
+  'valor',
+  'valorPago',
+  'divergencia',
+  'justificativa',
+  'dataPagamento',
+] as const;
+export type ContaPagarDivergenciaExportColumn =
+  (typeof CONTA_PAGAR_DIVERGENCIA_EXPORT_COLUMNS)[number];
+
+/** `GET /api/financeiro/contas-pagar/divergencias/export`. */
+export const exportDivergenciasContaPagarQuerySchema = exportQuerySchema(
+  listDivergenciasContaPagarQuerySchema,
+  CONTA_PAGAR_DIVERGENCIA_EXPORT_COLUMNS,
+);
+export type ExportDivergenciasContaPagarQuery = z.infer<
+  typeof exportDivergenciasContaPagarQuerySchema
+>;
+
+export const contaPagarDivergenciaSchema = z.object({
+  baixaId: z.uuid(),
+  contaPagarId: z.uuid(),
+  numero: z.number().int(),
+  descricao: z.string(),
+  beneficiarioNome: z.string().nullable(),
+  /** Valor do título. */
+  valor: decimal,
+  valorPago: decimal,
+  /** Valor pago menos o saldo do título: positivo é a mais; negativo, a menos. */
+  divergencia: decimal,
+  justificativa: z.string().nullable(),
+  dataPagamento: z.iso.date(),
+});
+export type ContaPagarDivergencia = z.infer<typeof contaPagarDivergenciaSchema>;
+
+export const contaPagarDivergenciaPageSchema = paginatedResponseSchema(contaPagarDivergenciaSchema);
+export type ContaPagarDivergenciaPage = z.infer<typeof contaPagarDivergenciaPageSchema>;

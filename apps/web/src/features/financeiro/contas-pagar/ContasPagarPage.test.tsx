@@ -29,6 +29,10 @@ function conta(parcial: Partial<ContaPagar>): ContaPagar {
     status: 'PENDENTE',
     observacoes: null,
     valorPago: '0',
+    competencia: null,
+    centroCustoId: null,
+    centroCustoNome: null,
+    documentoArquivoId: null,
     createdAt: '2026-10-14T12:00:00.000Z',
     updatedAt: '2026-10-14T12:00:00.000Z',
     ...parcial,
@@ -72,6 +76,7 @@ function api(rotas: Parameters<typeof apiFalsa>[0] = {}) {
     rotas: {
       [API]: () => pagina(CONTAS),
       [PLANO_CONTAS_API]: () => listaVazia(),
+      [`${API}/duplicidade`]: () => json({ candidatos: [] }),
       [CONTAS_BANCARIAS_API]: () => listaVazia(),
       ...rotas.rotas,
     },

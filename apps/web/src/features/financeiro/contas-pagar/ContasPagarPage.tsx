@@ -8,14 +8,18 @@ import {
   type ContaPagar,
 } from '@torres/shared';
 import { BanknoteIcon, XCircleIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { AcaoLinha, ExportacaoGrid } from '@/components/shared/data-grid/tipos';
+import { PageHeader } from '@/components/shared/PageHeader';
 import {
   acoesContaFinanceira,
   colunasContaFinanceira,
   filtroStatusContaFinanceira,
 } from '../contas-financeiras/grid';
 import { PaginaContaFinanceira } from '../contas-financeiras/PaginaContaFinanceira';
+import { AbaCentrosCusto } from './AbaCentrosCusto';
+import { AbaDivergencias } from './AbaDivergencias';
+import { AbasContasPagar, type IdAbaContasPagar } from './AbasContasPagar';
 import { DetalheContaPagar } from './DetalheContaPagar';
 import { ModalBaixaContaPagar } from './ModalBaixaContaPagar';
 import { ModalContaPagar } from './ModalContaPagar';
@@ -47,9 +51,29 @@ const COLUNAS = colunasContaFinanceira<ContaPagar>(
 
 /**
  * Contas a Pagar (`/pagar`, docs/inventario/telas/financeiro-contas-a-pagar.md): gerencie suas
- * contas a pagar e fornecedores.
+ * contas a pagar e fornecedores. Além da lista, tem as abas Divergências e Centros de Custo
+ * (issue #163).
  */
 export default function ContasPagarPage() {
+  const [aba, setAba] = useState<IdAbaContasPagar>('contas');
+  const abas = <AbasContasPagar aba={aba} onAba={setAba} />;
+
+  if (aba === 'contas') return <AbaContas abas={abas} />;
+  return (
+    <div className="grid gap-6">
+      <PageHeader
+        titulo="Contas a Pagar"
+        descricao="Gerencie suas contas a pagar e fornecedores."
+      />
+      {abas}
+      <div id="painel-aba-contas-pagar" role="tabpanel" aria-labelledby={`aba-${aba}`}>
+        {aba === 'divergencias' ? <AbaDivergencias /> : <AbaCentrosCusto />}
+      </div>
+    </div>
+  );
+}
+
+function AbaContas({ abas }: Readonly<{ abas: ReactNode }>) {
   const [criando, setCriando] = useState(false);
   const [detalhando, setDetalhando] = useState<ContaPagar | null>(null);
   const [editando, setEditando] = useState<ContaPagar | null>(null);
@@ -89,6 +113,7 @@ export default function ContasPagarPage() {
       descricao="Gerencie suas contas a pagar e fornecedores."
       permissaoCriar="financeiro.contas-pagar.criar"
       onCriar={() => setCriando(true)}
+      abas={abas}
       grid={{
         url: URL_CONTAS_PAGAR,
         schema: contaPagarPageSchema,

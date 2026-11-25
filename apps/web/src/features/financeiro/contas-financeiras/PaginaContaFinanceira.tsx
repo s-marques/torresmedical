@@ -21,6 +21,8 @@ export interface PaginaContaFinanceiraProps<C extends { id: string; descricao: s
   excluindo: C | null;
   onCancelarExclusao: () => void;
   onExcluir: (conta: C) => Promise<unknown>;
+  /** Abas da tela, logo abaixo do cabeçalho (ex.: Contas a Pagar tem Divergências e Centros de Custo). */
+  abas?: ReactNode;
   /** Modais da tela (cadastro, edição, detalhe...). */
   children: ReactNode;
 }
@@ -36,6 +38,7 @@ export function PaginaContaFinanceira<C extends { id: string; descricao: string 
   excluindo,
   onCancelarExclusao,
   onExcluir,
+  abas,
   children,
 }: Readonly<PaginaContaFinanceiraProps<C>>) {
   return (
@@ -52,6 +55,7 @@ export function PaginaContaFinanceira<C extends { id: string; descricao: string 
           </SePermitido>
         }
       />
+      {abas}
       <DataGrid {...grid} filtros={FILTROS_CONTA_FINANCEIRA} />
       {children}
       <ConfirmDialog

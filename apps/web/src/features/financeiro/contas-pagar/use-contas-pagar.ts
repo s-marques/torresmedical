@@ -1,9 +1,12 @@
 import {
   contaPagarBaixaSchema,
   contaPagarSchema,
+  verificacaoDuplicidadeContaPagarSchema,
   type BaixarContaPagarInput,
+  type ContaPagarPossivelDuplicada,
   type CreateContaPagarInput,
   type UpdateContaPagarInput,
+  type VerificarDuplicidadeContaPagarInput,
 } from '@torres/shared';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/client';
@@ -73,4 +76,18 @@ export function useBaixasContaPagar(id: string | undefined) {
       }),
     enabled: Boolean(id),
   });
+}
+
+/**
+ * `POST /contas-pagar/duplicidade`: possíveis títulos iguais ao que está sendo lançado (issue
+ * #163). Na edição, `contaPagarId` faz a API ignorar a própria conta e o que não mudou.
+ */
+export function verificarDuplicidadeContaPagar(
+  dados: VerificarDuplicidadeContaPagarInput,
+): Promise<ContaPagarPossivelDuplicada[]> {
+  return apiFetch(`${URL_CONTAS_PAGAR}/duplicidade`, {
+    method: 'POST',
+    body: dados,
+    schema: verificacaoDuplicidadeContaPagarSchema,
+  }).then((r) => r.candidatos);
 }

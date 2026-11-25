@@ -1,11 +1,13 @@
 import {
   acceptDoUso,
   baixarContaPagarSchema,
+  mensagemObrigatoria,
   validarArquivo,
   type ContaPagar,
 } from '@torres/shared';
 import { useRef, useState } from 'react';
-import { Controller } from 'react-hook-form';
+import { Controller, useWatch } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { FormAcoes } from '@/components/shared/form/FormAcoes';
 import { FormField } from '@/components/shared/form/FormField';
@@ -16,6 +18,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { formatarMoeda } from '@/lib/forms/mascaras';
 import { mensagemDoErroDeUpload, uploadArquivo } from '@/lib/api/upload-arquivo';
+import { divergenciaEmCentavos } from './regras-conta-pagar';
 import { useBaixarContaPagar, useContasBancarias } from './use-contas-pagar';
 
 const ID_FORMULARIO = 'form-baixar-conta-pagar';
@@ -32,6 +35,7 @@ export interface ModalBaixaContaPagarProps {
 
 /** Modal "Baixar Conta a Pagar": registra um pagamento, total ou parcial. */
 export function ModalBaixaContaPagar({ conta, onFechar }: Readonly<ModalBaixaContaPagarProps>) {
+  const { t } = useTranslation();
   const [parcial, setParcial] = useState(false);
   const [arquivo, setArquivo] = useState<File | null>(null);
   const entrada = useRef<HTMLInputElement>(null);
@@ -49,8 +53,11 @@ export function ModalBaixaContaPagar({ conta, onFechar }: Readonly<ModalBaixaCon
       documento: '',
       observacoes: '',
       comprovanteArquivoId: null,
+      justificativaDivergencia: '',
     },
   });
+  const valorPago = useWatch({ control: form.control, name: 'valorPago' });
+  const divergente = divergenciaEmCentavos(saldo, valorPago, parcial) !== 0;
   const opcoesContasBancarias = (contasBancarias.data?.data ?? []).map((c) => ({
     valor: c.id,
     rotulo: c.banco ? `${c.nome} - ${c.banco}` : c.nome,
@@ -95,6 +102,12 @@ export function ModalBaixaContaPagar({ conta, onFechar }: Readonly<ModalBaixaCon
         acoes={null}
         colunas={2}
         onSubmit={async (valores) => {
+          if (divergente && !valores.justificativaDivergencia) {
+            form.setError('justificativaDivergencia', {
+              message: mensagemObrigatoria('Justificativa', 'f'),
+            });
+            return;
+          }
           let comprovanteArquivoId: string | null = null;
           if (arquivo) {
             try {
@@ -105,7 +118,12 @@ export function ModalBaixaContaPagar({ conta, onFechar }: Readonly<ModalBaixaCon
               return;
             }
           }
-          await baixar.mutateAsync({ ...valores, comprovanteArquivoId });
+          await baixar.mutateAsync({
+            ...valores,
+            comprovanteArquivoId,
+            pagamentoParcial: parcial,
+            justificativaDivergencia: divergente ? valores.justificativaDivergencia : null,
+          });
           onFechar();
         }}
       >
@@ -161,6 +179,18 @@ export function ModalBaixaContaPagar({ conta, onFechar }: Readonly<ModalBaixaCon
           opcoes={opcoesContasBancarias}
           placeholder="Selecione a conta"
         />
+        {divergente && (
+          <FormField
+            name="justificativaDivergencia"
+            label={t('contasPagar.baixa.justificativa')}
+            tipo="textarea"
+            obrigatorio
+            descricao={t('contasPagar.baixa.justificativaAjuda', {
+              esperado: formatarMoeda(saldo),
+            })}
+            className="sm:col-span-2"
+          />
+        )}
         <FormField name="documento" label="Documento / Nr Comprovante" className="sm:col-span-2" />
         <FormField
           name="observacoes"
