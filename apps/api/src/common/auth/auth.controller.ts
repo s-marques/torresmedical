@@ -5,21 +5,26 @@ import {
   esqueciSenhaSchema,
   loginSchema,
   redefinirSenhaSchema,
+  regrasSenhaSchema,
   sessaoSchema,
+  trocarSenhaSchema,
   usuarioSessaoSchema,
   type EsqueciSenhaInput,
   type LoginInput,
   type RedefinirSenhaInput,
+  type RegrasSenha,
   type Sessao,
+  type TrocarSenhaInput,
   type UsuarioSessao,
 } from '@torres/shared';
 import type { CookieOptions, Request, Response } from 'express';
 import { ApiErrorResponses, ApiZodBody, ApiZodResponse } from '../swagger/zod-openapi';
 import { ZodValidationPipe } from '../validation/zod-validation.pipe';
 import { AUTH_CONFIG, type AuthConfig } from './auth.config';
-import { CurrentUser, Public, SomenteAutenticado } from './auth.decorators';
+import { CurrentUser, PermitidoComTrocaSenha, Public, SomenteAutenticado } from './auth.decorators';
 import { AuthService, type SessaoComRefresh } from './auth.service';
 import { THROTTLE_LOGIN, THROTTLE_SENHA } from './auth.throttle';
+import { PoliticaSegurancaService } from './politica-seguranca.service';
 import { toUsuarioSessao, type UsuarioAutenticado } from './usuario-autenticado';
 
 export const REFRESH_COOKIE = 'torres_refresh';
@@ -31,6 +36,7 @@ export const REFRESH_COOKIE_PATH = '/api/auth';
 export class AuthController {
   constructor(
     private readonly auth: AuthService,
+    private readonly politica: PoliticaSegurancaService,
     @Inject(AUTH_CONFIG) private readonly config: AuthConfig,
   ) {}
 
@@ -91,11 +97,40 @@ export class AuthController {
 
   @Get('me')
   @SomenteAutenticado()
+  @PermitidoComTrocaSenha()
   @ApiOperation({ summary: 'Usuário logado e as permissões do perfil' })
   @ApiZodResponse(200, usuarioSessaoSchema)
   @ApiErrorResponses(401)
   me(@CurrentUser() usuario: UsuarioAutenticado): UsuarioSessao {
     return toUsuarioSessao(usuario);
+  }
+
+  @Get('regras-senha')
+  @SomenteAutenticado()
+  @PermitidoComTrocaSenha()
+  @ApiOperation({ summary: 'Regras da política de senha (tamanho, maiúscula, símbolo)' })
+  @ApiZodResponse(200, regrasSenhaSchema)
+  @ApiErrorResponses(401)
+  regrasSenha(@CurrentUser() usuario: UsuarioAutenticado): Promise<RegrasSenha> {
+    return this.politica.regrasSenha(usuario.empresaId);
+  }
+
+  @Post('trocar-senha')
+  @SomenteAutenticado()
+  @PermitidoComTrocaSenha()
+  @HttpCode(204)
+  @ApiOperation({
+    summary: 'Troca a própria senha (informa a atual). Encerra as outras sessões',
+    description:
+      'Libera o acesso quando a senha é provisória ou venceu (403 TROCA_SENHA_OBRIGATORIA).',
+  })
+  @ApiZodBody(trocarSenhaSchema)
+  @ApiErrorResponses(400, 401)
+  async trocarSenha(
+    @CurrentUser() usuario: UsuarioAutenticado,
+    @Body(new ZodValidationPipe(trocarSenhaSchema)) body: TrocarSenhaInput,
+  ): Promise<void> {
+    await this.auth.trocarSenha(usuario, body);
   }
 
   @Post('esqueci-senha')

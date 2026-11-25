@@ -14,6 +14,7 @@ export const USUARIO_TESTE: UsuarioSessao = {
   perfil: { id: '00000000-0000-4000-8000-000000000002', nome: 'Administrador' },
   permissoes: [...PERMISSOES],
   avatarArquivoId: null,
+  trocarSenha: false,
   preferencias: PREFERENCIAS_PADRAO,
 };
 

@@ -12,6 +12,8 @@ import type {
   UpdateUsuarioInput,
 } from '@torres/shared';
 import { Prisma } from '../../../generated/prisma/client';
+import { PoliticaSegurancaService } from '../../../common/auth/politica-seguranca.service';
+import { SessoesService } from '../../../common/auth/sessoes.service';
 import { hashSenha, verificarSenha } from '../../../common/auth/senhas';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
@@ -211,6 +213,8 @@ export class UsuariosService {
   constructor(
     private readonly txHost: TransactionHost<PrismaAdapter>,
     private readonly exportService: ExportService,
+    private readonly politica: PoliticaSegurancaService,
+    private readonly sessoes: SessoesService,
   ) {}
 
   list(query: ListUsuariosQuery): Promise<Page<UsuarioDto>> {
@@ -233,6 +237,8 @@ export class UsuariosService {
     if (input.perfilId) await this.ensurePerfilExists(input.perfilId);
 
     const { senha, profissionalIds, ...resto } = input;
+    await this.politica.garantirSenhaValida(criador.empresaId, senha);
+    const { trocaPrimeiroAcesso } = await this.politica.obter(criador.empresaId);
     const senhaHash = await hashSenha(senha);
     const criado = await gravarComProfissionais(() =>
       this.txHost.tx.usuario.create({
@@ -240,6 +246,9 @@ export class UsuariosService {
           ...resto,
           empresaId: criador.empresaId,
           senhaHash,
+          senhaAlteradaEm: new Date(),
+          // Senha definida pelo administrador é provisória: o usuário a troca no primeiro acesso.
+          trocarSenhaNoAcesso: trocaPrimeiroAcesso,
           profissionais: { create: vinculos(profissionalIds) },
         },
         include: COM_PERFIL,
@@ -269,12 +278,22 @@ export class UsuariosService {
   }
 
   async resetarSenha(id: string, input: ResetarSenhaUsuarioInput): Promise<UsuarioDto> {
-    await this.buscar(id);
+    const usuario = await this.buscar(id);
+    await this.politica.garantirSenhaValida(usuario.empresaId, input.senha);
+    const { trocaPrimeiroAcesso } = await this.politica.obter(usuario.empresaId);
     const atualizado = await this.txHost.tx.usuario.update({
       where: { id },
-      data: { senhaHash: await hashSenha(input.senha) },
+      data: {
+        senhaHash: await hashSenha(input.senha),
+        senhaAlteradaEm: new Date(),
+        trocarSenhaNoAcesso: trocaPrimeiroAcesso,
+        // Quem estava bloqueado volta a poder entrar com a senha nova.
+        tentativasFalhas: 0,
+        bloqueadoAte: null,
+      },
       include: COM_PERFIL,
     });
+    await this.sessoes.revogarTodas(id);
     return this.toDto(atualizado);
   }
 

@@ -14,6 +14,7 @@ const PERMISSOES = [
   'gestao-profissionais.salas.editar',
   'gestao-profissionais.salas.excluir',
   'gestao-profissionais.salas.exportar',
+  'configuracoes-gestao.dados-pessoais.exportar',
 ] as const;
 const INEXISTENTE = '00000000-0000-4000-8000-000000000000';
 

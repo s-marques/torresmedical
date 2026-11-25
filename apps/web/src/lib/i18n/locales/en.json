@@ -111,7 +111,37 @@
     "redefinirDescricao": "Create a password with letters and numbers",
     "senhaNova": "New password",
     "confirmeSenha": "Confirm the password",
-    "alterarSenha": "Change password"
+    "alterarSenha": "Change password",
+    "trocarSenhaTitulo": "Change password",
+    "trocarSenhaDescricao": "Set a new password to keep using the system",
+    "senhaAtual": "Current password",
+    "regrasTitulo": "The new password must have:",
+    "regraTamanho": "At least {{min}} characters",
+    "regraLetrasNumeros": "Letters and numbers",
+    "regraMaiuscula": "At least one uppercase letter",
+    "regraSimbolo": "At least one symbol (e.g. ! @ # $ %)"
+  },
+  "seguranca": {
+    "aba": "Security",
+    "titulo": "Security policy",
+    "descricao": "Password rules, lockout after failed attempts and access termination (LGPD).",
+    "secaoSenha": "Password",
+    "secaoBloqueio": "Lockout after failed attempts",
+    "secaoAcesso": "Access termination",
+    "tamanhoMinimo": "Minimum password length",
+    "exigirMaiuscula": "Require an uppercase letter",
+    "exigirSimbolo": "Require a symbol",
+    "trocaPrimeiroAcesso": "Change the password on first access",
+    "trocaPrimeiroAcessoAjuda": "Applies to new users and to passwords reset by an administrator.",
+    "expiracaoDias": "Password expiration (days)",
+    "expiracaoDiasAjuda": "Leave empty for passwords that never expire.",
+    "tentativasBloqueio": "Failed logins before lockout",
+    "minutosBloqueio": "Lockout duration (minutes)",
+    "carenciaProfissionalDias": "Professional access after the contract ends (days)",
+    "carenciaProfissionalDiasAjuda": "0 ends access on the termination date. Higher values allow, for example, consulting records.",
+    "salvar": "Save policy",
+    "salva": "Security policy saved.",
+    "erroCarregar": "Could not load the security policy."
   },
   "paginas": {
     "emConstrucao": "Under construction",
@@ -1834,7 +1864,8 @@
       "agenda": "Schedule",
       "sala": "Room",
       "contrato": "Contract",
-      "prontuario": "Medical record"
+      "prontuario": "Medical record",
+      "exportacoes": "Exports"
     },
     "filtros": {
       "usuario": "User",
@@ -1875,7 +1906,8 @@
       "Venda": "Sale",
       "Orcamento": "Quote",
       "Paciente": "Patient",
-      "AuditLog": "Audit"
+      "AuditLog": "Audit",
+      "PoliticaSeguranca": "Security policy"
     },
     "campos": {
       "nome": "Name",

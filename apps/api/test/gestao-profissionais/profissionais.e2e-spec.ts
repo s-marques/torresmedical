@@ -26,6 +26,7 @@ const PERMISSOES = [
   'gestao-profissionais.profissionais.editar',
   'gestao-profissionais.profissionais.excluir',
   'gestao-profissionais.profissionais.exportar',
+  'configuracoes-gestao.dados-pessoais.exportar',
 ] as const;
 const INEXISTENTE = '00000000-0000-4000-8000-000000000000';
 // CNPJ fictício com dígitos verificadores válidos (exemplo público).

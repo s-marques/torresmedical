@@ -40,7 +40,15 @@
     "senhaLetrasNumeros": "The password must contain letters and numbers",
     "credenciaisInvalidas": "Invalid e-mail or password",
     "linkInvalido": "Invalid reset link",
-    "senhasNaoConferem": "The passwords do not match"
+    "senhasNaoConferem": "The passwords do not match",
+    "senhaMaiuscula": "The password must have at least one uppercase letter",
+    "senhaSimbolo": "The password must have at least one symbol (e.g. ! @ # $ %)",
+    "senhaIgualAtual": "The new password must be different from the current one"
+  },
+  "politica": {
+    "entre": "Enter a value between {{min}} and {{max}}",
+    "numeroInvalido": "Enter a whole number",
+    "booleano": "Invalid value"
   },
   "periodo": {
     "informeDataInicial": "Enter the start date",

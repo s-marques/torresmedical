@@ -35,6 +35,7 @@ import { TiposAgendamentoController } from './tipos-agendamento/tipos-agendament
 import { TiposAgendamentoService } from './tipos-agendamento/tipos-agendamento.service';
 import { UnidadesController } from './unidades/unidades.controller';
 import { UnidadesService } from './unidades/unidades.service';
+import { PoliticaSegurancaController } from './politica-seguranca/politica-seguranca.controller';
 import { UsuariosController } from './usuarios/usuarios.controller';
 import {
   PerfisLookupService,
@@ -90,6 +91,7 @@ const SERVICES = [
     CanaisWhatsappController,
     PerfisAcessoController,
     UsuariosController,
+    PoliticaSegurancaController,
     criarLookupController('empresas', EmpresasService),
     criarLookupController('unidades', UnidadesService),
     criarLookupController('tipos-agendamento', TiposAgendamentoService),

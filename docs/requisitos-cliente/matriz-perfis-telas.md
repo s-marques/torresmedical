@@ -151,3 +151,4 @@
 | `configuracoes-gestao.auditoria.ver` | ✔ | — | — | — | — | — |
 | `gestao-profissionais.profissionais-documentos.validar` | ✔ | ✔ | — | — | — | — |
 | `consultorio-assistencial.prontuarios-acessos.ver` | ✔ | — | — | — | — | — |
+| `configuracoes-gestao.dados-pessoais.exportar` | ✔ | ✔ | — | — | ✔ | — |

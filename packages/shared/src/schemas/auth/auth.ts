@@ -70,6 +70,8 @@ export const usuarioSessaoSchema = z.object({
   permissoes: z.array(permissaoSchema),
   /** Avatar da tela Configurações (issue #30), exibido no cabeçalho e no menu. */
   avatarArquivoId: z.uuid().nullable(),
+  /** Senha provisória ou vencida (issue #156): até trocá-la, só a troca de senha é liberada. */
+  trocarSenha: z.boolean().default(false),
   /** Preferências e aparência (issue #30): o front aplica tema, cor, densidade e idioma. */
   preferencias: preferenciasSchema,
 });

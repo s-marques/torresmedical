@@ -22,6 +22,7 @@ export const AUDIT_GRUPOS = [
   'sala',
   'contrato',
   'prontuario',
+  'exportacoes',
 ] as const;
 
 export const auditGrupoSchema = z.enum(AUDIT_GRUPOS, { error: 'Atalho inválido' });
@@ -48,6 +49,8 @@ export const AUDIT_ENTIDADES_CLINICAS = [
 
 export const AUDIT_GRUPOS_DEFINICAO: Readonly<Record<AuditGrupo, AuditGrupoDefinicao>> = {
   exclusoes: { action: 'DELETE' },
+  /** Relatório de exportações feitas (issue #156): quem exportou o quê e quando. */
+  exportacoes: { action: 'EXPORT' },
   cancelamentos: { action: 'UPDATE', statusFinal: ['CANCELADO', 'CANCELADA'] },
   descontos: { entities: ['Orcamento', 'Venda', 'Compra', 'ContaPagarBaixa'] },
   financeiro: {

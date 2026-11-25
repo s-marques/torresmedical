@@ -26,6 +26,7 @@ model Empresa {
 
   unidades              Unidade[]
   usuarios              Usuario[]
+  politicaSeguranca     PoliticaSeguranca?
   horariosFuncionamento HorarioFuncionamento[]
 
   @@map("empresas")
@@ -94,24 +95,32 @@ model HorarioIntervalo {
 
 /// Usuário do sistema. Sem `senhaHash` não há login (até definir a senha pela redefinição).
 model Usuario {
-  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  empresaId         String    @map("empresa_id") @db.Uuid
-  perfilId          String?   @map("perfil_id") @db.Uuid
-  nome              String
-  email             String    @unique
-  telefone          String?
-  cargo             String?
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  empresaId           String    @map("empresa_id") @db.Uuid
+  perfilId            String?   @map("perfil_id") @db.Uuid
+  nome                String
+  email               String    @unique
+  telefone            String?
+  cargo               String?
   /// Hash argon2id. Nunca sai em resposta, log ou audit_log.
-  senhaHash         String?   @map("senha_hash")
+  senhaHash           String?   @map("senha_hash")
   /// Libera ver CPF, RG, endereço e e-mail dos pacientes (tela Usuários).
-  verDadosSensiveis Boolean   @default(false) @map("ver_dados_sensiveis")
-  ativo             Boolean   @default(true)
-  ultimoLoginEm     DateTime? @map("ultimo_login_em") @db.Timestamptz(3)
+  verDadosSensiveis   Boolean   @default(false) @map("ver_dados_sensiveis")
+  ativo               Boolean   @default(true)
+  ultimoLoginEm       DateTime? @map("ultimo_login_em") @db.Timestamptz(3)
+  /// Falhas de login seguidas (issue #156). Zera ao entrar ou ao redefinir a senha.
+  tentativasFalhas    Int       @default(0) @map("tentativas_falhas")
+  /// Conta bloqueada por tentativas até esta data (política de segurança).
+  bloqueadoAte        DateTime? @map("bloqueado_ate") @db.Timestamptz(3)
+  /// Senha provisória ou vencida: só a troca de senha é liberada até o usuário trocá-la.
+  trocarSenhaNoAcesso Boolean   @default(false) @map("trocar_senha_no_acesso")
+  /// Última troca da senha. Nulo nas contas anteriores à política (valem desde a criação).
+  senhaAlteradaEm     DateTime? @map("senha_alterada_em") @db.Timestamptz(3)
   /// Id do Arquivo (common/storage, uso `avatar`) da tela Configurações (issue #30). Sem FK.
-  avatarArquivoId   String?   @map("avatar_arquivo_id") @db.Uuid
-  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(3)
+  avatarArquivoId     String?   @map("avatar_arquivo_id") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(3)
 
   empresa           Empresa                @relation(fields: [empresaId], references: [id], onDelete: Restrict)
   perfil            Perfil?                @relation(fields: [perfilId], references: [id], onDelete: Restrict)
@@ -498,42 +507,42 @@ enum BloqueioMotivo {
 
 /// Dono: gestao-profissionais.
 model Profissional {
-  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  nome                 String
+  id                      String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome                    String
   /// Registro no conselho (CRM, CRN, CRBM…), texto livre.
-  registro             String?
-  profissao            ProfissionalProfissao?
-  subespecialidade     String?
+  registro                String?
+  profissao               ProfissionalProfissao?
+  subespecialidade        String?
   /// Só dígitos (14).
-  cnpj                 String?
-  especialidadeId      String?                @map("especialidade_id") @db.Uuid
+  cnpj                    String?
+  especialidadeId         String?                @map("especialidade_id") @db.Uuid
   /// Especialidades adicionais separadas por vírgula (usadas pelo agente de IA).
-  outrasEspecialidades String?                @map("outras_especialidades")
-  telefone             String?
-  email                String?
-  duracaoPadrao        Int                    @default(30) @map("duracao_padrao")
-  valorConsulta        Decimal?               @map("valor_consulta") @db.Decimal(12, 2)
-  comissao             Decimal?               @db.Decimal(5, 2)
+  outrasEspecialidades    String?                @map("outras_especialidades")
+  telefone                String?
+  email                   String?
+  duracaoPadrao           Int                    @default(30) @map("duracao_padrao")
+  valorConsulta           Decimal?               @map("valor_consulta") @db.Decimal(12, 2)
+  comissao                Decimal?               @db.Decimal(5, 2)
   /// Chave da cor no calendário (catálogo em `packages/shared`).
-  corCalendario        String                 @default("azul") @map("cor_calendario")
-  cpf                  String?
-  rg                   String?
-  dataNascimento       DateTime?              @map("data_nascimento") @db.Date
-  naturalidade         String?
-  estadoCivil          EstadoCivil?           @map("estado_civil")
-  endereco             String?
-  enderecoConsultorio  String?                @map("endereco_consultorio")
-  telefoneReceita      String?                @map("telefone_receita")
-  cnes                 String?
-  rodapeReceita        String?                @map("rodape_receita")
-  layoutReceita        LayoutReceita          @default(PADRAO) @map("layout_receita")
+  corCalendario           String                 @default("azul") @map("cor_calendario")
+  cpf                     String?
+  rg                      String?
+  dataNascimento          DateTime?              @map("data_nascimento") @db.Date
+  naturalidade            String?
+  estadoCivil             EstadoCivil?           @map("estado_civil")
+  endereco                String?
+  enderecoConsultorio     String?                @map("endereco_consultorio")
+  telefoneReceita         String?                @map("telefone_receita")
+  cnes                    String?
+  rodapeReceita           String?                @map("rodape_receita")
+  layoutReceita           LayoutReceita          @default(PADRAO) @map("layout_receita")
   /// Credenciais da Memed, cifradas (AES-256-GCM) antes de gravar. A Secret Key nunca sai da API.
-  memedApiToken        String?                @map("memed_api_token")
-  memedSecretKey       String?                @map("memed_secret_key")
+  memedApiToken           String?                @map("memed_api_token")
+  memedSecretKey          String?                @map("memed_secret_key")
   /// Arquivos enviados em `/api/arquivos` (usos `foto-profissional` e `logo-receita`).
-  fotoArquivoId        String?                @map("foto_arquivo_id") @db.Uuid
-  logoReceitaArquivoId String?                @map("logo_receita_arquivo_id") @db.Uuid
-  ativo                Boolean                @default(true)
+  fotoArquivoId           String?                @map("foto_arquivo_id") @db.Uuid
+  logoReceitaArquivoId    String?                @map("logo_receita_arquivo_id") @db.Uuid
+  ativo                   Boolean                @default(true)
   /// Classificação do parceiro (issue #143), calculada todo dia. Nula até o primeiro cálculo.
   classificacao           ClassificacaoParceiro?
   classificacaoMotivo     String?                @map("classificacao_motivo")
@@ -541,11 +550,11 @@ model Profissional {
   classificacaoEm         DateTime?              @map("classificacao_em") @db.Timestamptz(3)
   /// Parceiro estratégico, marcado pela gerência (vale sobre as classes automáticas).
   estrategico             Boolean                @default(false)
-  createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt            DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt            DateTime?              @map("deleted_at") @db.Timestamptz(3)
+  createdAt               DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt               DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt               DateTime?              @map("deleted_at") @db.Timestamptz(3)
 
-  especialidade           Especialidade?          @relation(fields: [especialidadeId], references: [id], onDelete: Restrict)
+  especialidade           Especialidade?              @relation(fields: [especialidadeId], references: [id], onDelete: Restrict)
   horarios                HorarioAtendimento[]
   rqes                    ProfissionalRqe[]
   contatosAdministrativos ProfissionalContato[]
@@ -1946,8 +1955,8 @@ model ContratoSala {
   updatedAt          DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt          DateTime?                  @map("deleted_at") @db.Timestamptz(3)
 
-  sala         Sala                   @relation(fields: [salaId], references: [id])
-  profissional Profissional?          @relation(fields: [profissionalId], references: [id])
+  sala         Sala                     @relation(fields: [salaId], references: [id])
+  profissional Profissional?            @relation(fields: [profissionalId], references: [id])
   dias         ContratoSalaDia[]
   horas        ContratoSalaHora[]
   cobrancas    ContratoSalaCobranca[]
@@ -2744,17 +2753,17 @@ enum AtendimentoVersaoTipo {
 /// Dono: consultorio-assistencial. Exame ou anexo do atendimento (issue #151). O arquivo fica no
 /// storage (common/storage, uso "anexo-atendimento"), nunca público: o download é por link temporário.
 model AtendimentoAnexo {
-  id            String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  atendimentoId String                @map("atendimento_id") @db.Uuid
+  id            String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  atendimentoId String               @map("atendimento_id") @db.Uuid
   tipo          AtendimentoAnexoTipo
   /// Arquivo (common/storage), sem FK.
-  arquivoId     String                @map("arquivo_id") @db.Uuid
-  data          DateTime              @db.Date
+  arquivoId     String               @map("arquivo_id") @db.Uuid
+  data          DateTime             @db.Date
   descricao     String?
   /// Usuário que anexou. Sem FK: aceita "system".
-  criadoPorId   String?               @map("criado_por_id")
-  createdAt     DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
-  deletedAt     DateTime?             @map("deleted_at") @db.Timestamptz(3)
+  criadoPorId   String?              @map("criado_por_id")
+  createdAt     DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt     DateTime?            @map("deleted_at") @db.Timestamptz(3)
 
   atendimento Atendimento @relation(fields: [atendimentoId], references: [id], onDelete: Restrict)
 
@@ -3912,20 +3921,40 @@ enum ClassificacaoOrigem {
 /// Dono: gestao-profissionais. Histórico das mudanças de classificação (issue #143). Só inserção.
 /// `usuario_id` é um usuário (configuracoes-gestao), sem FK; nulo no cálculo diário.
 model ProfissionalClassificacao {
-  id                     String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  profissionalId         String                 @map("profissional_id") @db.Uuid
-  classificacaoAnterior  ClassificacaoParceiro? @map("classificacao_anterior")
-  classificacao          ClassificacaoParceiro
-  motivo                 String
-  parametros             Json                   @default("{}")
-  origem                 ClassificacaoOrigem
-  usuarioId              String?                @map("usuario_id")
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profissionalId        String                 @map("profissional_id") @db.Uuid
+  classificacaoAnterior ClassificacaoParceiro? @map("classificacao_anterior")
+  classificacao         ClassificacaoParceiro
+  motivo                String
+  parametros            Json                   @default("{}")
+  origem                ClassificacaoOrigem
+  usuarioId             String?                @map("usuario_id")
   /// Dia (fuso da clínica) a que o cálculo se refere.
-  referencia             DateTime               @db.Date
-  createdAt              DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  referencia            DateTime               @db.Date
+  createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
 
   profissional Profissional @relation(fields: [profissionalId], references: [id])
 
   @@index([profissionalId, createdAt(sort: Desc)])
   @@map("profissionais_classificacoes")
+}
+
+/// Política de segurança da empresa (issue #156): senha, bloqueio e encerramento de acesso.
+/// Sem linha = valores padrão de POLITICA_PADRAO (packages/shared). Dono: configuracoes-gestao.
+model PoliticaSeguranca {
+  empresaId                String   @id @map("empresa_id") @db.Uuid
+  tamanhoMinimo            Int      @default(8) @map("tamanho_minimo")
+  exigirMaiuscula          Boolean  @default(false) @map("exigir_maiuscula")
+  exigirSimbolo            Boolean  @default(false) @map("exigir_simbolo")
+  tentativasBloqueio       Int      @default(5) @map("tentativas_bloqueio")
+  minutosBloqueio          Int      @default(15) @map("minutos_bloqueio")
+  trocaPrimeiroAcesso      Boolean  @default(true) @map("troca_primeiro_acesso")
+  /// Nulo: a senha não expira.
+  expiracaoDias            Int?     @map("expiracao_dias")
+  carenciaProfissionalDias Int      @default(0) @map("carencia_profissional_dias")
+  updatedAt                DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@map("politica_seguranca")
 }

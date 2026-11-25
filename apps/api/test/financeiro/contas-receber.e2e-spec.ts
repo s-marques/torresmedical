@@ -16,6 +16,7 @@ const PERMISSOES = [
   'financeiro.contas-receber.editar',
   'financeiro.contas-receber.excluir',
   'financeiro.contas-receber.exportar',
+  'configuracoes-gestao.dados-pessoais.exportar',
 ] as const;
 const INEXISTENTE = '00000000-0000-4000-8000-000000000000';
 

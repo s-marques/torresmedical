@@ -47,5 +47,8 @@
   "ASSINATURA_SENHA_INVALIDA": "Contraseña incorrecta",
   "ARQUIVO_USO_INVALIDO": "Archivo no válido para este campo",
   "PERFIL_PADRAO_NAO_EXCLUIVEL": "Los perfiles estándar no se pueden eliminar. Duplique el perfil para ajustarlo",
-  "PERFIL_ADMINISTRADOR_PROTEGIDO": "El perfil Administrador no puede cambiar de nombre, páginas ni alcance de datos. Duplique el perfil para ajustarlo"
+  "PERFIL_ADMINISTRADOR_PROTEGIDO": "El perfil Administrador no puede cambiar de nombre, páginas ni alcance de datos. Duplique el perfil para ajustarlo",
+  "SENHA_FORA_DA_POLITICA": "La contraseña no cumple la política de seguridad",
+  "SENHA_ATUAL_INCORRETA": "La contraseña actual es incorrecta",
+  "TROCA_SENHA_OBRIGATORIA": "Debe cambiar su contraseña antes de continuar"
 }

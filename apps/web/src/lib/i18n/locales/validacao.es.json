@@ -40,7 +40,15 @@
     "senhaLetrasNumeros": "La contraseña debe tener letras y números",
     "credenciaisInvalidas": "Correo electrónico o contraseña no válidos",
     "linkInvalido": "Enlace de restablecimiento no válido",
-    "senhasNaoConferem": "Las contraseñas no coinciden"
+    "senhasNaoConferem": "Las contraseñas no coinciden",
+    "senhaMaiuscula": "La contraseña debe tener al menos una letra mayúscula",
+    "senhaSimbolo": "La contraseña debe tener al menos un símbolo (p. ej., ! @ # $ %)",
+    "senhaIgualAtual": "La nueva contraseña debe ser distinta de la actual"
+  },
+  "politica": {
+    "entre": "Ingrese un valor entre {{min}} y {{max}}",
+    "numeroInvalido": "Ingrese un número entero",
+    "booleano": "Valor inválido"
   },
   "periodo": {
     "informeDataInicial": "Ingrese la fecha inicial",

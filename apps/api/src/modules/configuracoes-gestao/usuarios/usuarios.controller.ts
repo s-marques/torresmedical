@@ -17,7 +17,11 @@ import {
   type UpdateUsuarioInput,
 } from '@torres/shared';
 import { Audit } from '../../../common/audit/audit.decorator';
-import { CurrentUser, RequirePermission } from '../../../common/auth/auth.decorators';
+import {
+  CurrentUser,
+  ExportaDadosPessoais,
+  RequirePermission,
+} from '../../../common/auth/auth.decorators';
 import type { UsuarioAutenticado } from '../../../common/auth/usuario-autenticado';
 import { toStreamableFile } from '../../../common/export/export-response';
 import {
@@ -53,6 +57,7 @@ export class UsuariosController {
   // Antes de ":id" para "export" não ser tratado como id.
   @Get('export')
   @RequirePermission('configuracoes-gestao.usuarios.exportar')
+  @ExportaDadosPessoais()
   @Audit({ entity: ENTITY, action: 'EXPORT' })
   @ApiOperation({
     summary: 'Exporta em Excel ou PDF com os mesmos filtros e ordenação da listagem',

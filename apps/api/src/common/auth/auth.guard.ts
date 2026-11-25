@@ -6,7 +6,13 @@ import type { Request } from 'express';
 import { RequestContextService } from '../context/request-context.service';
 import { ApiException } from '../errors/api.exception';
 import { ErrorCode } from '../errors/error-codes';
-import { AUTHENTICATED_METADATA, PERMISSION_METADATA, PUBLIC_METADATA } from './auth.decorators';
+import {
+  AUTHENTICATED_METADATA,
+  EXPORTA_DADOS_PESSOAIS_METADATA,
+  PERMISSION_METADATA,
+  PERMITIR_TROCA_SENHA_METADATA,
+  PUBLIC_METADATA,
+} from './auth.decorators';
 import { SESSAO_INVALIDA } from './auth.service';
 import { SessoesService } from './sessoes.service';
 import { isUuid } from './tokens';
@@ -18,6 +24,11 @@ import type {
 
 export const NAO_AUTENTICADO = 'Não autenticado';
 export const SEM_PERMISSAO = 'Sem permissão';
+
+/** Exportar dados pessoais ou clínicos exige esta permissão, além de `<tela>.exportar` (issue #156). */
+export const PERMISSAO_EXPORTAR_DADOS_PESSOAIS: Permissao =
+  'configuracoes-gestao.dados-pessoais.exportar';
+export const TROCA_SENHA_OBRIGATORIA = 'É preciso trocar a senha antes de continuar';
 
 /** Quem tem esta permissão vê o conteúdo clínico, também na trilha de auditoria (issue #155). */
 export const PERMISSAO_VER_PRONTUARIO: Permissao = 'consultorio-assistencial.prontuarios.ver';
@@ -50,11 +61,24 @@ export class AuthGuard implements CanActivate {
     this.context.setVerDadosSensiveis(usuario.verDadosSensiveis);
     this.context.setVerProntuario(usuario.permissoes.has(PERMISSAO_VER_PRONTUARIO));
 
+    if (
+      usuario.trocarSenha &&
+      !this.reflector.getAllAndOverride<boolean>(PERMITIR_TROCA_SENHA_METADATA, alvos)
+    ) {
+      throw new ApiException(403, 'TROCA_SENHA_OBRIGATORIA', TROCA_SENHA_OBRIGATORIA);
+    }
+
     const permissoes = this.reflector.getAllAndOverride<readonly Permissao[] | undefined>(
       PERMISSION_METADATA,
       alvos,
     );
-    if (permissoes) return this.exigir(usuario, permissoes);
+    if (permissoes) {
+      this.exigir(usuario, permissoes);
+      if (this.reflector.getAllAndOverride<boolean>(EXPORTA_DADOS_PESSOAIS_METADATA, alvos)) {
+        this.exigir(usuario, [PERMISSAO_EXPORTAR_DADOS_PESSOAIS]);
+      }
+      return true;
+    }
     if (this.reflector.getAllAndOverride<boolean>(AUTHENTICATED_METADATA, alvos)) return true;
     throw new ApiException(403, ErrorCode.FORBIDDEN, SEM_PERMISSAO);
   }
