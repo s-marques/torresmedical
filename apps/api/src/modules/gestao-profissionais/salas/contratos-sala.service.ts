@@ -6,6 +6,7 @@ import {
   descreverValorContrato,
   valorTotalMensal,
   type ContratoExportColumn,
+  type ItemBusca,
   type ContratoSala as ContratoSalaDto,
   type CancelarContratoSalaInput,
   type CreateContratoSalaInput,
@@ -33,6 +34,8 @@ import { competenciaAtual } from './competencia-cobranca';
 import type { SalaEmUsoVerificador } from './sala-em-uso';
 
 const NAO_EXCLUIDOS = { deletedAt: null } as const;
+/** Quantos dígitos cabem no `numero` (int4) sem estourar. */
+const NUMERO_CONTRATO_MAX_DIGITOS = 9;
 
 const INCLUDE = {
   sala: { select: { nome: true, numero: true } },
@@ -124,6 +127,48 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       this.semCobrancaIds(page.data),
     ]);
     return { ...page, data: page.data.map((c) => this.toDto(c, nomes, semCobranca)) };
+  }
+
+  /**
+   * Busca global do ⌘K (issue #159): nº do contrato ou dados do locatário (nome, CPF, telefone,
+   * CRM). Aplica o escopo: perfil restrito só vê contratos dos seus profissionais.
+   */
+  async buscaGlobal(termo: string, limite: number): Promise<ItemBusca[]> {
+    const digitos = termo.replaceAll(/\D/g, '');
+    const [profissionalIds, pacienteIds] = await Promise.all([
+      this.profissionais.idsPorBusca(termo),
+      this.pacientes.idsPorBusca(termo),
+    ]);
+    const contratos = await this.txHost.tx.contratoSala.findMany({
+      where: {
+        ...NAO_EXCLUIDOS,
+        sala: { deletedAt: null },
+        profissionalId: this.escopo.filtroProfissional(),
+        OR: [
+          ...(digitos.length > 0 && digitos.length <= NUMERO_CONTRATO_MAX_DIGITOS
+            ? [{ numero: Number(digitos) }]
+            : []),
+          { profissionalId: { in: profissionalIds } },
+          { pacienteId: { in: pacienteIds } },
+        ],
+      },
+      orderBy: [{ numero: 'desc' }],
+      take: limite,
+      include: INCLUDE,
+    });
+    const [nomes, semCobranca] = await Promise.all([
+      this.resolverNomes(contratos),
+      this.semCobrancaIds(contratos),
+    ]);
+    return contratos.map((c) => {
+      const dto = this.toDto(c, nomes, semCobranca);
+      return {
+        id: dto.id,
+        titulo: `Contrato nº ${dto.numero}`,
+        descricao: `${dto.locatarioNome} · ${dto.salaNome}`,
+        rota: `/salas?search=${dto.numero}`,
+      };
+    });
   }
 
   /**
@@ -510,6 +555,7 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       contrato.quantidadeMensal === null ? null : Number(contrato.quantidadeMensal);
     return {
       id: contrato.id,
+      numero: contrato.numero,
       modalidade: contrato.modalidade,
       salaId: contrato.salaId,
       salaNome: contrato.sala.nome,

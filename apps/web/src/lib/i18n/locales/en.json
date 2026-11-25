@@ -165,6 +165,14 @@
     "buscarTelaDescricao": "Type the name of a screen to go to it",
     "buscarTelaPlaceholder": "Search screen…",
     "nenhumaTela": "No screen found.",
+    "buscando": "Searching…",
+    "buscaTipos": {
+      "PACIENTE": "Patients",
+      "PROFISSIONAL": "Professionals",
+      "CONTRATO": "Contracts",
+      "FORNECEDOR": "Suppliers",
+      "LEAD": "Leads"
+    },
     "tema": "Theme",
     "notificacoes": "Notifications",
     "nenhumaNotificacao": "No notifications",

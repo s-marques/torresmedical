@@ -11,6 +11,7 @@ import {
   type PacienteExportColumn,
   type PacienteResumo,
   type UpdatePacienteInput,
+  type ItemBusca,
 } from '@torres/shared';
 import type { Paciente, Prisma } from '../../../generated/prisma/client';
 import { EscopoDadosService } from '../../../common/auth/escopo-dados.service';
@@ -255,6 +256,30 @@ export class PacientesService extends EntidadeLookupService<
       columns: selectColumns(PACIENTE_EXPORT_DEFINITIONS, query.columns),
       rows,
     });
+  }
+
+  /**
+   * Busca global do ⌘K (issue #159): nome, e-mail, CPF/CNPJ e telefone. Perfil restrito só acha
+   * os pacientes vinculados aos seus profissionais. O CPF sai mascarado.
+   */
+  async buscaGlobal(termo: string, limite: number): Promise<ItemBusca[]> {
+    const ids = await this.vinculados.idsNoEscopo();
+    const pacientes = await this.txHost.tx.paciente.findMany({
+      where: {
+        ...NAO_EXCLUIDOS,
+        ...buscaLista(termo),
+        ...(ids === null ? {} : { id: { in: ids } }),
+      },
+      orderBy: [{ nome: 'asc' }, { id: 'asc' }],
+      take: limite,
+      select: { id: true, nome: true, documento: true },
+    });
+    return pacientes.map((p) => ({
+      id: p.id,
+      titulo: p.nome,
+      descricao: mascararCpf(p.documento),
+      rota: `/clientes?search=${encodeURIComponent(termo)}`,
+    }));
   }
 
   /** Nome dos pacientes não excluídos entre os ids (cartões do CRM). */

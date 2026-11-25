@@ -165,6 +165,14 @@
     "buscarTelaDescricao": "Digite o nome da tela para navegar até ela",
     "buscarTelaPlaceholder": "Buscar tela…",
     "nenhumaTela": "Nenhuma tela encontrada.",
+    "buscando": "Buscando…",
+    "buscaTipos": {
+      "PACIENTE": "Pacientes",
+      "PROFISSIONAL": "Profissionais",
+      "CONTRATO": "Contratos",
+      "FORNECEDOR": "Fornecedores",
+      "LEAD": "Leads"
+    },
     "tema": "Tema",
     "notificacoes": "Notificações",
     "nenhumaNotificacao": "Nenhuma notificação",
