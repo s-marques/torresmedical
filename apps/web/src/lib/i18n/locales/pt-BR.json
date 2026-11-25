@@ -503,6 +503,82 @@
       "confirmar": "Excluir"
     }
   },
+  "veiculos": {
+    "titulo": "Veículos",
+    "descricao": "Gerencie os veiculos cadastrados.",
+    "novo": "Novo Veiculo",
+    "editar": "Editar Veiculo",
+    "buscar": "Buscar veiculos...",
+    "vazio": "Nenhum veiculo encontrado.",
+    "cadastrar": "Cadastrar",
+    "acoes": {
+      "editar": "Editar",
+      "excluir": "Excluir"
+    },
+    "colunas": {
+      "descricao": "Descrição",
+      "placa": "Placa",
+      "tipo": "Tipo",
+      "uso": "Uso",
+      "ipvaAnual": "IPVA",
+      "seguroAnual": "Seguro",
+      "financiamentoParcela": "Financ. Parcela"
+    },
+    "secoes": {
+      "dados": "Dados do Veículo",
+      "valores": "Valores e Impostos",
+      "financiamento": "Financiamento/Leasing"
+    },
+    "campos": {
+      "descricao": "Descrição",
+      "tipo": "Tipo",
+      "placa": "Placa",
+      "renavam": "RENAVAM",
+      "chassi": "Chassi",
+      "ano": "Ano",
+      "cor": "Cor",
+      "uso": "Uso",
+      "valorCompra": "Valor Compra (R$)",
+      "dataCompra": "Data Compra",
+      "ipvaAnual": "IPVA Anual (R$)",
+      "licenciamento": "Licenciamento (R$)",
+      "seguroAnual": "Seguro Anual (R$)",
+      "vencimentoSeguro": "Vencimento Seguro",
+      "banco": "Banco",
+      "financiamentoParcela": "Parcela (R$)",
+      "saldoDevedor": "Saldo Devedor (R$)",
+      "vencimentoFinanciamento": "Vencimento Financiamento",
+      "observacoes": "Observações"
+    },
+    "placeholders": {
+      "descricao": "Ex: Corolla XEi 2024",
+      "placa": "ABC-1D23",
+      "ano": "2024",
+      "cor": "Branco",
+      "banco": "Ex: Bradesco, Santander",
+      "observacoes": "Anotações gerais sobre o veículo"
+    },
+    "tipos": {
+      "CARRO": "Carro",
+      "MOTO": "Moto",
+      "UTILITARIO": "Utilitário"
+    },
+    "usos": {
+      "CLINICA": "Clínica",
+      "PESSOAL": "Pessoal",
+      "MISTO": "Misto"
+    },
+    "sucesso": {
+      "criado": "Veículo cadastrado.",
+      "atualizado": "Veículo atualizado.",
+      "excluido": "Veículo excluído."
+    },
+    "excluir": {
+      "titulo": "Excluir Veículo",
+      "descricao": "Tem certeza que deseja excluir o veículo \"{{descricao}}\"? Esta ação não pode ser desfeita.",
+      "confirmar": "Excluir"
+    }
+  },
   "patrimonio": {
     "titulo": "Patrimônio",
     "descricao": "Gerencie veículos, imóveis e bens do cliente.",

@@ -49,6 +49,7 @@ export * from './schemas/consultorio-assistencial/evolucao-voz';
 export * from './schemas/consultorio-assistencial/soroterapia';
 export * from './schemas/patrimonio-pessoal/bem';
 export * from './schemas/patrimonio-pessoal/imovel';
+export * from './schemas/patrimonio-pessoal/veiculo';
 export * from './schemas/compras-estoque/baixa-insumos';
 export * from './schemas/compras-estoque/categoria';
 export * from './schemas/compras-estoque/compra';

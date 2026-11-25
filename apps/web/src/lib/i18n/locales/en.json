@@ -611,6 +611,82 @@
       "confirmar": "Delete"
     }
   },
+  "veiculos": {
+    "titulo": "Vehicles",
+    "descricao": "Manage the registered vehicles.",
+    "novo": "New Vehicle",
+    "editar": "Edit Vehicle",
+    "buscar": "Search vehicles...",
+    "vazio": "No vehicles found.",
+    "cadastrar": "Register",
+    "acoes": {
+      "editar": "Edit",
+      "excluir": "Delete"
+    },
+    "colunas": {
+      "descricao": "Description",
+      "placa": "Plate",
+      "tipo": "Type",
+      "uso": "Use",
+      "ipvaAnual": "Vehicle Tax",
+      "seguroAnual": "Insurance",
+      "financiamentoParcela": "Loan Installment"
+    },
+    "secoes": {
+      "dados": "Vehicle Details",
+      "valores": "Values and Taxes",
+      "financiamento": "Financing/Leasing"
+    },
+    "campos": {
+      "descricao": "Description",
+      "tipo": "Type",
+      "placa": "Plate",
+      "renavam": "RENAVAM",
+      "chassi": "Chassis",
+      "ano": "Year",
+      "cor": "Color",
+      "uso": "Use",
+      "valorCompra": "Purchase Price (R$)",
+      "dataCompra": "Purchase Date",
+      "ipvaAnual": "Annual Vehicle Tax (R$)",
+      "licenciamento": "Registration Fee (R$)",
+      "seguroAnual": "Annual Insurance (R$)",
+      "vencimentoSeguro": "Insurance Expiry",
+      "banco": "Bank",
+      "financiamentoParcela": "Installment (R$)",
+      "saldoDevedor": "Outstanding Balance (R$)",
+      "vencimentoFinanciamento": "Loan Maturity",
+      "observacoes": "Notes"
+    },
+    "placeholders": {
+      "descricao": "E.g.: Corolla XEi 2024",
+      "placa": "ABC-1D23",
+      "ano": "2024",
+      "cor": "White",
+      "banco": "E.g.: Bradesco, Santander",
+      "observacoes": "General notes about the vehicle"
+    },
+    "tipos": {
+      "CARRO": "Car",
+      "MOTO": "Motorcycle",
+      "UTILITARIO": "Utility Vehicle"
+    },
+    "usos": {
+      "CLINICA": "Clinic",
+      "PESSOAL": "Personal",
+      "MISTO": "Mixed"
+    },
+    "sucesso": {
+      "criado": "Vehicle registered.",
+      "atualizado": "Vehicle updated.",
+      "excluido": "Vehicle deleted."
+    },
+    "excluir": {
+      "titulo": "Delete Vehicle",
+      "descricao": "Are you sure you want to delete the vehicle \"{{descricao}}\"? This action cannot be undone.",
+      "confirmar": "Delete"
+    }
+  },
   "patrimonio": {
     "titulo": "Assets",
     "descricao": "Manage the client's vehicles, properties and assets.",

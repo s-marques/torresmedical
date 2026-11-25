@@ -3862,6 +3862,54 @@ model Imovel {
   @@map("imoveis")
 }
 
+enum VeiculoTipo {
+  CARRO
+  MOTO
+  UTILITARIO
+
+  @@map("veiculo_tipo")
+}
+
+enum VeiculoUso {
+  CLINICA
+  PESSOAL
+  MISTO
+
+  @@map("veiculo_uso")
+}
+
+/// Dono: patrimonio-pessoal. Veículo (tela Veículos, `/veiculos`, issue #63). Seções do modal:
+/// Dados do Veículo, Valores e Impostos e Financiamento/Leasing. Tabela própria, independente de
+/// `Bem` (tela Patrimônio, #62). Exclusão lógica.
+model Veiculo {
+  id                      String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  descricao               String
+  tipo                    VeiculoTipo  @default(CARRO)
+  placa                   String?
+  renavam                 String?
+  chassi                  String?
+  ano                     Int?
+  cor                     String?
+  uso                     VeiculoUso   @default(CLINICA)
+  valorCompra             Decimal?     @map("valor_compra") @db.Decimal(12, 2)
+  dataCompra              DateTime?    @map("data_compra") @db.Date
+  ipvaAnual               Decimal?     @map("ipva_anual") @db.Decimal(12, 2)
+  licenciamento           Decimal?     @db.Decimal(12, 2)
+  seguroAnual             Decimal?     @map("seguro_anual") @db.Decimal(12, 2)
+  vencimentoSeguro        DateTime?    @map("vencimento_seguro") @db.Date
+  banco                   String?
+  financiamentoParcela    Decimal?     @map("financiamento_parcela") @db.Decimal(12, 2)
+  saldoDevedor            Decimal?     @map("saldo_devedor") @db.Decimal(12, 2)
+  vencimentoFinanciamento DateTime?    @map("vencimento_financiamento") @db.Date
+  observacoes             String?
+  createdAt               DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt               DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt               DateTime?    @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([descricao])
+  @@map("veiculos")
+}
+
 enum SoroterapiaChecklistStatus {
   EM_ANDAMENTO
   FINALIZADO
