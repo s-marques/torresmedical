@@ -8,6 +8,8 @@ import { EncaminhamentosController } from './encaminhamentos/encaminhamentos.con
 import { EncaminhamentosService } from './encaminhamentos/encaminhamentos.service';
 import { EvolucaoVozController } from './evolucao-voz/evolucao-voz.controller';
 import { EvolucaoVozService } from './evolucao-voz/evolucao-voz.service';
+import { ModelosProntuarioController } from './modelos-prontuario/modelos-prontuario.controller';
+import { ModelosProntuarioService } from './modelos-prontuario/modelos-prontuario.service';
 import { PacientesVinculadosService } from './pacientes-vinculados/pacientes-vinculados.service';
 import { PrestadoresController } from './prestadores/prestadores.controller';
 import { PrestadoresService } from './prestadores/prestadores.service';
@@ -44,6 +46,7 @@ import { ReceituarioBlocosService } from './receituarios/receituario-blocos.serv
   ],
   controllers: [
     ProntuariosController,
+    ModelosProntuarioController,
     AtendimentoRegistrosController,
     AtendimentoMedicoController,
     EvolucaoVozController,
@@ -55,6 +58,7 @@ import { ReceituarioBlocosService } from './receituarios/receituario-blocos.serv
   ],
   providers: [
     ProntuariosService,
+    ModelosProntuarioService,
     AcessoProntuarioService,
     AtendimentoAcessoService,
     AtendimentoAssinaturaService,

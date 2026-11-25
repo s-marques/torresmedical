@@ -61,3 +61,40 @@ describe('toAtendimentoDto', () => {
     });
   });
 });
+
+describe('respostas do modelo de prontuário (#152)', () => {
+  it('sem respostas o snapshot e o hash são os de antes do modelo', () => {
+    const snapshot = snapshotDoAtendimento({ ...BASE, respostas: null }, []);
+    expect('respostas' in snapshot).toBe(false);
+    expect(hashDoSnapshot(snapshot)).toBe(hashDoSnapshot(snapshotDoAtendimento(BASE, [])));
+  });
+
+  it('com respostas o hash muda com o valor, não com a ordem das chaves', () => {
+    const a = snapshotDoAtendimento({ ...BASE, respostas: { a: '1', b: 2 } }, []);
+    const mesmaOrdemTroca = snapshotDoAtendimento({ ...BASE, respostas: { b: 2, a: '1' } }, []);
+    const outroValor = snapshotDoAtendimento({ ...BASE, respostas: { a: '1', b: 3 } }, []);
+    expect(hashDoSnapshot(a)).toBe(hashDoSnapshot(mesmaOrdemTroca));
+    expect(hashDoSnapshot(a)).not.toBe(hashDoSnapshot(outroValor));
+    expect(hashDoSnapshot(a)).not.toBe(hashDoSnapshot(snapshotDoAtendimento(BASE, [])));
+  });
+
+  it('o dto traz o modelo e as respostas', () => {
+    const atendimento = {
+      id: 'a1',
+      pacienteId: 'p1',
+      profissionalId: 'pr1',
+      ...BASE,
+      status: 'EM_ANDAMENTO',
+      assinadoEm: null,
+      respostas: { queixa: 'Dor' },
+      createdAt: new Date('2026-11-25T10:00:00.000Z'),
+      updatedAt: new Date('2026-11-25T10:00:00.000Z'),
+    } as unknown as Atendimento;
+    const modelo = { modeloId: 'm', versaoId: 'v', nome: 'N', versao: 2, secoes: [] };
+    expect(toAtendimentoDto(atendimento, null, undefined, modelo)).toMatchObject({
+      modelo,
+      respostas: { queixa: 'Dor' },
+    });
+    expect(toAtendimentoDto(atendimento, null)).toMatchObject({ modelo: null });
+  });
+});

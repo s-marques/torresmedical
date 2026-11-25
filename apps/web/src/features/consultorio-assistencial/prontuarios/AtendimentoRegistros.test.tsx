@@ -59,6 +59,8 @@ function atendimento(parcial: Partial<Atendimento> = {}): Atendimento {
     conduta: 'Repouso',
     observacoes: null,
     status: 'EM_ANDAMENTO',
+    modelo: null,
+    respostas: null,
     assinadoEm: null,
     assinadoPorNome: null,
     totalAdendos: 0,

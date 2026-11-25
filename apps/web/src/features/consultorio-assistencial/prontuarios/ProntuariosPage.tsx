@@ -7,6 +7,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { EntitySelect } from '@/components/shared/EntitySelect';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Badge } from '@/components/ui/badge';
@@ -15,12 +16,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { AbaAnamneses } from './AbaAnamneses';
 import { AbaAtendimentos } from './AbaAtendimentos';
+import { AbaModelos } from './AbaModelos';
 import { AbaHistoricoClinico } from './AbaHistoricoClinico';
 import { AbaProntuario } from './AbaProntuario';
 import { AbaReceitas } from './AbaReceitas';
 import { CardPacientesComRegistros } from './CardPacientesComRegistros';
 import { PacienteHeaderProntuario } from './PacienteHeaderProntuario';
 import { useHistoricoClinico, usePacienteResumo } from './use-prontuarios';
+
+type Visao = 'pacientes' | 'modelos';
 
 type IdAba = 'prontuario' | 'atendimentos' | 'receitas' | 'anamneses' | 'historico';
 
@@ -36,6 +40,8 @@ const ABAS: readonly { id: IdAba; rotulo: string; icone: LucideIcon }[] = [
 export default function ProntuariosPage() {
   const [pacienteId, setPacienteId] = useState<string | null>(null);
   const [aba, setAba] = useState<IdAba>('prontuario');
+  const [visao, setVisao] = useState<Visao>('pacientes');
+  const { t } = useTranslation();
 
   return (
     <div className="grid gap-6">
@@ -43,23 +49,51 @@ export default function ProntuariosPage() {
         titulo="Prontuarios"
         descricao="Busque um paciente para acessar seu prontuario medico completo."
       />
-      <EntitySelect
-        entidade="pacientes"
-        value={pacienteId}
-        onChange={(id) => {
-          setPacienteId(id);
-          setAba('prontuario');
-        }}
-        placeholder="Buscar paciente por nome, CPF ou telefone…"
-        placeholderBusca="Buscar paciente…"
-        aria-label="Buscar paciente"
-        className="max-w-xl"
-      />
+      <div
+        role="tablist"
+        aria-label={t('modelosProntuario.titulo')}
+        className="flex w-fit gap-1 rounded-lg bg-muted p-1"
+      >
+        {(['pacientes', 'modelos'] as const).map((id) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={visao === id}
+            className={cn(
+              'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+              visao === id
+                ? 'bg-background text-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+            onClick={() => setVisao(id)}
+          >
+            {t(`modelosProntuario.visao.${id}`)}
+          </button>
+        ))}
+      </div>
+      {visao === 'modelos' && <AbaModelos />}
+      {visao === 'pacientes' && (
+        <>
+          <EntitySelect
+            entidade="pacientes"
+            value={pacienteId}
+            onChange={(id) => {
+              setPacienteId(id);
+              setAba('prontuario');
+            }}
+            placeholder="Buscar paciente por nome, CPF ou telefone…"
+            placeholderBusca="Buscar paciente…"
+            aria-label="Buscar paciente"
+            className="max-w-xl"
+          />
 
-      {!pacienteId && <CardPacientesComRegistros onSelecionar={setPacienteId} />}
+          {!pacienteId && <CardPacientesComRegistros onSelecionar={setPacienteId} />}
 
-      {pacienteId && (
-        <DetalhePaciente key={pacienteId} pacienteId={pacienteId} aba={aba} onAba={setAba} />
+          {pacienteId && (
+            <DetalhePaciente key={pacienteId} pacienteId={pacienteId} aba={aba} onAba={setAba} />
+          )}
+        </>
       )}
     </div>
   );

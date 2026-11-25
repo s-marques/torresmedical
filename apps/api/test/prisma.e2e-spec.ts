@@ -113,6 +113,8 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'mensalidade_titulos',
       'mensalidades',
       'modelos_confirmacao',
+      'modelos_prontuario',
+      'modelos_prontuario_versoes',
       'motivos_perda',
       'movimentacoes_estoque',
       'nao_conformidades',
