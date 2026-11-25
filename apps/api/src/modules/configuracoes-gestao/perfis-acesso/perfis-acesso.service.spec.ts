@@ -1,3 +1,4 @@
+import type { UpdatePerfilInput } from '@torres/shared';
 import { txHostFalso } from '../../../../test/utils/tx-host-falso';
 import type { ExportService } from '../../../common/export/export.service';
 import { PerfisAcessoService } from './perfis-acesso.service';
@@ -9,6 +10,7 @@ const PERFIL = {
   nome: 'Recepção',
   descricao: 'Acesso para recepcionistas',
   escopoDados: 'TODOS',
+  padrao: false,
   ativo: true,
   createdAt: AGORA,
   updatedAt: AGORA,
@@ -135,6 +137,111 @@ describe('PerfisAcessoService', () => {
       where: { id: PERFIL.id },
       data: { deletedAt: expect.any(Date) },
       include: { permissoes: true },
+    });
+  });
+
+  describe('perfis padrão (issue #154)', () => {
+    const ID = PERFIL.id;
+    const PADRAO = {
+      ...PERFIL,
+      padrao: true,
+      permissoes: [
+        { perfilId: ID, permissao: 'painel.painel.ver' },
+        { perfilId: ID, permissao: 'comercial-atendimento.agenda.ver' },
+        { perfilId: ID, permissao: 'comercial-atendimento.agenda.criar' },
+        { perfilId: ID, permissao: 'financeiro.caixas.criar' },
+        { perfilId: ID, permissao: 'configuracoes-gestao.auditoria.ver' },
+      ],
+    };
+
+    it('paginasPermitidas lista só o .ver das telas, não as demais ações nem os extras', async () => {
+      const { txHost } = txHostFalso('perfil', [PADRAO]);
+
+      const perfil = await new PerfisAcessoService(txHost, exportServiceFalso()).findById(ID);
+
+      expect(perfil.paginasPermitidas).toEqual(['painel.painel', 'comercial-atendimento.agenda']);
+      expect(perfil.padrao).toBe(true);
+    });
+
+    it('remove recusa perfil padrão (422) sem excluir', async () => {
+      const { txHost, delegate } = txHostFalso('perfil', [PADRAO]);
+
+      await expect(
+        new PerfisAcessoService(txHost, exportServiceFalso()).remove(ID),
+      ).rejects.toMatchObject({ code: 'PERFIL_PADRAO_NAO_EXCLUIVEL' });
+      expect(delegate.update).not.toHaveBeenCalled();
+    });
+
+    it('update mantém as ações das páginas que continuam e os extras; some as de páginas retiradas', async () => {
+      const { txHost, delegate } = txHostFalso('perfil', [PADRAO]);
+
+      await new PerfisAcessoService(txHost, exportServiceFalso()).update(ID, {
+        nome: 'Recepção',
+        descricao: null,
+        paginasPermitidas: ['comercial-atendimento.agenda', 'painel.painel'],
+        escopoDados: 'TODOS',
+      });
+
+      const { permissoes } = delegate.update.mock.calls[0][0].data;
+      expect(permissoes.create.map((p: { permissao: string }) => p.permissao).sort()).toEqual([
+        'comercial-atendimento.agenda.criar',
+        'comercial-atendimento.agenda.ver',
+        'configuracoes-gestao.auditoria.ver',
+        'painel.painel.ver',
+      ]);
+    });
+
+    it('o Administrador não muda nome, páginas nem escopo, mas a descrição sim', async () => {
+      const admin = { ...PADRAO, nome: 'Administrador' };
+      const { txHost, delegate } = txHostFalso('perfil', [admin]);
+      const service = new PerfisAcessoService(txHost, exportServiceFalso());
+      const base: UpdatePerfilInput = {
+        nome: 'Administrador',
+        descricao: 'Novo texto',
+        paginasPermitidas: ['painel.painel', 'comercial-atendimento.agenda'],
+        escopoDados: 'TODOS',
+      };
+
+      await expect(
+        service.update(ID, { ...base, paginasPermitidas: ['painel.painel'] }),
+      ).rejects.toMatchObject({ code: 'PERFIL_ADMINISTRADOR_PROTEGIDO' });
+      await expect(service.update(ID, { ...base, nome: 'Outro' })).rejects.toMatchObject({
+        code: 'PERFIL_ADMINISTRADOR_PROTEGIDO',
+      });
+      await expect(
+        service.update(ID, { ...base, escopoDados: 'PROFISSIONAIS_VINCULADOS' }),
+      ).rejects.toMatchObject({ code: 'PERFIL_ADMINISTRADOR_PROTEGIDO' });
+      expect(delegate.update).not.toHaveBeenCalled();
+
+      await service.update(ID, base);
+      expect(delegate.update).toHaveBeenCalledTimes(1);
+    });
+
+    it('duplicar copia permissões e escopo, sem a marca de padrão, com nome livre', async () => {
+      const { txHost, delegate } = txHostFalso('perfil', [PADRAO]);
+      delegate.findUnique.mockResolvedValueOnce({ id: 'ocupado' }).mockResolvedValue(null);
+
+      await new PerfisAcessoService(txHost, exportServiceFalso()).duplicar(ID);
+
+      expect(delegate.findUnique).toHaveBeenCalledTimes(2);
+      expect(delegate.create).toHaveBeenCalledWith({
+        data: {
+          nome: 'Cópia de Recepção (2)',
+          descricao: PADRAO.descricao,
+          escopoDados: 'TODOS',
+          permissoes: { create: PADRAO.permissoes.map((p) => ({ permissao: p.permissao })) },
+        },
+        include: { permissoes: true },
+      });
+    });
+
+    it('duplicar: 404 quando o perfil não existe', async () => {
+      const { txHost, delegate } = txHostFalso('perfil', []);
+
+      await expect(
+        new PerfisAcessoService(txHost, exportServiceFalso()).duplicar(ID),
+      ).rejects.toMatchObject({ message: 'Perfil não encontrado' });
+      expect(delegate.create).not.toHaveBeenCalled();
     });
   });
 });

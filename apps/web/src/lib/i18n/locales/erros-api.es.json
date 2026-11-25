@@ -45,5 +45,7 @@
   "ATENDIMENTO_NAO_ASSINADO": "La atención aún no está firmada: edite el registro",
   "ATENDIMENTO_NAO_FINALIZADO": "Finalice la atención antes de firmar",
   "ASSINATURA_SENHA_INVALIDA": "Contraseña incorrecta",
-  "ARQUIVO_USO_INVALIDO": "Archivo no válido para este campo"
+  "ARQUIVO_USO_INVALIDO": "Archivo no válido para este campo",
+  "PERFIL_PADRAO_NAO_EXCLUIVEL": "Los perfiles estándar no se pueden eliminar. Duplique el perfil para ajustarlo",
+  "PERFIL_ADMINISTRADOR_PROTEGIDO": "El perfil Administrador no puede cambiar de nombre, páginas ni alcance de datos. Duplique el perfil para ajustarlo"
 }

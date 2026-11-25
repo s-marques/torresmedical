@@ -1796,5 +1796,10 @@
       "documentoRemovido": "Document deleted.",
       "erroBaixar": "Could not download the file."
     }
+  },
+  "perfisAcesso": {
+    "padrao": "Default",
+    "duplicar": "Duplicate",
+    "duplicado": "Profile duplicated."
   }
 }

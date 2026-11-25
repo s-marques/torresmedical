@@ -89,6 +89,8 @@ export const perfilSchema = z.object({
   /** Ids de tela (`TelaId`) com permissão `.ver` concedida a este perfil. */
   paginasPermitidas: z.array(z.string()),
   escopoDados: escopoDadosSchema,
+  /** Perfil padrão do sistema (issue #154): pode ser duplicado, mas não excluído. */
+  padrao: z.boolean(),
   ativo: z.boolean(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),

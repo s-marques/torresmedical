@@ -38,14 +38,25 @@ describe('Perfis de Acesso (e2e)', () => {
 
   function criarNoBanco(
     nome: string,
-    extra: { deletedAt?: Date; ativo?: boolean; paginas?: string[] } = {},
+    extra: {
+      deletedAt?: Date;
+      ativo?: boolean;
+      padrao?: boolean;
+      paginas?: string[];
+      /** Permissões além do `.ver` das páginas (ações e extras). */
+      outras?: string[];
+    } = {},
   ) {
-    const { paginas = ['painel.painel'], ...dados } = extra;
+    const { paginas = ['painel.painel'], outras = [], ...dados } = extra;
     return prisma.perfil.create({
       data: {
         nome,
         ...dados,
-        permissoes: { create: paginas.map((pagina) => ({ permissao: `${pagina}.ver` })) },
+        permissoes: {
+          create: [...paginas.map((pagina) => `${pagina}.ver`), ...outras].map((permissao) => ({
+            permissao,
+          })),
+        },
       },
       include: { permissoes: true },
     });
@@ -261,6 +272,105 @@ describe('Perfis de Acesso (e2e)', () => {
         .patch(`${BASE}/${INEXISTENTE}`)
         .send({ nome: 'X', paginasPermitidas: ['painel.painel'] })
         .expect(404);
+      await expectNoAudit(prisma, { entity: 'Perfil' });
+    });
+  });
+
+  describe('perfis padrão (issue #154)', () => {
+    const OUTRAS = ['comercial-atendimento.agenda.criar', 'configuracoes-gestao.auditoria.ver'];
+
+    it('PATCH mantém as ações das páginas que continuam e os extras', async () => {
+      const perfil = await criarNoBanco('Recepção', {
+        padrao: true,
+        paginas: ['painel.painel', 'comercial-atendimento.agenda', 'financeiro.caixas'],
+        outras: [...OUTRAS, 'financeiro.caixas.criar'],
+      });
+
+      await http()
+        .patch(`${BASE}/${perfil.id}`)
+        .send({
+          nome: 'Recepção',
+          descricao: null,
+          paginasPermitidas: ['painel.painel', 'comercial-atendimento.agenda'],
+        })
+        .expect(200);
+
+      const permissoes = await prisma.perfilPermissao.findMany({ where: { perfilId: perfil.id } });
+      expect(permissoes.map((p) => p.permissao).sort()).toEqual([
+        'comercial-atendimento.agenda.criar',
+        'comercial-atendimento.agenda.ver',
+        'configuracoes-gestao.auditoria.ver',
+        'painel.painel.ver',
+      ]);
+    });
+
+    it('PATCH 422 no Administrador ao mudar páginas, sem auditar', async () => {
+      const admin = await criarNoBanco('Administrador', { padrao: true });
+
+      const res = await http()
+        .patch(`${BASE}/${admin.id}`)
+        .send({
+          nome: 'Administrador',
+          paginasPermitidas: ['painel.painel', 'painel.busca-inteligente'],
+        })
+        .expect(422);
+
+      expect(res.body.code).toBe('PERFIL_ADMINISTRADOR_PROTEGIDO');
+      await expectNoAudit(prisma, { entity: 'Perfil' });
+    });
+
+    it('DELETE 422 em perfil padrão, sem excluir nem auditar', async () => {
+      const perfil = await criarNoBanco('Recepção', { padrao: true });
+
+      const res = await http().delete(`${BASE}/${perfil.id}`).expect(422);
+
+      expect(res.body.code).toBe('PERFIL_PADRAO_NAO_EXCLUIVEL');
+      expect(
+        (await prisma.perfil.findUniqueOrThrow({ where: { id: perfil.id } })).deletedAt,
+      ).toBeNull();
+      await expectNoAudit(prisma, { entity: 'Perfil' });
+    });
+
+    it('POST /:id/duplicar: 201 copia todas as permissões, não é padrão e audita CREATE', async () => {
+      const origem = await criarNoBanco('Recepção', {
+        padrao: true,
+        paginas: ['comercial-atendimento.agenda'],
+        outras: OUTRAS,
+      });
+
+      const res = await http().post(`${BASE}/${origem.id}/duplicar`).expect(201);
+
+      const copia = perfilSchema.parse(res.body);
+      expect(copia).toMatchObject({
+        nome: 'Cópia de Recepção',
+        padrao: false,
+        paginasPermitidas: ['comercial-atendimento.agenda'],
+      });
+      const permissoes = await prisma.perfilPermissao.findMany({ where: { perfilId: copia.id } });
+      expect(permissoes.map((p) => p.permissao).sort()).toEqual(
+        ['comercial-atendimento.agenda.ver', ...OUTRAS].sort(),
+      );
+      await expectAudit(prisma, {
+        action: 'CREATE',
+        entity: 'Perfil',
+        entityId: copia.id,
+        before: null,
+        after: { nome: 'Cópia de Recepção', padrao: false },
+        userId: usuario.id,
+      });
+
+      const segunda = await http().post(`${BASE}/${origem.id}/duplicar`).expect(201);
+      expect(segunda.body.nome).toBe('Cópia de Recepção (2)');
+    });
+
+    it('POST /:id/duplicar: 404 inexistente, 400 id inválido e 403 sem permissão', async () => {
+      await http().post(`${BASE}/${INEXISTENTE}/duplicar`).expect(404);
+      await http().post(`${BASE}/nao-e-uuid/duplicar`).expect(400);
+      const origem = await criarNoBanco('Recepção');
+      const sem = await criarUsuarioTeste(app, {
+        permissoes: ['configuracoes-gestao.perfis-acesso.ver'],
+      });
+      await comUsuario(app, sem).post(`${BASE}/${origem.id}/duplicar`).expect(403);
       await expectNoAudit(prisma, { entity: 'Perfil' });
     });
   });

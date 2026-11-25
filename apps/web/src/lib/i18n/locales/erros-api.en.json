@@ -45,5 +45,7 @@
   "ATENDIMENTO_NAO_ASSINADO": "The appointment is not signed yet: edit the record",
   "ATENDIMENTO_NAO_FINALIZADO": "Finish the appointment before signing",
   "ASSINATURA_SENHA_INVALIDA": "Incorrect password",
-  "ARQUIVO_USO_INVALIDO": "Invalid file for this field"
+  "ARQUIVO_USO_INVALIDO": "Invalid file for this field",
+  "PERFIL_PADRAO_NAO_EXCLUIVEL": "Default profiles cannot be deleted. Duplicate the profile to adjust it",
+  "PERFIL_ADMINISTRADOR_PROTEGIDO": "The Administrator profile cannot have its name, pages or data scope changed. Duplicate the profile to adjust it"
 }

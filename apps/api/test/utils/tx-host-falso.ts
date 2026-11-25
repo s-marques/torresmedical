@@ -17,6 +17,7 @@ export function txHostFalso<R>(modelo: string, registros: R[]) {
     findFirst: jest.fn().mockResolvedValue(registros[0] ?? null),
     create: jest.fn().mockResolvedValue(registros[0] ?? null),
     update: jest.fn().mockResolvedValue(registros[0] ?? null),
+    findUnique: jest.fn().mockResolvedValue(null),
   };
   const txHost = { tx: { [modelo]: delegate } } as unknown as TransactionHost<PrismaAdapter>;
   return { txHost, delegate };

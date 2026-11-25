@@ -112,6 +112,16 @@ export class PerfisAcessoController {
     return this.perfis.update(id, body);
   }
 
+  @Post(':id/duplicar')
+  @RequirePermission('configuracoes-gestao.perfis-acesso.criar')
+  @Audit({ entity: ENTITY })
+  @ApiOperation({ summary: 'Duplica o perfil (inclusive um padrão) com todas as permissões' })
+  @ApiZodResponse(201, perfilSchema)
+  @ApiErrorResponses(400, 401, 403, 404)
+  duplicar(@IdParam() id: string): Promise<Perfil> {
+    return this.perfis.duplicar(id);
+  }
+
   @Delete(':id')
   @RequirePermission('configuracoes-gestao.perfis-acesso.excluir')
   @HttpCode(200)
