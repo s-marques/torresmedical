@@ -5,6 +5,7 @@ import { comUsuario, criarUsuarioTeste, type UsuarioTeste } from '../utils/auth'
 import { createE2eApp } from '../utils/create-e2e-app';
 import { truncateAll } from '../utils/database';
 import { expectAudit, expectNoAudit } from '../utils/expect-audit';
+import { criarMotivo, criarMotivoOutro } from '../utils/motivos-cancelamento';
 
 /** Bloqueios e reservas de sala (issue #138). */
 const BASE = '/api/gestao-profissionais/salas-bloqueios';
@@ -273,12 +274,20 @@ describe('Bloqueios de salas (e2e)', () => {
     });
   });
 
-  describe('POST :id/cancelar', () => {
+  describe('POST :id/cancelar (motivo da lista, issue #162)', () => {
+    let motivoId: string;
+    let outroId: string;
+
+    beforeEach(async () => {
+      motivoId = (await criarMotivo(prisma, 'PERIODO', { nome: 'Manutenção da sala' })).id;
+      outroId = (await criarMotivoOutro(prisma, 'PERIODO')).id;
+    });
+
     it('cancela sem excluir, com quem, quando e o motivo, e audita', async () => {
       const b = await criarNoBanco();
       const res = await http()
         .post(`${BASE}/${b.id}/cancelar`)
-        .send({ motivo: 'Obra adiada' })
+        .send({ motivoId, observacao: 'Obra adiada' })
         .expect(200);
       expect(res.body).toMatchObject({
         status: 'CANCELADO',
@@ -287,6 +296,15 @@ describe('Bloqueios de salas (e2e)', () => {
       });
       expect(res.body.canceladoEm).toEqual(expect.any(String));
       expect(await prisma.salaBloqueio.count()).toBe(1);
+      const [registro] = await prisma.cancelamento.findMany({ where: { entidadeId: b.id } });
+      expect(registro).toMatchObject({
+        tipo: 'PERIODO',
+        entidade: 'SalaBloqueio',
+        motivoId,
+        motivoNome: 'Manutenção da sala',
+        observacao: 'Obra adiada',
+        canceladoPorId: usuario.id,
+      });
       await expectAudit(prisma, {
         action: 'UPDATE',
         entity: ENTITY,
@@ -297,15 +315,33 @@ describe('Bloqueios de salas (e2e)', () => {
       });
     });
 
-    it('400 sem motivo; 409 se já cancelado; 404', async () => {
+    it('sem observação, o motivo da lista fica como texto do cancelamento', async () => {
+      const b = await criarNoBanco();
+      const res = await http().post(`${BASE}/${b.id}/cancelar`).send({ motivoId }).expect(200);
+      expect(res.body.motivoCancelamento).toBe('Manutenção da sala');
+    });
+
+    it('400 sem motivo, com motivo de outra lista ou "Outro" sem observação; 409 se já cancelado; 404', async () => {
       const b = await criarNoBanco();
       const vazio = await http().post(`${BASE}/${b.id}/cancelar`).send({}).expect(400);
       expect(vazio.body.details).toEqual([
-        expect.objectContaining({ field: 'motivo', message: 'Motivo é obrigatório.' }),
+        expect.objectContaining({ field: 'motivoId', message: 'Motivo é obrigatório.' }),
       ]);
-      await http().post(`${BASE}/${b.id}/cancelar`).send({ motivo: 'x' }).expect(200);
-      await http().post(`${BASE}/${b.id}/cancelar`).send({ motivo: 'x' }).expect(409);
-      await http().post(`${BASE}/${INEXISTENTE}/cancelar`).send({ motivo: 'x' }).expect(404);
+      const outraLista = (await criarMotivo(prisma, 'CONSULTA', { nome: 'Erro' })).id;
+      await http().post(`${BASE}/${b.id}/cancelar`).send({ motivoId: outraLista }).expect(400);
+      const semTexto = await http()
+        .post(`${BASE}/${b.id}/cancelar`)
+        .send({ motivoId: outroId })
+        .expect(400);
+      expect(semTexto.body.details).toEqual([
+        { field: 'observacao', message: 'Observação é obrigatória.' },
+      ]);
+      expect(await prisma.cancelamento.count()).toBe(0);
+
+      await http().post(`${BASE}/${b.id}/cancelar`).send({ motivoId }).expect(200);
+      await http().post(`${BASE}/${b.id}/cancelar`).send({ motivoId }).expect(409);
+      expect(await prisma.cancelamento.count()).toBe(1);
+      await http().post(`${BASE}/${INEXISTENTE}/cancelar`).send({ motivoId }).expect(404);
     });
   });
 

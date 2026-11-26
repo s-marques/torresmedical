@@ -6,6 +6,7 @@ import { comUsuario, criarUsuarioTeste, type UsuarioTeste } from '../utils/auth'
 import { createE2eApp } from '../utils/create-e2e-app';
 import { truncateAll } from '../utils/database';
 import { expectAudit, expectNoAudit } from '../utils/expect-audit';
+import { criarMotivoContratoEncerrado } from '../utils/motivos-cancelamento';
 
 const BASE = '/api/gestao-profissionais/contratos-sala';
 const PERMISSOES = ['gestao-profissionais.salas.ver', 'gestao-profissionais.salas.editar'] as const;
@@ -187,6 +188,7 @@ describe('Cobranças dos contratos de salas (e2e)', () => {
 
   describe('encerrar/cancelar cancela as parcelas pendentes', () => {
     it('cancela as parcelas pendentes com vencimento futuro e deixa as já vencidas', async () => {
+      const motivo = await criarMotivoContratoEncerrado(prisma);
       const contrato = await criarContrato({ modalidade: 'MENSAL', valorUnitario: 1500 });
       const futura = await prisma.contaReceber.create({
         data: { descricao: 'Futura', valor: 1500, dataVencimento: new Date('2026-12-10') },
@@ -212,6 +214,16 @@ describe('Cobranças dos contratos de salas (e2e)', () => {
       expect(
         (await prisma.contaReceber.findUniqueOrThrow({ where: { id: passada.id } })).status,
       ).toBe('PENDENTE');
+      // O histórico de cancelamentos registra a parcela com o motivo de sistema (issue #162).
+      const historico = await prisma.cancelamento.findMany();
+      expect(historico).toHaveLength(1);
+      expect(historico[0]).toMatchObject({
+        tipo: 'COBRANCA',
+        entidade: 'ContaReceber',
+        entidadeId: futura.id,
+        motivoId: motivo.id,
+        canceladoPorId: usuario.id,
+      });
       await expectAudit(prisma, {
         action: 'UPDATE',
         entity: 'ContaReceber',

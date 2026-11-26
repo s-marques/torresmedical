@@ -4,10 +4,10 @@ import {
   CONFIRMACAO_ETAPAS,
   CONFIRMACAO_ETAPA_ROTULO,
   CONFIRMACAO_STATUS_ROTULO,
+  type CancelarSemReagendamentoInput,
   type Confirmacao,
   type ConfirmacaoExportColumn,
   type ConfirmacaoHistorico,
-  type ConfirmacaoResposta,
   type ConfirmacaoStatus,
   type ExportConfirmacoesQuery,
   type ListConfirmacoesQuery,
@@ -17,6 +17,7 @@ import {
 } from '@torres/shared';
 import { type AgendamentoStatus, Prisma } from '../../../generated/prisma/client';
 import { isUuid } from '../../../common/auth/tokens';
+import { CancelamentosService } from '../../../common/cancelamentos/cancelamentos.service';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
 import { ExportService, selectColumns } from '../../../common/export/export.service';
@@ -108,6 +109,7 @@ export class ConfirmacoesService {
     private readonly config: ConfirmacoesConfigService,
     private readonly envios: EnvioConfirmacaoService,
     private readonly exportService: ExportService,
+    private readonly cancelamentos: CancelamentosService,
   ) {}
 
   // ---------- Aba Pendentes ----------
@@ -203,22 +205,36 @@ export class ConfirmacoesService {
     return toConfirmacao(await this.buscar(id));
   }
 
-  /** "Confirmar" (✓) e "Cancelar" (✗): atualizam o status do agendamento (auditado no controller). */
-  async responder(id: string, resposta: ConfirmacaoResposta): Promise<Confirmacao> {
+  /** "Confirmar" (✓): o agendamento pendente passa para Confirmado (auditado no controller). */
+  async confirmar(id: string): Promise<Confirmacao> {
     const antes = await this.buscar(id);
-    const novo: AgendamentoStatus = resposta === 'CONFIRMAR' ? 'CONFIRMADO' : 'CANCELADO';
-    const permitidos: AgendamentoStatus[] =
-      resposta === 'CONFIRMAR' ? ['AGENDADO'] : ['AGENDADO', 'CONFIRMADO'];
-    if (antes.status === novo) return toConfirmacao(antes);
-    if (!permitidos.includes(antes.status)) {
-      throw this.regra(
-        'STATUS_INVALIDO',
-        resposta === 'CONFIRMAR'
-          ? 'Só agendamentos pendentes podem ser confirmados'
-          : 'Este agendamento não pode mais ser cancelado',
-      );
+    if (antes.status === 'CONFIRMADO') return toConfirmacao(antes);
+    if (antes.status !== 'AGENDADO') {
+      throw this.regra('STATUS_INVALIDO', 'Só agendamentos pendentes podem ser confirmados');
     }
-    await this.txHost.tx.agendamento.update({ where: { id }, data: { status: novo } });
+    await this.txHost.tx.agendamento.update({ where: { id }, data: { status: 'CONFIRMADO' } });
+    return toConfirmacao(await this.buscar(id));
+  }
+
+  /**
+   * "Cancelar" (✗): o agendamento passa para Cancelado e libera o horário. Como na Agenda, o
+   * motivo da lista é obrigatório e o histórico guarda quem, quando e por quê (issue #162).
+   */
+  async cancelar(id: string, input: CancelarSemReagendamentoInput): Promise<Confirmacao> {
+    const antes = await this.buscar(id);
+    if (antes.status === 'CANCELADO') return toConfirmacao(antes);
+    if (antes.status !== 'AGENDADO' && antes.status !== 'CONFIRMADO') {
+      throw this.regra('STATUS_INVALIDO', 'Este agendamento não pode mais ser cancelado');
+    }
+    await this.cancelamentos.registrar({
+      tipo: 'CONSULTA',
+      entidade: 'Agendamento',
+      entidadeId: id,
+      motivoId: input.motivoId,
+      observacao: input.observacao,
+      profissionalId: antes.profissionalId,
+    });
+    await this.txHost.tx.agendamento.update({ where: { id }, data: { status: 'CANCELADO' } });
     return toConfirmacao(await this.buscar(id));
   }
 

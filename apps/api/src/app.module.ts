@@ -4,6 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AuditModule } from './common/audit/audit.module';
 import { AuthModule } from './common/auth/auth.module';
 import { BackupModule } from './common/backup/backup.module';
+import { CancelamentosModule } from './common/cancelamentos/cancelamentos.module';
 import { CryptoModule } from './common/crypto/crypto.module';
 import { RequestContextModule } from './common/context/request-context.module';
 import { AllExceptionsFilter } from './common/errors/all-exceptions.filter';
@@ -40,6 +41,7 @@ import { RegulatorioQualidadeModule } from './modules/regulatorio-qualidade/regu
     StorageModule,
     HealthModule,
     BackupModule,
+    CancelamentosModule,
     PainelModule,
     ComercialAtendimentoModule,
     ConsultorioAssistencialModule,

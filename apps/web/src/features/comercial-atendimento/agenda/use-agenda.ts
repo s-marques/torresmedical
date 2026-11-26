@@ -5,6 +5,7 @@ import {
   agendamentoSchema,
   salaSugeridaSchema,
   type AgendaProfissional,
+  type CancelarComMotivoInput,
   type Agendamento,
   type CreateAgendamentoInput,
   type SalaSugerida,
@@ -107,6 +108,25 @@ export function useAlterarAgendamento(id: string) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: agendaKeys.todas });
       toast.success(t('agenda.editar.sucesso'));
+    },
+  });
+}
+
+/** Cancela o agendamento com o motivo da lista e, se houve, o novo agendamento (issue #162). */
+export function useCancelarAgendamento(id: string) {
+  const queryClient = useQueryClient();
+  const { t } = useTranslation();
+  return useMutation({
+    mutationFn: (dados: CancelarComMotivoInput) =>
+      apiFetch(`${URL_AGENDAMENTOS}/${id}/cancelar`, {
+        method: 'POST',
+        body: dados,
+        schema: agendamentoSchema,
+      }),
+    meta: META_FORMULARIO,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: agendaKeys.todas });
+      toast.success(t('cancelamento.agenda.sucesso'));
     },
   });
 }

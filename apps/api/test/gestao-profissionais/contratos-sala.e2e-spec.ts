@@ -5,6 +5,7 @@ import { comUsuario, criarUsuarioTeste, type UsuarioTeste } from '../utils/auth'
 import { createE2eApp } from '../utils/create-e2e-app';
 import { truncateAll } from '../utils/database';
 import { expectAudit, expectNoAudit } from '../utils/expect-audit';
+import { criarMotivo, criarMotivoOutro } from '../utils/motivos-cancelamento';
 
 const BASE = '/api/gestao-profissionais/contratos-sala';
 const ENTITY = 'ContratoSala';
@@ -448,12 +449,6 @@ describe('Contratos de salas (e2e)', () => {
       campo: 'observacao',
       obrigatorio: 'Data de encerramento é obrigatória.',
     },
-    {
-      acao: 'cancelar',
-      status: 'CANCELADO',
-      campo: 'motivo',
-      obrigatorio: 'Data de cancelamento é obrigatória.',
-    },
   ])('POST /:id/$acao', ({ acao, status, campo, obrigatorio }) => {
     it(`passa o contrato ativo para ${status}, grava a data e o texto e audita UPDATE`, async () => {
       const contrato = await criarNoBanco();
@@ -530,6 +525,118 @@ describe('Contratos de salas (e2e)', () => {
         .post(`${BASE}/${contrato.id}/${acao}`)
         .send({ data: '2026-10-22' })
         .expect(403);
+    });
+  });
+
+  describe('POST /:id/cancelar (rescisão, motivo da lista, issue #162)', () => {
+    let motivoId: string;
+    let outroId: string;
+
+    beforeEach(async () => {
+      motivoId = (await criarMotivo(prisma, 'CONTRATO', { nome: 'Mudança de cidade' })).id;
+      outroId = (await criarMotivoOutro(prisma, 'CONTRATO')).id;
+    });
+
+    it('cancela o contrato ativo, grava data, observação e o histórico, e audita UPDATE', async () => {
+      const contrato = await criarNoBanco();
+
+      const res = await http()
+        .post(`${BASE}/${contrato.id}/cancelar`)
+        .send({ data: '2026-10-22', motivoId, observacao: '  Mudou para outra cidade ' })
+        .expect(200);
+
+      expect(contratoSalaSchema.parse(res.body)).toMatchObject({
+        status: 'CANCELADO',
+        encerradoEm: '2026-10-22',
+        motivoEncerramento: 'Mudou para outra cidade',
+      });
+      const [registro] = await prisma.cancelamento.findMany({ where: { entidadeId: contrato.id } });
+      expect(registro).toMatchObject({
+        tipo: 'CONTRATO',
+        entidade: 'ContratoSala',
+        motivoId,
+        motivoNome: 'Mudança de cidade',
+        observacao: 'Mudou para outra cidade',
+        canceladoPorId: usuario.id,
+        profissionalId,
+      });
+      await expectAudit(prisma, {
+        action: 'UPDATE',
+        entity: ENTITY,
+        entityId: contrato.id,
+        before: { status: 'ATIVO', encerradoEm: null },
+        after: { status: 'CANCELADO', encerradoEm: '2026-10-22' },
+        userId: usuario.id,
+      });
+    });
+
+    it('sem observação, o motivo da lista fica como texto do cancelamento', async () => {
+      const contrato = await criarNoBanco();
+      const res = await http()
+        .post(`${BASE}/${contrato.id}/cancelar`)
+        .send({ data: '2026-10-22', motivoId })
+        .expect(200);
+      expect(res.body.motivoEncerramento).toBe('Mudança de cidade');
+    });
+
+    it('400 sem data, sem motivo, motivo de outra lista ou "Outro" sem observação; nada muda', async () => {
+      const contrato = await criarNoBanco();
+      const url = `${BASE}/${contrato.id}/cancelar`;
+
+      const vazio = await http().post(url).send({ data: '', extra: 1 }).expect(400);
+      expect(vazio.body.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            field: 'data',
+            message: 'Data de cancelamento é obrigatória.',
+          }),
+          expect.objectContaining({ field: 'motivoId', message: 'Motivo é obrigatório.' }),
+          expect.objectContaining({ field: 'extra', message: 'Campo não permitido' }),
+        ]),
+      );
+      const outraLista = (await criarMotivo(prisma, 'PROPOSTA', { nome: 'Valor' })).id;
+      const invalido = await http()
+        .post(url)
+        .send({ data: '2026-10-22', motivoId: outraLista })
+        .expect(400);
+      expect(invalido.body.details).toEqual([{ field: 'motivoId', message: 'Motivo inválido' }]);
+      const semTexto = await http()
+        .post(url)
+        .send({ data: '2026-10-22', motivoId: outroId })
+        .expect(400);
+      expect(semTexto.body.details).toEqual([
+        { field: 'observacao', message: 'Observação é obrigatória.' },
+      ]);
+
+      await expectNoAudit(prisma, { entity: ENTITY });
+      expect(await prisma.cancelamento.count()).toBe(0);
+      expect(
+        (await prisma.contratoSala.findUniqueOrThrow({ where: { id: contrato.id } })).status,
+      ).toBe('ATIVO');
+    });
+
+    it('409 quando o contrato já foi encerrado ou cancelado, sem registrar', async () => {
+      const contrato = await criarNoBanco({ status: 'CANCELADO' });
+      const res = await http()
+        .post(`${BASE}/${contrato.id}/cancelar`)
+        .send({ data: '2026-10-22', motivoId })
+        .expect(409);
+      expect(res.body.code).toBe('CONTRATO_NAO_ATIVO');
+      expect(await prisma.cancelamento.count()).toBe(0);
+      await expectNoAudit(prisma, { entity: ENTITY });
+    });
+
+    it('404 para inexistente ou excluído, 400 para id inválido e 403 sem permissão de editar', async () => {
+      const corpo = { data: '2026-10-22', motivoId };
+      const excluido = await criarNoBanco({ deletedAt: new Date() });
+      await http().post(`${BASE}/${INEXISTENTE}/cancelar`).send(corpo).expect(404);
+      await http().post(`${BASE}/${excluido.id}/cancelar`).send(corpo).expect(404);
+      await http().post(`${BASE}/abc/cancelar`).send(corpo).expect(400);
+      const contrato = await criarNoBanco();
+      const leitor = await criarUsuarioTeste(app, {
+        permissoes: ['gestao-profissionais.salas.ver'],
+      });
+      await comUsuario(app, leitor).post(`${BASE}/${contrato.id}/cancelar`).send(corpo).expect(403);
     });
   });
 

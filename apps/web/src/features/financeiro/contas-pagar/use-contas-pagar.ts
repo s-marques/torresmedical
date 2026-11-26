@@ -3,6 +3,7 @@ import {
   contaPagarSchema,
   verificacaoDuplicidadeContaPagarSchema,
   type BaixarContaPagarInput,
+  type CancelarSemReagendamentoInput,
   type ContaPagarPossivelDuplicada,
   type CreateContaPagarInput,
   type RecusarContaPagarInput,
@@ -11,6 +12,7 @@ import {
 } from '@torres/shared';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/client';
+import { i18next } from '@/lib/i18n';
 import { useMutationContaFinanceira } from '../contas-financeiras/use-mutation-conta';
 
 export const URL_CONTAS_PAGAR = '/api/financeiro/contas-pagar';
@@ -46,6 +48,15 @@ export function useExcluirContaPagar() {
   return useMutationContaFinanceira(URL_CONTAS_PAGAR, (id: string) => chamar(`/${id}`, 'DELETE'), {
     sucesso: 'Conta a pagar excluída.',
   });
+}
+
+/** Cancela a conta pendente e sem baixa, com o motivo da lista (issue #162). */
+export function useCancelarContaPagar(id: string) {
+  return useMutationContaFinanceira(
+    URL_CONTAS_PAGAR,
+    (dados: CancelarSemReagendamentoInput) => chamar(`/${id}/cancelar`, 'POST', dados),
+    { formulario: true, sucesso: i18next.t('cancelamento.contaPagar.sucesso') },
+  );
 }
 
 export function useBaixarContaPagar(id: string) {

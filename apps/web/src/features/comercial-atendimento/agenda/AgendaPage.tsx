@@ -35,6 +35,7 @@ import { MatrizAgenda } from './MatrizAgenda';
 import { MODO_MATRIZ } from './matriz-filtros';
 import { CalendarioAgenda } from './CalendarioAgenda';
 import { colunasDaSemana, colunasDoDia } from './colunas-agenda';
+import { ModalCancelarAgendamento } from './ModalCancelarAgendamento';
 import { ModalDetalheAgendamento } from './ModalDetalheAgendamento';
 import { ModalEditarAgendamento } from './ModalEditarAgendamento';
 import { ModalNovoAgendamento } from './ModalNovoAgendamento';
@@ -53,6 +54,7 @@ function AgendaCalendario({ seletor }: Readonly<{ seletor: ReactNode }>) {
   const [criando, setCriando] = useState(false);
   const [selecionado, setSelecionado] = useState<Agendamento | null>(null);
   const [editando, setEditando] = useState<Agendamento | null>(null);
+  const [cancelando, setCancelando] = useState<Agendamento | null>(null);
 
   const periodo = periodoDaVisao(dataBase, visao);
   const agendamentos = useAgendamentos(periodo, profissionalId);
@@ -197,6 +199,17 @@ function AgendaCalendario({ seletor }: Readonly<{ seletor: ReactNode }>) {
             setSelecionado(null);
             setEditando(agendamento);
           }}
+          onCancelar={(agendamento) => {
+            setSelecionado(null);
+            setCancelando(agendamento);
+          }}
+        />
+      )}
+      {cancelando && (
+        <ModalCancelarAgendamento
+          agendamento={cancelando}
+          agendamentos={lista}
+          onFechar={() => setCancelando(null)}
         />
       )}
       {editando && (

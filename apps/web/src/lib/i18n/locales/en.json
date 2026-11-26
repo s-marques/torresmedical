@@ -362,6 +362,7 @@
         "base-conhecimento": "Knowledge Base",
         "bypass-agente": "Agent Bypass",
         "tipos-agendamento": "Appointment Types",
+        "motivos-cancelamento": "Cancellation Reasons",
         "respostas-rapidas": "Quick Replies",
         "configuracoes": "Settings",
         "minha-empresa": "My Company",
@@ -958,8 +959,6 @@
     "cancelar": {
       "titulo": "Cancel block",
       "descricao": "{{tipo}} of {{sala}} on {{periodo}}. The record is not deleted: it stays as canceled, with who, when and the reason.",
-      "motivo": "Cancellation reason",
-      "placeholder": "Why was the block canceled?",
       "voltar": "Back",
       "confirmar": "Cancel block"
     },
@@ -2280,5 +2279,100 @@
     "todosProfissionais": "All professionals I have access to",
     "incluirAnexos": "Include exams and attachments (generates a ZIP)",
     "exportar": "Export"
+  },
+  "cancelamento": {
+    "motivo": "Reason",
+    "selecioneMotivo": "Select the reason",
+    "observacao": "Note",
+    "observacaoPlaceholder": "Details of the cancellation (required for \"Other\")",
+    "reagendou": "Rescheduled?",
+    "naoReagendou": "Not rescheduled",
+    "reagendouAjuda": "Choose the patient's new appointment, if any.",
+    "voltar": "Back",
+    "agenda": {
+      "acao": "Cancel appointment",
+      "titulo": "Cancel appointment #{{numero}}",
+      "descricao": "{{paciente}} with {{profissional}} on {{data}} at {{hora}}. The appointment is not deleted: it stays cancelled, with who, when and why.",
+      "confirmar": "Cancel appointment",
+      "sucesso": "Appointment cancelled.",
+      "novoAgendamento": "#{{numero}} - {{data}} at {{hora}}"
+    },
+    "confirmacao": {
+      "descricao": "{{paciente}} with {{profissional}} on {{quando}}. The appointment is not deleted: it stays cancelled, with who, when and why, and the time slot is released."
+    },
+    "orcamento": {
+      "acao": "Cancel",
+      "titulo": "Cancel quote #{{numero}}",
+      "descricao": "The quote is not deleted: it stays cancelled, with who, when and why.",
+      "confirmar": "Cancel quote",
+      "sucesso": "Quote cancelled."
+    },
+    "contaReceber": {
+      "acao": "Cancel",
+      "titulo": "Cancel account receivable",
+      "descricao": "{{descricao}}. The account is not deleted: it stays cancelled, with who, when and why.",
+      "confirmar": "Cancel account",
+      "sucesso": "Account receivable cancelled."
+    },
+    "contaPagar": {
+      "acao": "Cancel",
+      "titulo": "Cancel account payable",
+      "descricao": "{{descricao}}. The account is not deleted: it stays cancelled, with who, when and why.",
+      "confirmar": "Cancel account",
+      "sucesso": "Account payable cancelled."
+    },
+    "contrato": {
+      "titulo": "Cancel contract (termination)",
+      "descricao": "Contract: {{sala}} - {{locatario}}",
+      "data": "Cancellation date",
+      "aviso": "Pending installments after the cancellation date will be cancelled automatically.",
+      "confirmar": "Cancel contract"
+    },
+    "tipos": {
+      "CONSULTA": "Appointment",
+      "CONTRATO": "Contract",
+      "COBRANCA": "Charge",
+      "PERIODO": "Period",
+      "PROPOSTA": "Proposal"
+    }
+  },
+  "motivosCancelamento": {
+    "titulo": "Cancellation Reasons",
+    "descricao": "Reason lists used when cancelling appointments, contracts, charges, periods and proposals.",
+    "novo": "New reason",
+    "buscar": "Search reason...",
+    "vazio": "No reasons registered.",
+    "colunas": {
+      "tipo": "Type",
+      "nome": "Reason",
+      "exigeTexto": "Requires note",
+      "ativo": "Status"
+    },
+    "sistema": "System",
+    "filtroTipo": "Type",
+    "todosTipos": "All types",
+    "acoes": {
+      "editar": "Edit",
+      "excluir": "Delete"
+    },
+    "excluir": {
+      "titulo": "Delete reason",
+      "descricao": "Delete the reason \"{{nome}}\"? Cancellations already recorded with it stay in the history.",
+      "confirmar": "Delete"
+    },
+    "modal": {
+      "tituloNovo": "New cancellation reason",
+      "tituloEditar": "Edit cancellation reason",
+      "tipo": "Cancellation type",
+      "nome": "Reason name",
+      "exigeTexto": "Requires a note when this reason is chosen",
+      "ativo": "Active",
+      "sistemaAviso": "Reason used by the system: it cannot be renamed, deactivated or deleted."
+    },
+    "sucesso": {
+      "criado": "Reason created.",
+      "atualizado": "Reason updated.",
+      "excluido": "Reason deleted."
+    }
   }
 }

@@ -9,6 +9,7 @@ import {
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { MOTIVO_ID, rotaMotivosCancelamento } from '@/test/motivos-cancelamento';
 import { apiFalsa, chamadasPara, json, renderApp, USUARIO_TESTE } from '@/test/render-app';
 import { hojeIso } from './formatar';
 
@@ -120,6 +121,7 @@ function api(opcoes: Parameters<typeof apiFalsa>[0] = {}, modelos: ConfirmacaoMo
           meta: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
         }),
       [`/api/lookups/tipos-agendamento/${TIPO}`]: () => json({ id: TIPO, label: 'Consulta' }),
+      ...rotaMotivosCancelamento,
       ...opcoes.rotas,
     },
   });
@@ -262,25 +264,34 @@ describe('Confirmações (/confirmacoes)', () => {
     );
   });
 
-  it('Cancelar: "Cancelar" do diálogo só fecha; o vermelho grava', async () => {
+  it('Cancelar: pede o motivo da lista; Voltar só fecha; confirmar grava motivo e observação', async () => {
     const { user, escritas } = renderTela();
     const linha = (await screen.findByText('Ana Fictícia')).closest('tr')!;
     await user.click(within(linha).getByRole('button', { name: 'Cancelar' }));
 
-    let dialogo = await screen.findByRole('alertdialog', { name: 'Cancelar Agendamento' });
-    expect(dialogo).toHaveTextContent('Cancelar o agendamento de Ana Fictícia em 18/11/2026');
-    const [fechar, confirmar] = within(dialogo).getAllByRole('button', { name: 'Cancelar' });
-    await user.click(fechar!);
-    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+    let modal = await screen.findByRole('dialog', { name: /Cancelar agendamento #/ });
+    expect(modal).toHaveTextContent('Ana Fictícia');
+    await user.click(within(modal).getByRole('button', { name: 'Voltar' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(escritas).toEqual([]);
 
     await user.click(within(linha).getByRole('button', { name: 'Cancelar' }));
-    dialogo = await screen.findByRole('alertdialog', { name: 'Cancelar Agendamento' });
-    const botoes = within(dialogo).getAllByRole('button', { name: 'Cancelar' });
-    await user.click(botoes[1] ?? confirmar!);
+    modal = await screen.findByRole('dialog', { name: /Cancelar agendamento #/ });
+    await user.click(within(modal).getByRole('button', { name: 'Cancelar agendamento' }));
+    expect(await within(modal).findByText('Motivo é obrigatório.')).toBeVisible();
+    expect(escritas).toEqual([]);
+
+    await user.click(within(modal).getByRole('combobox', { name: /Motivo/ }));
+    await user.click(await screen.findByRole('option', { name: 'Paciente desistiu' }));
+    await user.type(within(modal).getByLabelText('Observação'), 'Viagem');
+    await user.click(within(modal).getByRole('button', { name: 'Cancelar agendamento' }));
     await waitFor(() =>
       expect(escritas).toEqual([
-        { metodo: 'POST', caminho: `${API}/${C1}/cancelar`, corpo: undefined },
+        {
+          metodo: 'POST',
+          caminho: `${API}/${C1}/cancelar`,
+          corpo: { motivoId: MOTIVO_ID, observacao: 'Viagem' },
+        },
       ]),
     );
   });

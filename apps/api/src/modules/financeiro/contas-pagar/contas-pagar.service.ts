@@ -4,6 +4,7 @@ import {
   CONTA_PAGAR_ROTULO_STATUS_EXIBICAO,
   statusExibicaoContaPagar,
   type BaixarContaPagarInput,
+  type CancelarSemReagendamentoInput,
   type ContaPagar,
   type ContaPagarBaixa,
   type ContaPagarExportColumn,
@@ -24,6 +25,7 @@ import { FornecedoresService } from '../../compras-estoque/fornecedores/forneced
 import { FuncionariosService } from '../../regulatorio-qualidade/funcionarios/funcionarios.service';
 import { CentrosCustoService } from '../centros-custo/centros-custo.service';
 import { RequestContextService } from '../../../common/context/request-context.service';
+import { CancelamentosService } from '../../../common/cancelamentos/cancelamentos.service';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
 import { ExportService, selectColumns } from '../../../common/export/export.service';
@@ -110,6 +112,7 @@ export class ContasPagarService {
     private readonly duplicidade: ContasPagarDuplicidadeService,
     private readonly usuarios: UsuariosService,
     private readonly contexto: RequestContextService,
+    private readonly cancelamentos: CancelamentosService,
   ) {}
 
   async list(query: ListContasPagarQuery): Promise<Page<ContaPagar>> {
@@ -271,6 +274,44 @@ export class ContasPagarService {
       include: INCLUDE,
     });
     return this.toContaPagar(conta, await this.nomesDecisores([conta]));
+  }
+
+  /**
+   * Cancela uma conta pendente, sem pagamento (issue #162): o motivo da lista é obrigatório e o
+   * histórico guarda quem, quando e por quê. Conta com baixa precisa ter a baixa cancelada antes.
+   */
+  async cancelar(id: string, input: CancelarSemReagendamentoInput): Promise<ContaPagar> {
+    const conta = await this.buscarAtiva(id);
+    if (conta.status !== 'PENDENTE') {
+      throw new BusinessException(
+        'CONTA_PAGAR_NAO_PENDENTE',
+        'Só é possível cancelar uma conta a pagar pendente.',
+        { status: 409 },
+      );
+    }
+    const baixas = await this.txHost.tx.contaPagarBaixa.count({
+      where: { contaPagarId: id, deletedAt: null },
+    });
+    if (baixas > 0) {
+      throw new BusinessException(
+        'CONTA_PAGAR_COM_BAIXA',
+        'Esta conta tem pagamento registrado. Cancele a baixa antes de cancelar a conta.',
+        { status: 409 },
+      );
+    }
+    await this.cancelamentos.registrar({
+      tipo: 'COBRANCA',
+      entidade: 'ContaPagar',
+      entidadeId: id,
+      motivoId: input.motivoId,
+      observacao: input.observacao,
+    });
+    const cancelada = await this.txHost.tx.contaPagar.update({
+      where: { id },
+      data: { status: 'CANCELADO' },
+      include: INCLUDE,
+    });
+    return this.toContaPagar(cancelada);
   }
 
   /** "Cancelar Baixa": exclusão lógica da baixa mais recente e recálculo do status. */

@@ -1,12 +1,14 @@
 import {
   catalogoOrcamentoPageSchema,
   orcamentoSchema,
+  type CancelarSemReagendamentoInput,
   type CriarOrcamentoInput,
   type OrcamentoOrigem,
 } from '@torres/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api/client';
+import { i18next } from '@/lib/i18n';
 import { META_FORMULARIO } from '@/lib/api/query-client';
 
 export const URL_ORCAMENTOS = '/api/comercial-atendimento/orcamentos';
@@ -24,6 +26,24 @@ export function useCriarOrcamento() {
     onSuccess: async (orcamento) => {
       await queryClient.invalidateQueries({ queryKey: ['data-grid', URL_ORCAMENTOS] });
       toast.success(`Orçamento #${orcamento.numero} criado!`);
+    },
+  });
+}
+
+/** Cancela o orçamento pendente ou aprovado, com o motivo da lista (issue #162). */
+export function useCancelarOrcamento(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (dados: CancelarSemReagendamentoInput) =>
+      apiFetch(`${URL_ORCAMENTOS}/${id}/cancelar`, {
+        method: 'POST',
+        body: dados,
+        schema: orcamentoSchema,
+      }),
+    meta: META_FORMULARIO,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['data-grid', URL_ORCAMENTOS] });
+      toast.success(i18next.t('cancelamento.orcamento.sucesso'));
     },
   });
 }

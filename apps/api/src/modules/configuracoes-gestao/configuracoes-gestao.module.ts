@@ -29,6 +29,8 @@ import { AgenteRegrasController } from './instrucoes-agente/agente-regras.contro
 import { AgenteRegrasService } from './instrucoes-agente/agente-regras.service';
 import { MinhaEmpresaController } from './minha-empresa/minha-empresa.controller';
 import { MinhaEmpresaService } from './minha-empresa/minha-empresa.service';
+import { MotivosCancelamentoController } from './motivos-cancelamento/motivos-cancelamento.controller';
+import { MotivosCancelamentoService } from './motivos-cancelamento/motivos-cancelamento.service';
 import { PerfisAcessoController } from './perfis-acesso/perfis-acesso.controller';
 import { PerfisAcessoService } from './perfis-acesso/perfis-acesso.service';
 import { RelatoriosGestao } from './relatorios/relatorios-gestao';
@@ -52,6 +54,7 @@ const SERVICES = [
   MinhaEmpresaService,
   ConfiguracoesService,
   TiposAgendamentoService,
+  MotivosCancelamentoService,
   RespostasRapidasService,
   BaseConhecimentoService,
   BypassAgenteService,
@@ -83,6 +86,7 @@ const SERVICES = [
     ConfiguracoesController,
     UnidadesController,
     TiposAgendamentoController,
+    MotivosCancelamentoController,
     RespostasRapidasController,
     BaseConhecimentoController,
     BypassAgenteController,

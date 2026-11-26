@@ -83,7 +83,7 @@ describe('Relatórios de Gestão GES-01 a GES-04 (e2e)', () => {
   }
 
   describe('GET /relatorios (catálogo)', () => {
-    it('lista GES-01 a GES-04 com colunas e sem filtros extras', async () => {
+    it('lista GES-01 a GES-06 com colunas e sem filtros extras', async () => {
       const res = await http().get(BASE).expect(200);
 
       const { data } = catalogoRelatoriosSchema.parse(res.body);
@@ -92,6 +92,8 @@ describe('Relatórios de Gestão GES-01 a GES-04 (e2e)', () => {
         ['GES-02', 'Ticket Médio por Canal'],
         ['GES-03', 'Ocupação por Sala'],
         ['GES-04', 'LTV Paciente'],
+        ['GES-05', 'Cancelamentos'],
+        ['GES-06', 'Cancelamentos por Motivo'],
       ]);
       expect(data[0]?.colunas.map((c) => c.titulo)).toEqual([
         'Data/hora do acesso',
@@ -109,7 +111,11 @@ describe('Relatórios de Gestão GES-01 a GES-04 (e2e)', () => {
 
       const res = await http(parcial).get(BASE).expect(200);
 
-      expect(res.body.data.map((r: { id: string }) => r.id)).toEqual(['GES-03']);
+      expect(res.body.data.map((r: { id: string }) => r.id)).toEqual([
+        'GES-03',
+        'GES-05',
+        'GES-06',
+      ]);
     });
   });
 

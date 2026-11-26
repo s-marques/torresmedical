@@ -41,6 +41,13 @@ export const AGENDAMENTO_STATUS_ROTULOS: Record<AgendamentoStatus, string> = {
   EM_ATENDIMENTO: 'Em Atendimento',
 };
 
+/** Situações em que o agendamento ainda pode ser cancelado (issue #162). */
+export const AGENDAMENTO_STATUS_CANCELAVEIS: readonly AgendamentoStatus[] = [
+  'AGENDADO',
+  'CONFIRMADO',
+  'REAGENDAR',
+];
+
 /** Ordem da legenda no rodapé da tela. */
 export const AGENDAMENTO_STATUS_LEGENDA = [
   'AGENDADO',

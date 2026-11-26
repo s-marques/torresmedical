@@ -2,7 +2,8 @@ import { type Orcamento } from '@torres/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { apiFalsa, chamadasPara, json, renderApp } from '@/test/render-app';
+import { MOTIVO_ID, MOTIVO_OUTRO_ID, rotaMotivosCancelamento } from '@/test/motivos-cancelamento';
+import { apiFalsa, chamadasPara, json, renderApp, USUARIO_TESTE } from '@/test/render-app';
 
 vi.setConfig({ testTimeout: 20_000 });
 
@@ -66,6 +67,7 @@ function apiOrcamentos(aoCriar?: (corpo: unknown) => void) {
       },
       '/api/lookups/pacientes': () => pagina([]),
       '/api/lookups/formas-pagamento': () => pagina([]),
+      ...rotaMotivosCancelamento,
     },
   });
 }
@@ -99,6 +101,7 @@ describe('Orçamentos (/orcamentos)', () => {
       'Cliente',
       'Total',
       'Status',
+      'Ações',
     ]);
     const primeira = (await screen.findByText('Cliente Teste')).closest('tr') as HTMLElement;
     expect(within(primeira).getByText(/450,00/)).toBeVisible();
@@ -206,5 +209,114 @@ describe('Orçamentos (/orcamentos)', () => {
     await user.click(within(modal).getByRole('button', { name: 'Remover item 1' }));
 
     expect(within(modal).queryByText('TOTAL:')).not.toBeInTheDocument();
+  });
+
+  describe('Cancelar (issue #162)', () => {
+    const ROTA_CANCELAR = `${API}/${ID_1}/cancelar`;
+
+    async function abrirMenu(user: ReturnType<typeof userEvent.setup>, linha: string) {
+      const tr = (await screen.findByText(linha)).closest('tr') as HTMLElement;
+      await user.click(within(tr).getByRole('button', { name: 'Ações' }));
+    }
+
+    it('pendente e aprovado têm "Cancelar"; concluído e cancelado não têm ações', async () => {
+      const fetchMock = apiFalsa({
+        rotas: {
+          [API]: () =>
+            pagina([
+              orcamento({}),
+              orcamento({ id: ID_2, numero: 2, cliente: 'Cliente Concluído', status: 'CONCLUIDO' }),
+              orcamento({
+                id: '00000000-0000-4000-8000-0000000000d3',
+                numero: 3,
+                cliente: 'Cliente Cancelado',
+                status: 'CANCELADO',
+              }),
+            ]),
+          ...rotaMotivosCancelamento,
+        },
+      });
+      const { user } = renderTela(fetchMock);
+
+      await abrirMenu(user, 'Cliente Teste');
+      expect(await screen.findByRole('menuitem', { name: 'Cancelar' })).toBeVisible();
+      await user.keyboard('{Escape}');
+
+      for (const cliente of ['Cliente Concluído', 'Cliente Cancelado']) {
+        const tr = (await screen.findByText(cliente)).closest('tr') as HTMLElement;
+        expect(within(tr).queryByRole('button', { name: 'Ações' })).toBeNull();
+      }
+    });
+
+    it('pede o motivo da lista e envia motivo e observação', async () => {
+      let corpo: Record<string, unknown> | null = null;
+      const fetchMock = apiFalsa({
+        rotas: {
+          [API]: () => pagina(ORCAMENTOS),
+          ...rotaMotivosCancelamento,
+          [ROTA_CANCELAR]: (init) => {
+            corpo = JSON.parse(String(init?.body));
+            return json(orcamento({ status: 'CANCELADO' }));
+          },
+        },
+      });
+      const { user } = renderTela(fetchMock);
+
+      await abrirMenu(user, 'Cliente Teste');
+      await user.click(await screen.findByRole('menuitem', { name: 'Cancelar' }));
+      const modal = await screen.findByRole('dialog', { name: 'Cancelar orçamento #1' });
+
+      await user.click(within(modal).getByRole('button', { name: 'Cancelar orçamento' }));
+      expect(await within(modal).findByText('Motivo é obrigatório.')).toBeVisible();
+      expect(corpo).toBeNull();
+
+      await user.click(within(modal).getByRole('combobox', { name: /Motivo/ }));
+      await user.click(await screen.findByRole('option', { name: 'Paciente desistiu' }));
+      await user.type(within(modal).getByLabelText('Observação'), 'Sem retorno');
+      await user.click(within(modal).getByRole('button', { name: 'Cancelar orçamento' }));
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(corpo).toEqual({ motivoId: MOTIVO_ID, observacao: 'Sem retorno' });
+    });
+
+    it('o motivo "Outro" exige a observação', async () => {
+      let enviou = false;
+      const fetchMock = apiFalsa({
+        rotas: {
+          [API]: () => pagina(ORCAMENTOS),
+          ...rotaMotivosCancelamento,
+          [ROTA_CANCELAR]: () => {
+            enviou = true;
+            return json(orcamento({ status: 'CANCELADO' }));
+          },
+        },
+      });
+      const { user } = renderTela(fetchMock);
+
+      await abrirMenu(user, 'Cliente Teste');
+      await user.click(await screen.findByRole('menuitem', { name: 'Cancelar' }));
+      const modal = await screen.findByRole('dialog', { name: 'Cancelar orçamento #1' });
+      await user.click(within(modal).getByRole('combobox', { name: /Motivo/ }));
+      await user.click(await screen.findByRole('option', { name: 'Outro' }));
+      await user.click(within(modal).getByRole('button', { name: 'Cancelar orçamento' }));
+
+      expect(await within(modal).findByText('Observação é obrigatória.')).toBeVisible();
+      expect(enviou).toBe(false);
+      expect(MOTIVO_OUTRO_ID).toBeTruthy();
+    });
+
+    it('sem a permissão editar, não há ação de cancelar', async () => {
+      const semEditar = USUARIO_TESTE.permissoes.filter(
+        (p) => p !== 'comercial-atendimento.orcamentos.editar',
+      );
+      const fetchMock = apiFalsa({
+        usuario: { ...USUARIO_TESTE, permissoes: semEditar },
+        rotas: { [API]: () => pagina(ORCAMENTOS), ...rotaMotivosCancelamento },
+      });
+      renderTela(fetchMock);
+
+      const tr = (await screen.findByText('Cliente Teste')).closest('tr') as HTMLElement;
+      expect(within(tr).queryByRole('button', { name: 'Ações' })).toBeNull();
+    });
   });
 });

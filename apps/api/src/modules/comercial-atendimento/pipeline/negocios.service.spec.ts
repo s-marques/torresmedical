@@ -155,13 +155,18 @@ describe('NegociosService (regras)', () => {
         if (!estagio) throw new Error('404');
         return estagio;
       }),
-      buscarMotivoPerda: jest.fn(async () => ({ id: 'm' })),
+      buscarMotivoPerda: jest.fn(async () => ({ id: 'm', nome: 'Preço' })),
     } as unknown as CrmConfigService;
     const usuarios = {
       nomesPorIds: jest.fn(async () => new Map()),
       garantirAtivo: jest.fn(async () => undefined),
     };
     const vazio = { nomesPorIds: jest.fn(async () => new Map()) };
+    const cancelamentos = {
+      registrar: jest.fn().mockResolvedValue({ motivo: 'Motivo fictício' }),
+      registrarContratoCancelado: jest.fn(),
+      registrarNegocioPerdido: jest.fn(),
+    };
     const service = new NegociosService(
       { tx } as never,
       config,
@@ -169,8 +174,9 @@ describe('NegociosService (regras)', () => {
       vazio as never,
       usuarios as never,
       {} as never,
+      cancelamentos as never,
     );
-    return { service, update, tx, usuarios };
+    return { service, update, tx, usuarios, cancelamentos };
   }
 
   const estagio = (id: string, pipelineId = PIPELINE, marco: string | null = null) => ({
@@ -223,6 +229,12 @@ describe('NegociosService (regras)', () => {
       status: 'PERDIDO',
       motivoPerdaId: 'm',
     });
+
+    expect(perdido.cancelamentos.registrarNegocioPerdido).toHaveBeenCalledWith(
+      ID,
+      'Preço',
+      undefined,
+    );
 
     const jaPerdido = criar(negocio({ status: 'PERDIDO' }));
     await expect(jaPerdido.service.ganhar(ID)).rejects.toMatchObject({

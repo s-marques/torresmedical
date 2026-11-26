@@ -118,11 +118,15 @@ describe('salaBloqueioInputSchema', () => {
     ]);
   });
 
-  it('cancelar exige o motivo', () => {
-    const r = cancelarSalaBloqueioSchema.safeParse({ motivo: '  ' });
+  it('cancelar exige o motivo da lista; a observação é opcional (issue #162)', () => {
+    const r = cancelarSalaBloqueioSchema.safeParse({ motivoId: '' });
     expect(r.success ? [] : r.error.issues.map((i) => i.message)).toEqual([
       'Motivo é obrigatório.',
     ]);
+    expect(
+      cancelarSalaBloqueioSchema.parse({ motivoId: '00000000-0000-4000-8000-0000000000e1' }),
+    ).toMatchObject({ motivoId: '00000000-0000-4000-8000-0000000000e1' });
+    expect(cancelarSalaBloqueioSchema.safeParse({ motivo: 'Obra adiada' }).success).toBe(false);
   });
 });
 

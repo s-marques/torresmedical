@@ -15,6 +15,7 @@ import {
   type ListContratosSalaQuery,
   type UpdateContratoSalaInput,
 } from '@torres/shared';
+import { CancelamentosService } from '../../../common/cancelamentos/cancelamentos.service';
 import { EscopoDadosService } from '../../../common/auth/escopo-dados.service';
 import { isUuid } from '../../../common/auth/tokens';
 import { BusinessException } from '../../../common/errors/api.exception';
@@ -99,6 +100,7 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
     private readonly contasReceber: ContasReceberService,
     private readonly escopo: EscopoDadosService,
     private readonly acesso: AcessoProfissionalService,
+    private readonly cancelamentos: CancelamentosService,
   ) {}
 
   async emUso(ids: readonly string[]): Promise<ReadonlySet<string>> {
@@ -313,7 +315,7 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
 
   /** Rescisão: o contrato ativo passa a "cancelado" na data informada, com o motivo. */
   cancelar(id: string, input: CancelarContratoSalaInput): Promise<ContratoSalaDto> {
-    return this.fechar(id, 'CANCELADO', input.data, input.motivo);
+    return this.fechar(id, 'CANCELADO', input.data, input.observacao ?? null, input.motivoId);
   }
 
   /**
@@ -325,7 +327,8 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
     id: string,
     status: ContratoSalaStatus,
     data: string,
-    motivo: string | null,
+    observacao: string | null,
+    motivoId?: string,
   ): Promise<ContratoSalaDto> {
     const contrato = await this.buscar(id);
     if (contrato.status !== 'ATIVO') {
@@ -335,9 +338,25 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
         { status: 409 },
       );
     }
+    // Rescisão: o motivo da lista é obrigatório e o histórico guarda quem, quando e por quê (#162).
+    const cancelamento =
+      status === 'CANCELADO' && motivoId
+        ? await this.cancelamentos.registrar({
+            tipo: 'CONTRATO',
+            entidade: 'ContratoSala',
+            entidadeId: id,
+            motivoId,
+            observacao,
+            profissionalId: contrato.profissionalId,
+          })
+        : null;
     const alterado = await this.txHost.tx.contratoSala.update({
       where: { id },
-      data: { status, encerradoEm: paraData(data), motivoEncerramento: motivo },
+      data: {
+        status,
+        encerradoEm: paraData(data),
+        motivoEncerramento: observacao ?? cancelamento?.motivo ?? null,
+      },
       include: INCLUDE,
     });
     const cobrancas = await this.txHost.tx.contratoSalaCobranca.findMany({

@@ -31,6 +31,7 @@ import { AbaDivergencias } from './AbaDivergencias';
 import { AbasContasPagar, type IdAbaContasPagar } from './AbasContasPagar';
 import { DetalheContaPagar } from './DetalheContaPagar';
 import { ModalBaixaContaPagar } from './ModalBaixaContaPagar';
+import { ModalCancelarContaPagar } from './ModalCancelarContaPagar';
 import { ModalContaPagar } from './ModalContaPagar';
 import { ModalRecusaContaPagar } from './ModalRecusaContaPagar';
 import { SituacaoAprovacao } from './SituacaoAprovacao';
@@ -115,6 +116,7 @@ function AbaContas({ abas }: Readonly<{ abas: ReactNode }>) {
   const [detalhando, setDetalhando] = useState<ContaPagar | null>(null);
   const [editando, setEditando] = useState<ContaPagar | null>(null);
   const [baixando, setBaixando] = useState<ContaPagar | null>(null);
+  const [cancelando, setCancelando] = useState<ContaPagar | null>(null);
   const [excluindo, setExcluindo] = useState<ContaPagar | null>(null);
   const [aprovando, setAprovando] = useState<ContaPagar | null>(null);
   const [recusando, setRecusando] = useState<ContaPagar | null>(null);
@@ -135,6 +137,11 @@ function AbaContas({ abas }: Readonly<{ abas: ReactNode }>) {
       onExcluir: () => setExcluindo(conta),
       permissaoEditar: 'financeiro.contas-pagar.editar',
       permissaoExcluir: 'financeiro.contas-pagar.excluir',
+      cancelamento: {
+        onCancelar: () => setCancelando(conta),
+        // Só a conta pendente e sem pagamento; com baixa, cancele a baixa antes.
+        desabilitada: conta.status !== 'PENDENTE' || Number(conta.valorPago) > 0,
+      },
       extras: [
         {
           rotulo: t('contasPagar.aprovacao.aprovar'),
@@ -194,6 +201,9 @@ function AbaContas({ abas }: Readonly<{ abas: ReactNode }>) {
     >
       {criando && <ModalContaPagar onFechar={() => setCriando(false)} />}
       {editando && <ModalContaPagar conta={editando} onFechar={() => setEditando(null)} />}
+      {cancelando && (
+        <ModalCancelarContaPagar conta={cancelando} onFechar={() => setCancelando(null)} />
+      )}
       {baixando && <ModalBaixaContaPagar conta={baixando} onFechar={() => setBaixando(null)} />}
       {recusando && <ModalRecusaContaPagar conta={recusando} onFechar={() => setRecusando(null)} />}
       <ConfirmDialog
