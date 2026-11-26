@@ -1,6 +1,7 @@
 import type { TransactionHost } from '@nestjs-cls/transactional';
 import { Prisma } from '../../../generated/prisma/client';
 import type { AuditService } from '../../../common/audit/audit.service';
+import type { CancelamentosService } from '../../../common/cancelamentos/cancelamentos.service';
 import type { ExportService } from '../../../common/export/export.service';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import type { ContasBancariasService } from '../contas-bancarias/contas-bancarias.service';
@@ -79,6 +80,7 @@ function setup() {
     { ensureWithinLimit: jest.fn(), export: jest.fn() } as unknown as ExportService,
     audit as unknown as AuditService,
     contasBancarias as unknown as ContasBancariasService,
+    { registrar: jest.fn() } as unknown as CancelamentosService,
   );
   return { service, contaReceber, contaReceberBaixa, formaPagamento, audit, contasBancarias };
 }
