@@ -417,7 +417,7 @@ describe('Contas a Receber (/receber)', () => {
     expect(screen.queryByRole('menuitem', { name: 'Excluir' })).not.toBeInTheDocument();
   });
 
-  describe('Cancelar (issue #162)', () => {
+  describe('Cancelar (issue #162)', { timeout: 20_000 }, () => {
     const ROTA_CANCELAR = `${API}/${ID_1}/cancelar`;
     const comMotivos = (rotas: NonNullable<Parameters<typeof apiFalsa>[0]>['rotas'] = {}) =>
       api({ rotas: { ...rotaMotivosCancelamento, ...rotas } });

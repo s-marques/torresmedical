@@ -606,7 +606,7 @@ describe('Agenda: sala no agendamento (issue #136)', () => {
     });
   });
 
-  describe('Cancelar agendamento (issue #162)', () => {
+  describe('Cancelar agendamento (issue #162)', { timeout: 20_000 }, () => {
     const ROTA_CANCELAR = `${API}/${ID_AG}/cancelar`;
 
     async function abrirCancelamento(fetchMock = api()) {

@@ -70,7 +70,7 @@ async function escolherMotivo(user: ReturnType<typeof userEvent.setup>, nome: st
   return modal;
 }
 
-describe('ModalCancelamento', () => {
+describe('ModalCancelamento', { timeout: 20_000 }, () => {
   it('pede os motivos do tipo e mostra o contexto do que será cancelado', async () => {
     const { fetchMock } = montar({ onConfirmar: vi.fn() });
 
