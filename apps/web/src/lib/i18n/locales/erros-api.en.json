@@ -59,5 +59,12 @@
   "EXPORT_LIMIT_EXCEEDED": "The export exceeds the allowed limit. Refine the filters",
   "CONTA_PAGAR_NAO_APROVADA": "The payable must be approved before it is paid",
   "CONTA_PAGAR_APROVADOR_IGUAL_LANCADOR": "Whoever entered the payable cannot approve or reject it",
-  "CONTA_PAGAR_APROVACAO_INVALIDA": "Only a pending payable awaiting approval can be approved or rejected"
+  "CONTA_PAGAR_APROVACAO_INVALIDA": "Only a pending payable awaiting approval can be approved or rejected",
+  "MOTIVO_CANCELAMENTO_SISTEMA": "This reason is used by the system and cannot be changed, deactivated or deleted",
+  "MOTIVO_CANCELAMENTO_AUSENTE": "The \"Contract ended or canceled\" reason is not registered",
+  "AGENDAMENTO_NAO_CANCELAVEL": "Only a scheduled, confirmed or to-reschedule appointment can be canceled",
+  "ORCAMENTO_NAO_CANCELAVEL": "Only a pending or approved quote can be canceled",
+  "CONTA_RECEBER_NAO_PENDENTE": "Only a pending account receivable can be canceled",
+  "CONTA_PAGAR_NAO_PENDENTE": "Only a pending account payable can be canceled",
+  "CONTA_PAGAR_COM_BAIXA": "This account has a payment recorded. Cancel the payment before canceling the account"
 }

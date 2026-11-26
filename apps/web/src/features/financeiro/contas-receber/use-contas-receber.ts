@@ -1,9 +1,11 @@
 import {
   contaReceberSchema,
+  type CancelarSemReagendamentoInput,
   type CreateContaReceberInput,
   type UpdateContaReceberInput,
 } from '@torres/shared';
 import { apiFetch } from '@/lib/api/client';
+import { i18next } from '@/lib/i18n';
 import { useMutationContaFinanceira } from '../contas-financeiras/use-mutation-conta';
 
 export const URL_CONTAS_RECEBER = '/api/financeiro/contas-receber';
@@ -38,5 +40,14 @@ export function useExcluirContaReceber() {
     {
       sucesso: 'Conta a receber excluída.',
     },
+  );
+}
+
+/** Cancela a conta pendente com o motivo da lista (issue #162). */
+export function useCancelarContaReceber(id: string) {
+  return useMutationContaFinanceira(
+    URL_CONTAS_RECEBER,
+    (dados: CancelarSemReagendamentoInput) => chamar(`/${id}/cancelar`, 'POST', dados),
+    { formulario: true, sucesso: i18next.t('cancelamento.contaReceber.sucesso') },
   );
 }

@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Patch, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   agendaProfissionaisSchema,
   agendamentoListaSchema,
   agendamentoSchema,
+  cancelarComMotivoSchema,
   createAgendamentoSchema,
   listAgendamentosQuerySchema,
   salaSugeridaQuerySchema,
@@ -11,6 +12,7 @@ import {
   updateAgendamentoSchema,
   type Agendamento,
   type AgendamentoLista,
+  type CancelarComMotivoInput,
   type CreateAgendamentoInput,
   type ListAgendamentosQuery,
   type SalaSugerida,
@@ -106,5 +108,20 @@ export class AgendaController {
     @Body(new ZodValidationPipe(updateAgendamentoSchema)) body: UpdateAgendamentoInput,
   ): Promise<Agendamento> {
     return this.agenda.update(id, body);
+  }
+
+  @Post(':id/cancelar')
+  @RequirePermission('comercial-atendimento.agenda.editar')
+  @HttpCode(200)
+  @Audit({ entity: ENTITY, action: 'UPDATE' })
+  @ApiOperation({ summary: 'Cancela o agendamento, com o motivo da lista e se reagendou (#162)' })
+  @ApiZodBody(cancelarComMotivoSchema)
+  @ApiZodResponse(200, agendamentoSchema)
+  @ApiErrorResponses(400, 401, 403, 404, 409)
+  cancelar(
+    @IdParam() id: string,
+    @Body(new ZodValidationPipe(cancelarComMotivoSchema)) body: CancelarComMotivoInput,
+  ): Promise<Agendamento> {
+    return this.agenda.cancelar(id, body);
   }
 }

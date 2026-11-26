@@ -124,6 +124,7 @@ const DEFINICAO = {
       baseConhecimento: ['Base de Conhecimento', '/base-conhecimento'],
       bypassAgente: ['Bypass Agente', '/bypass-agente'],
       tiposAgendamento: ['Tipos de Agendamento', '/config/tipos-agendamento'],
+      motivosCancelamento: ['Motivos de Cancelamento', '/config/motivos-cancelamento'],
       respostasRapidas: ['Respostas Rápidas', '/respostas-rapidas'],
       configuracoes: ['Configurações', '/settings'],
       minhaEmpresa: ['Minha Empresa', '/settings/empresa'],
@@ -179,6 +180,8 @@ export const TELAS_FORA_DO_INVENTARIO: readonly TelaId[] = [
   'gestao-profissionais.onboarding',
   /** Consulta da trilha de auditoria (issue #155, R §15 e §41). */
   'configuracoes-gestao.auditoria',
+  /** Cadastro dos motivos de cancelamento por tipo (issue #162, R §35). */
+  'configuracoes-gestao.motivos-cancelamento',
 ];
 
 /** Ação de permissão que libera a tela no menu. */

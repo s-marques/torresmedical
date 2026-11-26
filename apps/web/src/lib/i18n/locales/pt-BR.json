@@ -850,8 +850,6 @@
     "cancelar": {
       "titulo": "Cancelar bloqueio",
       "descricao": "{{tipo}} da {{sala}} em {{periodo}}. O registro não é excluído: fica como cancelado, com quem, quando e o motivo.",
-      "motivo": "Motivo do cancelamento",
-      "placeholder": "Por que o bloqueio foi cancelado?",
       "voltar": "Voltar",
       "confirmar": "Cancelar bloqueio"
     },
@@ -2172,5 +2170,100 @@
     "todosProfissionais": "Todos os profissionais do meu acesso",
     "incluirAnexos": "Incluir exames e anexos (gera um ZIP)",
     "exportar": "Exportar"
+  },
+  "cancelamento": {
+    "motivo": "Motivo",
+    "selecioneMotivo": "Selecione o motivo",
+    "observacao": "Observação",
+    "observacaoPlaceholder": "Detalhes do cancelamento (obrigatório em \"Outro\")",
+    "reagendou": "Reagendou?",
+    "naoReagendou": "Não reagendou",
+    "reagendouAjuda": "Escolha o novo agendamento do paciente, se houver.",
+    "voltar": "Voltar",
+    "agenda": {
+      "acao": "Cancelar agendamento",
+      "titulo": "Cancelar agendamento #{{numero}}",
+      "descricao": "{{paciente}} com {{profissional}} em {{data}} às {{hora}}. O agendamento não é excluído: fica cancelado, com quem, quando e o motivo.",
+      "confirmar": "Cancelar agendamento",
+      "sucesso": "Agendamento cancelado.",
+      "novoAgendamento": "#{{numero}} - {{data}} às {{hora}}"
+    },
+    "confirmacao": {
+      "descricao": "{{paciente}} com {{profissional}} em {{quando}}. O agendamento não é excluído: fica cancelado, com quem, quando e o motivo, e o horário é liberado."
+    },
+    "orcamento": {
+      "acao": "Cancelar",
+      "titulo": "Cancelar orçamento #{{numero}}",
+      "descricao": "O orçamento não é excluído: fica cancelado, com quem, quando e o motivo.",
+      "confirmar": "Cancelar orçamento",
+      "sucesso": "Orçamento cancelado."
+    },
+    "contaReceber": {
+      "acao": "Cancelar",
+      "titulo": "Cancelar conta a receber",
+      "descricao": "{{descricao}}. A conta não é excluída: fica cancelada, com quem, quando e o motivo.",
+      "confirmar": "Cancelar conta",
+      "sucesso": "Conta a receber cancelada."
+    },
+    "contaPagar": {
+      "acao": "Cancelar",
+      "titulo": "Cancelar conta a pagar",
+      "descricao": "{{descricao}}. A conta não é excluída: fica cancelada, com quem, quando e o motivo.",
+      "confirmar": "Cancelar conta",
+      "sucesso": "Conta a pagar cancelada."
+    },
+    "contrato": {
+      "titulo": "Cancelar contrato (rescisão)",
+      "descricao": "Contrato: {{sala}} - {{locatario}}",
+      "data": "Data de cancelamento",
+      "aviso": "Parcelas pendentes após a data de cancelamento serão canceladas automaticamente.",
+      "confirmar": "Cancelar contrato"
+    },
+    "tipos": {
+      "CONSULTA": "Consulta",
+      "CONTRATO": "Contrato",
+      "COBRANCA": "Cobrança",
+      "PERIODO": "Período",
+      "PROPOSTA": "Proposta"
+    }
+  },
+  "motivosCancelamento": {
+    "titulo": "Motivos de Cancelamento",
+    "descricao": "Listas de motivos usadas ao cancelar consultas, contratos, cobranças, períodos e propostas.",
+    "novo": "Novo motivo",
+    "buscar": "Buscar motivo...",
+    "vazio": "Nenhum motivo cadastrado.",
+    "colunas": {
+      "tipo": "Tipo",
+      "nome": "Motivo",
+      "exigeTexto": "Exige observação",
+      "ativo": "Situação"
+    },
+    "sistema": "Sistema",
+    "filtroTipo": "Tipo",
+    "todosTipos": "Todos os tipos",
+    "acoes": {
+      "editar": "Editar",
+      "excluir": "Excluir"
+    },
+    "excluir": {
+      "titulo": "Excluir motivo",
+      "descricao": "Deseja excluir o motivo \"{{nome}}\"? Os cancelamentos já registrados com ele continuam no histórico.",
+      "confirmar": "Excluir"
+    },
+    "modal": {
+      "tituloNovo": "Novo motivo de cancelamento",
+      "tituloEditar": "Editar motivo de cancelamento",
+      "tipo": "Tipo de cancelamento",
+      "nome": "Nome do motivo",
+      "exigeTexto": "Exige observação ao escolher este motivo",
+      "ativo": "Ativo",
+      "sistemaAviso": "Motivo usado pelo sistema: não pode ser renomeado, desativado nem excluído."
+    },
+    "sucesso": {
+      "criado": "Motivo criado.",
+      "atualizado": "Motivo atualizado.",
+      "excluido": "Motivo excluído."
+    }
   }
 }

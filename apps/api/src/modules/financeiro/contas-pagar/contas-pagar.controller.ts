@@ -15,6 +15,7 @@ import {
   baixarContaPagarSchema,
   recusarContaPagarSchema,
   type RecusarContaPagarInput,
+  cancelarSemReagendamentoSchema,
   contaPagarBaixaSchema,
   contaPagarDivergenciaPageSchema,
   contaPagarPageSchema,
@@ -28,6 +29,7 @@ import {
   verificacaoDuplicidadeContaPagarSchema,
   verificarDuplicidadeContaPagarSchema,
   type BaixarContaPagarInput,
+  type CancelarSemReagendamentoInput,
   type ContaPagar,
   type ContaPagarBaixa,
   type ContaPagarDivergencia,
@@ -252,6 +254,22 @@ export class ContasPagarController {
   @ApiErrorResponses(400, 401, 403, 404, 422)
   cancelarBaixa(@IdParam() id: string): Promise<ContaPagar> {
     return this.contasPagar.cancelarBaixa(id);
+  }
+
+  @Post(':id/cancelar')
+  @RequirePermission('financeiro.contas-pagar.editar')
+  @HttpCode(200)
+  @Audit({ entity: ENTITY, action: 'UPDATE' })
+  @ApiOperation({ summary: 'Cancela a conta pendente e sem baixa, com o motivo da lista (#162)' })
+  @ApiZodBody(cancelarSemReagendamentoSchema)
+  @ApiZodResponse(200, contaPagarSchema)
+  @ApiErrorResponses(400, 401, 403, 404, 409)
+  cancelar(
+    @IdParam() id: string,
+    @Body(new ZodValidationPipe(cancelarSemReagendamentoSchema))
+    body: CancelarSemReagendamentoInput,
+  ): Promise<ContaPagar> {
+    return this.contasPagar.cancelar(id, body);
   }
 
   @Delete(':id')

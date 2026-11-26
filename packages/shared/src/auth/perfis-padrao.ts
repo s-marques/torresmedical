@@ -280,6 +280,8 @@ export const PERFIS_PADRAO: readonly PerfilPadrao[] = [
 export const TELAS_SOMENTE_ADMINISTRADOR: readonly TelaId[] = [
   /** Consulta da trilha de auditoria (issue #155). */
   'configuracoes-gestao.auditoria',
+  /** Cadastro dos motivos de cancelamento (issue #162). */
+  'configuracoes-gestao.motivos-cancelamento',
 ];
 
 /** Perfis que nunca recebem permissão clínica (R §14). */

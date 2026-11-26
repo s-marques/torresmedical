@@ -181,6 +181,9 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   'configuracoes-gestao.tipos-agendamento': lazy(
     () => import('@/features/configuracoes-gestao/tipos-agendamento/TiposAgendamentoPage'),
   ),
+  'configuracoes-gestao.motivos-cancelamento': lazy(
+    () => import('@/features/configuracoes-gestao/motivos-cancelamento/MotivosCancelamentoPage'),
+  ),
   'configuracoes-gestao.agentes-ia': lazy(
     () => import('@/features/configuracoes-gestao/agentes-ia/AgentesIaPage'),
   ),

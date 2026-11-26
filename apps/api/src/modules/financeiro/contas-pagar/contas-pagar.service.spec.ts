@@ -1,3 +1,4 @@
+import type { CancelamentosService } from '../../../common/cancelamentos/cancelamentos.service';
 import type { TransactionHost } from '@nestjs-cls/transactional';
 import type { RequestContextService } from '../../../common/context/request-context.service';
 import type { UsuariosService } from '../../configuracoes-gestao/usuarios/usuarios.service';
@@ -62,6 +63,7 @@ function setup() {
     findMany: jest.fn().mockResolvedValue([]),
     findFirst: jest.fn().mockResolvedValue(null),
     update: jest.fn().mockResolvedValue({}),
+    count: jest.fn().mockResolvedValue(0),
   };
   const formaPagamento = { findFirst: jest.fn().mockResolvedValue({ id: 'x' }) };
   const contaBancaria = { findFirst: jest.fn().mockResolvedValue({ id: 'x' }) };
@@ -87,6 +89,11 @@ function setup() {
     nomesPorIds: jest.fn().mockResolvedValue(new Map([[APROVADOR_ID, 'Gerente Teste']])),
   };
   const contexto = { getUserId: jest.fn().mockReturnValue(APROVADOR_ID) };
+  const cancelamentos = {
+    registrar: jest.fn().mockResolvedValue({ motivo: 'Motivo fictício' }),
+    registrarContratoCancelado: jest.fn(),
+    registrarNegocioPerdido: jest.fn(),
+  };
   const service = new ContasPagarService(
     txHost,
     exportService as unknown as ExportService,
@@ -96,6 +103,7 @@ function setup() {
     duplicidade as unknown as ContasPagarDuplicidadeService,
     usuarios as unknown as UsuariosService,
     contexto as unknown as RequestContextService,
+    cancelamentos as unknown as CancelamentosService,
   );
   return {
     usuarios,
@@ -108,6 +116,7 @@ function setup() {
     funcionarios,
     centrosCusto,
     duplicidade,
+    cancelamentos,
   };
 }
 
@@ -489,6 +498,61 @@ describe('ContasPagarService: centro de custo, anexo e duplicidade (#163)', () =
       ID,
     );
     expect(duplicidade.registrarConfirmacao).toHaveBeenCalledWith(ID, []);
+  });
+
+  describe('cancelar (issue #162)', () => {
+    const MOTIVO_ID = '5b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
+    const ENTRADA = { motivoId: MOTIVO_ID, observacao: undefined };
+
+    it('cancela a conta pendente sem baixa e registra o motivo (cobrança)', async () => {
+      const { service, contaPagar, cancelamentos } = setup();
+      contaPagar.update.mockResolvedValue({ ...CONTA, status: 'CANCELADO' });
+
+      const cancelada = await service.cancelar(ID, { ...ENTRADA, observacao: 'Duplicada' });
+
+      expect(cancelamentos.registrar).toHaveBeenCalledWith({
+        tipo: 'COBRANCA',
+        entidade: 'ContaPagar',
+        entidadeId: ID,
+        motivoId: MOTIVO_ID,
+        observacao: 'Duplicada',
+      });
+      expect(contaPagar.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: ID }, data: { status: 'CANCELADO' } }),
+      );
+      expect(cancelada.status).toBe('CANCELADO');
+    });
+
+    it.each(['PAGO', 'CANCELADO'] as const)(
+      'conta %s não pode ser cancelada (409)',
+      async (status) => {
+        const { service, contaPagar, cancelamentos } = setup();
+        contaPagar.findFirst.mockResolvedValue({ ...CONTA, status });
+
+        await expect(service.cancelar(ID, ENTRADA)).rejects.toMatchObject({
+          code: 'CONTA_PAGAR_NAO_PENDENTE',
+        });
+        expect(cancelamentos.registrar).not.toHaveBeenCalled();
+        expect(contaPagar.update).not.toHaveBeenCalled();
+      },
+    );
+
+    it('conta com baixa parcial: cancele a baixa antes (409)', async () => {
+      const { service, contaPagar, contaPagarBaixa, cancelamentos } = setup();
+      contaPagarBaixa.count.mockResolvedValue(1);
+
+      await expect(service.cancelar(ID, ENTRADA)).rejects.toMatchObject({
+        code: 'CONTA_PAGAR_COM_BAIXA',
+      });
+      expect(cancelamentos.registrar).not.toHaveBeenCalled();
+      expect(contaPagar.update).not.toHaveBeenCalled();
+    });
+
+    it('404 quando a conta não existe', async () => {
+      const { service, contaPagar } = setup();
+      contaPagar.findFirst.mockResolvedValue(null);
+      await expect(service.cancelar(ID, ENTRADA)).rejects.toMatchObject({ status: 404 });
+    });
   });
 });
 

@@ -16,10 +16,12 @@ import {
   type ResumoReceitaProfissionaisQuery,
   type UpdateContaReceberInput,
   type UpdateReceitaProfissionalInput,
+  type CancelarSemReagendamentoInput,
 } from '@torres/shared';
 import { Prisma } from '../../../generated/prisma/client';
 import { AuditService } from '../../../common/audit/audit.service';
 import type { FiltroProfissional } from '../../../common/auth/escopo-dados.service';
+import { CancelamentosService } from '../../../common/cancelamentos/cancelamentos.service';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ExportService, selectColumns } from '../../../common/export/export.service';
 import type { ExportFile } from '../../../common/export/export.types';
@@ -101,6 +103,7 @@ export class ContasReceberService {
     private readonly exportService: ExportService,
     private readonly audit: AuditService,
     private readonly contasBancarias: ContasBancariasService,
+    private readonly cancelamentos: CancelamentosService,
   ) {}
 
   async list(query: ListContasReceberQuery): Promise<Page<ContaReceber>> {
@@ -129,6 +132,29 @@ export class ContasReceberService {
       include: INCLUDE,
     });
     return toContaReceber(conta);
+  }
+
+  /**
+   * Cancela uma conta pendente (issue #162): o motivo da lista é obrigatório e o histórico guarda
+   * quem, quando e por quê. Conta já recebida não se cancela: estorne o recebimento antes.
+   */
+  async cancelar(id: string, input: CancelarSemReagendamentoInput): Promise<ContaReceber> {
+    const atual = await this.findById(id);
+    if (atual.status !== 'PENDENTE') {
+      throw new BusinessException(
+        'CONTA_RECEBER_NAO_PENDENTE',
+        'Só é possível cancelar uma conta a receber pendente.',
+        { status: 409 },
+      );
+    }
+    await this.cancelamentos.registrar({
+      tipo: 'COBRANCA',
+      entidade: 'ContaReceber',
+      entidadeId: id,
+      motivoId: input.motivoId,
+      observacao: input.observacao,
+    });
+    return this.atualizar(id, { status: 'CANCELADO' });
   }
 
   async update(id: string, input: UpdateContaReceberInput): Promise<ContaReceber> {
@@ -320,6 +346,7 @@ export class ContasReceberService {
     for (const conta of contas) {
       const antes = toContaReceber(conta);
       const depois = await this.atualizar(conta.id, { status: 'CANCELADO' });
+      await this.cancelamentos.registrarContratoCancelado('ContaReceber', conta.id);
       await this.audit.record({
         action: 'UPDATE',
         entity: 'ContaReceber',

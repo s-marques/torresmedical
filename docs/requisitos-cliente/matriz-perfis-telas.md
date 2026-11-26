@@ -140,6 +140,7 @@
 | Base de Conhecimento | T | V | — | — | — | — |
 | Bypass Agente | T | V | — | — | — | — |
 | Tipos de Agendamento | T | E | V | — | — | — |
+| Motivos de Cancelamento | T | — | — | — | — | — |
 | Respostas Rápidas | T | E | V | — | — | E |
 | Configurações | T | V | — | — | — | — |
 | Minha Empresa | T | E | — | — | — | — |

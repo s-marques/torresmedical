@@ -4207,3 +4207,69 @@ model ExportacaoLote {
   @@index([entidade, status])
   @@map("exportacoes_lote")
 }
+
+/// Tipo de cancelamento (issue #162): define a lista de motivos e o relatório.
+enum TipoCancelamento {
+  CONSULTA
+  CONTRATO
+  COBRANCA
+  PERIODO
+  PROPOSTA
+
+  @@map("tipo_cancelamento")
+}
+
+/// Dono: configuracoes-gestao. Lista padronizada de motivos de cancelamento por tipo (issue #162,
+/// R §35). `sistema`: motivo que o código usa ("Outro", "Contrato cancelado"); não sai da lista.
+/// Exclusão lógica: cancelamentos antigos continuam apontando para o motivo.
+model MotivoCancelamento {
+  id         String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipo       TipoCancelamento
+  nome       String
+  /// Gerado a partir do nome (único por tipo entre os motivos não excluídos).
+  codigo     String
+  /// O motivo exige a observação ("Outro").
+  exigeTexto Boolean          @default(false) @map("exige_texto")
+  sistema    Boolean          @default(false)
+  ordem      Int
+  ativo      Boolean          @default(true)
+  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt  DateTime?        @map("deleted_at") @db.Timestamptz(3)
+
+  cancelamentos Cancelamento[]
+
+  @@index([tipo, ordem])
+  @@map("motivos_cancelamento")
+}
+
+/// Dono: configuracoes-gestao. Histórico de cancelamentos (issue #162, R §34): quem, quando, por quê
+/// e se reagendou. Só recebe inserções: nada é apagado. A entidade cancelada (`entidade` + `entidade_id`)
+/// é de outro módulo, então não há FK; usuário e profissional também não. `motivo_nome` guarda o
+/// texto do motivo na data (negócio perdido usa `MotivoPerda`, sem `motivo_id`).
+model Cancelamento {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipo            TipoCancelamento
+  /// Nome da entidade (`ENTIDADES_CANCELAMENTO` em packages/shared).
+  entidade        String
+  entidadeId      String           @map("entidade_id") @db.Uuid
+  motivoId        String?          @map("motivo_id") @db.Uuid
+  motivoNome      String           @map("motivo_nome")
+  observacao      String?
+  /// Usuário que cancelou (configuracoes-gestao), sem FK; nulo quando o sistema cancelou.
+  canceladoPorId  String?          @map("cancelado_por_id") @db.Uuid
+  canceladoEm     DateTime         @default(now()) @map("cancelado_em") @db.Timestamptz(3)
+  /// Profissional da consulta, do contrato ou do período, quando há (sem FK).
+  profissionalId  String?          @map("profissional_id") @db.Uuid
+  /// Novo agendamento criado no lugar do cancelado (só na consulta), sem FK.
+  reagendouParaId String?          @map("reagendou_para_id") @db.Uuid
+
+  motivo MotivoCancelamento? @relation(fields: [motivoId], references: [id], onDelete: Restrict)
+
+  @@index([tipo, canceladoEm])
+  @@index([profissionalId, canceladoEm])
+  @@index([entidade, entidadeId])
+  @@index([motivoId])
+  @@index([canceladoEm])
+  @@map("cancelamentos")
+}

@@ -2,6 +2,7 @@ import { PREFERENCIAS_PADRAO, type ContratoSala, type Sala } from '@torres/share
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MOTIVO_ID, rotaMotivosCancelamento } from '@/test/motivos-cancelamento';
 import {
   apiFalsa,
   chamadasPara,
@@ -137,6 +138,7 @@ function api(rotas: Parameters<typeof apiFalsa>[0] = {}) {
       '/api/lookups/pacientes': () => lookup([PACIENTE_ID, 'Bruno Cliente Teste']),
       '/api/lookups/formas-pagamento': () =>
         lookup(['00000000-0000-4000-8000-0000000000c1', 'PIX']),
+      ...rotaMotivosCancelamento,
       ...rotas.rotas,
     },
   });
@@ -788,7 +790,7 @@ describe('Gestão de Salas: encerrar e cancelar contrato', () => {
     expect(corpo).toEqual({ data: '2026-10-30', observacao: 'Fim do prazo' });
   });
 
-  it('Cancelar: abre a rescisão, Voltar não envia e confirmar grava a data e o motivo', async () => {
+  it('Cancelar: abre a rescisão, Voltar não envia e confirmar grava a data e o motivo da lista', async () => {
     let corpo: Record<string, unknown> | null = null;
     const { user } = await renderAba(
       apiFechar({
@@ -802,9 +804,9 @@ describe('Gestão de Salas: encerrar e cancelar contrato', () => {
       await screen.findByRole('button', { name: 'Cancelar contrato de Dra. Ana Teste' }),
     );
 
-    const modal = await screen.findByRole('dialog', { name: 'Cancelar Contrato (Rescisão)' });
-    expect(within(modal).getByLabelText(/Data de Cancelamento/)).toHaveValue(hoje());
-    expect(within(modal).getByPlaceholderText('Motivo do cancelamento/rescisão...')).toBeVisible();
+    const modal = await screen.findByRole('dialog', { name: 'Cancelar contrato (rescisão)' });
+    expect(within(modal).getByLabelText(/Data de cancelamento/)).toHaveValue(hoje());
+    expect(within(modal).getByRole('combobox', { name: /Motivo/ })).toBeVisible();
     expect(
       within(modal).getByText(
         'Parcelas pendentes após a data de cancelamento serão canceladas automaticamente.',
@@ -816,12 +818,19 @@ describe('Gestão de Salas: encerrar e cancelar contrato', () => {
     expect(corpo).toBeNull();
 
     await user.click(screen.getByRole('button', { name: 'Cancelar contrato de Dra. Ana Teste' }));
-    const reaberto = await screen.findByRole('dialog', { name: 'Cancelar Contrato (Rescisão)' });
-    await user.type(within(reaberto).getByLabelText('Motivo da Rescisão'), 'Rescisão amigável');
-    await user.click(within(reaberto).getByRole('button', { name: 'Cancelar Contrato' }));
+    const reaberto = await screen.findByRole('dialog', { name: 'Cancelar contrato (rescisão)' });
+    // Sem motivo da lista, não envia.
+    await user.click(within(reaberto).getByRole('button', { name: 'Cancelar contrato' }));
+    expect(await within(reaberto).findByText('Motivo é obrigatório.')).toBeVisible();
+    expect(corpo).toBeNull();
+
+    await user.click(within(reaberto).getByRole('combobox', { name: /Motivo/ }));
+    await user.click(await screen.findByRole('option', { name: 'Paciente desistiu' }));
+    await user.type(within(reaberto).getByLabelText('Observação'), 'Rescisão amigável');
+    await user.click(within(reaberto).getByRole('button', { name: 'Cancelar contrato' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(corpo).toEqual({ data: hoje(), motivo: 'Rescisão amigável' });
+    expect(corpo).toEqual({ data: hoje(), motivoId: MOTIVO_ID, observacao: 'Rescisão amigável' });
   });
 
   it('o erro 409 da API aparece sem fechar o modal', async () => {

@@ -1,3 +1,4 @@
+import type { CancelamentosService } from '../../../common/cancelamentos/cancelamentos.service';
 import type { TransactionHost } from '@nestjs-cls/transactional';
 import { Prisma } from '../../../generated/prisma/client';
 import type { AuditService } from '../../../common/audit/audit.service';
@@ -56,13 +57,19 @@ function setup() {
   };
   const audit = { record: jest.fn() };
   const contasBancarias = { garantirExiste: jest.fn().mockResolvedValue(undefined) };
+  const cancelamentos = {
+    registrar: jest.fn().mockResolvedValue({ motivo: 'Motivo fictício' }),
+    registrarContratoCancelado: jest.fn(),
+    registrarNegocioPerdido: jest.fn(),
+  };
   const service = new ContasReceberService(
     txHost,
     exportService as unknown as ExportService,
     audit as unknown as AuditService,
     contasBancarias as unknown as ContasBancariasService,
+    cancelamentos as unknown as CancelamentosService,
   );
-  return { service, contaReceber, exportService, audit, contasBancarias };
+  return { service, contaReceber, exportService, audit, contasBancarias, cancelamentos };
 }
 
 const ENTRADA = {
@@ -556,5 +563,55 @@ describe('ContasReceberService: Receita Profissionais', () => {
     contaReceber.update.mockResolvedValue(RECEITA);
     await service.removerReceita(ID);
     expect(contaReceber.update.mock.calls[0][0].data.deletedAt).toBeInstanceOf(Date);
+  });
+
+  describe('cancelar (issue #162)', () => {
+    const MOTIVO_ID = '5b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
+    const ENTRADA = { motivoId: MOTIVO_ID, observacao: undefined };
+
+    it('cancela a conta pendente e registra o motivo (cobrança)', async () => {
+      const { service, contaReceber, cancelamentos } = setup();
+      contaReceber.update.mockResolvedValue({ ...CONTA, status: 'CANCELADO' });
+
+      const cancelada = await service.cancelar(ID, ENTRADA);
+
+      expect(cancelamentos.registrar).toHaveBeenCalledWith({
+        tipo: 'COBRANCA',
+        entidade: 'ContaReceber',
+        entidadeId: ID,
+        motivoId: MOTIVO_ID,
+        observacao: undefined,
+      });
+      expect(contaReceber.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: ID }, data: { status: 'CANCELADO' } }),
+      );
+      expect(cancelada.status).toBe('CANCELADO');
+    });
+
+    it.each(['RECEBIDO', 'CANCELADO'] as const)(
+      'conta %s não pode ser cancelada (409)',
+      async (status) => {
+        const { service, contaReceber, cancelamentos } = setup();
+        contaReceber.findFirst.mockResolvedValue({ ...CONTA, status });
+
+        await expect(service.cancelar(ID, ENTRADA)).rejects.toMatchObject({
+          code: 'CONTA_RECEBER_NAO_PENDENTE',
+        });
+        expect(cancelamentos.registrar).not.toHaveBeenCalled();
+        expect(contaReceber.update).not.toHaveBeenCalled();
+      },
+    );
+
+    it('cancelamento em cascata do contrato registra o motivo de sistema em cada parcela', async () => {
+      const { service, contaReceber, audit, cancelamentos } = setup();
+      contaReceber.findMany.mockResolvedValue([CONTA]);
+      contaReceber.update.mockResolvedValue({ ...CONTA, status: 'CANCELADO' });
+
+      const total = await service.cancelarPendentesComVencimentoApos([ID], '2026-10-01');
+
+      expect(total).toBe(1);
+      expect(cancelamentos.registrarContratoCancelado).toHaveBeenCalledWith('ContaReceber', ID);
+      expect(audit.record).toHaveBeenCalledTimes(1);
+    });
   });
 });

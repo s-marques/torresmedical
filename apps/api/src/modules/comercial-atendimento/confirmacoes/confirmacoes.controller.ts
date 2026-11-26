@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
 import {
+  cancelarSemReagendamentoSchema,
   confirmacaoConfigInputSchema,
   confirmacaoConfigSchema,
   confirmacaoHistoricoPageSchema,
@@ -25,6 +26,7 @@ import {
   listHistoricoConfirmacoesQuerySchema,
   resumoConfirmacoesQuerySchema,
   resumoConfirmacoesSchema,
+  type CancelarSemReagendamentoInput,
   type Confirmacao,
   type ConfirmacaoConfig,
   type ConfirmacaoConfigInput,
@@ -219,17 +221,25 @@ export class ConfirmacoesController {
   @ApiZodResponse(200, confirmacaoSchema)
   @ApiErrorResponses(400, 401, 403, 404, 422)
   confirmar(@IdParam() id: string): Promise<Confirmacao> {
-    return this.confirmacoes.responder(id, 'CONFIRMAR');
+    return this.confirmacoes.confirmar(id);
   }
 
   @Post(':id/cancelar')
   @RequirePermission(`${PERMISSAO}.editar`)
   @HttpCode(200)
   @Audit({ entity: 'Agendamento', action: 'UPDATE' })
-  @ApiOperation({ summary: 'Cancelar: o agendamento passa para Cancelado e libera o horário' })
+  @ApiOperation({
+    summary:
+      'Cancelar: o agendamento passa para Cancelado e libera o horário, com o motivo da lista (#162)',
+  })
+  @ApiZodBody(cancelarSemReagendamentoSchema)
   @ApiZodResponse(200, confirmacaoSchema)
   @ApiErrorResponses(400, 401, 403, 404, 422)
-  cancelar(@IdParam() id: string): Promise<Confirmacao> {
-    return this.confirmacoes.responder(id, 'CANCELAR');
+  cancelar(
+    @IdParam() id: string,
+    @Body(new ZodValidationPipe(cancelarSemReagendamentoSchema))
+    body: CancelarSemReagendamentoInput,
+  ): Promise<Confirmacao> {
+    return this.confirmacoes.cancelar(id, body);
   }
 }

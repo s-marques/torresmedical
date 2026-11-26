@@ -7,6 +7,7 @@ import { comUsuario, criarUsuarioTeste, SENHA_TESTE, type UsuarioTeste } from '.
 import { createE2eApp } from '../utils/create-e2e-app';
 import { truncateAll } from '../utils/database';
 import { expectAudit } from '../utils/expect-audit';
+import { criarMotivo } from '../utils/motivos-cancelamento';
 
 const AUTH = '/api/auth';
 const POLITICA = '/api/configuracoes-gestao/politica-seguranca';
@@ -396,10 +397,11 @@ describe('LGPD e segurança (e2e, issue #156)', () => {
       });
       const c = await contrato();
       const op = await operador();
+      const motivo = await criarMotivo(prisma, 'CONTRATO', { nome: 'Valor' });
 
       await comUsuario(app, op)
         .post(`/api/gestao-profissionais/contratos-sala/${c.id}/cancelar`)
-        .send({ data: '2026-11-01', motivo: 'Rescisão' })
+        .send({ data: '2026-11-01', motivoId: motivo.id })
         .expect(200);
 
       expect(profissional.id).toBeDefined();

@@ -297,6 +297,16 @@ describe('Pipeline / CRM (e2e)', () => {
         .send({ motivoPerdaId: motivo.id })
         .expect(200);
       expect(res.body).toMatchObject({ status: 'PERDIDO', motivoPerda: 'Preço' });
+      // Histórico de cancelamentos (issue #162): a perda entra como proposta, com o nome do motivo.
+      const historico = await prisma.cancelamento.findMany({ where: { entidadeId: id } });
+      expect(historico).toHaveLength(1);
+      expect(historico[0]).toMatchObject({
+        tipo: 'PROPOSTA',
+        entidade: 'Negocio',
+        motivoId: null,
+        motivoNome: 'Preço',
+        canceladoPorId: usuario.id,
+      });
       await expectAudit(prisma, {
         action: 'UPDATE',
         entity: 'Negocio',

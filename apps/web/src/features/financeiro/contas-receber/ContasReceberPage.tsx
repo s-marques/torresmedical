@@ -16,6 +16,7 @@ import {
 } from '../contas-financeiras/grid';
 import { PaginaContaFinanceira } from '../contas-financeiras/PaginaContaFinanceira';
 import { DetalheContaReceber } from './DetalheContaReceber';
+import { ModalCancelarContaReceber } from './ModalCancelarContaReceber';
 import { ModalContaReceber } from './ModalContaReceber';
 import { URL_CONTAS_RECEBER, useExcluirContaReceber } from './use-contas-receber';
 
@@ -47,6 +48,7 @@ export default function ContasReceberPage() {
   const [criando, setCriando] = useState(false);
   const [detalhando, setDetalhando] = useState<ContaReceber | null>(null);
   const [editando, setEditando] = useState<ContaReceber | null>(null);
+  const [cancelando, setCancelando] = useState<ContaReceber | null>(null);
   const [excluindo, setExcluindo] = useState<ContaReceber | null>(null);
   const excluir = useExcluirContaReceber();
 
@@ -71,6 +73,10 @@ export default function ContasReceberPage() {
             onExcluir: () => setExcluindo(conta),
             permissaoEditar: 'financeiro.contas-receber.editar',
             permissaoExcluir: 'financeiro.contas-receber.excluir',
+            cancelamento: {
+              onCancelar: () => setCancelando(conta),
+              desabilitada: conta.status !== 'PENDENTE',
+            },
           }),
         aoClicarLinha: setDetalhando,
         mensagemVazio: 'Nenhuma conta a receber encontrada.',
@@ -82,6 +88,9 @@ export default function ContasReceberPage() {
     >
       {criando && <ModalContaReceber onFechar={() => setCriando(false)} />}
       {editando && <ModalContaReceber conta={editando} onFechar={() => setEditando(null)} />}
+      {cancelando && (
+        <ModalCancelarContaReceber conta={cancelando} onFechar={() => setCancelando(null)} />
+      )}
       {detalhando && (
         <DetalheContaReceber
           conta={detalhando}

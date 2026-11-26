@@ -15,10 +15,15 @@ import {
   type OrcamentoExportColumn,
   type OrcamentoOrigem,
   type SoroterapiaPacote,
+  type CancelarSemReagendamentoInput,
 } from '@torres/shared';
 import type { Prisma } from '../../../generated/prisma/client';
+import { CancelamentosService } from '../../../common/cancelamentos/cancelamentos.service';
+import { BusinessException } from '../../../common/errors/api.exception';
+import { ErrorCode } from '../../../common/errors/error-codes';
 import { ExportService, selectColumns } from '../../../common/export/export.service';
 import type { ExportColumn, ExportFile } from '../../../common/export/export.types';
+import { isUuid } from '../../../common/auth/tokens';
 import { paginate, type Page } from '../../../common/pagination/paginate';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { FormasPagamentoService } from '../../financeiro/formas-pagamento/formas-pagamento.service';
@@ -106,6 +111,7 @@ export class OrcamentosService {
     private readonly servicos: ServicosProfissionaisService,
     private readonly protocolos: ProtocolosService,
     private readonly protocolosMae: ProtocolosMaeService,
+    private readonly cancelamentos: CancelamentosService,
   ) {}
 
   async list(query: ListOrcamentosQuery): Promise<Page<Orcamento>> {
@@ -191,6 +197,42 @@ export class OrcamentosService {
       include: INCLUDE,
     });
     return toOrcamento(criado);
+  }
+
+  /**
+   * Cancela a proposta (issue #162): só Pendente ou Aprovado. O motivo da lista é obrigatório e o
+   * histórico guarda quem, quando e por quê.
+   */
+  async cancelar(id: string, input: CancelarSemReagendamentoInput): Promise<Orcamento> {
+    const atual = isUuid(id)
+      ? await this.txHost.tx.orcamento.findFirst({
+          where: { id, deletedAt: null },
+          include: INCLUDE,
+        })
+      : null;
+    if (!atual) {
+      throw new BusinessException(ErrorCode.NOT_FOUND, 'Orçamento não encontrado', { status: 404 });
+    }
+    if (atual.status !== 'PENDENTE' && atual.status !== 'APROVADO') {
+      throw new BusinessException(
+        'ORCAMENTO_NAO_CANCELAVEL',
+        'Só é possível cancelar um orçamento pendente ou aprovado.',
+        { status: 409 },
+      );
+    }
+    await this.cancelamentos.registrar({
+      tipo: 'PROPOSTA',
+      entidade: 'Orcamento',
+      entidadeId: id,
+      motivoId: input.motivoId,
+      observacao: input.observacao,
+    });
+    const cancelado = await this.txHost.tx.orcamento.update({
+      where: { id },
+      data: { status: 'CANCELADO' },
+      include: INCLUDE,
+    });
+    return toOrcamento(cancelado);
   }
 
   async export(query: ExportOrcamentosQuery): Promise<ExportFile> {

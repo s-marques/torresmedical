@@ -3,6 +3,7 @@ import { PREFERENCIAS_PADRAO } from '@torres/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { MOTIVO_ID, MOTIVO_OUTRO_ID, rotaMotivosCancelamento } from '@/test/motivos-cancelamento';
 import {
   apiFalsa,
   chamadasPara,
@@ -117,6 +118,7 @@ function api(
           meta: { page: 1, pageSize: 100, total: 2, totalPages: 1 },
         }),
       [BLOQUEIOS]: () => pagina(LISTA),
+      ...rotaMotivosCancelamento,
       ...rotas,
     },
   });
@@ -241,7 +243,7 @@ describe('Gestão de Salas: aba Bloqueios (issue #138)', () => {
     expect(within(modal).getByLabelText('Segunda: hora inicial')).toHaveValue('08:00');
   });
 
-  it('Cancelar: motivo obrigatório, envia o motivo e não exclui', async () => {
+  it('Cancelar: motivo da lista obrigatório, envia o motivo e não exclui', async () => {
     const cancelar = vi.fn(() => json({ ...LISTA[0], status: 'CANCELADO' }));
     const { user, fetchMock } = await abrirAba(
       api({ [`${BLOQUEIOS}/${B1}/cancelar`]: () => cancelar() }),
@@ -253,14 +255,32 @@ describe('Gestão de Salas: aba Bloqueios (issue #138)', () => {
     expect(await within(modal).findByText('Motivo é obrigatório.')).toBeVisible();
     expect(cancelar).not.toHaveBeenCalled();
 
-    await user.type(within(modal).getByLabelText(/Motivo do cancelamento/), 'Obra adiada');
+    await escolher(user, modal, /Motivo/, 'Paciente desistiu');
+    await user.type(within(modal).getByLabelText('Observação'), 'Obra adiada');
     await user.click(within(modal).getByRole('button', { name: 'Cancelar bloqueio' }));
     await waitFor(() => expect(cancelar).toHaveBeenCalled());
     const envio = chamadasPara(fetchMock, `${BLOQUEIOS}/${B1}/cancelar`)[0];
-    expect(corpoDe(envio?.[1])).toEqual({ motivo: 'Obra adiada' });
+    expect(corpoDe(envio?.[1])).toEqual({ motivoId: MOTIVO_ID, observacao: 'Obra adiada' });
     expect(
       chamadasPara(fetchMock, `${BLOQUEIOS}/${B1}`).some(([, i]) => i?.method === 'DELETE'),
     ).toBe(false);
+  });
+
+  it('Cancelar: o motivo "Outro" exige a observação', async () => {
+    const cancelar = vi.fn(() => json({ ...LISTA[0], status: 'CANCELADO' }));
+    const { user } = await abrirAba(api({ [`${BLOQUEIOS}/${B1}/cancelar`]: () => cancelar() }));
+    await user.click(await screen.findByRole('button', { name: 'Cancelar bloqueio de Sala 1' }));
+    const modal = await screen.findByRole('dialog', { name: 'Cancelar bloqueio' });
+
+    await escolher(user, modal, /Motivo/, 'Outro');
+    await user.click(within(modal).getByRole('button', { name: 'Cancelar bloqueio' }));
+    expect(await within(modal).findByText('Observação é obrigatória.')).toBeVisible();
+    expect(cancelar).not.toHaveBeenCalled();
+
+    await user.type(within(modal).getByLabelText(/Observação/), 'Detalhe fictício');
+    await user.click(within(modal).getByRole('button', { name: 'Cancelar bloqueio' }));
+    await waitFor(() => expect(cancelar).toHaveBeenCalled());
+    expect(MOTIVO_OUTRO_ID).toBeTruthy();
   });
 
   it('erro de conflito (409) do servidor aparece no formulário', async () => {

@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Post, Query, StreamableFile } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, Query, StreamableFile } from '@nestjs/common';
 import { ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
 import {
+  cancelarSemReagendamentoSchema,
   catalogoOrcamentoPageSchema,
   catalogoOrcamentoQuerySchema,
   criarOrcamentoSchema,
@@ -8,6 +9,7 @@ import {
   listOrcamentosQuerySchema,
   orcamentoPageSchema,
   orcamentoSchema,
+  type CancelarSemReagendamentoInput,
   type CatalogoOrcamentoItem,
   type CatalogoOrcamentoQuery,
   type CriarOrcamentoInput,
@@ -25,6 +27,7 @@ import {
   ApiZodQuery,
   ApiZodResponse,
 } from '../../../common/swagger/zod-openapi';
+import { IdParam } from '../../../common/validation/id-param.decorator';
 import { ZodValidationPipe } from '../../../common/validation/zod-validation.pipe';
 import { OrcamentosService } from './orcamentos.service';
 
@@ -93,5 +96,23 @@ export class OrcamentosController {
     @Body(new ZodValidationPipe(criarOrcamentoSchema)) body: CriarOrcamentoInput,
   ): Promise<Orcamento> {
     return this.orcamentos.create(body);
+  }
+
+  @Post(':id/cancelar')
+  @RequirePermission('comercial-atendimento.orcamentos.editar')
+  @HttpCode(200)
+  @Audit({ entity: ENTITY, action: 'UPDATE' })
+  @ApiOperation({
+    summary: 'Cancela o orçamento pendente ou aprovado, com o motivo da lista (#162)',
+  })
+  @ApiZodBody(cancelarSemReagendamentoSchema)
+  @ApiZodResponse(200, orcamentoSchema)
+  @ApiErrorResponses(400, 401, 403, 404, 409)
+  cancelar(
+    @IdParam() id: string,
+    @Body(new ZodValidationPipe(cancelarSemReagendamentoSchema))
+    body: CancelarSemReagendamentoInput,
+  ): Promise<Orcamento> {
+    return this.orcamentos.cancelar(id, body);
   }
 }

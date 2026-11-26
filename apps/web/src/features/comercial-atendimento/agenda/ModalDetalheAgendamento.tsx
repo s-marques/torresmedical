@@ -1,5 +1,9 @@
-import { AGENDAMENTO_STATUS_ROTULOS, type Agendamento } from '@torres/shared';
-import { PencilIcon, UserIcon } from 'lucide-react';
+import {
+  AGENDAMENTO_STATUS_CANCELAVEIS,
+  AGENDAMENTO_STATUS_ROTULOS,
+  type Agendamento,
+} from '@torres/shared';
+import { PencilIcon, UserIcon, XCircleIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '@/components/shared/Modal';
@@ -17,6 +21,8 @@ export interface ModalDetalheAgendamentoProps {
   onFechar: () => void;
   /** Abre a edição (sala, data, hora e duração); só aparece com a permissão editar. */
   onEditar: (agendamento: Agendamento) => void;
+  /** Abre o cancelamento com motivo (issue #162); só aparece com a permissão editar. */
+  onCancelar: (agendamento: Agendamento) => void;
 }
 
 function Campo({ rotulo, children }: Readonly<{ rotulo: string; children: ReactNode }>) {
@@ -30,13 +36,14 @@ function Campo({ rotulo, children }: Readonly<{ rotulo: string; children: ReactN
 
 /**
  * Modal "Agendamento #N" aberto ao clicar num cartão da agenda (somente leitura).
- * Confirmar, Check-in, Faltou, Cancelar e Registrar Recebimento ficam para outras issues; o Editar
+ * Confirmar, Check-in, Faltou e Registrar Recebimento ficam para outras issues; o Cancelar tem motivo (#162); o Editar
  * troca sala, data, hora e duração (issue #136).
  */
 export function ModalDetalheAgendamento({
   agendamento: a,
   onFechar,
   onEditar,
+  onCancelar,
 }: Readonly<ModalDetalheAgendamentoProps>) {
   const { t } = useTranslation();
   const valor = a.valor ?? 0;
@@ -47,10 +54,23 @@ export function ModalDetalheAgendamento({
       titulo={`Agendamento #${a.numero}`}
       rodape={
         <SePermitido permissao="comercial-atendimento.agenda.editar">
-          <Button type="button" variant="outline" onClick={() => onEditar(a)}>
-            <PencilIcon aria-hidden />
-            {t('agenda.detalhe.editar')}
-          </Button>
+          <div className="flex flex-wrap justify-end gap-2">
+            {AGENDAMENTO_STATUS_CANCELAVEIS.includes(a.status) && (
+              <Button
+                type="button"
+                variant="outline"
+                className="text-destructive hover:text-destructive"
+                onClick={() => onCancelar(a)}
+              >
+                <XCircleIcon aria-hidden />
+                {t('cancelamento.agenda.acao')}
+              </Button>
+            )}
+            <Button type="button" variant="outline" onClick={() => onEditar(a)}>
+              <PencilIcon aria-hidden />
+              {t('agenda.detalhe.editar')}
+            </Button>
+          </div>
         </SePermitido>
       }
     >

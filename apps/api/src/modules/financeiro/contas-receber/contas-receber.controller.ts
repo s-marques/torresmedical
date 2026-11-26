@@ -11,12 +11,14 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
 import {
+  cancelarSemReagendamentoSchema,
   contaReceberPageSchema,
   contaReceberSchema,
   createContaReceberSchema,
   exportContasReceberQuerySchema,
   listContasReceberQuerySchema,
   updateContaReceberSchema,
+  type CancelarSemReagendamentoInput,
   type ContaReceber,
   type CreateContaReceberInput,
   type ExportContasReceberQuery,
@@ -115,6 +117,22 @@ export class ContasReceberController {
     @Body(new ZodValidationPipe(updateContaReceberSchema)) body: UpdateContaReceberInput,
   ): Promise<ContaReceber> {
     return this.contasReceber.update(id, body);
+  }
+
+  @Post(':id/cancelar')
+  @RequirePermission('financeiro.contas-receber.editar')
+  @HttpCode(200)
+  @Audit({ entity: ENTITY, action: 'UPDATE' })
+  @ApiOperation({ summary: 'Cancela a conta pendente, com o motivo da lista (issue #162)' })
+  @ApiZodBody(cancelarSemReagendamentoSchema)
+  @ApiZodResponse(200, contaReceberSchema)
+  @ApiErrorResponses(400, 401, 403, 404, 409)
+  cancelar(
+    @IdParam() id: string,
+    @Body(new ZodValidationPipe(cancelarSemReagendamentoSchema))
+    body: CancelarSemReagendamentoInput,
+  ): Promise<ContaReceber> {
+    return this.contasReceber.cancelar(id, body);
   }
 
   @Delete(':id')
