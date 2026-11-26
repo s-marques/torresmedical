@@ -66,7 +66,7 @@ describe('Relatórios do Financeiro (e2e)', () => {
     prisma.planoConta.create({ data: { codigo, nome, tipo } });
 
   describe('GET /relatorios (catálogo)', () => {
-    it('lista FIN-01 a FIN-25 que têm dados, com colunas e filtros', async () => {
+    it('lista FIN-01 a FIN-27 que têm dados, com colunas e filtros', async () => {
       const res = await http().get(BASE).expect(200);
 
       const { data: relatorios } = catalogoRelatoriosSchema.parse(res.body);
@@ -86,6 +86,8 @@ describe('Relatórios do Financeiro (e2e)', () => {
         'FIN-23',
         'FIN-24',
         'FIN-25',
+        'FIN-26',
+        'FIN-27',
       ]);
       expect(relatorios.find((r) => r.id === 'FIN-25')?.filtros[0]?.parametro).toBe('situacao');
     });
@@ -329,6 +331,173 @@ describe('Relatórios do Financeiro (e2e)', () => {
       expect(soDespesa).toEqual([
         expect.objectContaining({ codigo: '3.01', tipo: 'Despesa', lancamentos: 1, valor: 300 }),
       ]);
+    });
+  });
+
+  describe('FIN-26 e FIN-27: provisão de recebimentos', () => {
+    const mesAtual = HOJE.slice(0, 7);
+    const somarMeses = (mes: string, n: number): string => {
+      const [ano = 0, m = 1] = mes.split('-').map(Number);
+      return new Date(Date.UTC(ano, m - 1 + n, 1)).toISOString().slice(0, 7);
+    };
+    const [m0, m1, m2] = [mesAtual, somarMeses(mesAtual, 1), somarMeses(mesAtual, 2)] as [
+      string,
+      string,
+      string,
+    ];
+    const fimDoMes = (mes: string) =>
+      new Date(Date.UTC(Number(mes.slice(0, 4)), Number(mes.slice(5)), 0))
+        .toISOString()
+        .slice(0, 10);
+    const PROVISAO = { de: `${m0}-01`, ate: fimDoMes(m2) };
+    const inicio = new Date(`${somarMeses(m0, -6)}-01T00:00:00Z`);
+
+    const sala = (nome: string) => prisma.sala.create({ data: { nome } });
+    const profissional = (nome: string) => prisma.profissional.create({ data: { nome } });
+    const contrato = (
+      salaId: string,
+      profissionalId: string,
+      extra: Record<string, unknown> = {},
+    ) =>
+      prisma.contratoSala.create({
+        data: {
+          salaId,
+          modalidade: 'MENSAL',
+          locatarioTipo: 'PROFISSIONAL',
+          profissionalId,
+          valorUnitario: 1160,
+          diaVencimento: 10,
+          dataInicio: inicio,
+          ...extra,
+        } as never,
+      });
+    const consultarProvisao = (id: string, extra: Record<string, string> = {}) =>
+      http()
+        .get(`${BASE}/${id}`)
+        .query({ ...PROVISAO, ...extra });
+    const linhasProvisao = async (id: string, extra: Record<string, string> = {}) =>
+      paginaRelatorioSchema.parse((await consultarProvisao(id, extra).expect(200)).body).data;
+
+    /** Cenário conhecido: um contrato com título no mês atual, outros só projetados, permuta, turno e "sem cobrança". */
+    async function cenario() {
+      const [salaA, salaB] = await Promise.all([sala('Sala A'), sala('Sala B')]);
+      const [dra, dr] = await Promise.all([profissional('Dra. Alfa'), profissional('Dr. Beta')]);
+      const comTitulo = await contrato(salaA.id, dra.id);
+      const titulo = await receber(0, 1160, {
+        dataVencimento: new Date(`${m0}-10T00:00:00Z`),
+        contratoSalaId: comTitulo.id,
+        competencia: m0,
+        profissionalSacadoId: dra.id,
+      });
+      await prisma.contratoSalaCobranca.create({
+        data: { contratoSalaId: comTitulo.id, competencia: m0, contaReceberId: titulo.id },
+      });
+      await contrato(salaB.id, dr.id, { valorUnitario: 500, diaVencimento: 20 });
+      await contrato(salaB.id, dr.id, { permuta: true });
+      await contrato(salaB.id, dr.id, { modalidade: 'TURNO', valorUnitario: 300 });
+      const semCobranca = await contrato(salaA.id, dra.id, { valorUnitario: 200 });
+      await prisma.contratoSalaCobranca.create({
+        data: { contratoSalaId: semCobranca.id, competencia: m2 },
+      });
+    }
+
+    it('FIN-27: o contrato de R$ 1.160 (dia 10) aparece nos meses seguintes, sem permuta, turno nem "sem cobrança"', async () => {
+      await cenario();
+
+      const detalhe = await linhasProvisao('FIN-27');
+
+      expect(
+        detalhe.map((l) => [l.origem, String(l.vencimento).slice(0, 10), l.valor, l.profissional]),
+      ).toEqual(
+        expect.arrayContaining([
+          ['Gerado', `${m0}-10`, 1160, 'Dra. Alfa'],
+          ['Projetado', `${m1}-10`, 1160, 'Dra. Alfa'],
+          ['Projetado', `${m2}-10`, 1160, 'Dra. Alfa'],
+          ['Projetado', `${m0}-20`, 500, 'Dr. Beta'],
+          ['Projetado', `${m1}-20`, 500, 'Dr. Beta'],
+          ['Projetado', `${m2}-20`, 500, 'Dr. Beta'],
+          ['Projetado', `${m0}-10`, 200, 'Dra. Alfa'],
+          ['Projetado', `${m1}-10`, 200, 'Dra. Alfa'],
+        ]),
+      );
+      expect(detalhe).toHaveLength(8);
+    });
+
+    it('FIN-26: os totais por mês conferem com o cenário conhecido', async () => {
+      await cenario();
+
+      expect(await linhasProvisao('FIN-26')).toEqual([
+        { grupo: m0, gerado: 1160, projetado: 700, total: 1860 },
+        { grupo: m1, gerado: 0, projetado: 1860, total: 1860 },
+        { grupo: m2, gerado: 0, projetado: 1660, total: 1660 },
+      ]);
+    });
+
+    it('FIN-26: agrupa por profissional e filtra por origem', async () => {
+      await cenario();
+
+      expect(
+        await linhasProvisao('FIN-26', { agrupar: 'profissional', origem: 'projetado' }),
+      ).toEqual([
+        { grupo: 'Dr. Beta', gerado: 0, projetado: 1500, total: 1500 },
+        { grupo: 'Dra. Alfa', gerado: 0, projetado: 2720, total: 2720 },
+      ]);
+    });
+
+    it('FIN-26: título cancelado não entra na provisão', async () => {
+      const salaA = await sala('Sala A');
+      const dra = await profissional('Dra. Alfa');
+      const c = await contrato(salaA.id, dra.id);
+      await receber(0, 1160, {
+        dataVencimento: new Date(`${m0}-10T00:00:00Z`),
+        contratoSalaId: c.id,
+        competencia: m0,
+        status: 'CANCELADO',
+      });
+
+      expect(await linhasProvisao('FIN-26', { agrupar: 'status', origem: 'gerado' })).toEqual([]);
+    });
+
+    it('422 quando o período passa de 24 meses', async () => {
+      const res = await http()
+        .get(`${BASE}/FIN-26`)
+        .query({ de: PROVISAO.de, ate: fimDoMes(somarMeses(m0, 24)) })
+        .expect(422);
+
+      expect(res.body.code).toBe('PROVISAO_PERIODO_EXCEDIDO');
+    });
+
+    it('403 sem permissão em Contas a Receber e para perfil restrito', async () => {
+      const semReceber = await criarUsuarioTeste(app, { permissoes: [TELA_VER] });
+      await http(semReceber).get(`${BASE}/FIN-26`).query(PROVISAO).expect(403);
+      const dra = await profissional('Dra. Alfa');
+      const restrito = await criarUsuarioTeste(app, {
+        permissoes: TODAS,
+        escopoDados: 'PROFISSIONAIS_VINCULADOS',
+        profissionalIds: [dra.id],
+      });
+      await http(restrito).get(`${BASE}/FIN-27`).query(PROVISAO).expect(403);
+    });
+
+    it('exporta em Excel, PDF e CSV e grava EXPORT no audit_log', async () => {
+      await cenario();
+
+      for (const format of ['xlsx', 'pdf', 'csv']) {
+        await http()
+          .get(`${BASE}/FIN-27/export`)
+          .query({ ...PROVISAO, format })
+          .buffer(true)
+          .parse(binario)
+          .expect(200);
+      }
+
+      const registros = await prisma.auditLog.findMany({
+        where: { action: 'EXPORT', entity: ENTIDADE_RELATORIO, entityId: 'FIN-27' },
+      });
+      expect(registros.map((r) => r.userId)).toEqual([usuario.id, usuario.id, usuario.id]);
+      expect(
+        registros.map((r) => (r.after as { filtros: { format: string } }).filtros.format).sort(),
+      ).toEqual(['csv', 'pdf', 'xlsx']);
     });
   });
 
