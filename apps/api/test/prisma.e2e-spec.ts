@@ -86,6 +86,7 @@ describe('Banco: migration e tabelas estruturais (e2e)', () => {
       'contas_pagar',
       'contas_pagar_baixas',
       'contas_receber',
+      'contas_receber_baixas',
       'contatos_whatsapp',
       'contratos_sala',
       'contratos_sala_cobranca',

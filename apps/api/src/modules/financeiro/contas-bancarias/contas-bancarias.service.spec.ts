@@ -30,9 +30,9 @@ function setup({
     create: jest.fn().mockResolvedValue(CONTA),
     update: jest.fn().mockResolvedValue(CONTA),
   };
-  const contaReceber = {
+  const contaReceberBaixa = {
     aggregate: jest.fn().mockResolvedValue({
-      _sum: { valor: recebido === null ? null : new Prisma.Decimal(recebido) },
+      _sum: { valorRecebido: recebido === null ? null : new Prisma.Decimal(recebido) },
     }),
   };
   const contaPagarBaixa = {
@@ -41,12 +41,12 @@ function setup({
       .mockResolvedValue({ _sum: { valorPago: pago === null ? null : new Prisma.Decimal(pago) } }),
   };
   const txHost = {
-    tx: { contaBancaria, contaReceber, contaPagarBaixa },
+    tx: { contaBancaria, contaReceberBaixa, contaPagarBaixa },
   } as unknown as TransactionHost<PrismaAdapter>;
   return {
     service: new ContasBancariasService(txHost),
     contaBancaria,
-    contaReceber,
+    contaReceberBaixa,
     contaPagarBaixa,
   };
 }
@@ -77,14 +77,15 @@ describe('ContasBancariasService', () => {
   });
 
   it('saldo conta só movimentos a partir da data do saldo inicial', async () => {
-    const { service, contaBancaria, contaReceber, contaPagarBaixa } = setup();
+    const { service, contaBancaria, contaReceberBaixa, contaPagarBaixa } = setup();
     const desde = new Date('2026-09-01T00:00:00.000Z');
     contaBancaria.findFirst.mockResolvedValue({ ...CONTA, dataSaldoInicial: desde });
     await service.findById(ID);
-    expect(contaReceber.aggregate.mock.calls[0][0].where).toMatchObject({
+    expect(contaReceberBaixa.aggregate.mock.calls[0][0].where).toMatchObject({
       contaBancariaId: ID,
-      status: 'RECEBIDO',
       dataRecebimento: { gte: desde },
+      deletedAt: null,
+      contaReceber: { deletedAt: null, profissionalId: null },
     });
     expect(contaPagarBaixa.aggregate.mock.calls[0][0].where).toMatchObject({
       contaBancariaId: ID,

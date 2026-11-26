@@ -73,7 +73,8 @@ describe('Conciliação (e2e)', () => {
     });
   }
 
-  function criarReceber(
+  /** Conta RECEBIDO ganha a baixa total (o recebido do sistema soma as baixas, issue #165). */
+  async function criarReceber(
     descricao: string,
     extra: {
       valor?: string;
@@ -84,9 +85,20 @@ describe('Conciliação (e2e)', () => {
       deletedAt?: Date;
     } = {},
   ) {
-    return prisma.contaReceber.create({
+    const conta = await prisma.contaReceber.create({
       data: { descricao, valor: '100.00', dataVencimento: new Date('2026-10-10'), ...extra },
     });
+    if (extra.status === 'RECEBIDO') {
+      await prisma.contaReceberBaixa.create({
+        data: {
+          contaReceberId: conta.id,
+          dataRecebimento: extra.dataRecebimento ?? new Date('2026-10-10'),
+          valorRecebido: extra.valor ?? '100.00',
+          contaBancariaId: extra.contaBancariaId,
+        },
+      });
+    }
+    return conta;
   }
 
   describe('Contas bancárias', () => {

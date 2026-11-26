@@ -45,7 +45,11 @@ export class FinanceiroAlertasRegras implements FonteAlertas {
         tipo: 'RECEBIVEIS_VENCIDOS',
         contar: (hoje) =>
           this.txHost.tx.contaReceber.count({
-            where: { ...DO_TORRES, status: 'PENDENTE', dataVencimento: { lt: dia(hoje) } },
+            where: {
+              ...DO_TORRES,
+              status: { in: ['PENDENTE', 'PARCIAL'] },
+              dataVencimento: { lt: dia(hoje) },
+            },
           }),
       },
     ];

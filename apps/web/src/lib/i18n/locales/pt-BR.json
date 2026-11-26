@@ -1922,6 +1922,76 @@
       "filtros": "Filtros"
     }
   },
+  "contasReceber": {
+    "colunas": {
+      "contrato": "Contrato",
+      "saldo": "Saldo"
+    },
+    "campos": {
+      "competencia": "Competência",
+      "competenciaAjuda": "Vazia: o mês do vencimento.",
+      "profissional": "Profissional (locatário)",
+      "profissionalPlaceholder": "Buscar profissional...",
+      "sacadoAjuda": "Para cobranças de contrato de sala. Use o cliente ou o profissional, não os dois."
+    },
+    "acoes": {
+      "baixar": "Baixar",
+      "renegociar": "Renegociar",
+      "cancelarBaixa": "Cancelar Baixa"
+    },
+    "status": {
+      "parcial": "Parcial",
+      "renegociado": "Renegociado"
+    },
+    "mensagens": {
+      "baixaRegistrada": "Recebimento registrado.",
+      "baixaCancelada": "Baixa cancelada.",
+      "renegociada": "Conta renegociada."
+    },
+    "baixa": {
+      "titulo": "Baixar Conta a Receber",
+      "descricao": "Registrar recebimento de {{descricao}}.",
+      "saldoEmAberto": "Saldo em aberto: {{saldo}}",
+      "confirmar": "Confirmar Baixa",
+      "dataRecebimento": "Data de Recebimento",
+      "valorRecebido": "Valor Recebido",
+      "valorAjuda": "Menor que o saldo: a conta fica Parcial. Igual ao saldo: Pago.",
+      "formaPagamento": "Forma de Pagamento",
+      "contaBancaria": "Conta Bancária",
+      "selecione": "Selecione",
+      "documento": "Documento / Nr Comprovante",
+      "observacoes": "Observações"
+    },
+    "renegociar": {
+      "titulo": "Renegociar Conta a Receber",
+      "descricao": "O saldo de {{descricao}} será refeito em novos títulos.",
+      "confirmar": "Renegociar",
+      "parcela": "Parcela {{numero}}",
+      "valor": "Valor",
+      "vencimento": "Vencimento",
+      "adicionarParcela": "Adicionar parcela",
+      "removerParcela": "Remover parcela {{numero}}",
+      "somaConfere": "As parcelas fecham com o saldo em aberto.",
+      "somaFaltam": "Faltam {{diferenca}} para fechar o saldo em aberto.",
+      "somaSobram": "Sobram {{diferenca}} em relação ao saldo em aberto.",
+      "observacoes": "Observações"
+    },
+    "detalhe": {
+      "profissional": "Profissional (locatário)",
+      "contrato": "Contrato",
+      "competencia": "Competência",
+      "valorRecebido": "Valor Recebido",
+      "saldo": "Saldo em Aberto",
+      "renegociadoDe": "Renegociado do título",
+      "renegociadoPara": "Renegociado nos títulos",
+      "baixas": "Baixas",
+      "baixaData": "Data",
+      "baixaValor": "Valor Recebido",
+      "baixaForma": "Forma de Pagamento",
+      "baixaConta": "Conta Bancária",
+      "baixaRegistrada": "Registrado em"
+    }
+  },
   "contasPagar": {
     "competencia": "Competência",
     "centroCusto": "Centro de Custo",

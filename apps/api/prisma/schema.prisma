@@ -575,7 +575,8 @@ model Profissional {
   classificacoes          ProfissionalClassificacao[]
 
   baixasInsumos BaixaInsumo[]
-  receitas      ContaReceber[]
+  receitas      ContaReceber[] @relation("ReceitaProfissional")
+  contasReceberSacado ContaReceber[] @relation("SacadoProfissional")
   bloqueiosSala SalaBloqueio[]
 
   @@index([especialidadeId])
@@ -1331,6 +1332,7 @@ model FormaPagamento {
   contasPagar             ContaPagar[]
   baixasContaPagar        ContaPagarBaixa[]
   contasReceber           ContaReceber[]
+  baixasContaReceber      ContaReceberBaixa[]
   recebimentosAgendamento AgendamentoRecebimento[]
   mensalidades            Mensalidade[]
 
@@ -1962,6 +1964,7 @@ model ContratoSala {
   dias         ContratoSalaDia[]
   horas        ContratoSalaHora[]
   cobrancas    ContratoSalaCobranca[]
+  contasReceber ContaReceber[]
   onboardings  ProfissionalOnboarding[]
 
   @@index([salaId])
@@ -2475,12 +2478,15 @@ model PlanoConta {
   @@map("planos_contas")
 }
 
-/// "Vencido" não é gravado: é calculado (PENDENTE com dataVencimento no passado), conforme
-/// o sistema real (print do dev, issue #48).
+/// "A vencer" e "Vencido" não são gravados: são calculados sobre PENDENTE (vencimento futuro ou
+/// no passado). RECEBIDO é exibido como "Pago". PARCIAL: há baixa, mas o saldo não zerou.
+/// RENEGOCIADO: o saldo foi refeito em novos títulos (`renegociadoDeId`), issue #165.
 enum ContaReceberStatus {
   PENDENTE
   RECEBIDO
   CANCELADO
+  PARCIAL
+  RENEGOCIADO
 
   @@map("conta_receber_status")
 }
@@ -2501,6 +2507,15 @@ model ContaReceber {
   /// Receita do profissional (tela Receita Profissionais, #55). Preenchido: a conta é do
   /// profissional e fica fora de Contas a Receber, Conciliação e saldos do Torres.
   profissionalId   String?            @map("profissional_id") @db.Uuid
+  /// Sacado profissional (locatário de contrato de sala, issue #165). Diferente de
+  /// `profissionalId`: a conta continua sendo do Torres e aparece em Contas a Receber.
+  profissionalSacadoId String?        @map("profissional_sacado_id") @db.Uuid
+  /// Contrato de sala que originou a cobrança.
+  contratoSalaId   String?            @map("contrato_sala_id") @db.Uuid
+  /// Título original, quando esta conta nasceu de uma renegociação.
+  renegociadoDeId  String?            @map("renegociado_de_id") @db.Uuid
+  /// Competência (`AAAA-MM`) para o relatório de provisão.
+  competencia      String?            @db.VarChar(7)
   documento        String?
   totalParcelas    Int                @default(1) @map("total_parcelas")
   status           ContaReceberStatus @default(PENDENTE)
@@ -2516,17 +2531,50 @@ model ContaReceber {
   formaPagamento FormaPagamento? @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
   planoConta     PlanoConta?     @relation(fields: [planoContaId], references: [id], onDelete: Restrict)
   contaBancaria  ContaBancaria?  @relation(fields: [contaBancariaId], references: [id], onDelete: Restrict)
-  profissional   Profissional?   @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+  profissional   Profissional?   @relation("ReceitaProfissional", fields: [profissionalId], references: [id], onDelete: Restrict)
+  profissionalSacado Profissional? @relation("SacadoProfissional", fields: [profissionalSacadoId], references: [id], onDelete: Restrict)
+  contratoSala   ContratoSala?   @relation(fields: [contratoSalaId], references: [id], onDelete: Restrict)
+  renegociadoDe  ContaReceber?   @relation("Renegociacao", fields: [renegociadoDeId], references: [id], onDelete: Restrict)
+  renegociacoes  ContaReceber[]  @relation("Renegociacao")
+  baixas         ContaReceberBaixa[]
 
   @@index([pacienteId])
   @@index([formaPagamentoId])
   @@index([planoContaId])
   @@index([profissionalId])
+  @@index([profissionalSacadoId])
+  @@index([contratoSalaId])
+  @@index([renegociadoDeId])
+  @@index([competencia])
   @@index([status])
   @@index([dataVencimento])
   @@index([contaBancariaId])
   @@index([dataRecebimento])
   @@map("contas_receber")
+}
+
+/// Dono: financeiro. Baixa (recebimento total ou parcial) de uma conta a receber (issue #165).
+/// "Cancelar baixa" exclui logicamente a mais recente e recalcula o status.
+model ContaReceberBaixa {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contaReceberId   String    @map("conta_receber_id") @db.Uuid
+  dataRecebimento  DateTime  @map("data_recebimento") @db.Date
+  valorRecebido    Decimal   @map("valor_recebido") @db.Decimal(12, 2)
+  formaPagamentoId String?   @map("forma_pagamento_id") @db.Uuid
+  contaBancariaId  String?   @map("conta_bancaria_id") @db.Uuid
+  documento        String?
+  observacoes      String?
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  contaReceber   ContaReceber    @relation(fields: [contaReceberId], references: [id], onDelete: Cascade)
+  formaPagamento FormaPagamento? @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
+  contaBancaria  ContaBancaria?  @relation(fields: [contaBancariaId], references: [id], onDelete: Restrict)
+
+  @@index([contaReceberId])
+  @@index([dataRecebimento])
+  @@index([contaBancariaId])
+  @@map("contas_receber_baixas")
 }
 
 enum ContaBancariaTipo {
@@ -2558,6 +2606,7 @@ model ContaBancaria {
 
   baixas        ContaPagarBaixa[]
   contasReceber ContaReceber[]
+  baixasReceber ContaReceberBaixa[]
 
   @@map("contas_bancarias")
 }

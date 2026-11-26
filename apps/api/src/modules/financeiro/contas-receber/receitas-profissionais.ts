@@ -57,6 +57,13 @@ export function orderByReceitas(
 }
 
 /** Colunas exportáveis, iguais às do grid. */
+/** A tela Receita Profissionais mantém o vocabulário próprio (Pendente/Recebido), fora da #165. */
+const ROTULO_STATUS_RECEITA = {
+  ...CONTA_RECEBER_ROTULO_STATUS_EXIBICAO,
+  A_VENCER: 'Pendente',
+  RECEBIDO: 'Recebido',
+} as const;
+
 export const RECEITA_PROFISSIONAL_EXPORT_DEFINITIONS: readonly ExportColumn<
   ReceitaProfissional,
   ReceitaProfissionalExportColumn
@@ -75,6 +82,6 @@ export const RECEITA_PROFISSIONAL_EXPORT_DEFINITIONS: readonly ExportColumn<
   {
     key: 'status',
     header: 'Status',
-    value: (r) => CONTA_RECEBER_ROTULO_STATUS_EXIBICAO[statusExibicaoContaReceber(r)],
+    value: (r) => ROTULO_STATUS_RECEITA[statusExibicaoContaReceber(r)],
   },
 ];

@@ -59,7 +59,7 @@ describe('FinanceiroAlertasRegras', () => {
       where: {
         deletedAt: null,
         profissionalId: null,
-        status: 'PENDENTE',
+        status: { in: ['PENDENTE', 'PARCIAL'] },
         dataVencimento: { lt: new Date('2026-11-25T00:00:00.000Z') },
       },
     });

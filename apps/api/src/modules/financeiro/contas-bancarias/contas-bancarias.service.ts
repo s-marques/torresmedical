@@ -103,13 +103,14 @@ export class ContasBancariasService {
   private async saldo(conta: ContaBancariaRow): Promise<Prisma.Decimal> {
     const desde = conta.dataSaldoInicial ? { gte: conta.dataSaldoInicial } : undefined;
     const [recebido, pago] = await Promise.all([
-      this.txHost.tx.contaReceber.aggregate({
-        _sum: { valor: true },
+      // Cada baixa (inclusive as parciais, issue #165) entra na conta onde foi recebida.
+      this.txHost.tx.contaReceberBaixa.aggregate({
+        _sum: { valorRecebido: true },
         where: {
-          ...DO_TORRES,
+          ...NAO_EXCLUIDAS,
           contaBancariaId: conta.id,
-          status: 'RECEBIDO',
           dataRecebimento: desde,
+          contaReceber: DO_TORRES,
         },
       }),
       this.txHost.tx.contaPagarBaixa.aggregate({
@@ -123,7 +124,7 @@ export class ContasBancariasService {
       }),
     ]);
     return conta.saldoInicial
-      .add(recebido._sum.valor ?? new Prisma.Decimal(0))
+      .add(recebido._sum.valorRecebido ?? new Prisma.Decimal(0))
       .sub(pago._sum.valorPago ?? new Prisma.Decimal(0));
   }
 }

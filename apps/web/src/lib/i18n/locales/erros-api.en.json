@@ -66,5 +66,7 @@
   "ORCAMENTO_NAO_CANCELAVEL": "Only a pending or approved quote can be canceled",
   "CONTA_RECEBER_NAO_PENDENTE": "Only a pending account receivable can be canceled",
   "CONTA_PAGAR_NAO_PENDENTE": "Only a pending account payable can be canceled",
-  "CONTA_PAGAR_COM_BAIXA": "This account has a payment recorded. Cancel the payment before canceling the account"
+  "CONTA_PAGAR_COM_BAIXA": "This account has a payment recorded. Cancel the payment before canceling the account",
+  "CONTA_RECEBER_BAIXA_EXCEDE_SALDO": "The amount received is greater than the open balance",
+  "CONTA_RECEBER_RENEGOCIACAO_SOMA": "The installments must add up to the open balance"
 }
