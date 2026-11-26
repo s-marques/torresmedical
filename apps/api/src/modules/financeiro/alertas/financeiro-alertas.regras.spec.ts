@@ -5,9 +5,13 @@ const HOJE = '2026-11-25';
 function criar(quantidade = 3) {
   const contaPagar = { count: jest.fn().mockResolvedValue(quantidade) };
   const contaReceber = { count: jest.fn().mockResolvedValue(quantidade) };
-  const regras = new FinanceiroAlertasRegras({ tx: { contaPagar, contaReceber } } as never);
+  const regua = { contarParaAlerta: jest.fn().mockResolvedValue(2) };
+  const regras = new FinanceiroAlertasRegras(
+    { tx: { contaPagar, contaReceber } } as never,
+    regua as never,
+  );
   const porTipo = Object.fromEntries(regras.regras().map((regra) => [regra.tipo, regra]));
-  return { porTipo, contaPagar, contaReceber };
+  return { porTipo, contaPagar, contaReceber, regua };
 }
 
 describe('FinanceiroAlertasRegras', () => {
@@ -17,7 +21,14 @@ describe('FinanceiroAlertasRegras', () => {
       'CONTAS_PAGAR_VENCIDAS',
       'CONTAS_PAGAR_AGUARDANDO_APROVACAO',
       'RECEBIVEIS_VENCIDOS',
+      'COBRANCAS_REGUA',
     ]);
+  });
+
+  it('cobranças da régua: delega a contagem do dia à régua (issue #166)', async () => {
+    const { porTipo, regua } = criar();
+    await expect(porTipo.COBRANCAS_REGUA?.contar(HOJE)).resolves.toBe(2);
+    expect(regua.contarParaAlerta).toHaveBeenCalledWith(HOJE);
   });
 
   it('contas a pagar aguardando aprovação: pendentes lançadas, não excluídas (issue #164)', async () => {

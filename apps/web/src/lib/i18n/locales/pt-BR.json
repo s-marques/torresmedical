@@ -195,7 +195,9 @@
       "CONTAS_PAGAR_VENCIDAS_one": "{{count}} conta a pagar vencida",
       "CONTAS_PAGAR_VENCIDAS_other": "{{count}} contas a pagar vencidas",
       "RECEBIVEIS_VENCIDOS_one": "{{count}} recebível vencido",
-      "RECEBIVEIS_VENCIDOS_other": "{{count}} recebíveis vencidos"
+      "RECEBIVEIS_VENCIDOS_other": "{{count}} recebíveis vencidos",
+      "COBRANCAS_REGUA_one": "{{count}} cobrança da régua hoje",
+      "COBRANCAS_REGUA_other": "{{count}} cobranças da régua hoje"
     }
   },
   "temas": {
@@ -2334,6 +2336,96 @@
       "criado": "Motivo criado.",
       "atualizado": "Motivo atualizado.",
       "excluido": "Motivo excluído."
+    }
+  },
+  "inadimplencia": {
+    "titulo": "Inadimplência",
+    "descricao": "Acompanhe o que está vencido e a régua de cobrança dos profissionais.",
+    "atualizar": "Atualizar",
+    "erroCarregar": "Não foi possível carregar o painel de inadimplência.",
+    "abas": {
+      "painel": "Painel",
+      "regua": "Régua de cobrança",
+      "historico": "Histórico de cobranças"
+    },
+    "indicadores": {
+      "titulo": "Indicadores do dia",
+      "aReceberHoje": "A receber hoje",
+      "vencidos": "Vencidos",
+      "contratos": "Contratos inadimplentes",
+      "profissionais": "Profissionais inadimplentes",
+      "titulos_one": "{{count}} título",
+      "titulos_other": "{{count}} títulos"
+    },
+    "aging": {
+      "titulo": "Aging dos vencidos",
+      "todas": "Todas as faixas",
+      "ATE_30": "0 a 30 dias",
+      "DE_31_A_60": "31 a 60 dias",
+      "ACIMA_60": "Mais de 60 dias"
+    },
+    "porProfissional": {
+      "titulo": "Profissionais inadimplentes",
+      "vazio": "Nenhum profissional inadimplente.",
+      "resumo": "{{valor}} em {{titulos}} título(s), atraso de até {{dias}} dia(s)"
+    },
+    "titulos": {
+      "titulo": "Títulos vencidos",
+      "vazio": "Nenhum título vencido.",
+      "dias_one": "{{count}} dia",
+      "dias_other": "{{count}} dias",
+      "colunas": {
+        "descricao": "Descrição",
+        "sacado": "Devedor",
+        "contrato": "Contrato",
+        "vencimento": "Vencimento",
+        "atraso": "Atraso",
+        "saldo": "Saldo em aberto",
+        "cobrancas": "Cobranças enviadas"
+      }
+    },
+    "regua": {
+      "descricao": "A régua avisa o profissional por WhatsApp nos quatro marcos, uma única vez por título. Os textos abaixo são sugestões a confirmar com o cliente.",
+      "erroCarregar": "Não foi possível carregar a régua de cobrança.",
+      "sucesso": "Régua de cobrança atualizada.",
+      "editarMensagem": "Editar mensagem",
+      "ativo": "Marco ativo",
+      "whatsapp": "Enviar por WhatsApp",
+      "alertaInterno": "Alerta interno",
+      "marcos": {
+        "ANTES_3_DIAS": "3 dias antes do vencimento",
+        "NO_VENCIMENTO": "No vencimento",
+        "DEPOIS_3_DIAS": "3 dias depois do vencimento",
+        "DEPOIS_7_DIAS": "7 dias depois do vencimento"
+      },
+      "modal": {
+        "titulo": "Mensagem: {{marco}}",
+        "mensagem": "Mensagem",
+        "variaveis": "Variáveis disponíveis: {{lista}}.",
+        "restaurar": "Restaurar texto padrão"
+      }
+    },
+    "historico": {
+      "vazio": "Nenhuma cobrança enviada ainda.",
+      "todosMarcos": "Todos os marcos",
+      "doTitulo": "Cobranças enviadas",
+      "status": {
+        "ENVIADO": "Enviada",
+        "FALHA": "Falha"
+      },
+      "erros": {
+        "SEM_TELEFONE": "Profissional sem telefone",
+        "SEM_CANAL": "Sem canal de WhatsApp conectado"
+      },
+      "colunas": {
+        "titulo": "Título",
+        "profissional": "Profissional",
+        "marco": "Marco",
+        "situacao": "Situação",
+        "motivo": "Motivo da falha",
+        "vencimento": "Vencimento",
+        "enviadoEm": "Registrada em"
+      }
     }
   }
 }

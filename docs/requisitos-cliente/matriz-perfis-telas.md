@@ -92,6 +92,7 @@
 | Plano de Contas | T | L | — | — | T | — |
 | Relatórios | T | L | — | — | L | — |
 | Indicadores | T | L | — | — | L | — |
+| Inadimplência | T | L | — | — | T | — |
 
 ### PATRIMÔNIO & PESSOAL
 

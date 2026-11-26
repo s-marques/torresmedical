@@ -2537,6 +2537,7 @@ model ContaReceber {
   renegociadoDe  ContaReceber?   @relation("Renegociacao", fields: [renegociadoDeId], references: [id], onDelete: Restrict)
   renegociacoes  ContaReceber[]  @relation("Renegociacao")
   baixas         ContaReceberBaixa[]
+  cobrancas      CobrancaEnvio[]
 
   @@index([pacienteId])
   @@index([formaPagamentoId])
@@ -4321,4 +4322,60 @@ model Cancelamento {
   @@index([motivoId])
   @@index([canceladoEm])
   @@map("cancelamentos")
+}
+
+enum MarcoCobranca {
+  ANTES_3_DIAS
+  NO_VENCIMENTO
+  DEPOIS_3_DIAS
+  DEPOIS_7_DIAS
+
+  @@map("marco_cobranca")
+}
+
+enum CobrancaEnvioStatus {
+  ENVIADO
+  FALHA
+
+  @@map("cobranca_envio_status")
+}
+
+/// Dono: financeiro. Régua de cobrança (issue #166, R §18): uma linha por marco (3 dias antes, no
+/// vencimento, 3 e 7 dias depois), criadas pela migration. Os dias do marco são fixos no código;
+/// a tela só liga/desliga, escolhe os canais e edita o texto.
+model ReguaCobranca {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  marco          MarcoCobranca @unique
+  ativo          Boolean       @default(true)
+  enviarWhatsapp Boolean       @default(true) @map("enviar_whatsapp")
+  /// Entra na contagem do alerta interno (central de notificações) do dia.
+  alertaInterno  Boolean       @default(true) @map("alerta_interno")
+  /// Texto com as variáveis {nome}, {valor}, {vencimento} e {titulo}.
+  mensagem       String
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("regua_cobranca")
+}
+
+/// Dono: financeiro. Histórico das cobranças da régua, por título e marco (issue #166). A restrição
+/// única garante o aviso uma única vez; falha (sem telefone ou canal) também fica registrada e não
+/// é repetida sozinha. O vínculo com a mensagem do WhatsApp não tem FK (outro módulo).
+model CobrancaEnvio {
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contaReceberId     String              @map("conta_receber_id") @db.Uuid
+  marco              MarcoCobranca
+  canal              String              @default("WHATSAPP")
+  status             CobrancaEnvioStatus
+  /// Código da falha (SEM_TELEFONE, SEM_CANAL); nulo quando enviado.
+  erro               String?
+  mensagemWhatsappId String?             @map("mensagem_whatsapp_id") @db.Uuid
+  /// Vencimento do título na hora do envio.
+  vencimento         DateTime            @db.Date
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  contaReceber ContaReceber @relation(fields: [contaReceberId], references: [id], onDelete: Restrict)
+
+  @@unique([contaReceberId, marco])
+  @@index([createdAt])
+  @@map("cobrancas_envios")
 }

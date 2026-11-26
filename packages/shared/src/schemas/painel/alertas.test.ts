@@ -32,11 +32,20 @@ describe('tiposVisiveis', () => {
     const financeiro = new Set(['financeiro.contas-pagar.ver', 'financeiro.contas-receber.ver']);
     // Aguardando aprovação é do aprovador (permissão própria), não de quem só vê a tela.
     expect(tiposVisiveis(financeiro, false)).toEqual(
-      TIPOS_ALERTA.filter((tipo) => tipo !== 'CONTAS_PAGAR_AGUARDANDO_APROVACAO'),
+      TIPOS_ALERTA.filter(
+        (tipo) => tipo !== 'CONTAS_PAGAR_AGUARDANDO_APROVACAO' && tipo !== 'COBRANCAS_REGUA',
+      ),
     );
     expect(
-      tiposVisiveis(new Set([...financeiro, 'financeiro.contas-pagar.aprovar']), false),
+      tiposVisiveis(
+        new Set([...financeiro, 'financeiro.contas-pagar.aprovar', 'financeiro.inadimplencia.ver']),
+        false,
+      ),
     ).toEqual([...TIPOS_ALERTA]);
+    // As cobranças da régua são de quem vê a tela de Inadimplência (issue #166).
+    expect(tiposVisiveis(new Set(['financeiro.inadimplencia.ver']), false)).toEqual([
+      'COBRANCAS_REGUA',
+    ]);
     expect(tiposVisiveis(new Set(['financeiro.contas-pagar.aprovar']), false)).toEqual([
       'CONTAS_PAGAR_AGUARDANDO_APROVACAO',
     ]);

@@ -6,9 +6,11 @@ import {
 import { BanknoteIcon, HandshakeIcon, XCircleIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { SePermitido } from '@/components/shared/SePermitido';
 import { formatarData, formatarDataHora } from '@/lib/formatar';
 import { formatarMoeda } from '@/lib/forms/mascaras';
 import { DetalheContaFinanceira, ItemDetalhe } from '../contas-financeiras/DetalheContaFinanceira';
+import { HistoricoCobrancasTitulo } from '../inadimplencia/HistoricoCobrancasTitulo';
 import { formatarCompetencia } from '../contas-pagar/regras-conta-pagar';
 import { contaComBaixaCancelavel, contaComSaldoEmAberto } from './regras-conta-receber';
 import { useBaixasContaReceber } from './use-contas-receber';
@@ -141,6 +143,11 @@ export function DetalheContaReceber({
             </table>
           </div>
         </div>
+      )}
+      {conta.profissionalSacadoId && (
+        <SePermitido permissao="financeiro.inadimplencia.ver">
+          <HistoricoCobrancasTitulo contaReceberId={conta.id} />
+        </SePermitido>
       )}
     </DetalheContaFinanceira>
   );
