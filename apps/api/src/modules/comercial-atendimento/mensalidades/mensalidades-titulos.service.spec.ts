@@ -73,6 +73,7 @@ describe('MensalidadesTitulosService.gerar', () => {
     expect(contasReceber.criarDeOrigemExterna).toHaveBeenCalledWith({
       descricao: 'Mensalidade - Plano a',
       pacienteId: PACIENTE,
+      competencia: '2026-11',
       valor: 150.5,
       dataVencimento: '2026-11-10',
       formaPagamentoId: FORMA,

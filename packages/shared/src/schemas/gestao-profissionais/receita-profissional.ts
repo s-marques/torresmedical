@@ -4,7 +4,7 @@ import { erroObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 import {
   contaReceberFiltroStatusSchema,
-  contaReceberInputSchema,
+  contaReceberCamposSchema,
   contaReceberSchema,
 } from '../financeiro/conta-receber';
 import { decimal, filtrosContaFinanceira } from '../financeiro/conta-financeira';
@@ -66,9 +66,11 @@ export type ExportReceitaProfissionaisQuery = z.infer<typeof exportReceitaProfis
  * `PATCH /api/gestao-profissionais/receita-profissionais/:id` (ação "Editar"): os campos do
  * formulário de Contas a Receber mais o Profissional, obrigatório (a receita é do profissional).
  */
-export const updateReceitaProfissionalSchema = contaReceberInputSchema.extend({
-  profissionalId: z.uuid({ error: erroObrigatorio('Profissional') }),
-});
+export const updateReceitaProfissionalSchema = contaReceberCamposSchema
+  .omit({ profissionalSacadoId: true, competencia: true })
+  .extend({
+    profissionalId: z.uuid({ error: erroObrigatorio('Profissional') }),
+  });
 export type UpdateReceitaProfissionalInput = z.output<typeof updateReceitaProfissionalSchema>;
 export type ReceitaProfissionalFormulario = z.input<typeof updateReceitaProfissionalSchema>;
 

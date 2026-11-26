@@ -20,6 +20,16 @@ function conta(parcial: Partial<ContaReceber>): ContaReceber {
     descricao: 'Mensalidade Outubro',
     pacienteId: null,
     pacienteNome: null,
+    profissionalSacadoId: null,
+    profissionalSacadoNome: null,
+    contratoSalaId: null,
+    contratoSalaNumero: null,
+    renegociadoDeId: null,
+    renegociadoDeNumero: null,
+    renegociadoParaNumeros: [],
+    competencia: null,
+    valorRecebido: '0.00',
+    saldo: '150.50',
     valor: '150.50',
     dataVencimento: '2026-12-10',
     formaPagamentoId: null,
@@ -50,6 +60,8 @@ const CONTAS = [
     contaBancariaId: CONTA_BANCARIA_ID,
     contaBancariaNome: 'Banco Teste',
     dataRecebimento: '2026-12-08',
+    valorRecebido: '150.50',
+    saldo: '0.00',
   }),
 ];
 
@@ -139,9 +151,19 @@ describe('Contas a Receber (/receber)', () => {
       'Valor',
       'Vencimento',
       'Status',
+      'Contrato',
+      'Saldo',
       'Ações',
     ]);
-    for (const nome of ['Todos', 'Pendente', 'Recebido', 'Vencido']) {
+    for (const nome of [
+      'Todos',
+      'A vencer',
+      'Vencido',
+      'Pago',
+      'Parcial',
+      'Renegociado',
+      'Cancelado',
+    ]) {
       expect(screen.getByRole('button', { name: nome })).toBeVisible();
     }
     expect(screen.getByPlaceholderText('Buscar contas a receber...')).toBeVisible();
@@ -155,14 +177,16 @@ describe('Contas a Receber (/receber)', () => {
     renderTela();
 
     const l1 = (await screen.findByText('Mensalidade Outubro')).closest('tr') as HTMLElement;
-    expect(within(l1).getByText('R$ 150,50')).toBeVisible();
+    // Valor e Saldo (conta sem baixa: o saldo é o valor inteiro).
+    expect(within(l1).getAllByText('R$ 150,50')).toHaveLength(2);
     expect(within(l1).getByText('10/12/2026')).toBeVisible();
-    expect(within(l1).getByText('Pendente')).toBeVisible();
-    expect(within(l1).getByText('-')).toBeVisible();
+    expect(within(l1).getByText('A vencer')).toBeVisible();
+    // Cliente e Contrato vazios.
+    expect(within(l1).getAllByText('-')).toHaveLength(2);
 
     const l2 = screen.getByText('Procedimento Estético').closest('tr') as HTMLElement;
     expect(within(l2).getByText('Maria Teste')).toBeVisible();
-    expect(within(l2).getByText('Recebido')).toBeVisible();
+    expect(within(l2).getByText('Pago')).toBeVisible();
   });
 
   it('chips de status filtram na API; Todos volta à lista completa', async () => {
@@ -218,7 +242,7 @@ describe('Contas a Receber (/receber)', () => {
     expect(within(modal).getByLabelText('Documento')).toBeVisible();
     expect(within(modal).getByLabelText('Total Parcelas')).toBeVisible();
     expect(within(modal).getByLabelText('Observações')).toBeVisible();
-    expect(within(modal).getByRole('combobox', { name: 'Status' })).toHaveTextContent('Pendente');
+    expect(within(modal).getByRole('combobox', { name: 'Status' })).toHaveTextContent('A vencer');
     expect(within(modal).getByRole('button', { name: 'Cancelar' })).toBeVisible();
     expect(within(modal).getByRole('button', { name: 'Cadastrar' })).toBeVisible();
   });
@@ -288,7 +312,7 @@ describe('Contas a Receber (/receber)', () => {
 
     const modal = await screen.findByRole('dialog', { name: 'Procedimento Estético' });
     expect(within(modal).getByText('Maria Teste')).toBeVisible();
-    expect(within(modal).getByText('Recebido')).toBeVisible();
+    expect(within(modal).getByText('Pago')).toBeVisible();
     const fechar = within(modal).getAllByRole('button', { name: 'Fechar' });
     await user.click(fechar[0] as HTMLElement);
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -328,7 +352,7 @@ describe('Contas a Receber (/receber)', () => {
     expect(within(modal).queryByLabelText('Data de Recebimento')).not.toBeInTheDocument();
 
     await user.click(within(modal).getByRole('combobox', { name: 'Status' }));
-    await user.click(await screen.findByRole('option', { name: 'Recebido' }));
+    await user.click(await screen.findByRole('option', { name: 'Pago' }));
     expect(await within(modal).findByLabelText('Data de Recebimento')).toBeVisible();
     expect(within(modal).getByRole('combobox', { name: 'Conta Bancária' })).toBeVisible();
   });

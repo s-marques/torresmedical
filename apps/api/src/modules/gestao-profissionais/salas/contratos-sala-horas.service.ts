@@ -134,6 +134,9 @@ export class ContratosSalaHorasService {
     const conta = await this.contasReceber.criarDeOrigemExterna({
       descricao: `Aluguel de sala - ${dto.salaNome} - ${dto.locatarioNome} (${descreverValorContrato(dto)})`,
       pacienteId: dto.locatarioTipo === 'CLIENTE' ? dto.locatarioId : null,
+      profissionalSacadoId: dto.locatarioTipo === 'PROFISSIONAL' ? dto.locatarioId : null,
+      contratoSalaId: dto.id,
+      competencia: mes,
       valor: valorTotal,
       dataVencimento: dataVencimentoDoMes(mes, dto.diaVencimento),
       formaPagamentoId: dto.formaPagamentoId,

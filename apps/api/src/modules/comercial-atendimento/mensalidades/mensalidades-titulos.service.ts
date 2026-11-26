@@ -62,6 +62,7 @@ export class MensalidadesTitulosService {
     const conta = await this.contasReceber.criarDeOrigemExterna({
       descricao: descricaoTituloMensalidade(mensalidade.descricao),
       pacienteId: mensalidade.pacienteId,
+      competencia,
       valor: Number(mensalidade.valor),
       dataVencimento: vencimentoTituloMensalidade(competencia, mensalidade.diaVencimento),
       formaPagamentoId: mensalidade.formaPagamentoId,

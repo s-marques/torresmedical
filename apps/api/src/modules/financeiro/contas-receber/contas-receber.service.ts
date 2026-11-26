@@ -1,9 +1,13 @@
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { Injectable } from '@nestjs/common';
 import {
+  CONTA_RECEBER_BAIXA_EXCEDE_SALDO,
+  CONTA_RECEBER_RENEGOCIACAO_SOMA,
   CONTA_RECEBER_ROTULO_STATUS_EXIBICAO,
   statusExibicaoContaReceber,
+  type BaixarContaReceberInput,
   type ContaReceber,
+  type ContaReceberBaixa,
   type ContaReceberExportColumn,
   type ContaReceberStatus,
   type CreateContaReceberInput,
@@ -12,6 +16,7 @@ import {
   type ListContasReceberQuery,
   type ListReceitaProfissionaisQuery,
   type ReceitaProfissional,
+  type RenegociarContaReceberInput,
   type ResumoReceitaProfissionais,
   type ResumoReceitaProfissionaisQuery,
   type UpdateContaReceberInput,
@@ -23,6 +28,7 @@ import { AuditService } from '../../../common/audit/audit.service';
 import type { FiltroProfissional } from '../../../common/auth/escopo-dados.service';
 import { CancelamentosService } from '../../../common/cancelamentos/cancelamentos.service';
 import { BusinessException } from '../../../common/errors/api.exception';
+import { ErrorCode } from '../../../common/errors/error-codes';
 import { ExportService, selectColumns } from '../../../common/export/export.service';
 import type { ExportFile } from '../../../common/export/export.types';
 import { paginate, type Page } from '../../../common/pagination/paginate';
@@ -50,31 +56,93 @@ const INCLUDE = {
   paciente: { select: { nome: true } },
   contaBancaria: { select: { nome: true } },
   profissional: { select: { nome: true } },
+  profissionalSacado: { select: { nome: true } },
+  contratoSala: { select: { numero: true } },
+  renegociadoDe: { select: { numero: true } },
+  renegociacoes: {
+    where: { deletedAt: null },
+    select: { numero: true },
+    orderBy: { numero: 'asc' },
+  },
+  baixas: { where: { deletedAt: null }, select: { valorRecebido: true } },
 } as const;
 
 type ContaReceberComRelacoes = Prisma.ContaReceberGetPayload<{ include: typeof INCLUDE }>;
+
+const INCLUDE_BAIXA = {
+  formaPagamento: { select: { nome: true } },
+  contaBancaria: { select: { nome: true } },
+} as const;
 
 /**
  * Entrada de criação. Conta bancária e data de recebimento são opcionais para quem cria fora da
  * tela (ex.: cobrança de contrato de sala).
  */
-type DadosContaReceber = Omit<CreateContaReceberInput, 'contaBancariaId' | 'dataRecebimento'> &
-  Partial<Pick<CreateContaReceberInput, 'contaBancariaId' | 'dataRecebimento'>> & {
+type DadosContaReceber = Omit<
+  CreateContaReceberInput,
+  'contaBancariaId' | 'dataRecebimento' | 'profissionalSacadoId' | 'competencia'
+> &
+  Partial<
+    Pick<
+      CreateContaReceberInput,
+      'contaBancariaId' | 'dataRecebimento' | 'profissionalSacadoId' | 'competencia'
+    >
+  > & {
     /** Só a tela Receita Profissionais informa (receita do profissional). */
     profissionalId?: string;
+    /** Contrato de sala que originou a cobrança (issue #165). */
+    contratoSalaId?: string;
   };
 
 const hoje = () => new Date().toISOString().slice(0, 10);
+const ZERO = new Prisma.Decimal(0);
+
+function somaBaixas(baixas: readonly { valorRecebido: Prisma.Decimal }[]): Prisma.Decimal {
+  return baixas.reduce((total, b) => total.add(b.valorRecebido), ZERO);
+}
+
+/** Competência `AAAA-MM` do vencimento (padrão quando o usuário não informa). */
+const competenciaDoVencimento = (dataVencimento: string) => dataVencimento.slice(0, 7);
 
 export function toContaReceber(conta: ContaReceberComRelacoes): ContaReceber {
+  const recebido = somaBaixas(conta.baixas);
+  const aberta = conta.status === 'PENDENTE' || conta.status === 'PARCIAL';
   return {
     ...camposContaFinanceira(conta),
     pacienteId: conta.pacienteId,
     pacienteNome: conta.paciente?.nome ?? null,
+    profissionalSacadoId: conta.profissionalSacadoId,
+    profissionalSacadoNome: conta.profissionalSacado?.nome ?? null,
+    contratoSalaId: conta.contratoSalaId,
+    contratoSalaNumero: conta.contratoSala?.numero ?? null,
+    renegociadoDeId: conta.renegociadoDeId,
+    renegociadoDeNumero: conta.renegociadoDe?.numero ?? null,
+    renegociadoParaNumeros: conta.renegociacoes.map((n) => n.numero),
+    competencia: conta.competencia,
     status: conta.status,
+    valorRecebido: recebido.toFixed(2),
+    saldo: (aberta ? Prisma.Decimal.max(conta.valor.sub(recebido), ZERO) : ZERO).toFixed(2),
     contaBancariaId: conta.contaBancariaId,
     contaBancariaNome: conta.contaBancaria?.nome ?? null,
     dataRecebimento: conta.dataRecebimento?.toISOString().slice(0, 10) ?? null,
+  };
+}
+
+export function toContaReceberBaixa(
+  baixa: Prisma.ContaReceberBaixaGetPayload<{ include: typeof INCLUDE_BAIXA }>,
+): ContaReceberBaixa {
+  return {
+    id: baixa.id,
+    contaReceberId: baixa.contaReceberId,
+    dataRecebimento: baixa.dataRecebimento.toISOString().slice(0, 10),
+    valorRecebido: baixa.valorRecebido.toString(),
+    formaPagamentoId: baixa.formaPagamentoId,
+    formaPagamentoNome: baixa.formaPagamento?.nome ?? null,
+    contaBancariaId: baixa.contaBancariaId,
+    contaBancariaNome: baixa.contaBancaria?.nome ?? null,
+    documento: baixa.documento,
+    observacoes: baixa.observacoes,
+    createdAt: baixa.createdAt.toISOString(),
   };
 }
 
@@ -91,7 +159,12 @@ export const CONTA_RECEBER_EXPORT_DEFINITIONS = colunasExportContaFinanceira<
   ContaReceber,
   ContaReceberExportColumn
 >(
-  { key: 'cliente', header: 'Cliente', value: (c) => c.pacienteNome ?? '', width: 3 },
+  {
+    key: 'cliente',
+    header: 'Cliente',
+    value: (c) => c.pacienteNome ?? c.profissionalSacadoNome ?? '',
+    width: 3,
+  },
   (c) => CONTA_RECEBER_ROTULO_STATUS_EXIBICAO[statusExibicaoContaReceber(c)],
 );
 
@@ -118,20 +191,33 @@ export class ContasReceberService {
   }
 
   async findById(id: string): Promise<ContaReceber> {
-    const conta = await this.txHost.tx.contaReceber.findFirst({
-      where: { id, ...DO_TORRES },
-      include: INCLUDE,
-    });
-    if (!conta) throw contaNaoEncontrada('Conta a receber não encontrada');
-    return toContaReceber(conta);
+    return toContaReceber(await this.buscarTorres(id));
   }
 
+  /**
+   * Cria a conta. Com status Pago (modal), grava a baixa total (data e conta bancária informadas;
+   * sem data, a de hoje). A competência padrão é o mês do vencimento.
+   */
   async create(input: DadosContaReceber): Promise<ContaReceber> {
+    const { contaBancariaId, dataRecebimento, status, ...resto } = input;
+    const pago = status === 'RECEBIDO';
+    if (pago && contaBancariaId) await this.contasBancarias.garantirExiste(contaBancariaId);
     const conta = await this.txHost.tx.contaReceber.create({
-      data: await this.dados(input),
+      data: {
+        ...resto,
+        status: pago ? 'PENDENTE' : status,
+        dataVencimento: new Date(resto.dataVencimento),
+        competencia: resto.competencia ?? competenciaDoVencimento(resto.dataVencimento),
+      },
       include: INCLUDE,
     });
-    return toContaReceber(conta);
+    if (!pago) return toContaReceber(conta);
+    return this.registrarBaixa(conta.id, {
+      dataRecebimento: dataRecebimento ?? hoje(),
+      valorRecebido: conta.valor,
+      formaPagamentoId: conta.formaPagamentoId,
+      contaBancariaId: contaBancariaId ?? null,
+    });
   }
 
   /**
@@ -158,14 +244,176 @@ export class ContasReceberService {
   }
 
   async update(id: string, input: UpdateContaReceberInput): Promise<ContaReceber> {
-    const atual = await this.findById(id);
-    return this.atualizar(id, await this.dados(input, atual.dataRecebimento));
+    const atual = await this.buscarTorres(id);
+    if (atual.status === 'RENEGOCIADO') {
+      throw new BusinessException(
+        ErrorCode.BUSINESS_RULE,
+        'Um título renegociado não pode ser alterado.',
+      );
+    }
+    const { contaBancariaId, dataRecebimento, status, ...resto } = input;
+    const recebido = somaBaixas(atual.baixas);
+    if (new Prisma.Decimal(resto.valor).lessThan(recebido)) {
+      throw new BusinessException(
+        ErrorCode.BUSINESS_RULE,
+        'O valor não pode ser menor que o já recebido.',
+      );
+    }
+    if (status === 'CANCELADO' && recebido.greaterThan(ZERO)) {
+      throw new BusinessException(
+        ErrorCode.BUSINESS_RULE,
+        'Cancele as baixas antes de cancelar a conta.',
+      );
+    }
+    if (status === 'RECEBIDO' && contaBancariaId) {
+      await this.contasBancarias.garantirExiste(contaBancariaId);
+    }
+    // Reabrir um título pago pelo modal desfaz as baixas (o histórico fica, com exclusão lógica).
+    if (status === 'PENDENTE' && atual.status === 'RECEBIDO') await this.excluirBaixas(id);
+
+    await this.txHost.tx.contaReceber.update({
+      where: { id },
+      data: {
+        ...resto,
+        dataVencimento: new Date(resto.dataVencimento),
+        competencia: resto.competencia ?? competenciaDoVencimento(resto.dataVencimento),
+        // Sair de Cancelado pelo modal reabre a conta; o status final vem das baixas.
+        status:
+          status === 'CANCELADO'
+            ? 'CANCELADO'
+            : atual.status === 'CANCELADO'
+              ? 'PENDENTE'
+              : atual.status,
+      },
+    });
+    if (status === 'CANCELADO') return this.findById(id);
+
+    const saldo = new Prisma.Decimal(resto.valor).sub(
+      status === 'PENDENTE' && atual.status === 'RECEBIDO' ? ZERO : recebido,
+    );
+    if (status === 'RECEBIDO' && saldo.greaterThan(ZERO)) {
+      return this.registrarBaixa(id, {
+        dataRecebimento: dataRecebimento ?? hoje(),
+        valorRecebido: saldo,
+        formaPagamentoId: resto.formaPagamentoId,
+        contaBancariaId: contaBancariaId ?? null,
+      });
+    }
+    if (status === 'RECEBIDO' && (contaBancariaId || dataRecebimento)) {
+      await this.corrigirUltimaBaixa(id, dataRecebimento, contaBancariaId);
+    }
+    return this.recalcular(id);
   }
 
-  /** Exclusão lógica: histórico financeiro. */
+  /** Exclusão lógica: histórico financeiro. Título renegociado fica, para o rastreio. */
   async remove(id: string): Promise<ContaReceber> {
-    await this.findById(id);
+    const atual = await this.buscarTorres(id);
+    if (atual.status === 'RENEGOCIADO') {
+      throw new BusinessException(
+        ErrorCode.BUSINESS_RULE,
+        'Um título renegociado não pode ser excluído.',
+      );
+    }
     return this.atualizar(id, { deletedAt: new Date() });
+  }
+
+  async listBaixas(id: string): Promise<ContaReceberBaixa[]> {
+    await this.buscarTorres(id);
+    const baixas = await this.txHost.tx.contaReceberBaixa.findMany({
+      where: { contaReceberId: id, deletedAt: null },
+      include: INCLUDE_BAIXA,
+      orderBy: { createdAt: 'desc' },
+    });
+    return baixas.map(toContaReceberBaixa);
+  }
+
+  /**
+   * Modal "Baixar Conta a Receber": recebimento total ou parcial, até o saldo em aberto. A conta
+   * vira Parcial enquanto houver saldo e Pago quando a soma das baixas atinge o valor.
+   */
+  async baixar(id: string, input: BaixarContaReceberInput): Promise<ContaReceber> {
+    const conta = await this.buscarTorres(id);
+    this.exigirAberta(conta, 'baixar');
+    const saldo = conta.valor.sub(somaBaixas(conta.baixas));
+    if (new Prisma.Decimal(input.valorRecebido).greaterThan(saldo)) {
+      throw new BusinessException(
+        CONTA_RECEBER_BAIXA_EXCEDE_SALDO,
+        'O valor recebido é maior que o saldo em aberto.',
+      );
+    }
+    if (input.formaPagamentoId) await this.garantirFormaPagamento(input.formaPagamentoId);
+    if (input.contaBancariaId) await this.contasBancarias.garantirExiste(input.contaBancariaId);
+    return this.registrarBaixa(id, input);
+  }
+
+  /** "Cancelar baixa": exclusão lógica da baixa mais recente e recálculo do status. */
+  async cancelarBaixa(id: string): Promise<ContaReceber> {
+    const conta = await this.buscarTorres(id);
+    if (conta.status === 'CANCELADO' || conta.status === 'RENEGOCIADO') {
+      throw new BusinessException(
+        ErrorCode.BUSINESS_RULE,
+        'Não é possível cancelar baixa de uma conta cancelada ou renegociada.',
+      );
+    }
+    const ultima = await this.ultimaBaixa(id);
+    if (!ultima) {
+      throw new BusinessException(
+        ErrorCode.BUSINESS_RULE,
+        'Esta conta não tem baixa para cancelar.',
+      );
+    }
+    await this.txHost.tx.contaReceberBaixa.update({
+      where: { id: ultima.id },
+      data: { deletedAt: new Date() },
+    });
+    return this.recalcular(id);
+  }
+
+  /**
+   * Renegociação: o saldo em aberto vira um ou mais títulos novos (a soma das parcelas fecha com o
+   * saldo) ligados ao original, que passa a Renegociado e continua rastreável. Só conta A vencer,
+   * Vencida ou Parcial pode ser renegociada. Os títulos novos são auditados aqui; o original, pelo
+   * `@Audit` do endpoint.
+   */
+  async renegociar(id: string, input: RenegociarContaReceberInput): Promise<ContaReceber> {
+    const conta = await this.buscarTorres(id);
+    this.exigirAberta(conta, 'renegociar');
+    const saldo = conta.valor.sub(somaBaixas(conta.baixas));
+    const soma = input.parcelas.reduce((total, p) => total.add(p.valor), ZERO);
+    if (!soma.equals(saldo)) {
+      throw new BusinessException(
+        CONTA_RECEBER_RENEGOCIACAO_SOMA,
+        'A soma das parcelas deve ser igual ao saldo em aberto.',
+      );
+    }
+    const total = input.parcelas.length;
+    for (const [indice, parcela] of input.parcelas.entries()) {
+      const nova = await this.txHost.tx.contaReceber.create({
+        data: {
+          descricao: `${conta.descricao} (renegociação ${indice + 1}/${total})`,
+          pacienteId: conta.pacienteId,
+          profissionalSacadoId: conta.profissionalSacadoId,
+          contratoSalaId: conta.contratoSalaId,
+          renegociadoDeId: conta.id,
+          competencia: conta.competencia,
+          valor: parcela.valor,
+          dataVencimento: new Date(parcela.dataVencimento),
+          formaPagamentoId: conta.formaPagamentoId,
+          planoContaId: conta.planoContaId,
+          documento: conta.documento,
+          observacoes: input.observacoes ?? conta.observacoes,
+        },
+        include: INCLUDE,
+      });
+      await this.audit.record({
+        action: 'CREATE',
+        entity: 'ContaReceber',
+        entityId: nova.id,
+        before: null,
+        after: toContaReceber(nova),
+      });
+    }
+    return this.atualizar(id, { status: 'RENEGOCIADO' });
   }
 
   async export(query: ExportContasReceberQuery): Promise<ExportFile> {
@@ -358,6 +606,115 @@ export class ContasReceberService {
     return contas.length;
   }
 
+  private async buscarTorres(id: string): Promise<ContaReceberComRelacoes> {
+    const conta = await this.txHost.tx.contaReceber.findFirst({
+      where: { id, ...DO_TORRES },
+      include: INCLUDE,
+    });
+    if (!conta) throw contaNaoEncontrada('Conta a receber não encontrada');
+    return conta;
+  }
+
+  /** Baixar e renegociar só valem para conta A vencer, Vencida ou Parcial. */
+  private exigirAberta(conta: ContaReceberComRelacoes, acao: 'baixar' | 'renegociar'): void {
+    const motivos: Partial<Record<ContaReceberStatus, string>> = {
+      RECEBIDO: 'já está paga',
+      CANCELADO: 'está cancelada',
+      RENEGOCIADO: 'já foi renegociada',
+    };
+    const motivo = motivos[conta.status];
+    if (motivo) {
+      throw new BusinessException(
+        ErrorCode.BUSINESS_RULE,
+        `Não é possível ${acao}: a conta ${motivo}.`,
+      );
+    }
+  }
+
+  private async garantirFormaPagamento(id: string): Promise<void> {
+    const existe = await this.txHost.tx.formaPagamento.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true },
+    });
+    if (!existe) throw contaNaoEncontrada('Forma de pagamento não encontrada');
+  }
+
+  private ultimaBaixa(id: string) {
+    return this.txHost.tx.contaReceberBaixa.findFirst({
+      where: { contaReceberId: id, deletedAt: null },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  private async registrarBaixa(
+    id: string,
+    baixa: {
+      dataRecebimento: string;
+      valorRecebido: number | Prisma.Decimal;
+      formaPagamentoId?: string | null;
+      contaBancariaId?: string | null;
+      documento?: string | null;
+      observacoes?: string | null;
+    },
+  ): Promise<ContaReceber> {
+    await this.txHost.tx.contaReceberBaixa.create({
+      data: {
+        contaReceberId: id,
+        dataRecebimento: new Date(baixa.dataRecebimento),
+        valorRecebido: baixa.valorRecebido,
+        formaPagamentoId: baixa.formaPagamentoId ?? null,
+        contaBancariaId: baixa.contaBancariaId ?? null,
+        documento: baixa.documento ?? null,
+        observacoes: baixa.observacoes ?? null,
+      },
+    });
+    return this.recalcular(id);
+  }
+
+  private async excluirBaixas(id: string): Promise<void> {
+    await this.txHost.tx.contaReceberBaixa.updateMany({
+      where: { contaReceberId: id, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+  }
+
+  private async corrigirUltimaBaixa(
+    id: string,
+    dataRecebimento: string | null | undefined,
+    contaBancariaId: string | null | undefined,
+  ): Promise<void> {
+    const ultima = await this.ultimaBaixa(id);
+    if (!ultima) return;
+    await this.txHost.tx.contaReceberBaixa.update({
+      where: { id: ultima.id },
+      data: {
+        ...(dataRecebimento && { dataRecebimento: new Date(dataRecebimento) }),
+        ...(contaBancariaId && { contaBancariaId }),
+      },
+    });
+  }
+
+  /**
+   * Recalcula o status pela soma das baixas (Pago, Parcial ou A vencer) e guarda na conta a data
+   * e a conta bancária da baixa mais recente. Conta cancelada ou renegociada não muda.
+   */
+  private async recalcular(id: string): Promise<ContaReceber> {
+    const conta = await this.buscarTorres(id);
+    if (conta.status === 'CANCELADO' || conta.status === 'RENEGOCIADO') {
+      return toContaReceber(conta);
+    }
+    const recebido = somaBaixas(conta.baixas);
+    let status: ContaReceberStatus = 'PENDENTE';
+    if (recebido.greaterThanOrEqualTo(conta.valor)) status = 'RECEBIDO';
+    else if (recebido.greaterThan(ZERO)) status = 'PARCIAL';
+    const ultima = await this.ultimaBaixa(id);
+    return this.atualizar(id, {
+      status,
+      contaBancariaId: ultima?.contaBancariaId ?? null,
+      dataRecebimento: ultima?.dataRecebimento ?? null,
+    });
+  }
+
   private async atualizar(
     id: string,
     data: Prisma.ContaReceberUncheckedUpdateInput,
@@ -406,11 +763,25 @@ export class ContasReceberService {
   private where(
     query: Pick<ListContasReceberQuery, 'search' | 'status' | 'vencimentoDe' | 'vencimentoAte'>,
   ): Prisma.ContaReceberWhereInput {
-    return {
-      ...whereContaFinanceira<ContaReceberStatus, Prisma.ContaReceberWhereInput>(query, [
-        { paciente: { nome: { contains: query.search, mode: 'insensitive' } } },
-      ]),
+    const { status } = query;
+    const base = {
+      ...whereContaFinanceira<ContaReceberStatus, Prisma.ContaReceberWhereInput>(
+        { ...query, status: undefined },
+        [
+          { paciente: { nome: { contains: query.search, mode: 'insensitive' } } },
+          { profissionalSacado: { nome: { contains: query.search, mode: 'insensitive' } } },
+        ],
+      ),
       ...DO_TORRES,
+    };
+    if (!status) return base;
+    if (status !== 'A_VENCER' && status !== 'VENCIDO') return { ...base, status };
+    // "A vencer" e "Vencido" dividem as contas Pendentes pelo dia de hoje.
+    const inicioDoDia = new Date(`${hoje()}T00:00:00.000Z`);
+    return {
+      ...base,
+      status: 'PENDENTE',
+      AND: [{ dataVencimento: status === 'VENCIDO' ? { lt: inicioDoDia } : { gte: inicioDoDia } }],
     };
   }
 }

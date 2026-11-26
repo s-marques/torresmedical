@@ -2031,6 +2031,76 @@
       "filtros": "Filters"
     }
   },
+  "contasReceber": {
+    "colunas": {
+      "contrato": "Contract",
+      "saldo": "Balance"
+    },
+    "campos": {
+      "competencia": "Competence month",
+      "competenciaAjuda": "Empty: the due date month.",
+      "profissional": "Professional (tenant)",
+      "profissionalPlaceholder": "Search professional...",
+      "sacadoAjuda": "For room contract charges. Use the client or the professional, not both."
+    },
+    "acoes": {
+      "baixar": "Record payment",
+      "renegociar": "Renegotiate",
+      "cancelarBaixa": "Cancel payment"
+    },
+    "status": {
+      "parcial": "Partial",
+      "renegociado": "Renegotiated"
+    },
+    "mensagens": {
+      "baixaRegistrada": "Payment recorded.",
+      "baixaCancelada": "Payment cancelled.",
+      "renegociada": "Receivable renegotiated."
+    },
+    "baixa": {
+      "titulo": "Record Receivable Payment",
+      "descricao": "Record a payment received for {{descricao}}.",
+      "saldoEmAberto": "Open balance: {{saldo}}",
+      "confirmar": "Confirm Payment",
+      "dataRecebimento": "Payment Date",
+      "valorRecebido": "Amount Received",
+      "valorAjuda": "Less than the balance: the receivable becomes Partial. Equal: Paid.",
+      "formaPagamento": "Payment Method",
+      "contaBancaria": "Bank Account",
+      "selecione": "Select",
+      "documento": "Document / Receipt No.",
+      "observacoes": "Notes"
+    },
+    "renegociar": {
+      "titulo": "Renegotiate Receivable",
+      "descricao": "The balance of {{descricao}} will be rebuilt into new receivables.",
+      "confirmar": "Renegotiate",
+      "parcela": "Installment {{numero}}",
+      "valor": "Amount",
+      "vencimento": "Due date",
+      "adicionarParcela": "Add installment",
+      "removerParcela": "Remove installment {{numero}}",
+      "somaConfere": "The installments match the open balance.",
+      "somaFaltam": "{{diferenca}} missing to match the open balance.",
+      "somaSobram": "{{diferenca}} over the open balance.",
+      "observacoes": "Notes"
+    },
+    "detalhe": {
+      "profissional": "Professional (tenant)",
+      "contrato": "Contract",
+      "competencia": "Competence month",
+      "valorRecebido": "Amount Received",
+      "saldo": "Open Balance",
+      "renegociadoDe": "Renegotiated from",
+      "renegociadoPara": "Renegotiated into",
+      "baixas": "Payments",
+      "baixaData": "Date",
+      "baixaValor": "Amount Received",
+      "baixaForma": "Payment Method",
+      "baixaConta": "Bank Account",
+      "baixaRegistrada": "Recorded on"
+    }
+  },
   "contasPagar": {
     "competencia": "Accounting period",
     "centroCusto": "Cost Center",

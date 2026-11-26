@@ -3,9 +3,12 @@ import {
   type ContaReceber,
   type ContaReceberFormulario,
 } from '@torres/shared';
-import { useWatch } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { FormField } from '@/components/shared/form/FormField';
 import { useFormulario } from '@/components/shared/form/use-formulario';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useOpcoesContasBancarias } from '../contas-bancarias/use-contas-bancarias';
 import { ModalContaFinanceira } from '../contas-financeiras/ModalContaFinanceira';
 import { valoresIniciaisContaFinanceira } from '../contas-financeiras/valores-iniciais';
@@ -16,7 +19,11 @@ function valoresIniciais(conta?: ContaReceber): ContaReceberFormulario {
   return {
     ...valoresIniciaisContaFinanceira(conta),
     pacienteId: conta?.pacienteId ?? null,
-    status: conta?.status ?? 'PENDENTE',
+    profissionalSacadoId: conta?.profissionalSacadoId ?? null,
+    competencia: conta?.competencia ?? '',
+    // Parcial é calculado pelas baixas: no modal a conta aparece como A vencer e a API recalcula.
+    status:
+      conta?.status === 'RECEBIDO' || conta?.status === 'CANCELADO' ? conta.status : 'PENDENTE',
     contaBancariaId: conta?.contaBancariaId ?? null,
     dataRecebimento: conta?.dataRecebimento ?? '',
   };
@@ -49,6 +56,33 @@ export function CamposRecebimento() {
   );
 }
 
+/** Competência (mês/ano) da conta, base do relatório de provisão. Vazia: o mês do vencimento. */
+function CampoCompetencia() {
+  const { t } = useTranslation();
+  const { control } = useFormContext<ContaReceberFormulario>();
+  return (
+    <Controller
+      control={control}
+      name="competencia"
+      render={({ field }) => (
+        <div className="grid content-start gap-2">
+          <Label htmlFor="competencia">{t('contasReceber.campos.competencia')}</Label>
+          <Input
+            id="competencia"
+            type="month"
+            value={field.value ?? ''}
+            onChange={(e) => field.onChange(e.target.value)}
+            onBlur={field.onBlur}
+          />
+          <p className="text-xs text-muted-foreground">
+            {t('contasReceber.campos.competenciaAjuda')}
+          </p>
+        </div>
+      )}
+    />
+  );
+}
+
 export interface ModalContaReceberProps {
   /** Sem conta: "Nova Conta a Receber". Com conta: "Editar Conta a Receber". */
   conta?: ContaReceber;
@@ -57,6 +91,7 @@ export interface ModalContaReceberProps {
 
 /** Modal "Nova Conta a Receber" e "Editar Conta a Receber" (`/receber`). */
 export function ModalContaReceber({ conta, onFechar }: Readonly<ModalContaReceberProps>) {
+  const { t } = useTranslation();
   const criar = useCriarContaReceber();
   const editar = useEditarContaReceber(conta?.id ?? '');
   const form = useFormulario(contaReceberInputSchema, { defaultValues: valoresIniciais(conta) });
@@ -72,16 +107,30 @@ export function ModalContaReceber({ conta, onFechar }: Readonly<ModalContaRecebe
       finalidade="receber"
       opcoesStatus={OPCOES_STATUS}
       pessoa={
-        <FormField
-          name="pacienteId"
-          label="Cliente"
-          tipo="entidade"
-          entidade="pacientes"
-          placeholder="Buscar cliente (nome, telefone)..."
-          className="sm:col-span-2"
-        />
+        <>
+          <FormField
+            name="pacienteId"
+            label="Cliente"
+            tipo="entidade"
+            entidade="pacientes"
+            placeholder="Buscar cliente (nome, telefone)..."
+          />
+          <FormField
+            name="profissionalSacadoId"
+            label={t('contasReceber.campos.profissional')}
+            tipo="entidade"
+            entidade="profissionais"
+            placeholder={t('contasReceber.campos.profissionalPlaceholder')}
+            descricao={t('contasReceber.campos.sacadoAjuda')}
+          />
+        </>
       }
-      aposStatus={<CamposRecebimento />}
+      aposStatus={
+        <>
+          <CamposRecebimento />
+          <CampoCompetencia />
+        </>
+      }
     />
   );
 }

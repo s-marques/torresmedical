@@ -138,7 +138,7 @@ export default function ReceitaProfissionaisPage() {
         rotulo: t('receitaProfissionais.colunas.status'),
         opcoes: (['PENDENTE', 'RECEBIDO', 'VENCIDO'] as const).map((valor) => ({
           valor,
-          rotulo: rotulosStatus[valor],
+          rotulo: rotulosStatus[valor === 'PENDENTE' ? 'A_VENCER' : valor],
         })),
       },
       {

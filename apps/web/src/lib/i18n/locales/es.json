@@ -2031,6 +2031,76 @@
       "filtros": "Filtros"
     }
   },
+  "contasReceber": {
+    "colunas": {
+      "contrato": "Contrato",
+      "saldo": "Saldo"
+    },
+    "campos": {
+      "competencia": "Competencia",
+      "competenciaAjuda": "Vacía: el mes del vencimiento.",
+      "profissional": "Profesional (arrendatario)",
+      "profissionalPlaceholder": "Buscar profesional...",
+      "sacadoAjuda": "Para cobros de contrato de sala. Use el cliente o el profesional, no los dos."
+    },
+    "acoes": {
+      "baixar": "Registrar cobro",
+      "renegociar": "Renegociar",
+      "cancelarBaixa": "Cancelar cobro"
+    },
+    "status": {
+      "parcial": "Parcial",
+      "renegociado": "Renegociado"
+    },
+    "mensagens": {
+      "baixaRegistrada": "Cobro registrado.",
+      "baixaCancelada": "Cobro cancelado.",
+      "renegociada": "Cuenta renegociada."
+    },
+    "baixa": {
+      "titulo": "Registrar Cobro de Cuenta por Cobrar",
+      "descricao": "Registrar el cobro de {{descricao}}.",
+      "saldoEmAberto": "Saldo abierto: {{saldo}}",
+      "confirmar": "Confirmar Cobro",
+      "dataRecebimento": "Fecha de Cobro",
+      "valorRecebido": "Valor Cobrado",
+      "valorAjuda": "Menor que el saldo: la cuenta queda Parcial. Igual: Pagada.",
+      "formaPagamento": "Forma de Pago",
+      "contaBancaria": "Cuenta Bancaria",
+      "selecione": "Seleccione",
+      "documento": "Documento / Nº Comprobante",
+      "observacoes": "Observaciones"
+    },
+    "renegociar": {
+      "titulo": "Renegociar Cuenta por Cobrar",
+      "descricao": "El saldo de {{descricao}} se rehará en nuevos títulos.",
+      "confirmar": "Renegociar",
+      "parcela": "Cuota {{numero}}",
+      "valor": "Valor",
+      "vencimento": "Vencimiento",
+      "adicionarParcela": "Agregar cuota",
+      "removerParcela": "Quitar cuota {{numero}}",
+      "somaConfere": "Las cuotas cuadran con el saldo abierto.",
+      "somaFaltam": "Faltan {{diferenca}} para cuadrar el saldo abierto.",
+      "somaSobram": "Sobran {{diferenca}} respecto al saldo abierto.",
+      "observacoes": "Observaciones"
+    },
+    "detalhe": {
+      "profissional": "Profesional (arrendatario)",
+      "contrato": "Contrato",
+      "competencia": "Competencia",
+      "valorRecebido": "Valor Cobrado",
+      "saldo": "Saldo Abierto",
+      "renegociadoDe": "Renegociado del título",
+      "renegociadoPara": "Renegociado en los títulos",
+      "baixas": "Cobros",
+      "baixaData": "Fecha",
+      "baixaValor": "Valor Cobrado",
+      "baixaForma": "Forma de Pago",
+      "baixaConta": "Cuenta Bancaria",
+      "baixaRegistrada": "Registrado el"
+    }
+  },
   "contasPagar": {
     "competencia": "Competencia",
     "centroCusto": "Centro de Costo",
