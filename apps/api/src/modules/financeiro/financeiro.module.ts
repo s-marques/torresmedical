@@ -2,6 +2,7 @@ import { FinanceiroAlertasRegras } from './alertas/financeiro-alertas.regras';
 import { ContasReceberLoteFonte } from './contas-receber/contas-receber-lote.fonte';
 import { ContasPagarLoteFonte } from './contas-pagar/contas-pagar-lote.fonte';
 import { forwardRef, Module } from '@nestjs/common';
+import { criarRelatoriosController } from '../../common/relatorios/relatorios.controller';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
 import { ComercialAtendimentoModule } from '../comercial-atendimento/comercial-atendimento.module';
 import { ComprasEstoqueModule } from '../compras-estoque/compras-estoque.module';
@@ -34,6 +35,7 @@ import { FormasPagamentoController } from './formas-pagamento/formas-pagamento.c
 import { FormasPagamentoService } from './formas-pagamento/formas-pagamento.service';
 import { PlanoContasController } from './plano-contas/plano-contas.controller';
 import { PlanoContasService } from './plano-contas/plano-contas.service';
+import { RelatoriosFinanceiro } from './relatorios/relatorios-financeiro';
 
 /** Módulo FINANCEIRO do inventário. Dono das entidades Forma de Pagamento e Bandeira. */
 @Module({
@@ -58,6 +60,7 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
     InadimplenciaController,
     criarLookupController('formas-pagamento', FormasPagamentoService),
     criarLookupController('centros-custo', CentrosCustoService),
+    criarRelatoriosController('financeiro.relatorios', RelatoriosFinanceiro),
   ],
   providers: [
     ContasReceberLoteFonte,
@@ -78,6 +81,7 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
     ReguaCobrancaService,
     InadimplenciaAgendador,
     FinanceiroAlertasRegras,
+    RelatoriosFinanceiro,
   ],
   exports: [
     // Regras de alerta de contas a pagar e a receber: central de notificações (#160).

@@ -1259,6 +1259,13 @@
     "modulo": "Compras / Inventario",
     "relatorios": "Informes"
   },
+  "relatoriosFinanceiro": {
+    "titulo": "Informes Financieros",
+    "descricao": "Morosidad, facturación, cuentas por pagar y por cobrar, estado de resultados, extractos y gastos por centro de costo.",
+    "painel": "Panel",
+    "modulo": "Finanzas",
+    "relatorios": "Informes"
+  },
   "relatoriosGestao": {
     "titulo": "Informes de Gestión",
     "descricao": "Registro de acceso, ticket promedio, ocupación de sala y LTV.",

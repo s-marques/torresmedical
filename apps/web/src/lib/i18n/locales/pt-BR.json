@@ -1149,6 +1149,13 @@
     "modulo": "Compras / Estoque",
     "relatorios": "Relatórios"
   },
+  "relatoriosFinanceiro": {
+    "titulo": "Relatórios Financeiros",
+    "descricao": "Inadimplência, faturamento, contas a pagar e a receber, DRE, extratos e despesas por centro de custo.",
+    "painel": "Painel",
+    "modulo": "Financeiro",
+    "relatorios": "Relatórios"
+  },
   "relatoriosGestao": {
     "titulo": "Relatórios de Gestão",
     "descricao": "Log de acesso, ticket médio, ocupação de sala e LTV.",
