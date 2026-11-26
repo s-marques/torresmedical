@@ -2,6 +2,7 @@ import type { TelaId } from '@torres/shared';
 import {
   ArrowRightLeft,
   BadgeCheck,
+  BellRing,
   BookOpenText,
   Bot,
   Boxes,
@@ -120,6 +121,7 @@ export const ICONES_TELA: Record<TelaId, LucideIcon> = {
   'financeiro.plano-contas': ListTree,
   'financeiro.relatorios': ChartColumn,
   'financeiro.indicadores': Gauge,
+  'financeiro.inadimplencia': BellRing,
 
   'patrimonio-pessoal.patrimonio': Landmark,
   'patrimonio-pessoal.imoveis': Building2,

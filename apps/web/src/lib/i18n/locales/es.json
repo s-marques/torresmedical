@@ -195,7 +195,9 @@
       "CONTAS_PAGAR_VENCIDAS_one": "{{count}} cuenta por pagar vencida",
       "CONTAS_PAGAR_VENCIDAS_other": "{{count}} cuentas por pagar vencidas",
       "RECEBIVEIS_VENCIDOS_one": "{{count}} cuenta por cobrar vencida",
-      "RECEBIVEIS_VENCIDOS_other": "{{count}} cuentas por cobrar vencidas"
+      "RECEBIVEIS_VENCIDOS_other": "{{count}} cuentas por cobrar vencidas",
+      "COBRANCAS_REGUA_one": "{{count}} cobro del calendario hoy",
+      "COBRANCAS_REGUA_other": "{{count}} cobros del calendario hoy"
     }
   },
   "temas": {
@@ -325,7 +327,8 @@
         "formas-pagamento": "Formas de Pago",
         "plano-contas": "Plan de Cuentas",
         "relatorios": "Informes",
-        "indicadores": "Indicadores"
+        "indicadores": "Indicadores",
+        "inadimplencia": "Morosidad"
       },
       "patrimonio-pessoal": {
         "patrimonio": "Patrimonio",
@@ -2443,6 +2446,96 @@
       "criado": "Motivo creado.",
       "atualizado": "Motivo actualizado.",
       "excluido": "Motivo eliminado."
+    }
+  },
+  "inadimplencia": {
+    "titulo": "Morosidad",
+    "descricao": "Siga lo que está vencido y el calendario de cobro de los profesionales.",
+    "atualizar": "Actualizar",
+    "erroCarregar": "No se pudo cargar el panel de morosidad.",
+    "abas": {
+      "painel": "Panel",
+      "regua": "Calendario de cobro",
+      "historico": "Historial de cobros"
+    },
+    "indicadores": {
+      "titulo": "Indicadores del día",
+      "aReceberHoje": "A cobrar hoy",
+      "vencidos": "Vencidos",
+      "contratos": "Contratos morosos",
+      "profissionais": "Profesionales morosos",
+      "titulos_one": "{{count}} título",
+      "titulos_other": "{{count}} títulos"
+    },
+    "aging": {
+      "titulo": "Antigüedad de los vencidos",
+      "todas": "Todos los tramos",
+      "ATE_30": "0 a 30 días",
+      "DE_31_A_60": "31 a 60 días",
+      "ACIMA_60": "Más de 60 días"
+    },
+    "porProfissional": {
+      "titulo": "Profesionales morosos",
+      "vazio": "Ningún profesional moroso.",
+      "resumo": "{{valor}} en {{titulos}} título(s), con atraso de hasta {{dias}} día(s)"
+    },
+    "titulos": {
+      "titulo": "Títulos vencidos",
+      "vazio": "Ningún título vencido.",
+      "dias_one": "{{count}} día",
+      "dias_other": "{{count}} días",
+      "colunas": {
+        "descricao": "Descripción",
+        "sacado": "Deudor",
+        "contrato": "Contrato",
+        "vencimento": "Vencimiento",
+        "atraso": "Atraso",
+        "saldo": "Saldo pendiente",
+        "cobrancas": "Cobros enviados"
+      }
+    },
+    "regua": {
+      "descricao": "El calendario avisa al profesional por WhatsApp en los cuatro hitos, una sola vez por título. Los textos de abajo son sugerencias por confirmar con el cliente.",
+      "erroCarregar": "No se pudo cargar el calendario de cobro.",
+      "sucesso": "Calendario de cobro actualizado.",
+      "editarMensagem": "Editar mensaje",
+      "ativo": "Hito activo",
+      "whatsapp": "Enviar por WhatsApp",
+      "alertaInterno": "Alerta interna",
+      "marcos": {
+        "ANTES_3_DIAS": "3 días antes del vencimiento",
+        "NO_VENCIMENTO": "En el vencimiento",
+        "DEPOIS_3_DIAS": "3 días después del vencimiento",
+        "DEPOIS_7_DIAS": "7 días después del vencimiento"
+      },
+      "modal": {
+        "titulo": "Mensaje: {{marco}}",
+        "mensagem": "Mensaje",
+        "variaveis": "Variables disponibles: {{lista}}.",
+        "restaurar": "Restaurar texto predeterminado"
+      }
+    },
+    "historico": {
+      "vazio": "Aún no se envió ningún cobro.",
+      "todosMarcos": "Todos los hitos",
+      "doTitulo": "Cobros enviados",
+      "status": {
+        "ENVIADO": "Enviado",
+        "FALHA": "Fallo"
+      },
+      "erros": {
+        "SEM_TELEFONE": "Profesional sin teléfono",
+        "SEM_CANAL": "Sin canal de WhatsApp conectado"
+      },
+      "colunas": {
+        "titulo": "Título",
+        "profissional": "Profesional",
+        "marco": "Hito",
+        "situacao": "Situación",
+        "motivo": "Motivo del fallo",
+        "vencimento": "Vencimiento",
+        "enviadoEm": "Registrado el"
+      }
     }
   }
 }

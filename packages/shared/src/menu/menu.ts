@@ -76,6 +76,7 @@ const DEFINICAO = {
       planoContas: ['Plano de Contas', '/plano-contas'],
       relatorios: ['Relatórios', '/financeiro/relatorios'],
       indicadores: ['Indicadores', '/financeiro/indicadores'],
+      inadimplencia: ['Inadimplência', '/financeiro/inadimplencia'],
     },
   },
   patrimonioPessoal: {
@@ -182,6 +183,8 @@ export const TELAS_FORA_DO_INVENTARIO: readonly TelaId[] = [
   'configuracoes-gestao.auditoria',
   /** Cadastro dos motivos de cancelamento por tipo (issue #162, R §35). */
   'configuracoes-gestao.motivos-cancelamento',
+  /** Painel de inadimplência e régua de cobrança (issue #166, R §18). */
+  'financeiro.inadimplencia',
 ];
 
 /** Ação de permissão que libera a tela no menu. */

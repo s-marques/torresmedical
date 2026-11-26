@@ -93,7 +93,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     forwardRef(() => ConsultorioAssistencialModule),
     forwardRef(() => ComprasEstoqueModule),
     forwardRef(() => ConfiguracoesGestaoModule),
-    FinanceiroModule,
+    forwardRef(() => FinanceiroModule),
   ],
   controllers: [
     AgendaController,
@@ -194,6 +194,8 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     NegociosHistoricoService,
     // Leads (negócios em aberto) na busca global do ⌘K (#159).
     NegociosService,
+    // Mensagens automáticas por WhatsApp: régua de cobrança do Financeiro (#166).
+    MensagensSaidaWhatsappService,
   ],
 })
 export class ComercialAtendimentoModule {}

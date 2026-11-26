@@ -3,6 +3,7 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import type { AlertaRegra, FonteAlertas } from '../../../common/alertas/alerta-regra';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import { DO_TORRES, NAO_EXCLUIDAS } from '../conta-financeira';
+import { ReguaCobrancaService } from '../inadimplencia/regua-cobranca.service';
 
 function dia(valor: string): Date {
   return new Date(`${valor}T00:00:00.000Z`);
@@ -15,7 +16,10 @@ function dia(valor: string): Date {
  */
 @Injectable()
 export class FinanceiroAlertasRegras implements FonteAlertas {
-  constructor(private readonly txHost: TransactionHost<PrismaAdapter>) {}
+  constructor(
+    private readonly txHost: TransactionHost<PrismaAdapter>,
+    private readonly regua: ReguaCobrancaService,
+  ) {}
 
   regras(): readonly AlertaRegra[] {
     return [
@@ -52,6 +56,8 @@ export class FinanceiroAlertasRegras implements FonteAlertas {
             },
           }),
       },
+      // Cobranças da régua do dia (issue #166): títulos de profissionais nos marcos ativos.
+      { tipo: 'COBRANCAS_REGUA', contar: (hoje) => this.regua.contarParaAlerta(hoje) },
     ];
   }
 }

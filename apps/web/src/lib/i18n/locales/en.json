@@ -195,7 +195,9 @@
       "CONTAS_PAGAR_VENCIDAS_one": "{{count}} overdue bill",
       "CONTAS_PAGAR_VENCIDAS_other": "{{count}} overdue bills",
       "RECEBIVEIS_VENCIDOS_one": "{{count}} overdue receivable",
-      "RECEBIVEIS_VENCIDOS_other": "{{count}} overdue receivables"
+      "RECEBIVEIS_VENCIDOS_other": "{{count}} overdue receivables",
+      "COBRANCAS_REGUA_one": "{{count}} collection reminder today",
+      "COBRANCAS_REGUA_other": "{{count}} collection reminders today"
     }
   },
   "temas": {
@@ -325,7 +327,8 @@
         "formas-pagamento": "Payment Methods",
         "plano-contas": "Chart of Accounts",
         "relatorios": "Reports",
-        "indicadores": "Indicators"
+        "indicadores": "Indicators",
+        "inadimplencia": "Delinquency"
       },
       "patrimonio-pessoal": {
         "patrimonio": "Assets",
@@ -2443,6 +2446,96 @@
       "criado": "Reason created.",
       "atualizado": "Reason updated.",
       "excluido": "Reason deleted."
+    }
+  },
+  "inadimplencia": {
+    "titulo": "Delinquency",
+    "descricao": "Track what is overdue and the collection schedule for professionals.",
+    "atualizar": "Refresh",
+    "erroCarregar": "Could not load the delinquency panel.",
+    "abas": {
+      "painel": "Panel",
+      "regua": "Collection schedule",
+      "historico": "Collection history"
+    },
+    "indicadores": {
+      "titulo": "Indicators of the day",
+      "aReceberHoje": "Receivable today",
+      "vencidos": "Overdue",
+      "contratos": "Delinquent contracts",
+      "profissionais": "Delinquent professionals",
+      "titulos_one": "{{count}} invoice",
+      "titulos_other": "{{count}} invoices"
+    },
+    "aging": {
+      "titulo": "Overdue aging",
+      "todas": "All ranges",
+      "ATE_30": "0 to 30 days",
+      "DE_31_A_60": "31 to 60 days",
+      "ACIMA_60": "Over 60 days"
+    },
+    "porProfissional": {
+      "titulo": "Delinquent professionals",
+      "vazio": "No delinquent professionals.",
+      "resumo": "{{valor}} in {{titulos}} invoice(s), up to {{dias}} day(s) late"
+    },
+    "titulos": {
+      "titulo": "Overdue invoices",
+      "vazio": "No overdue invoices.",
+      "dias_one": "{{count}} day",
+      "dias_other": "{{count}} days",
+      "colunas": {
+        "descricao": "Description",
+        "sacado": "Debtor",
+        "contrato": "Contract",
+        "vencimento": "Due date",
+        "atraso": "Days late",
+        "saldo": "Open balance",
+        "cobrancas": "Reminders sent"
+      }
+    },
+    "regua": {
+      "descricao": "The schedule notifies the professional by WhatsApp at the four milestones, once per invoice. The texts below are suggestions to be confirmed with the client.",
+      "erroCarregar": "Could not load the collection schedule.",
+      "sucesso": "Collection schedule updated.",
+      "editarMensagem": "Edit message",
+      "ativo": "Milestone active",
+      "whatsapp": "Send by WhatsApp",
+      "alertaInterno": "Internal alert",
+      "marcos": {
+        "ANTES_3_DIAS": "3 days before the due date",
+        "NO_VENCIMENTO": "On the due date",
+        "DEPOIS_3_DIAS": "3 days after the due date",
+        "DEPOIS_7_DIAS": "7 days after the due date"
+      },
+      "modal": {
+        "titulo": "Message: {{marco}}",
+        "mensagem": "Message",
+        "variaveis": "Available variables: {{lista}}.",
+        "restaurar": "Restore default text"
+      }
+    },
+    "historico": {
+      "vazio": "No reminders sent yet.",
+      "todosMarcos": "All milestones",
+      "doTitulo": "Reminders sent",
+      "status": {
+        "ENVIADO": "Sent",
+        "FALHA": "Failed"
+      },
+      "erros": {
+        "SEM_TELEFONE": "Professional has no phone",
+        "SEM_CANAL": "No connected WhatsApp channel"
+      },
+      "colunas": {
+        "titulo": "Invoice",
+        "profissional": "Professional",
+        "marco": "Milestone",
+        "situacao": "Status",
+        "motivo": "Failure reason",
+        "vencimento": "Due date",
+        "enviadoEm": "Recorded at"
+      }
     }
   }
 }

@@ -577,6 +577,39 @@ fora do inventário, em Configurações / Gestão. A gravação continua na seç
 - **Escopo (#153):** a tela é da administração (escopo `TODOS`), então não há filtro por
   profissional. O filtro de usuário usa o lookup `usuarios`.
 
+## Inadimplência: painel e régua de cobrança (`/financeiro/inadimplencia`)
+
+Issue #166 (R §18 e §44). Tela fora do inventário, em Financeiro, com três abas: **Painel**, **Régua de
+cobrança** e **Histórico de cobranças**. Perfil restrito a profissionais (#153) recebe 403: é a visão da
+administração.
+
+- **Vencido e saldo:** título de Contas a Receber do Torres (sem a receita dos profissionais) com status
+  Pendente ou Parcial e vencimento antes de hoje (dia no fuso da clínica). O valor é o **saldo em aberto**
+  (valor menos as baixas parciais, #165); Pago, Cancelado, Renegociado e excluído ficam fora. "A receber
+  hoje" é o saldo dos que vencem hoje.
+- **Painel** (`GET /api/financeiro/inadimplencia/painel`): a receber hoje, vencidos (valor e quantidade),
+  aging em 0–30, 31–60 e mais de 60 dias, contratos de sala com título vencido e profissionais
+  inadimplentes (do maior saldo para o menor). `GET .../titulos` lista os mesmos títulos (filtros `faixa` e
+  `profissionalId`): a soma da lista fecha com o painel.
+- **Régua** (`GET .../regua`, `PATCH .../regua/:id`): quatro marcos fixos, **3 dias antes**, **no
+  vencimento**, **3 dias depois** e **7 dias depois**, criados pela migration. Cada um liga/desliga, escolhe
+  WhatsApp e alerta interno e tem o texto editável com as variáveis `{nome}`, `{valor}`, `{vencimento}` e
+  `{titulo}`. Os textos iniciais são **sugestões a confirmar com o cliente**.
+- **Quem é cobrado (decisão do dev):** só títulos com **profissional sacado** (contratos de sala). Paciente
+  fica fora. Canal: só WhatsApp (o e-mail não existe no sistema e fica para outra issue), usando o canal
+  conectado do profissional ou da clínica, pela mesma fila das mensagens automáticas.
+- **Rodada:** `InadimplenciaAgendador`, toda hora cheia das 8h às 18h (fuso de São Paulo; desliga com
+  `CAMPANHAS_AGENDADOR=off`). A restrição única `(conta_receber_id, marco)` em `cobrancas_envios` garante o
+  aviso **uma única vez** por título e marco: as rodadas seguintes e um reinício da API não repetem. Falta de
+  telefone (`SEM_TELEFONE`) ou de canal (`SEM_CANAL`) fica como **Falha** no histórico e não é repetida
+  sozinha. O dia perdido (API fora o dia todo) não é recuperado.
+- **Alerta interno:** o tipo `COBRANCAS_REGUA` da central de notificações (#160) conta os títulos que estão
+  hoje num marco ativo com "Alerta interno" ligado.
+- **Histórico:** aba própria (filtros por marco e situação) e a seção "Cobranças enviadas" no detalhe da
+  conta a receber (com a permissão `financeiro.inadimplencia.ver`). Cada envio é auditado
+  (`CobrancaEnvio`, usuário `system`, sem texto nem telefone) e a edição da régua também (`ReguaCobranca`).
+- **Permissões:** `financeiro.inadimplencia.ver` (painel, histórico e régua) e `.editar` (alterar a régua).
+
 ## Backup e restauração (`common/backup`)
 
 Requisito do cliente (R §40, issue #157): backup automático, redundância fora do servidor, registro

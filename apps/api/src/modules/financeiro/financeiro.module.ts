@@ -3,6 +3,7 @@ import { ContasReceberLoteFonte } from './contas-receber/contas-receber-lote.fon
 import { ContasPagarLoteFonte } from './contas-pagar/contas-pagar-lote.fonte';
 import { forwardRef, Module } from '@nestjs/common';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
+import { ComercialAtendimentoModule } from '../comercial-atendimento/comercial-atendimento.module';
 import { ComprasEstoqueModule } from '../compras-estoque/compras-estoque.module';
 import { ConfiguracoesGestaoModule } from '../configuracoes-gestao/configuracoes-gestao.module';
 import { GestaoProfissionaisModule } from '../gestao-profissionais/gestao-profissionais.module';
@@ -23,6 +24,10 @@ import { ContasPagarDuplicidadeService } from './contas-pagar/contas-pagar-dupli
 import { ContasPagarService } from './contas-pagar/contas-pagar.service';
 import { ContasReceberController } from './contas-receber/contas-receber.controller';
 import { ContasReceberService } from './contas-receber/contas-receber.service';
+import { InadimplenciaAgendador } from './inadimplencia/inadimplencia.agendador';
+import { InadimplenciaController } from './inadimplencia/inadimplencia.controller';
+import { InadimplenciaService } from './inadimplencia/inadimplencia.service';
+import { ReguaCobrancaService } from './inadimplencia/regua-cobranca.service';
 import { IndicadoresFinanceirosController } from './indicadores/indicadores.controller';
 import { IndicadoresFinanceirosService } from './indicadores/indicadores.service';
 import { FormasPagamentoController } from './formas-pagamento/formas-pagamento.controller';
@@ -36,6 +41,7 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
     forwardRef(() => ComprasEstoqueModule),
     forwardRef(() => GestaoProfissionaisModule),
     forwardRef(() => ConfiguracoesGestaoModule),
+    forwardRef(() => ComercialAtendimentoModule),
     RegulatorioQualidadeModule,
   ],
   controllers: [
@@ -49,6 +55,7 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
     ContasReceberController,
     ConciliacaoController,
     IndicadoresFinanceirosController,
+    InadimplenciaController,
     criarLookupController('formas-pagamento', FormasPagamentoService),
     criarLookupController('centros-custo', CentrosCustoService),
   ],
@@ -67,6 +74,9 @@ import { PlanoContasService } from './plano-contas/plano-contas.service';
     ContasReceberService,
     ConciliacaoService,
     IndicadoresFinanceirosService,
+    InadimplenciaService,
+    ReguaCobrancaService,
+    InadimplenciaAgendador,
     FinanceiroAlertasRegras,
   ],
   exports: [
