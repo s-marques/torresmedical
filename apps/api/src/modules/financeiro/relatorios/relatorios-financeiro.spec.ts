@@ -4,6 +4,7 @@ import type { EscopoDadosService } from '../../../common/auth/escopo-dados.servi
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import type { ConsultaRelatorio } from '../../../common/relatorios/relatorio.types';
 import { escopoFalso } from '../../../../test/utils/escopo-falso';
+import type { ContratosSalaService } from '../../gestao-profissionais/salas/contratos-sala.service';
 import { RelatoriosFinanceiro } from './relatorios-financeiro';
 
 const consulta = (
@@ -18,8 +19,16 @@ const consulta = (
 const decimal = (n: number) => new Prisma.Decimal(n);
 const dia = (valor: string) => new Date(`${valor}T00:00:00Z`);
 
-function criar(tx: Record<string, unknown>, escopo: EscopoDadosService = escopoFalso()) {
-  return new RelatoriosFinanceiro({ tx } as unknown as TransactionHost<PrismaAdapter>, escopo);
+function criar(
+  tx: Record<string, unknown>,
+  escopo: EscopoDadosService = escopoFalso(),
+  contratos: Record<string, unknown> = {},
+) {
+  return new RelatoriosFinanceiro(
+    { tx } as unknown as TransactionHost<PrismaAdapter>,
+    escopo,
+    contratos as unknown as ContratosSalaService,
+  );
 }
 
 describe('RelatoriosFinanceiro', () => {
@@ -42,6 +51,8 @@ describe('RelatoriosFinanceiro', () => {
       ['FIN-23', 'financeiro.indicadores.ver'],
       ['FIN-24', 'financeiro.plano-contas.ver'],
       ['FIN-25', 'financeiro.contas-pagar.ver'],
+      ['FIN-26', 'financeiro.contas-receber.ver'],
+      ['FIN-27', 'financeiro.contas-receber.ver'],
     ]);
   });
 
@@ -171,5 +182,128 @@ describe('RelatoriosFinanceiro', () => {
       ['Despesas', 'Aluguel', 300],
       ['Resultado', 'Receitas menos despesas', 1200],
     ]);
+  });
+
+  describe('FIN-26 e FIN-27: provisão de recebimentos', () => {
+    const PERIODO = { de: '2026-11-01', ate: '2027-01-31' };
+    const contratoDto = (extra: Record<string, unknown> = {}) => ({
+      id: 'c1',
+      numero: 7,
+      modalidade: 'MENSAL',
+      permuta: false,
+      valorUnitario: 1160,
+      diaVencimento: 10,
+      dataInicio: '2026-01-01',
+      dataFim: null,
+      salaNome: 'Sala 1',
+      locatarioTipo: 'PROFISSIONAL',
+      locatarioNome: 'Dra. Teste',
+      ...extra,
+    });
+    const contaGerada = {
+      numero: 1,
+      valor: decimal(1160),
+      dataVencimento: dia('2026-11-10'),
+      status: 'PENDENTE',
+      paciente: null,
+      profissionalSacado: { nome: 'Dra. Teste' },
+      contratoSala: {
+        numero: 7,
+        modalidade: 'MENSAL',
+        sala: { nome: 'Sala 1' },
+        profissional: { nome: 'Dra. Teste' },
+      },
+    };
+    /** Novembro tem título gerado e dezembro tem cobrança registrada: só janeiro é projetado. */
+    const montar = (contratos: unknown[], escopo?: EscopoDadosService) =>
+      criar(
+        {
+          contaReceber: {
+            findMany: jest.fn(async (args: { where: { contratoSalaId?: { in?: string[] } } }) =>
+              args.where.contratoSalaId?.in
+                ? [
+                    {
+                      contratoSalaId: 'c1',
+                      competencia: '2026-11',
+                      dataVencimento: dia('2026-11-10'),
+                    },
+                  ]
+                : [contaGerada],
+            ),
+          },
+          contratoSalaCobranca: {
+            findMany: jest
+              .fn()
+              .mockResolvedValue([{ contratoSalaId: 'c1', competencia: '2026-12' }]),
+          },
+        },
+        escopo,
+        { ativosNoPeriodo: jest.fn().mockResolvedValue(contratos) },
+      );
+
+    it('une o título gerado à projeção dos meses sem título nem cobrança', async () => {
+      const relatorios = montar([contratoDto()]);
+
+      const linhas = await relatorios.linhasProvisaoDetalhe(consulta(PERIODO), '2026-11');
+
+      expect(
+        linhas.map((l) => [l.origem, l.vencimento.toISOString().slice(0, 10), l.valor]),
+      ).toEqual([
+        ['Gerado', '2026-11-10', 1160],
+        ['Projetado', '2027-01-10', 1160],
+      ]);
+    });
+
+    it('o resumo soma gerado e projetado por mês', async () => {
+      const relatorios = montar([contratoDto()]);
+
+      const linhas = await relatorios.linhasProvisaoResumo(consulta(PERIODO), '2026-11');
+
+      expect(linhas).toEqual([
+        { grupo: '2026-11', gerado: 1160, projetado: 0, total: 1160 },
+        { grupo: '2027-01', gerado: 0, projetado: 1160, total: 1160 },
+      ]);
+    });
+
+    it('filtra por origem e agrupa por profissional', async () => {
+      const relatorios = montar([contratoDto()]);
+
+      const linhas = await relatorios.linhasProvisaoResumo(
+        consulta(PERIODO, { origem: 'projetado', agrupar: 'profissional' }),
+        '2026-11',
+      );
+
+      expect(linhas).toEqual([{ grupo: 'Dra. Teste', gerado: 0, projetado: 1160, total: 1160 }]);
+    });
+
+    it('não projeta permuta nem modalidades sem valor fixo', async () => {
+      const relatorios = montar([
+        contratoDto({ id: 'p', permuta: true }),
+        contratoDto({ id: 't', modalidade: 'TURNO' }),
+      ]);
+
+      const linhas = await relatorios.linhasProvisaoDetalhe(
+        consulta(PERIODO, { origem: 'projetado' }),
+        '2026-11',
+      );
+
+      expect(linhas).toEqual([]);
+    });
+
+    it('recusa período com mais de 24 meses', async () => {
+      const relatorios = montar([]);
+
+      await expect(
+        relatorios.linhasProvisao(consulta({ de: '2026-11-01', ate: '2028-11-30' })),
+      ).rejects.toMatchObject({ status: 422, code: 'PROVISAO_PERIODO_EXCEDIDO' });
+    });
+
+    it('perfil restrito recebe 403', async () => {
+      const relatorios = montar([], escopoFalso(['p1']));
+
+      await expect(relatorios.linhasProvisao(consulta(PERIODO))).rejects.toMatchObject({
+        status: 403,
+      });
+    });
   });
 });

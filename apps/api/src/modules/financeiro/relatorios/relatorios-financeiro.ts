@@ -1,7 +1,13 @@
 import { TransactionHost } from '@nestjs-cls/transactional';
-import { Injectable } from '@nestjs/common';
-import type { ContaReceberStatus, FiltroRelatorio } from '@torres/shared';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import {
+  CONTRATO_MODALIDADE_ROTULOS,
+  type ContaReceberStatus,
+  type ContratoModalidade,
+  type FiltroRelatorio,
+} from '@torres/shared';
 import { EscopoDadosService, semPermissao } from '../../../common/auth/escopo-dados.service';
+import { BusinessException } from '../../../common/errors/api.exception';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import {
   definirRelatorio,
@@ -11,6 +17,11 @@ import {
   type ReportDefinition,
 } from '../../../common/relatorios/relatorio.types';
 import { ordenarEPaginar } from '../../comercial-atendimento/relatorios/relatorios-comercial';
+import {
+  competenciaAtual,
+  limitesCompetencia,
+} from '../../gestao-profissionais/salas/competencia-cobranca';
+import { ContratosSalaService } from '../../gestao-profissionais/salas/contratos-sala.service';
 import { DO_TORRES, NAO_EXCLUIDAS } from '../conta-financeira';
 import { hojeNaClinica } from '../inadimplencia/inadimplencia.service';
 import {
@@ -19,12 +30,24 @@ import {
   saldoEmAberto,
   somarDias,
 } from '../inadimplencia/inadimplencia.regras';
+import {
+  agruparProvisao,
+  chaveCompetencia,
+  mesesDoPeriodo,
+  MAX_MESES_PROVISAO,
+  projetarContratos,
+  SEM_PROFISSIONAL,
+  type AgruparProvisao,
+  type LinhaProvisao,
+  type LinhaProvisaoAgrupada,
+} from './provisao-recebimentos';
 
 export const SEM_CLIENTE = 'Sem cliente';
 export const SEM_CONTA = 'Sem conta contábil';
 export const SEM_CENTRO_CUSTO = 'Sem centro de custo';
 export const SEM_FORMA_PAGAMENTO = 'Sem forma de pagamento';
 export const SEM_FORNECEDOR = 'Sem fornecedor';
+export const SEM_SALA = 'Sem sala';
 
 /** Janela da média do relatório de despesas por centro de custo (decisão do dev: 90 dias). */
 export const DIAS_MEDIA_DESPESA = 90;
@@ -65,6 +88,71 @@ const FILTRO_TIPO_CONTA: FiltroRelatorio = {
     { valor: 'despesa', rotulo: 'Despesas' },
   ],
 };
+
+const FILTRO_ORIGEM_PROVISAO: FiltroRelatorio = {
+  tipo: 'select',
+  parametro: 'origem',
+  rotulo: 'Origem',
+  opcoes: [
+    { valor: 'gerado', rotulo: 'Gerado' },
+    { valor: 'projetado', rotulo: 'Projetado' },
+  ],
+};
+
+const FILTRO_MODALIDADE_PROVISAO: FiltroRelatorio = {
+  tipo: 'select',
+  parametro: 'modalidade',
+  rotulo: 'Modalidade',
+  opcoes: (Object.keys(CONTRATO_MODALIDADE_ROTULOS) as ContratoModalidade[]).map((valor) => ({
+    valor,
+    rotulo: CONTRATO_MODALIDADE_ROTULOS[valor],
+  })),
+};
+
+const FILTRO_STATUS_PROVISAO: FiltroRelatorio = {
+  tipo: 'select',
+  parametro: 'status',
+  rotulo: 'Status',
+  opcoes: [
+    { valor: 'PENDENTE', rotulo: 'Pendente' },
+    { valor: 'PARCIAL', rotulo: 'Parcial' },
+    { valor: 'RECEBIDO', rotulo: 'Pago' },
+    { valor: 'PROJETADO', rotulo: 'Projetado' },
+  ],
+};
+
+const FILTRO_AGRUPAR_PROVISAO: FiltroRelatorio = {
+  tipo: 'select',
+  parametro: 'agrupar',
+  rotulo: 'Agrupar por',
+  opcoes: [
+    { valor: 'mes', rotulo: 'Mês' },
+    { valor: 'profissional', rotulo: 'Profissional' },
+    { valor: 'sala', rotulo: 'Sala' },
+    { valor: 'modalidade', rotulo: 'Modalidade' },
+    { valor: 'status', rotulo: 'Status' },
+  ],
+};
+
+const AGRUPAMENTOS_PROVISAO: readonly AgruparProvisao[] = [
+  'mes',
+  'profissional',
+  'sala',
+  'modalidade',
+  'status',
+];
+
+export interface LinhaProvisaoDetalhe {
+  vencimento: Date;
+  origem: string;
+  contrato: number | null;
+  locatario: string;
+  profissional: string;
+  sala: string;
+  modalidade: string;
+  valor: number;
+  status: string;
+}
 
 export interface LinhaInadimplencia {
   numero: number;
@@ -179,6 +267,12 @@ export interface LinhaPagarSemanal {
   situacao: 'Vencida' | 'Da semana' | 'Pendente';
 }
 
+/** Valor do filtro de status da provisão para a linha. */
+const statusProvisao = (l: LinhaProvisao): string =>
+  l.origem === 'Projetado'
+    ? 'PROJETADO'
+    : ({ Pendente: 'PENDENTE', Parcial: 'PARCIAL', Pago: 'RECEBIDO' }[l.status] ?? l.status);
+
 const num = (valor: { toNumber(): number } | null | undefined): number => valor?.toNumber() ?? 0;
 const arredondar = (valor: number): number => Math.round(valor * 100) / 100;
 const percentual = (parte: number, total: number): number =>
@@ -240,7 +334,8 @@ const coluna = <T>(
  * 20. Ficam de fora, sem fonte de dados ou regra confirmada: FIN-02, 03 (definição), FIN-04,
  * FIN-05 (não há unidade nos títulos), FIN-08, FIN-09, FIN-15, FIN-16, FIN-18 e FIN-21 (#169).
  * Dos requisitos do cliente entram FIN-22 (receita total), FIN-23 (DRE por competência), FIN-24
- * (por conta contábil) e FIN-25 (contas a pagar semanal). A provisão de recebimentos é a #167.
+ * (por conta contábil) e FIN-25 (contas a pagar semanal). A provisão de recebimentos (#167) é o
+ * FIN-26 (resumo) e o FIN-27 (detalhado).
  * Tudo é do caixa do coworking: as receitas dos profissionais ficam de fora (falha C8).
  */
 @Injectable()
@@ -250,6 +345,8 @@ export class RelatoriosFinanceiro implements ProvedorRelatorios {
   constructor(
     private readonly txHost: TransactionHost<PrismaAdapter>,
     private readonly escopo: EscopoDadosService,
+    @Inject(forwardRef(() => ContratosSalaService))
+    private readonly contratos: ContratosSalaService,
   ) {
     this.relatorios = [
       this.inadimplencia(),
@@ -267,6 +364,8 @@ export class RelatoriosFinanceiro implements ProvedorRelatorios {
       this.dre(),
       this.porContaContabil(),
       this.pagarSemanal(),
+      this.provisaoResumo(),
+      this.provisaoDetalhada(),
     ];
   }
 
@@ -977,6 +1076,191 @@ export class RelatoriosFinanceiro implements ProvedorRelatorios {
       ordenacaoPadrao: 'vencimento:asc',
       buscar: async (c, p) => ordenarEPaginar(await this.linhasPagarSemanal(c), c.sort, p),
       contar: async (c) => (await this.linhasPagarSemanal(c)).length,
+    });
+  }
+
+  /**
+   * Provisão de recebimentos (R §17, §18 e §27): por vencimento no período, os títulos já gerados
+   * de contratos de sala (Contas a Receber do Torres) e a projeção dos contratos Mensais ativos
+   * sem título no mês. Permuta, "sem cobrança" e meses depois do fim da vigência ficam de fora.
+   * A projeção parte do mês atual e o período tem no máximo {@link MAX_MESES_PROVISAO} meses.
+   */
+  async linhasProvisao(
+    consulta: ConsultaRelatorio,
+    mesAtual = competenciaAtual(),
+  ): Promise<LinhaProvisao[]> {
+    this.somenteAdministracao();
+    const { periodo, filtros } = consulta;
+    const meses = mesesDoPeriodo(periodo.de, periodo.ate);
+    if (meses.length > MAX_MESES_PROVISAO) {
+      throw new BusinessException(
+        'PROVISAO_PERIODO_EXCEDIDO',
+        `O período da provisão pode ter no máximo ${MAX_MESES_PROVISAO} meses.`,
+      );
+    }
+    const [geradas, projetadas] = await Promise.all([
+      this.provisaoGerada(consulta),
+      this.provisaoProjetada(consulta, meses, mesAtual),
+    ]);
+    return [...geradas, ...projetadas].filter(
+      (l) =>
+        (!filtros.origem || l.origem.toLowerCase() === filtros.origem) &&
+        (!filtros.modalidade || l.modalidade === filtros.modalidade) &&
+        (!filtros.status || statusProvisao(l) === filtros.status),
+    );
+  }
+
+  private async provisaoGerada(consulta: ConsultaRelatorio): Promise<LinhaProvisao[]> {
+    const contas = await this.txHost.tx.contaReceber.findMany({
+      where: {
+        ...DO_TORRES,
+        contratoSalaId: { not: null },
+        status: VALIDAS,
+        dataVencimento: faixaDe(consulta),
+      },
+      include: {
+        paciente: { select: { nome: true } },
+        profissionalSacado: { select: { nome: true } },
+        contratoSala: {
+          select: {
+            numero: true,
+            modalidade: true,
+            sala: { select: { nome: true } },
+            profissional: { select: { nome: true } },
+          },
+        },
+      },
+    });
+    return contas.map((c) => ({
+      origem: 'Gerado',
+      mes: mesDe(c.dataVencimento),
+      vencimento: c.dataVencimento,
+      contrato: c.contratoSala?.numero ?? null,
+      locatario: c.paciente?.nome ?? c.profissionalSacado?.nome ?? SEM_CLIENTE,
+      profissional: c.contratoSala?.profissional?.nome ?? SEM_PROFISSIONAL,
+      sala: c.contratoSala?.sala.nome ?? SEM_SALA,
+      modalidade: c.contratoSala?.modalidade ?? null,
+      valor: num(c.valor),
+      status: rotuloStatus(c.status),
+    }));
+  }
+
+  private async provisaoProjetada(
+    { periodo }: ConsultaRelatorio,
+    meses: readonly string[],
+    mesAtual: string,
+  ): Promise<LinhaProvisao[]> {
+    const contratos = (await this.contratos.ativosNoPeriodo(periodo.de, periodo.ate)).filter(
+      (c) => c.modalidade === 'MENSAL' && !c.permuta,
+    );
+    if (contratos.length === 0) return [];
+    const ids = contratos.map((c) => c.id);
+    const [cobrancas, contas] = await Promise.all([
+      this.txHost.tx.contratoSalaCobranca.findMany({
+        where: { contratoSalaId: { in: ids }, competencia: { in: [...meses] } },
+        select: { contratoSalaId: true, competencia: true },
+      }),
+      this.txHost.tx.contaReceber.findMany({
+        where: {
+          ...NAO_EXCLUIDAS,
+          contratoSalaId: { in: ids },
+          OR: [
+            { competencia: { in: [...meses] } },
+            {
+              competencia: null,
+              dataVencimento: faixa(
+                limitesCompetencia(meses[0] ?? mesAtual).de,
+                limitesCompetencia(meses[meses.length - 1] ?? mesAtual).ate,
+              ),
+            },
+          ],
+        },
+        select: { contratoSalaId: true, competencia: true, dataVencimento: true },
+      }),
+    ]);
+    const cobertas = new Set<string>();
+    for (const c of cobrancas) cobertas.add(chaveCompetencia(c.contratoSalaId, c.competencia));
+    for (const c of contas) {
+      if (c.contratoSalaId) {
+        cobertas.add(chaveCompetencia(c.contratoSalaId, c.competencia ?? mesDe(c.dataVencimento)));
+      }
+    }
+    return projetarContratos(contratos, { periodo, aPartirDe: mesAtual, cobertas });
+  }
+
+  /** FIN-26: provisão agrupada (padrão: por mês) em gerado, projetado e total. */
+  async linhasProvisaoResumo(
+    consulta: ConsultaRelatorio,
+    mesAtual?: string,
+  ): Promise<LinhaProvisaoAgrupada[]> {
+    const pedido = consulta.filtros.agrupar as AgruparProvisao | undefined;
+    const agrupar = AGRUPAMENTOS_PROVISAO.find((a) => a === pedido) ?? 'mes';
+    const linhas = await this.linhasProvisao(consulta, mesAtual);
+    return agruparProvisao(linhas, agrupar, (m) => CONTRATO_MODALIDADE_ROTULOS[m]);
+  }
+
+  /** FIN-27: uma linha por parcela esperada, gerada ou projetada. */
+  async linhasProvisaoDetalhe(
+    consulta: ConsultaRelatorio,
+    mesAtual?: string,
+  ): Promise<LinhaProvisaoDetalhe[]> {
+    const linhas = await this.linhasProvisao(consulta, mesAtual);
+    return linhas.map((l) => ({
+      vencimento: l.vencimento,
+      origem: l.origem,
+      contrato: l.contrato,
+      locatario: l.locatario,
+      profissional: l.profissional,
+      sala: l.sala,
+      modalidade: l.modalidade ? CONTRATO_MODALIDADE_ROTULOS[l.modalidade] : '—',
+      valor: l.valor,
+      status: l.status,
+    }));
+  }
+
+  private provisaoResumo(): ReportDefinition {
+    return definirRelatorio<LinhaProvisaoAgrupada>({
+      id: 'FIN-26',
+      nome: 'Provisão de Recebimentos',
+      permissao: 'financeiro.contas-receber.ver',
+      filtros: [
+        FILTRO_AGRUPAR_PROVISAO,
+        FILTRO_ORIGEM_PROVISAO,
+        FILTRO_MODALIDADE_PROVISAO,
+        FILTRO_STATUS_PROVISAO,
+      ],
+      colunas: [
+        coluna('grupo', 'Grupo', { width: 2 }),
+        coluna('gerado', 'Gerado (R$)', { type: 'currency' }),
+        coluna('projetado', 'Projetado (R$)', { type: 'currency' }),
+        coluna('total', 'Total (R$)', { type: 'currency' }),
+      ],
+      ordenacaoPadrao: 'grupo:asc',
+      buscar: async (c, p) => ordenarEPaginar(await this.linhasProvisaoResumo(c), c.sort, p),
+      contar: async (c) => (await this.linhasProvisaoResumo(c)).length,
+    });
+  }
+
+  private provisaoDetalhada(): ReportDefinition {
+    return definirRelatorio<LinhaProvisaoDetalhe>({
+      id: 'FIN-27',
+      nome: 'Provisão de Recebimentos (Detalhada)',
+      permissao: 'financeiro.contas-receber.ver',
+      filtros: [FILTRO_ORIGEM_PROVISAO, FILTRO_MODALIDADE_PROVISAO, FILTRO_STATUS_PROVISAO],
+      colunas: [
+        coluna('vencimento', 'Vencimento', { type: 'date' }),
+        coluna('origem', 'Origem'),
+        coluna('contrato', 'Contrato', { type: 'number' }),
+        coluna('locatario', 'Locatário', { width: 2 }),
+        coluna('profissional', 'Profissional', { width: 2 }),
+        coluna('sala', 'Sala'),
+        coluna('modalidade', 'Modalidade'),
+        coluna('valor', 'Valor (R$)', { type: 'currency' }),
+        coluna('status', 'Status'),
+      ],
+      ordenacaoPadrao: 'vencimento:asc',
+      buscar: async (c, p) => ordenarEPaginar(await this.linhasProvisaoDetalhe(c), c.sort, p),
+      contar: async (c) => (await this.linhasProvisaoDetalhe(c)).length,
     });
   }
 }

@@ -65,6 +65,7 @@
   "AGENDAMENTO_NAO_CANCELAVEL": "Only a scheduled, confirmed or to-reschedule appointment can be canceled",
   "ORCAMENTO_NAO_CANCELAVEL": "Only a pending or approved quote can be canceled",
   "CONTA_RECEBER_NAO_PENDENTE": "Only a pending account receivable can be canceled",
+  "PROVISAO_PERIODO_EXCEDIDO": "The provision period can span at most 24 months",
   "CONTA_PAGAR_NAO_PENDENTE": "Only a pending account payable can be canceled",
   "CONTA_PAGAR_COM_BAIXA": "This account has a payment recorded. Cancel the payment before canceling the account",
   "CONTA_RECEBER_BAIXA_EXCEDE_SALDO": "The amount received is greater than the open balance",
