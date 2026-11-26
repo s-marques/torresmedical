@@ -3,7 +3,7 @@ import { PlusIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataGrid } from '@/components/shared/data-grid/DataGrid';
-import type { DataGridProps } from '@/components/shared/data-grid/tipos';
+import type { DataGridProps, FiltroGrid } from '@/components/shared/data-grid/tipos';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { SePermitido } from '@/components/shared/SePermitido';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,8 @@ export interface PaginaContaFinanceiraProps<C extends { id: string; descricao: s
   permissaoCriar: Permissao;
   onCriar: () => void;
   grid: Omit<DataGridProps<C>, 'filtros'>;
+  /** Filtros próprios da tela, depois do período de vencimento (ex.: Aprovação em Contas a Pagar). */
+  filtrosExtras?: readonly FiltroGrid[];
   /** Título do diálogo de exclusão, ex.: "Excluir Conta a Pagar". */
   tituloExcluir: string;
   /** Conta aguardando a confirmação de exclusão (`null`: diálogo fechado). */
@@ -34,6 +36,7 @@ export function PaginaContaFinanceira<C extends { id: string; descricao: string 
   permissaoCriar,
   onCriar,
   grid,
+  filtrosExtras = [],
   tituloExcluir,
   excluindo,
   onCancelarExclusao,
@@ -56,7 +59,7 @@ export function PaginaContaFinanceira<C extends { id: string; descricao: string 
         }
       />
       {abas}
-      <DataGrid {...grid} filtros={FILTROS_CONTA_FINANCEIRA} />
+      <DataGrid {...grid} filtros={[...FILTROS_CONTA_FINANCEIRA, ...filtrosExtras]} />
       {children}
       <ConfirmDialog
         aberto={excluindo !== null}

@@ -34,6 +34,14 @@ export class FinanceiroAlertasRegras implements FonteAlertas {
           }),
       },
       {
+        // Mesma condição do filtro `?status=PENDENTE&aprovacao=LANCADA` da lista (issue #164).
+        tipo: 'CONTAS_PAGAR_AGUARDANDO_APROVACAO',
+        contar: () =>
+          this.txHost.tx.contaPagar.count({
+            where: { ...NAO_EXCLUIDAS, status: 'PENDENTE', aprovacao: 'LANCADA' },
+          }),
+      },
+      {
         tipo: 'RECEBIVEIS_VENCIDOS',
         contar: (hoje) =>
           this.txHost.tx.contaReceber.count({

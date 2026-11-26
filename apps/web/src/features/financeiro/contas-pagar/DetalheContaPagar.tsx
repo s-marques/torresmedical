@@ -3,14 +3,16 @@ import {
   statusExibicaoContaPagar,
   type ContaPagar,
 } from '@torres/shared';
-import { BanknoteIcon, XCircleIcon } from 'lucide-react';
+import { BanIcon, BanknoteIcon, CheckCircle2Icon, XCircleIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { SePermitido } from '@/components/shared/SePermitido';
 import { Button } from '@/components/ui/button';
 import { useLinkArquivo } from '@/hooks/use-link-arquivo';
 import { formatarData, formatarDataHora } from '@/lib/formatar';
 import { formatarMoeda } from '@/lib/forms/mascaras';
 import { DetalheContaFinanceira, ItemDetalhe } from '../contas-financeiras/DetalheContaFinanceira';
 import { formatarCompetencia } from './regras-conta-pagar';
+import { SituacaoAprovacao } from './SituacaoAprovacao';
 import { useBaixasContaPagar } from './use-contas-pagar';
 
 export interface DetalheContaPagarProps {
@@ -18,6 +20,8 @@ export interface DetalheContaPagarProps {
   onFechar: () => void;
   onEditar: () => void;
   onBaixar: () => void;
+  onAprovar: () => void;
+  onRecusar: () => void;
   onCancelarBaixa: () => void;
 }
 
@@ -27,6 +31,8 @@ export function DetalheContaPagar({
   onFechar,
   onEditar,
   onBaixar,
+  onAprovar,
+  onRecusar,
   onCancelarBaixa,
 }: Readonly<DetalheContaPagarProps>) {
   const { t } = useTranslation();
@@ -43,6 +49,30 @@ export function DetalheContaPagar({
       itensExtras={
         <>
           <ItemDetalhe rotulo="Valor Pago">{formatarMoeda(Number(conta.valorPago))}</ItemDetalhe>
+          <ItemDetalhe rotulo={t('contasPagar.aprovacao.coluna')}>
+            <SituacaoAprovacao aprovacao={conta.aprovacao} />
+          </ItemDetalhe>
+          {conta.aprovadoPorNome && conta.aprovadoEm && (
+            <ItemDetalhe rotulo={t('contasPagar.aprovacao.aprovadaPor')}>
+              {t('contasPagar.aprovacao.porEm', {
+                nome: conta.aprovadoPorNome,
+                data: formatarDataHora(conta.aprovadoEm),
+              })}
+            </ItemDetalhe>
+          )}
+          {conta.recusadoPorNome && conta.recusadoEm && (
+            <>
+              <ItemDetalhe rotulo={t('contasPagar.aprovacao.recusadaPor')}>
+                {t('contasPagar.aprovacao.porEm', {
+                  nome: conta.recusadoPorNome,
+                  data: formatarDataHora(conta.recusadoEm),
+                })}
+              </ItemDetalhe>
+              <ItemDetalhe rotulo={t('contasPagar.aprovacao.motivo')}>
+                {conta.motivoRecusa}
+              </ItemDetalhe>
+            </>
+          )}
           <ItemDetalhe rotulo={t('contasPagar.detalhe.competencia')}>
             {formatarCompetencia(conta.competencia)}
           </ItemDetalhe>
@@ -72,7 +102,19 @@ export function DetalheContaPagar({
               Cancelar Baixa
             </Button>
           )}
-          {conta.status === 'PENDENTE' && (
+          {conta.status === 'PENDENTE' && conta.aprovacao === 'LANCADA' && (
+            <SePermitido permissao="financeiro.contas-pagar.aprovar">
+              <Button type="button" variant="outline" onClick={onRecusar}>
+                <BanIcon aria-hidden />
+                {t('contasPagar.aprovacao.recusar')}
+              </Button>
+              <Button type="button" variant="outline" onClick={onAprovar}>
+                <CheckCircle2Icon aria-hidden />
+                {t('contasPagar.aprovacao.aprovar')}
+              </Button>
+            </SePermitido>
+          )}
+          {conta.status === 'PENDENTE' && conta.aprovacao === 'APROVADA' && (
             <Button type="button" variant="outline" onClick={onBaixar}>
               <BanknoteIcon aria-hidden />
               Baixar

@@ -56,5 +56,8 @@
   "EXPORTACAO_EM_ANDAMENTO": "Ya hay una exportación de esta entidad en curso",
   "EXPORTACAO_INDISPONIVEL": "Esta exportación aún no está disponible",
   "EXPORTACAO_EXPIRADA": "El enlace de esta exportación expiró. Solicite una nueva exportación",
-  "EXPORT_LIMIT_EXCEEDED": "La exportación supera el límite permitido. Refine los filtros"
+  "EXPORT_LIMIT_EXCEEDED": "La exportación supera el límite permitido. Refine los filtros",
+  "CONTA_PAGAR_NAO_APROVADA": "La cuenta debe ser aprobada antes del pago",
+  "CONTA_PAGAR_APROVADOR_IGUAL_LANCADOR": "Quien registró la cuenta no puede aprobarla ni rechazarla",
+  "CONTA_PAGAR_APROVACAO_INVALIDA": "Solo una cuenta pendiente de aprobación puede aprobarse o rechazarse"
 }

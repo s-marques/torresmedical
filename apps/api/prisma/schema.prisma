@@ -2577,6 +2577,15 @@ enum ContaPagarStatus {
   @@map("conta_pagar_status")
 }
 
+/// Aprovação financeira antes da baixa (issue #164): só conta APROVADA recebe baixa.
+enum ContaPagarAprovacao {
+  LANCADA
+  APROVADA
+  RECUSADA
+
+  @@map("conta_pagar_aprovacao")
+}
+
 /// Dono: financeiro. Conta a pagar (tela Contas a Pagar, `/pagar`). O beneficiário é um
 /// Fornecedor (compras-estoque) ou um Funcionário (regulatorio-qualidade), sem FK: o acesso é
 /// pelos services exportados de cada módulo (CLAUDE.md, seção 3). Exclusão lógica: histórico
@@ -2598,6 +2607,14 @@ model ContaPagar {
   documento          String?
   totalParcelas      Int                        @default(1) @map("total_parcelas")
   status             ContaPagarStatus           @default(PENDENTE)
+  aprovacao          ContaPagarAprovacao        @default(LANCADA)
+  /// Usuário que lançou (sem FK). Não pode aprovar nem recusar a própria conta.
+  lancadoPorId       String?                    @map("lancado_por_id") @db.Uuid
+  aprovadoPorId      String?                    @map("aprovado_por_id") @db.Uuid
+  aprovadoEm         DateTime?                  @map("aprovado_em") @db.Timestamptz(3)
+  recusadoPorId      String?                    @map("recusado_por_id") @db.Uuid
+  recusadoEm         DateTime?                  @map("recusado_em") @db.Timestamptz(3)
+  motivoRecusa       String?                    @map("motivo_recusa")
   observacoes        String?
   /// Competência contábil (`AAAA-MM`).
   competencia        String?                    @db.VarChar(7)
@@ -2619,6 +2636,7 @@ model ContaPagar {
   @@index([planoContaId])
   @@index([centroCustoId])
   @@index([status])
+  @@index([aprovacao])
   @@index([dataVencimento])
   @@map("contas_pagar")
 }

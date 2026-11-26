@@ -2109,6 +2109,27 @@
       "cadastrar": "Registrar",
       "editar": "Editar",
       "excluir": "Eliminar"
+    },
+    "aprovacao": {
+      "coluna": "Aprobación",
+      "filtro": "Aprobación",
+      "todas": "Todas",
+      "situacoes": {
+        "LANCADA": "Pendiente de aprobación",
+        "APROVADA": "Aprobada",
+        "RECUSADA": "Rechazada"
+      },
+      "aprovar": "Aprobar",
+      "recusar": "Rechazar",
+      "aprovarTitulo": "Aprobar Cuenta por Pagar",
+      "aprovarDescricao": "¿Aprobar la cuenta \"{{descricao}}\"? Después podrá registrarse el pago.",
+      "recusarTitulo": "Rechazar Cuenta por Pagar",
+      "recusarDescricao": "La cuenta \"{{descricao}}\" no se pagará. Indique el motivo del rechazo.",
+      "motivo": "Motivo del rechazo",
+      "motivoPlaceholder": "Ej.: boleto duplicado",
+      "aprovadaPor": "Aprobada por",
+      "recusadaPor": "Rechazada por",
+      "porEm": "{{nome}} el {{data}}"
     }
   },
   "modelosProntuario": {

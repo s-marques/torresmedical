@@ -1,4 +1,5 @@
 import {
+  CONTA_PAGAR_APROVACOES,
   CONTA_PAGAR_ROTULO_FILTRO_STATUS,
   CONTA_PAGAR_ROTULO_STATUS_EXIBICAO,
   contaPagarPageSchema,
@@ -7,10 +8,18 @@ import {
   statusExibicaoContaPagar,
   type ContaPagar,
 } from '@torres/shared';
-import { BanknoteIcon, XCircleIcon } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
-import type { AcaoLinha, ExportacaoGrid } from '@/components/shared/data-grid/tipos';
+import { BanknoteIcon, CheckCircle2Icon, XCircleIcon, BanIcon } from 'lucide-react';
+import { useMemo, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import type {
+  AcaoLinha,
+  ColunaGrid,
+  ExportacaoGrid,
+  FiltroGrid,
+} from '@/components/shared/data-grid/tipos';
 import { PageHeader } from '@/components/shared/PageHeader';
+import type { TFunction } from 'i18next';
 import {
   acoesContaFinanceira,
   colunasContaFinanceira,
@@ -23,7 +32,10 @@ import { AbasContasPagar, type IdAbaContasPagar } from './AbasContasPagar';
 import { DetalheContaPagar } from './DetalheContaPagar';
 import { ModalBaixaContaPagar } from './ModalBaixaContaPagar';
 import { ModalContaPagar } from './ModalContaPagar';
+import { ModalRecusaContaPagar } from './ModalRecusaContaPagar';
+import { SituacaoAprovacao } from './SituacaoAprovacao';
 import {
+  useAprovarContaPagar,
   useCancelarBaixaContaPagar,
   URL_CONTAS_PAGAR,
   useExcluirContaPagar,
@@ -37,17 +49,42 @@ const EXPORTACAO: ExportacaoGrid = {
   schema: exportContasPagarQuerySchema,
 };
 
-const COLUNAS = colunasContaFinanceira<ContaPagar>(
-  {
-    id: 'beneficiario',
-    titulo: 'Fornecedor / Funcionário',
-    ordenavel: true,
-    exportavel: true,
-    celula: (c) => c.beneficiarioNome ?? '-',
-  },
-  statusExibicaoContaPagar,
-  CONTA_PAGAR_ROTULO_STATUS_EXIBICAO,
-);
+function criarColunas(t: TFunction): ColunaGrid<ContaPagar>[] {
+  return [
+    ...colunasContaFinanceira<ContaPagar>(
+      {
+        id: 'beneficiario',
+        titulo: 'Fornecedor / Funcionário',
+        ordenavel: true,
+        exportavel: true,
+        celula: (c) => c.beneficiarioNome ?? '-',
+      },
+      statusExibicaoContaPagar,
+      CONTA_PAGAR_ROTULO_STATUS_EXIBICAO,
+    ),
+    {
+      id: 'aprovacao',
+      titulo: t('contasPagar.aprovacao.coluna'),
+      celula: (c) => <SituacaoAprovacao aprovacao={c.aprovacao} />,
+    },
+  ];
+}
+
+/** Filtro "Aprovação" (issue #164): o alerta "aguardando aprovação" abre a lista por `?aprovacao=`. */
+function criarFiltrosExtras(t: TFunction): readonly FiltroGrid[] {
+  return [
+    {
+      tipo: 'select',
+      parametro: 'aprovacao',
+      rotulo: t('contasPagar.aprovacao.filtro'),
+      rotuloTodos: t('contasPagar.aprovacao.todas'),
+      opcoes: CONTA_PAGAR_APROVACOES.map((valor) => ({
+        valor,
+        rotulo: t(`contasPagar.aprovacao.situacoes.${valor}`),
+      })),
+    },
+  ];
+}
 
 /**
  * Contas a Pagar (`/pagar`, docs/inventario/telas/financeiro-contas-a-pagar.md): gerencie suas
@@ -79,8 +116,17 @@ function AbaContas({ abas }: Readonly<{ abas: ReactNode }>) {
   const [editando, setEditando] = useState<ContaPagar | null>(null);
   const [baixando, setBaixando] = useState<ContaPagar | null>(null);
   const [excluindo, setExcluindo] = useState<ContaPagar | null>(null);
+  const [aprovando, setAprovando] = useState<ContaPagar | null>(null);
+  const [recusando, setRecusando] = useState<ContaPagar | null>(null);
+  const { t } = useTranslation();
+  const colunas = useMemo(() => criarColunas(t), [t]);
+  const filtros = useMemo(() => criarFiltrosExtras(t), [t]);
   const excluir = useExcluirContaPagar();
+  const aprovar = useAprovarContaPagar();
   const cancelarBaixa = useCancelarBaixaContaPagar();
+
+  const aguardandoAprovacao = (conta: ContaPagar) =>
+    conta.status === 'PENDENTE' && conta.aprovacao === 'LANCADA';
 
   const acoes = (conta: ContaPagar): AcaoLinha[] =>
     acoesContaFinanceira({
@@ -91,10 +137,24 @@ function AbaContas({ abas }: Readonly<{ abas: ReactNode }>) {
       permissaoExcluir: 'financeiro.contas-pagar.excluir',
       extras: [
         {
+          rotulo: t('contasPagar.aprovacao.aprovar'),
+          icone: CheckCircle2Icon,
+          permissao: 'financeiro.contas-pagar.aprovar',
+          desabilitada: !aguardandoAprovacao(conta),
+          onSelect: () => setAprovando(conta),
+        },
+        {
+          rotulo: t('contasPagar.aprovacao.recusar'),
+          icone: BanIcon,
+          permissao: 'financeiro.contas-pagar.aprovar',
+          desabilitada: !aguardandoAprovacao(conta),
+          onSelect: () => setRecusando(conta),
+        },
+        {
           rotulo: 'Editar Baixa',
           icone: BanknoteIcon,
           permissao: 'financeiro.contas-pagar.editar',
-          desabilitada: conta.status !== 'PENDENTE',
+          desabilitada: conta.status !== 'PENDENTE' || conta.aprovacao !== 'APROVADA',
           onSelect: () => setBaixando(conta),
         },
         {
@@ -118,7 +178,7 @@ function AbaContas({ abas }: Readonly<{ abas: ReactNode }>) {
         url: URL_CONTAS_PAGAR,
         schema: contaPagarPageSchema,
         querySchema: listContasPagarQuerySchema,
-        colunas: COLUNAS,
+        colunas,
         busca: 'Buscar contas a pagar...',
         status: STATUS,
         exportacao: EXPORTACAO,
@@ -126,6 +186,7 @@ function AbaContas({ abas }: Readonly<{ abas: ReactNode }>) {
         aoClicarLinha: setDetalhando,
         mensagemVazio: 'Nenhuma conta a pagar encontrada.',
       }}
+      filtrosExtras={filtros}
       tituloExcluir="Excluir Conta a Pagar"
       excluindo={excluindo}
       onCancelarExclusao={() => setExcluindo(null)}
@@ -134,6 +195,17 @@ function AbaContas({ abas }: Readonly<{ abas: ReactNode }>) {
       {criando && <ModalContaPagar onFechar={() => setCriando(false)} />}
       {editando && <ModalContaPagar conta={editando} onFechar={() => setEditando(null)} />}
       {baixando && <ModalBaixaContaPagar conta={baixando} onFechar={() => setBaixando(null)} />}
+      {recusando && <ModalRecusaContaPagar conta={recusando} onFechar={() => setRecusando(null)} />}
+      <ConfirmDialog
+        aberto={aprovando !== null}
+        onAbertoChange={(aberto) => aberto || setAprovando(null)}
+        titulo={t('contasPagar.aprovacao.aprovarTitulo')}
+        descricao={t('contasPagar.aprovacao.aprovarDescricao', {
+          descricao: aprovando?.descricao ?? '',
+        })}
+        rotuloConfirmar={t('contasPagar.aprovacao.aprovar')}
+        onConfirmar={() => (aprovando ? aprovar.mutateAsync(aprovando.id) : undefined)}
+      />
       {detalhando && (
         <DetalheContaPagar
           conta={detalhando}
@@ -144,6 +216,14 @@ function AbaContas({ abas }: Readonly<{ abas: ReactNode }>) {
           }}
           onBaixar={() => {
             setBaixando(detalhando);
+            setDetalhando(null);
+          }}
+          onAprovar={() => {
+            setAprovando(detalhando);
+            setDetalhando(null);
+          }}
+          onRecusar={() => {
+            setRecusando(detalhando);
             setDetalhando(null);
           }}
           onCancelarBaixa={() => {

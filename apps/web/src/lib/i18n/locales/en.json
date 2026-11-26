@@ -2109,6 +2109,27 @@
       "cadastrar": "Register",
       "editar": "Edit",
       "excluir": "Delete"
+    },
+    "aprovacao": {
+      "coluna": "Approval",
+      "filtro": "Approval",
+      "todas": "All",
+      "situacoes": {
+        "LANCADA": "Awaiting approval",
+        "APROVADA": "Approved",
+        "RECUSADA": "Rejected"
+      },
+      "aprovar": "Approve",
+      "recusar": "Reject",
+      "aprovarTitulo": "Approve Payable",
+      "aprovarDescricao": "Approve \"{{descricao}}\"? It can be paid afterwards.",
+      "recusarTitulo": "Reject Payable",
+      "recusarDescricao": "\"{{descricao}}\" will not be paid. Enter the reason for rejecting it.",
+      "motivo": "Reason for rejection",
+      "motivoPlaceholder": "E.g. duplicate bill",
+      "aprovadaPor": "Approved by",
+      "recusadaPor": "Rejected by",
+      "porEm": "{{nome}} on {{data}}"
     }
   },
   "modelosProntuario": {

@@ -241,6 +241,8 @@ export const PERFIS_PADRAO: readonly PerfilPadrao[] = [
     extras: [
       'gestao-profissionais.profissionais-documentos.validar',
       'configuracoes-gestao.dados-pessoais.exportar',
+      // Quem lança e dá baixa (Financeiro) não aprova a conta (issue #164).
+      'financeiro.contas-pagar.aprovar',
     ],
   },
   {

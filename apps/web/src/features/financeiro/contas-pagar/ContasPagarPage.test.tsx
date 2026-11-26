@@ -27,6 +27,12 @@ function conta(parcial: Partial<ContaPagar>): ContaPagar {
     documento: null,
     totalParcelas: 1,
     status: 'PENDENTE',
+    aprovacao: 'APROVADA',
+    aprovadoPorNome: null,
+    aprovadoEm: null,
+    recusadoPorNome: null,
+    recusadoEm: null,
+    motivoRecusa: null,
     observacoes: null,
     valorPago: '0',
     competencia: null,
@@ -108,6 +114,7 @@ describe('Contas a Pagar (/pagar)', () => {
       'Valor',
       'Vencimento',
       'Status',
+      'Aprovação',
       'Ações',
     ]);
     for (const nome of ['Todos', 'Pendente', 'Pago', 'Vencido']) {

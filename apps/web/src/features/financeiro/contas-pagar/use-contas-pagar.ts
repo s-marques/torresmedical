@@ -5,6 +5,7 @@ import {
   type BaixarContaPagarInput,
   type ContaPagarPossivelDuplicada,
   type CreateContaPagarInput,
+  type RecusarContaPagarInput,
   type UpdateContaPagarInput,
   type VerificarDuplicidadeContaPagarInput,
 } from '@torres/shared';
@@ -52,6 +53,24 @@ export function useBaixarContaPagar(id: string) {
     URL_CONTAS_PAGAR,
     (dados: BaixarContaPagarInput) => chamar(`/${id}/baixar`, 'POST', dados),
     { formulario: true, sucesso: 'Pagamento registrado.' },
+  );
+}
+
+/** Aprova a conta aguardando aprovação (issue #164). */
+export function useAprovarContaPagar() {
+  return useMutationContaFinanceira(
+    URL_CONTAS_PAGAR,
+    (id: string) => chamar(`/${id}/aprovar`, 'POST'),
+    { sucesso: 'Conta a pagar aprovada.' },
+  );
+}
+
+/** Recusa a conta aguardando aprovação, com motivo. */
+export function useRecusarContaPagar(id: string) {
+  return useMutationContaFinanceira(
+    URL_CONTAS_PAGAR,
+    (dados: RecusarContaPagarInput) => chamar(`/${id}/recusar`, 'POST', dados),
+    { formulario: true, sucesso: 'Conta a pagar recusada.' },
   );
 }
 

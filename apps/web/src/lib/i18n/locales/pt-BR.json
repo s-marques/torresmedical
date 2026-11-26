@@ -2001,6 +2001,27 @@
       "cadastrar": "Cadastrar",
       "editar": "Editar",
       "excluir": "Excluir"
+    },
+    "aprovacao": {
+      "coluna": "Aprovação",
+      "filtro": "Aprovação",
+      "todas": "Todas",
+      "situacoes": {
+        "LANCADA": "Aguardando aprovação",
+        "APROVADA": "Aprovada",
+        "RECUSADA": "Recusada"
+      },
+      "aprovar": "Aprovar",
+      "recusar": "Recusar",
+      "aprovarTitulo": "Aprovar Conta a Pagar",
+      "aprovarDescricao": "Aprovar a conta \"{{descricao}}\"? Depois disso ela poderá ser baixada.",
+      "recusarTitulo": "Recusar Conta a Pagar",
+      "recusarDescricao": "A conta \"{{descricao}}\" não será paga. Informe o motivo da recusa.",
+      "motivo": "Motivo da recusa",
+      "motivoPlaceholder": "Ex.: boleto em duplicidade",
+      "aprovadaPor": "Aprovada por",
+      "recusadaPor": "Recusada por",
+      "porEm": "{{nome}} em {{data}}"
     }
   },
   "modelosProntuario": {
