@@ -22,7 +22,7 @@ export function AbasContasPagar({ aba, onAba }: Readonly<AbasContasPagarProps>) 
     <div
       role="tablist"
       aria-label={t('contasPagar.abas.rotulo')}
-      className="flex w-fit gap-1 rounded-lg bg-muted p-1"
+      className="flex w-fit max-w-full gap-1 overflow-x-auto rounded-lg bg-muted p-1"
     >
       {ABAS.map(({ id, chave, icone: Icone }) => (
         <button
@@ -33,7 +33,7 @@ export function AbasContasPagar({ aba, onAba }: Readonly<AbasContasPagarProps>) 
           aria-selected={aba === id}
           aria-controls="painel-aba-contas-pagar"
           className={cn(
-            'flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+            'flex shrink-0 items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors',
             aba === id
               ? 'bg-background text-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground',

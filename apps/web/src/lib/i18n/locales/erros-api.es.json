@@ -56,5 +56,18 @@
   "EXPORTACAO_EM_ANDAMENTO": "Ya hay una exportación de esta entidad en curso",
   "EXPORTACAO_INDISPONIVEL": "Esta exportación aún no está disponible",
   "EXPORTACAO_EXPIRADA": "El enlace de esta exportación expiró. Solicite una nueva exportación",
-  "EXPORT_LIMIT_EXCEEDED": "La exportación supera el límite permitido. Refine los filtros"
+  "EXPORT_LIMIT_EXCEEDED": "La exportación supera el límite permitido. Refine los filtros",
+  "CONTA_PAGAR_NAO_APROVADA": "La cuenta debe ser aprobada antes del pago",
+  "CONTA_PAGAR_APROVADOR_IGUAL_LANCADOR": "Quien registró la cuenta no puede aprobarla ni rechazarla",
+  "CONTA_PAGAR_APROVACAO_INVALIDA": "Solo una cuenta pendiente de aprobación puede aprobarse o rechazarse",
+  "MOTIVO_CANCELAMENTO_SISTEMA": "Este motivo es usado por el sistema y no se puede modificar, desactivar ni eliminar",
+  "MOTIVO_CANCELAMENTO_AUSENTE": "El motivo \"Contrato finalizado o cancelado\" no está registrado",
+  "AGENDAMENTO_NAO_CANCELAVEL": "Solo se puede cancelar una cita agendada, confirmada o por reprogramar",
+  "ORCAMENTO_NAO_CANCELAVEL": "Solo se puede cancelar un presupuesto pendiente o aprobado",
+  "CONTA_RECEBER_NAO_PENDENTE": "Solo se puede cancelar una cuenta por cobrar pendiente",
+  "PROVISAO_PERIODO_EXCEDIDO": "El período de la provisión puede abarcar como máximo 24 meses",
+  "CONTA_PAGAR_NAO_PENDENTE": "Solo se puede cancelar una cuenta por pagar pendiente",
+  "CONTA_PAGAR_COM_BAIXA": "Esta cuenta tiene un pago registrado. Cancele el pago antes de cancelar la cuenta",
+  "CONTA_RECEBER_BAIXA_EXCEDE_SALDO": "El valor cobrado es mayor que el saldo abierto",
+  "CONTA_RECEBER_RENEGOCIACAO_SOMA": "Las cuotas deben sumar el saldo abierto"
 }

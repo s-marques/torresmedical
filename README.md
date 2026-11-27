@@ -240,6 +240,38 @@ seção 3). Exemplos funcionando em **`/dev/componentes`**: a página existe só
 - **Testes de grid** usam MSW: `usarMsw()` e `servidorMsw.use(http.get('/api/...', …))`
   (`src/test/msw.ts`). Não misture com `apiFalsa`/`renderApp` no mesmo arquivo.
 
+## Uso pelo celular (web responsivo)
+
+O sistema abre no navegador do celular, sem aplicativo (issue #161, R §42). Abaixo de 768 px o
+menu vira drawer (#74) e as telas se adaptam; a largura de referência é 360 a 414 px.
+
+- **Telas validadas:** login, Dashboard, Agenda (dia), Recepção, Atendimento Médico (lista, detalhe e
+  abas), Pacientes (lista e detalhe), Contas a Pagar, Contas a Receber, Negócios e Atividades,
+  inclusive os formulários "Novo…" e as abas do Dashboard.
+- **`DataGrid`:** no celular cada linha vira um **cartão** (título + campos "rótulo: valor" + menu
+  de ações), sem rolagem horizontal. A primeira coluna visível é o título; marque outra com
+  `tituloCartao: true` na coluna quando a identificação não for a primeira (ex.: nome do paciente em
+  vez do horário). A ordenação por cabeçalho só existe na tabela (desktop).
+- **Regras de layout:** o conteúdo largo rola dentro do próprio container, nunca a página.
+  Um `grid` sem colunas declaradas usa uma trilha `minmax(0, 1fr)` (regra em `index.css`); barras de
+  abas rolam na horizontal; textos longos quebram em vez de `truncate`.
+- **Toque:** botões `default` e `sm` têm 40 px de altura abaixo de 768 px, e o menu "⋯" de ações, 44 px.
+- **Agenda:** abre na visão **Dia** no celular (a semana de 7 colunas não cabe). O modo Matriz fica
+  fora do escopo do celular.
+- **Teste de layout** (Playwright, Chromium real; o jsdom não calcula layout): `e2e/` em `apps/web`.
+  Verifica, em 360 e 414 px, que a página não rola na horizontal e que os botões principais têm
+  tamanho de toque. A API é simulada por rota (`e2e/api-falsa.ts`), com linhas geradas do schema Zod
+  (`e2e/amostra.ts`), então não precisa de banco. No CI roda no job "Layout no celular".
+
+  ```bash
+  pnpm --filter @torres/shared build
+  pnpm --filter @torres/web exec playwright install chromium   # uma vez
+  pnpm --filter @torres/web test:layout
+  ```
+
+  Tela nova que deva funcionar no celular: acrescente-a em `TELAS` de `e2e/celular.spec.ts`
+  (e a fixture em `e2e/fixtures.ts`, se ela listar dados).
+
 ## Agenda matricial (`/agenda?modo=matriz`)
 
 Visão **Matriz** da Agenda (issue #137): Sala × Dia × Horário × Profissional, só leitura. Junta o
@@ -435,6 +467,35 @@ em `packages/shared/src/menu/menu.ts`).
 - **Relatório:** por profissional, enviados, recebidos e conversão (atendidos ÷ total, em %). Usuário
   restrito vê só as linhas dos próprios profissionais.
 
+## Contas a Pagar: aprovação antes da baixa (`/pagar`)
+
+Não há baixa sem confirmação de quem tem alçada (issue #164, R §16). A aprovação é um campo à parte
+de `status` (Pendente/Pago/Cancelado): `aprovacao` = `LANCADA` (aguardando), `APROVADA` ou
+`RECUSADA`. Regras confirmadas pelo dev:
+
+- **Quem aprova:** só quem tem `financeiro.contas-pagar.aprovar` (Administrador e Gerência; o
+  Financeiro lança e dá baixa, sem aprovar). **Quem lançou não aprova nem recusa a própria conta**
+  (422 `CONTA_PAGAR_APROVADOR_IGUAL_LANCADOR`), mesmo com a permissão. Quem lançou é `lancadoPorId`;
+  ao reenviar uma conta (ver abaixo), vale quem a reenviou.
+- **Baixa só de conta aprovada:** `POST /:id/baixar` em conta não aprovada responde 422
+  `CONTA_PAGAR_NAO_APROVADA`. O mesmo vale para marcar a conta como "Pago" pelo campo Status do modal
+  de edição ou criá-la já paga.
+- **API:** `POST /:id/aprovar` e `POST /:id/recusar` (corpo `{ motivo }`, obrigatório), ambos
+  auditados como `UPDATE` de `ContaPagar`; só conta pendente e aguardando aprovação (422
+  `CONTA_PAGAR_APROVACAO_INVALIDA`). A resposta traz quem aprovou ou recusou (nome), quando e o
+  motivo. `GET /contas-pagar?aprovacao=LANCADA|APROVADA|RECUSADA` filtra a lista.
+- **Reenvio:** editar conta recusada a devolve para aprovação (limpa a recusa). Em conta aprovada e
+  ainda não paga, mudar valor, vencimento, beneficiário ou documento também desfaz a aprovação; mudar
+  só descrição, observação ou outros campos não.
+- **Contas existentes:** a migration marca como `APROVADA` (sem aprovador) o que já estava lançado,
+  para não travar a baixa. As novas nascem `LANCADA`.
+- **Alerta (#160):** `CONTAS_PAGAR_AGUARDANDO_APROVACAO`, visível a quem tem a permissão de aprovar;
+  abre `/pagar?status=PENDENTE&aprovacao=LANCADA`.
+- **Tela:** coluna e filtro "Aprovação", ações Aprovar e Recusar no menu da linha e no detalhe, "Editar
+  Baixa" e "Baixar" só para conta aprovada.
+- **Fora do escopo (sem decisão do cliente):** limite de valor por aprovador e aprovação automática
+  de contas recorrentes (o sistema ainda não tem contas recorrentes).
+
 ## Relatórios (`ReportPage` + `common/relatorios`)
 
 As 7 telas de Relatórios usam a mesma estrutura: seletor de relatório, período De/Até e o
@@ -515,6 +576,39 @@ fora do inventário, em Configurações / Gestão. A gravação continua na seç
   registro e nomes dos campos), nunca o antes e depois. É auditada (`EXPORT`, entidade `AuditLog`).
 - **Escopo (#153):** a tela é da administração (escopo `TODOS`), então não há filtro por
   profissional. O filtro de usuário usa o lookup `usuarios`.
+
+## Inadimplência: painel e régua de cobrança (`/financeiro/inadimplencia`)
+
+Issue #166 (R §18 e §44). Tela fora do inventário, em Financeiro, com três abas: **Painel**, **Régua de
+cobrança** e **Histórico de cobranças**. Perfil restrito a profissionais (#153) recebe 403: é a visão da
+administração.
+
+- **Vencido e saldo:** título de Contas a Receber do Torres (sem a receita dos profissionais) com status
+  Pendente ou Parcial e vencimento antes de hoje (dia no fuso da clínica). O valor é o **saldo em aberto**
+  (valor menos as baixas parciais, #165); Pago, Cancelado, Renegociado e excluído ficam fora. "A receber
+  hoje" é o saldo dos que vencem hoje.
+- **Painel** (`GET /api/financeiro/inadimplencia/painel`): a receber hoje, vencidos (valor e quantidade),
+  aging em 0–30, 31–60 e mais de 60 dias, contratos de sala com título vencido e profissionais
+  inadimplentes (do maior saldo para o menor). `GET .../titulos` lista os mesmos títulos (filtros `faixa` e
+  `profissionalId`): a soma da lista fecha com o painel.
+- **Régua** (`GET .../regua`, `PATCH .../regua/:id`): quatro marcos fixos, **3 dias antes**, **no
+  vencimento**, **3 dias depois** e **7 dias depois**, criados pela migration. Cada um liga/desliga, escolhe
+  WhatsApp e alerta interno e tem o texto editável com as variáveis `{nome}`, `{valor}`, `{vencimento}` e
+  `{titulo}`. Os textos iniciais são **sugestões a confirmar com o cliente**.
+- **Quem é cobrado (decisão do dev):** só títulos com **profissional sacado** (contratos de sala). Paciente
+  fica fora. Canal: só WhatsApp (o e-mail não existe no sistema e fica para outra issue), usando o canal
+  conectado do profissional ou da clínica, pela mesma fila das mensagens automáticas.
+- **Rodada:** `InadimplenciaAgendador`, toda hora cheia das 8h às 18h (fuso de São Paulo; desliga com
+  `CAMPANHAS_AGENDADOR=off`). A restrição única `(conta_receber_id, marco)` em `cobrancas_envios` garante o
+  aviso **uma única vez** por título e marco: as rodadas seguintes e um reinício da API não repetem. Falta de
+  telefone (`SEM_TELEFONE`) ou de canal (`SEM_CANAL`) fica como **Falha** no histórico e não é repetida
+  sozinha. O dia perdido (API fora o dia todo) não é recuperado.
+- **Alerta interno:** o tipo `COBRANCAS_REGUA` da central de notificações (#160) conta os títulos que estão
+  hoje num marco ativo com "Alerta interno" ligado.
+- **Histórico:** aba própria (filtros por marco e situação) e a seção "Cobranças enviadas" no detalhe da
+  conta a receber (com a permissão `financeiro.inadimplencia.ver`). Cada envio é auditado
+  (`CobrancaEnvio`, usuário `system`, sem texto nem telefone) e a edição da régua também (`ReguaCobranca`).
+- **Permissões:** `financeiro.inadimplencia.ver` (painel, histórico e régua) e `.editar` (alterar a régua).
 
 ## Backup e restauração (`common/backup`)
 

@@ -1,4 +1,5 @@
 import {
+  type CancelarSemReagendamentoInput,
   confirmacaoConfigSchema,
   confirmacaoModeloListaSchema,
   confirmacaoModeloSchema,
@@ -110,19 +111,32 @@ export function useExcluirModelo() {
   );
 }
 
-export type AcaoConfirmacao = 'enviar' | 'confirmar' | 'cancelar';
+export type AcaoConfirmacao = 'enviar' | 'confirmar';
 
 const SUCESSO_ACAO: Record<AcaoConfirmacao, string> = {
   enviar: 'Confirmação enviada.',
   confirmar: 'Agendamento confirmado.',
-  cancelar: 'Agendamento cancelado.',
 };
 
-/** Ações da linha do grid: Enviar confirmacao, Confirmar e Cancelar. */
+/** Ações da linha do grid: Enviar confirmacao e Confirmar (o Cancelar pede o motivo, abaixo). */
 export function useAcaoConfirmacao(acao: AcaoConfirmacao) {
   return useEscrita(
     (id: string) =>
       apiFetch(`${URL_CONFIRMACOES}/${id}/${acao}`, { method: 'POST', schema: confirmacaoSchema }),
     SUCESSO_ACAO[acao],
+  );
+}
+
+/** "Cancelar" (✗): o agendamento é cancelado com o motivo da lista (issue #162). */
+export function useCancelarConfirmacao(id: string) {
+  return useEscrita(
+    (dados: CancelarSemReagendamentoInput) =>
+      apiFetch(`${URL_CONFIRMACOES}/${id}/cancelar`, {
+        method: 'POST',
+        body: dados,
+        schema: confirmacaoSchema,
+      }),
+    'Agendamento cancelado.',
+    true,
   );
 }

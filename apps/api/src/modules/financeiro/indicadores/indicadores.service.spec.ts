@@ -5,7 +5,11 @@ import { IndicadoresFinanceirosService, limitesDoMes, mesAnteriorDe } from './in
 
 const ID_RECORRENTE = '0b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 
-function setup(somas: { receber: number[]; pagar: number }) {
+/**
+ * `receber`: somas de `contaReceber` (faturamento e recorrente da base competência);
+ * `baixas`: somas de `contaReceberBaixa` (recebido e, na base caixa, também o faturamento).
+ */
+function setup(somas: { receber: number[]; baixas?: number[]; pagar: number }) {
   const fila = [...somas.receber];
   const contaReceber = {
     aggregate: jest.fn().mockImplementation(() => {
@@ -13,18 +17,25 @@ function setup(somas: { receber: number[]; pagar: number }) {
       return Promise.resolve({ _sum: { valor } });
     }),
   };
+  const filaBaixas = [...(somas.baixas ?? [])];
+  const contaReceberBaixa = {
+    aggregate: jest.fn().mockImplementation(() => {
+      const valorRecebido = filaBaixas.shift() ?? 0;
+      return Promise.resolve({ _sum: { valorRecebido } });
+    }),
+  };
   const contaPagarBaixa = {
     aggregate: jest.fn().mockResolvedValue({ _sum: { valorPago: somas.pagar } }),
   };
   const txHost = {
-    tx: { contaReceber, contaPagarBaixa },
+    tx: { contaReceber, contaReceberBaixa, contaPagarBaixa },
   } as unknown as TransactionHost<PrismaAdapter>;
   const cobrancas = { idsContasReceberDasCobrancas: jest.fn().mockResolvedValue([ID_RECORRENTE]) };
   const service = new IndicadoresFinanceirosService(
     txHost,
     cobrancas as unknown as ContratosSalaCobrancaService,
   );
-  return { service, contaReceber, contaPagarBaixa, cobrancas };
+  return { service, contaReceber, contaReceberBaixa, contaPagarBaixa, cobrancas };
 }
 
 describe('IndicadoresFinanceirosService', () => {
@@ -40,9 +51,10 @@ describe('IndicadoresFinanceirosService', () => {
   });
 
   it('calcular: faturamento, recorrente, avulsa, despesas e resultado (recebido - despesas)', async () => {
-    // Ordem das somas: faturamento, recorrente, recebido.
-    const { service, contaReceber, cobrancas } = setup({
-      receber: [9070, 7910, 9070],
+    // Competência: faturamento e recorrente pelos títulos; recebido pelas baixas.
+    const { service, contaReceber, contaReceberBaixa, cobrancas } = setup({
+      receber: [9070, 7910],
+      baixas: [9070],
       pagar: 6978.25,
     });
 
@@ -56,11 +68,12 @@ describe('IndicadoresFinanceirosService', () => {
       despesasPagas: 6978.25,
     });
     expect(cobrancas.idsContasReceberDasCobrancas).toHaveBeenCalledWith('2026-10', '2026-10');
-    expect(contaReceber.aggregate).toHaveBeenCalledTimes(3);
+    expect(contaReceber.aggregate).toHaveBeenCalledTimes(2);
+    expect(contaReceberBaixa.aggregate).toHaveBeenCalledTimes(1);
   });
 
-  it('calcular: só do Torres (sem receita de profissional) e sem canceladas na competência', async () => {
-    const { service, contaReceber } = setup({ receber: [0, 0, 0], pagar: 0 });
+  it('calcular: só do Torres (sem receita de profissional), sem canceladas nem renegociadas na competência', async () => {
+    const { service, contaReceber } = setup({ receber: [0, 0], baixas: [0], pagar: 0 });
 
     await service.calcular('2026-10-01', '2026-10-31', 'competencia');
 
@@ -68,25 +81,35 @@ describe('IndicadoresFinanceirosService', () => {
     expect(where).toMatchObject({
       deletedAt: null,
       profissionalId: null,
-      status: { not: 'CANCELADO' },
+      status: { notIn: ['CANCELADO', 'RENEGOCIADO'] },
       dataVencimento: { gte: new Date('2026-10-01T00:00:00.000Z') },
     });
   });
 
-  it('calcular na base recebimento considera só as contas recebidas no período', async () => {
-    const { service, contaReceber } = setup({ receber: [0, 0, 0], pagar: 0 });
+  it('calcular na base recebimento soma as baixas do período (inclusive as parciais)', async () => {
+    const { service, contaReceber, contaReceberBaixa } = setup({
+      receber: [],
+      baixas: [0, 0, 0],
+      pagar: 0,
+    });
 
     await service.calcular('2026-10-01', '2026-10-31', 'recebimento');
 
-    expect(contaReceber.aggregate.mock.calls[0]?.[0].where).toMatchObject({
-      status: 'RECEBIDO',
+    expect(contaReceber.aggregate).not.toHaveBeenCalled();
+    expect(contaReceberBaixa.aggregate.mock.calls[0]?.[0].where).toMatchObject({
+      deletedAt: null,
       dataRecebimento: { lte: new Date('2026-10-31T00:00:00.000Z') },
+      contaReceber: { deletedAt: null, profissionalId: null },
     });
   });
 
   it('obter: 10 cards, com anterior e variação; sem fonte aparecem sem valor', async () => {
-    // Mês atual (3 somas) e mês anterior (3 somas), em paralelo e na ordem de chamada.
-    const { service } = setup({ receber: [9070, 7910, 9070, 13650, 7910, 13650], pagar: 100 });
+    // Mês atual e mês anterior, em paralelo e na ordem de chamada.
+    const { service } = setup({
+      receber: [9070, 7910, 13650, 7910],
+      baixas: [9070, 13650],
+      pagar: 100,
+    });
 
     const r = await service.obter({ mes: '2026-10' });
 
@@ -113,7 +136,7 @@ describe('IndicadoresFinanceirosService', () => {
   });
 
   it('obter sem mês usa o mês atual', async () => {
-    const { service } = setup({ receber: [], pagar: 0 });
+    const { service } = setup({ receber: [], baixas: [], pagar: 0 });
 
     const r = await service.obter({});
 

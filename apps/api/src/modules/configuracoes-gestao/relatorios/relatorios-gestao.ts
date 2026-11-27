@@ -1,10 +1,18 @@
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { Injectable } from '@nestjs/common';
-import type { Sort } from '@torres/shared';
+import {
+  TIPOS_CANCELAMENTO,
+  RELATORIO_CANCELAMENTOS_ID,
+  TIPO_CANCELAMENTO_ROTULO,
+  type Sort,
+} from '@torres/shared';
+import { EscopoDadosService } from '../../../common/auth/escopo-dados.service';
+import type { Prisma } from '../../../generated/prisma/client';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import {
   definirRelatorio,
   type ProvedorRelatorios,
+  type ConsultaRelatorio,
   type ReportDefinition,
 } from '../../../common/relatorios/relatorio.types';
 import {
@@ -13,10 +21,34 @@ import {
   type TicketMedioOrigem,
 } from '../../comercial-atendimento/indicadores-gestao/indicadores-gestao.service';
 import { ordenarEPaginar } from '../../comercial-atendimento/relatorios/relatorios-comercial';
+import { UsuariosService } from '../usuarios/usuarios.service';
+import { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
 import {
   SalasPainelService,
   type OcupacaoSalaPeriodo,
 } from '../../gestao-profissionais/salas/salas-painel.service';
+
+export interface LinhaCancelamento {
+  canceladoEm: Date;
+  tipo: string;
+  motivo: string;
+  profissional: string | null;
+  canceladoPor: string | null;
+  reagendou: string | null;
+  observacao: string | null;
+}
+
+export interface LinhaCancelamentoPorMotivo {
+  tipo: string;
+  motivo: string;
+  profissional: string | null;
+  quantidade: number;
+}
+
+/** Ids distintos e preenchidos, para buscar os nomes de uma vez. */
+function ids(valores: readonly (string | null)[]): string[] {
+  return [...new Set(valores.filter((v): v is string => v !== null))];
+}
 
 export interface LinhaLogAcesso {
   acessoEm: Date;
@@ -37,12 +69,17 @@ export class RelatoriosGestao implements ProvedorRelatorios {
     private readonly txHost: TransactionHost<PrismaAdapter>,
     private readonly indicadores: IndicadoresGestaoService,
     private readonly salas: SalasPainelService,
+    private readonly profissionais: ProfissionaisService,
+    private readonly usuarios: UsuariosService,
+    private readonly escopo: EscopoDadosService,
   ) {
     this.relatorios = [
       this.logDeAcesso(),
       this.ticketMedioPorCanal(),
       this.ocupacaoPorSala(),
       this.ltvPaciente(),
+      this.cancelamentos(),
+      this.cancelamentosPorMotivo(),
     ];
   }
 
@@ -226,6 +263,141 @@ export class RelatoriosGestao implements ProvedorRelatorios {
         ),
       contar: async (consulta) =>
         (await this.indicadores.ltvPorPaciente(consulta.intervalo)).length,
+    });
+  }
+
+  // --- Cancelamentos (issue #162) --------------------------------------------------------------
+
+  private filtroTipoCancelamento() {
+    return {
+      tipo: 'select' as const,
+      parametro: 'tipo',
+      rotulo: 'Tipo',
+      opcoes: TIPOS_CANCELAMENTO.map((valor) => ({
+        valor,
+        rotulo: TIPO_CANCELAMENTO_ROTULO[valor],
+      })),
+    };
+  }
+
+  /** Cancelamentos do período, no escopo do usuário (perfil restrito só vê os dos seus profissionais). */
+  private whereCancelamentos({
+    intervalo,
+    filtros,
+  }: {
+    intervalo: { gte: Date; lt: Date };
+    filtros: Readonly<Record<string, string | undefined>>;
+  }): Prisma.CancelamentoWhereInput {
+    const tipo = TIPOS_CANCELAMENTO.find((t) => t === filtros.tipo);
+    return {
+      canceladoEm: intervalo,
+      tipo,
+      profissionalId: this.escopo.filtroProfissional(),
+    };
+  }
+
+  private cancelamentos(): ReportDefinition {
+    const ordem = (sort: Sort | undefined): Prisma.CancelamentoOrderByWithRelationInput[] => {
+      const direcao = sort?.direction ?? 'desc';
+      if (sort?.field === 'tipo') return [{ tipo: direcao }, { canceladoEm: 'desc' }];
+      if (sort?.field === 'motivo') return [{ motivoNome: direcao }, { canceladoEm: 'desc' }];
+      return [{ canceladoEm: direcao }, { id: 'asc' }];
+    };
+    return definirRelatorio<LinhaCancelamento>({
+      id: RELATORIO_CANCELAMENTOS_ID,
+      nome: 'Cancelamentos',
+      colunas: [
+        {
+          key: 'canceladoEm',
+          header: 'Data/hora',
+          type: 'datetime',
+          value: (l) => l.canceladoEm,
+          width: 2,
+          ordenavel: true,
+        },
+        { key: 'tipo', header: 'Tipo', value: (l) => l.tipo, ordenavel: true },
+        { key: 'motivo', header: 'Motivo', value: (l) => l.motivo, width: 3, ordenavel: true },
+        { key: 'profissional', header: 'Profissional', value: (l) => l.profissional, width: 3 },
+        { key: 'canceladoPor', header: 'Cancelado por', value: (l) => l.canceladoPor, width: 3 },
+        { key: 'reagendou', header: 'Reagendou', value: (l) => l.reagendou },
+        { key: 'observacao', header: 'Observação', value: (l) => l.observacao, width: 4 },
+      ],
+      ordenacaoPadrao: 'canceladoEm:desc',
+      filtros: [this.filtroTipoCancelamento()],
+      buscar: async (consulta, pagina) => {
+        const linhas = await this.txHost.tx.cancelamento.findMany({
+          where: this.whereCancelamentos(consulta),
+          orderBy: ordem(consulta.sort),
+          ...(pagina ? { skip: pagina.skip, take: pagina.take } : {}),
+        });
+        const [profissionais, usuarios] = await Promise.all([
+          this.profissionais.nomesPorIds(ids(linhas.map((l) => l.profissionalId))),
+          this.usuarios.nomesPorIds(ids(linhas.map((l) => l.canceladoPorId))),
+        ]);
+        return linhas.map((l) => ({
+          canceladoEm: l.canceladoEm,
+          tipo: TIPO_CANCELAMENTO_ROTULO[l.tipo],
+          motivo: l.motivoNome,
+          profissional: l.profissionalId ? (profissionais.get(l.profissionalId) ?? null) : null,
+          canceladoPor: l.canceladoPorId ? (usuarios.get(l.canceladoPorId) ?? null) : 'Sistema',
+          reagendou: l.tipo === 'CONSULTA' ? (l.reagendouParaId ? 'Sim' : 'Não') : null,
+          observacao: l.observacao,
+        }));
+      },
+      contar: (consulta) =>
+        this.txHost.tx.cancelamento.count({ where: this.whereCancelamentos(consulta) }),
+    });
+  }
+
+  /** Total por tipo, motivo e profissional (inteligência gerencial: por que e quem mais cancela). */
+  private cancelamentosPorMotivo(): ReportDefinition {
+    const linhas = async (consulta: ConsultaRelatorio): Promise<LinhaCancelamentoPorMotivo[]> => {
+      const grupos = await this.txHost.tx.cancelamento.groupBy({
+        by: ['tipo', 'motivoNome', 'profissionalId'],
+        where: this.whereCancelamentos(consulta),
+        _count: { _all: true },
+      });
+      const nomes = await this.profissionais.nomesPorIds(ids(grupos.map((g) => g.profissionalId)));
+      const linhas = grupos.map((g) => ({
+        tipo: TIPO_CANCELAMENTO_ROTULO[g.tipo],
+        motivo: g.motivoNome,
+        profissional: g.profissionalId ? (nomes.get(g.profissionalId) ?? null) : null,
+        quantidade: g._count._all,
+      }));
+      // O banco não garante a ordem dos grupos: fixa uma ordem base para os empates saírem sempre iguais.
+      return linhas.sort(
+        (a, b) =>
+          a.tipo.localeCompare(b.tipo, 'pt-BR') ||
+          a.motivo.localeCompare(b.motivo, 'pt-BR') ||
+          (a.profissional ?? '').localeCompare(b.profissional ?? '', 'pt-BR'),
+      );
+    };
+    return definirRelatorio<LinhaCancelamentoPorMotivo>({
+      id: 'GES-06',
+      nome: 'Cancelamentos por Motivo',
+      colunas: [
+        { key: 'tipo', header: 'Tipo', value: (l) => l.tipo, ordenavel: true },
+        { key: 'motivo', header: 'Motivo', value: (l) => l.motivo, width: 3, ordenavel: true },
+        {
+          key: 'profissional',
+          header: 'Profissional',
+          value: (l) => l.profissional,
+          width: 3,
+          ordenavel: true,
+        },
+        {
+          key: 'quantidade',
+          header: 'Cancelamentos',
+          type: 'number',
+          value: (l) => l.quantidade,
+          ordenavel: true,
+        },
+      ],
+      ordenacaoPadrao: 'quantidade:desc',
+      filtros: [this.filtroTipoCancelamento()],
+      buscar: async (consulta, pagina) =>
+        ordenarEPaginar(await linhas(consulta), consulta.sort, pagina),
+      contar: async (consulta) => (await linhas(consulta)).length,
     });
   }
 }

@@ -2,6 +2,7 @@ import { PERMISSOES, type ContaReceber } from '@torres/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { MOTIVO_ID, MOTIVO_OUTRO_ID, rotaMotivosCancelamento } from '@/test/motivos-cancelamento';
 import { apiFalsa, chamadasPara, json, renderApp, USUARIO_TESTE } from '@/test/render-app';
 
 const API = '/api/financeiro/contas-receber';
@@ -19,6 +20,16 @@ function conta(parcial: Partial<ContaReceber>): ContaReceber {
     descricao: 'Mensalidade Outubro',
     pacienteId: null,
     pacienteNome: null,
+    profissionalSacadoId: null,
+    profissionalSacadoNome: null,
+    contratoSalaId: null,
+    contratoSalaNumero: null,
+    renegociadoDeId: null,
+    renegociadoDeNumero: null,
+    renegociadoParaNumeros: [],
+    competencia: null,
+    valorRecebido: '0.00',
+    saldo: '150.50',
     valor: '150.50',
     dataVencimento: '2026-12-10',
     formaPagamentoId: null,
@@ -49,6 +60,8 @@ const CONTAS = [
     contaBancariaId: CONTA_BANCARIA_ID,
     contaBancariaNome: 'Banco Teste',
     dataRecebimento: '2026-12-08',
+    valorRecebido: '150.50',
+    saldo: '0.00',
   }),
 ];
 
@@ -138,9 +151,19 @@ describe('Contas a Receber (/receber)', () => {
       'Valor',
       'Vencimento',
       'Status',
+      'Contrato',
+      'Saldo',
       'Ações',
     ]);
-    for (const nome of ['Todos', 'Pendente', 'Recebido', 'Vencido']) {
+    for (const nome of [
+      'Todos',
+      'A vencer',
+      'Vencido',
+      'Pago',
+      'Parcial',
+      'Renegociado',
+      'Cancelado',
+    ]) {
       expect(screen.getByRole('button', { name: nome })).toBeVisible();
     }
     expect(screen.getByPlaceholderText('Buscar contas a receber...')).toBeVisible();
@@ -154,14 +177,16 @@ describe('Contas a Receber (/receber)', () => {
     renderTela();
 
     const l1 = (await screen.findByText('Mensalidade Outubro')).closest('tr') as HTMLElement;
-    expect(within(l1).getByText('R$ 150,50')).toBeVisible();
+    // Valor e Saldo (conta sem baixa: o saldo é o valor inteiro).
+    expect(within(l1).getAllByText('R$ 150,50')).toHaveLength(2);
     expect(within(l1).getByText('10/12/2026')).toBeVisible();
-    expect(within(l1).getByText('Pendente')).toBeVisible();
-    expect(within(l1).getByText('-')).toBeVisible();
+    expect(within(l1).getByText('A vencer')).toBeVisible();
+    // Cliente e Contrato vazios.
+    expect(within(l1).getAllByText('-')).toHaveLength(2);
 
     const l2 = screen.getByText('Procedimento Estético').closest('tr') as HTMLElement;
     expect(within(l2).getByText('Maria Teste')).toBeVisible();
-    expect(within(l2).getByText('Recebido')).toBeVisible();
+    expect(within(l2).getByText('Pago')).toBeVisible();
   });
 
   it('chips de status filtram na API; Todos volta à lista completa', async () => {
@@ -217,7 +242,7 @@ describe('Contas a Receber (/receber)', () => {
     expect(within(modal).getByLabelText('Documento')).toBeVisible();
     expect(within(modal).getByLabelText('Total Parcelas')).toBeVisible();
     expect(within(modal).getByLabelText('Observações')).toBeVisible();
-    expect(within(modal).getByRole('combobox', { name: 'Status' })).toHaveTextContent('Pendente');
+    expect(within(modal).getByRole('combobox', { name: 'Status' })).toHaveTextContent('A vencer');
     expect(within(modal).getByRole('button', { name: 'Cancelar' })).toBeVisible();
     expect(within(modal).getByRole('button', { name: 'Cadastrar' })).toBeVisible();
   });
@@ -287,7 +312,7 @@ describe('Contas a Receber (/receber)', () => {
 
     const modal = await screen.findByRole('dialog', { name: 'Procedimento Estético' });
     expect(within(modal).getByText('Maria Teste')).toBeVisible();
-    expect(within(modal).getByText('Recebido')).toBeVisible();
+    expect(within(modal).getByText('Pago')).toBeVisible();
     const fechar = within(modal).getAllByRole('button', { name: 'Fechar' });
     await user.click(fechar[0] as HTMLElement);
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -327,7 +352,7 @@ describe('Contas a Receber (/receber)', () => {
     expect(within(modal).queryByLabelText('Data de Recebimento')).not.toBeInTheDocument();
 
     await user.click(within(modal).getByRole('combobox', { name: 'Status' }));
-    await user.click(await screen.findByRole('option', { name: 'Recebido' }));
+    await user.click(await screen.findByRole('option', { name: 'Pago' }));
     expect(await within(modal).findByLabelText('Data de Recebimento')).toBeVisible();
     expect(within(modal).getByRole('combobox', { name: 'Conta Bancária' })).toBeVisible();
   });
@@ -414,5 +439,128 @@ describe('Contas a Receber (/receber)', () => {
     expect(screen.getByRole('menuitem', { name: 'Detalhar' })).toBeVisible();
     expect(screen.queryByRole('menuitem', { name: 'Editar' })).not.toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: 'Excluir' })).not.toBeInTheDocument();
+  });
+
+  describe('Cancelar (issue #162)', { timeout: 20_000 }, () => {
+    const ROTA_CANCELAR = `${API}/${ID_1}/cancelar`;
+    const comMotivos = (rotas: NonNullable<Parameters<typeof apiFalsa>[0]>['rotas'] = {}) =>
+      api({ rotas: { ...rotaMotivosCancelamento, ...rotas } });
+
+    it('a conta pendente tem "Cancelar" no menu; a já fechada vem desabilitada', async () => {
+      const { user } = renderTela(comMotivos());
+
+      const pendente = (await screen.findByText('Mensalidade Outubro')).closest(
+        'tr',
+      ) as HTMLElement;
+      await user.click(within(pendente).getByRole('button', { name: 'Ações' }));
+      expect(await screen.findByRole('menuitem', { name: 'Cancelar' })).not.toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
+      await user.keyboard('{Escape}');
+
+      const fechada = (await screen.findByText('Procedimento Estético')).closest(
+        'tr',
+      ) as HTMLElement;
+      await user.click(within(fechada).getByRole('button', { name: 'Ações' }));
+      expect(await screen.findByRole('menuitem', { name: 'Cancelar' })).toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
+    });
+
+    it('pede o motivo da lista, envia motivo e observação e não exclui a conta', async () => {
+      let corpo: Record<string, unknown> | null = null;
+      const fetchMock = comMotivos({
+        [ROTA_CANCELAR]: (init) => {
+          corpo = corpoDe(init);
+          return json({ ...CONTAS[0], status: 'CANCELADO' });
+        },
+      });
+      const { user } = renderTela(fetchMock);
+
+      await abrirMenu(user, 'Mensalidade Outubro', 'Cancelar');
+      const modal = await screen.findByRole('dialog', { name: 'Cancelar conta a receber' });
+      expect(within(modal).getByText(/Mensalidade Outubro/)).toBeVisible();
+
+      await user.click(within(modal).getByRole('button', { name: 'Cancelar conta' }));
+      expect(await within(modal).findByText('Motivo é obrigatório.')).toBeVisible();
+      expect(corpo).toBeNull();
+
+      await user.click(within(modal).getByRole('combobox', { name: /Motivo/ }));
+      await user.click(await screen.findByRole('option', { name: 'Paciente desistiu' }));
+      await user.type(within(modal).getByLabelText('Observação'), 'Lançamento duplicado');
+      await user.click(within(modal).getByRole('button', { name: 'Cancelar conta' }));
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(corpo).toEqual({ motivoId: MOTIVO_ID, observacao: 'Lançamento duplicado' });
+      expect(
+        chamadasPara(fetchMock, `${API}/${ID_1}`).some(([, init]) => init?.method === 'DELETE'),
+      ).toBe(false);
+    });
+
+    it('o motivo "Outro" exige a observação antes de enviar', async () => {
+      let enviou = false;
+      const { user } = renderTela(
+        comMotivos({
+          [ROTA_CANCELAR]: () => {
+            enviou = true;
+            return json({ ...CONTAS[0], status: 'CANCELADO' });
+          },
+        }),
+      );
+
+      await abrirMenu(user, 'Mensalidade Outubro', 'Cancelar');
+      const modal = await screen.findByRole('dialog', { name: 'Cancelar conta a receber' });
+      await user.click(within(modal).getByRole('combobox', { name: /Motivo/ }));
+      await user.click(await screen.findByRole('option', { name: 'Outro' }));
+      await user.click(within(modal).getByRole('button', { name: 'Cancelar conta' }));
+
+      expect(await within(modal).findByText('Observação é obrigatória.')).toBeVisible();
+      expect(enviou).toBe(false);
+      expect(MOTIVO_OUTRO_ID).toBeTruthy();
+    });
+
+    it('o erro do servidor (409) aparece no modal e não fecha', async () => {
+      const { user } = renderTela(
+        comMotivos({
+          [ROTA_CANCELAR]: () =>
+            json(
+              {
+                statusCode: 409,
+                code: 'CONTA_NAO_PENDENTE',
+                message: 'Só é possível cancelar uma conta pendente.',
+              },
+              409,
+            ),
+        }),
+      );
+
+      await abrirMenu(user, 'Mensalidade Outubro', 'Cancelar');
+      const modal = await screen.findByRole('dialog', { name: 'Cancelar conta a receber' });
+      await user.click(within(modal).getByRole('combobox', { name: /Motivo/ }));
+      await user.click(await screen.findByRole('option', { name: 'Paciente desistiu' }));
+      await user.click(within(modal).getByRole('button', { name: 'Cancelar conta' }));
+
+      expect(
+        await within(modal).findByText('Só é possível cancelar uma conta pendente.'),
+      ).toBeVisible();
+      expect(screen.getByRole('dialog', { name: 'Cancelar conta a receber' })).toBeVisible();
+    });
+
+    it('sem a permissão editar, o menu não tem "Cancelar"', async () => {
+      const semEditar = PERMISSOES.filter((p) => p !== 'financeiro.contas-receber.editar');
+      const { user } = renderTela(
+        api({
+          usuario: { ...USUARIO_TESTE, permissoes: semEditar },
+          rotas: rotaMotivosCancelamento,
+        }),
+      );
+
+      const tr = (await screen.findByText('Mensalidade Outubro')).closest('tr') as HTMLElement;
+      await user.click(within(tr).getByRole('button', { name: 'Ações' }));
+      await screen.findByRole('menuitem', { name: 'Detalhar' });
+      expect(screen.queryByRole('menuitem', { name: 'Cancelar' })).toBeNull();
+    });
   });
 });

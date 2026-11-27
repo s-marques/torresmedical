@@ -166,6 +166,14 @@
     "buscarTelaDescricao": "Escriba el nombre de la pantalla para ir a ella",
     "buscarTelaPlaceholder": "Buscar pantalla…",
     "nenhumaTela": "No se encontró ninguna pantalla.",
+    "buscando": "Buscando…",
+    "buscaTipos": {
+      "PACIENTE": "Pacientes",
+      "PROFISSIONAL": "Profesionales",
+      "CONTRATO": "Contratos",
+      "FORNECEDOR": "Proveedores",
+      "LEAD": "Leads"
+    },
     "tema": "Tema",
     "notificacoes": "Notificaciones",
     "nenhumaNotificacao": "No hay notificaciones",
@@ -188,7 +196,9 @@
       "CONTAS_PAGAR_VENCIDAS_one": "{{count}} cuenta por pagar vencida",
       "CONTAS_PAGAR_VENCIDAS_other": "{{count}} cuentas por pagar vencidas",
       "RECEBIVEIS_VENCIDOS_one": "{{count}} cuenta por cobrar vencida",
-      "RECEBIVEIS_VENCIDOS_other": "{{count}} cuentas por cobrar vencidas"
+      "RECEBIVEIS_VENCIDOS_other": "{{count}} cuentas por cobrar vencidas",
+      "COBRANCAS_REGUA_one": "{{count}} cobro del calendario hoy",
+      "COBRANCAS_REGUA_other": "{{count}} cobros del calendario hoy"
     }
   },
   "temas": {
@@ -318,7 +328,8 @@
         "formas-pagamento": "Formas de Pago",
         "plano-contas": "Plan de Cuentas",
         "relatorios": "Informes",
-        "indicadores": "Indicadores"
+        "indicadores": "Indicadores",
+        "inadimplencia": "Morosidad"
       },
       "patrimonio-pessoal": {
         "patrimonio": "Patrimonio",
@@ -355,6 +366,7 @@
         "base-conhecimento": "Base de Conocimiento",
         "bypass-agente": "Bypass del Agente",
         "tipos-agendamento": "Tipos de Cita",
+        "motivos-cancelamento": "Motivos de Cancelación",
         "respostas-rapidas": "Respuestas Rápidas",
         "configuracoes": "Configuración",
         "minha-empresa": "Mi Empresa",
@@ -951,8 +963,6 @@
     "cancelar": {
       "titulo": "Cancelar bloqueo",
       "descricao": "{{tipo}} de {{sala}} el {{periodo}}. El registro no se elimina: queda como cancelado, con quién, cuándo y el motivo.",
-      "motivo": "Motivo de la cancelación",
-      "placeholder": "¿Por qué se canceló el bloqueo?",
       "voltar": "Volver",
       "confirmar": "Cancelar bloqueo"
     },
@@ -1248,6 +1258,13 @@
     "descricao": "Vencimientos, pérdidas, posición, movimientos, compras, curva ABC, consumo y previsión de compras.",
     "painel": "Panel",
     "modulo": "Compras / Inventario",
+    "relatorios": "Informes"
+  },
+  "relatoriosFinanceiro": {
+    "titulo": "Informes Financieros",
+    "descricao": "Morosidad, facturación, cuentas por pagar y por cobrar, estado de resultados, extractos y gastos por centro de costo.",
+    "painel": "Panel",
+    "modulo": "Finanzas",
     "relatorios": "Informes"
   },
   "relatoriosReceitaProfissionais": {
@@ -2032,6 +2049,76 @@
       "filtros": "Filtros"
     }
   },
+  "contasReceber": {
+    "colunas": {
+      "contrato": "Contrato",
+      "saldo": "Saldo"
+    },
+    "campos": {
+      "competencia": "Competencia",
+      "competenciaAjuda": "Vacía: el mes del vencimiento.",
+      "profissional": "Profesional (arrendatario)",
+      "profissionalPlaceholder": "Buscar profesional...",
+      "sacadoAjuda": "Para cobros de contrato de sala. Use el cliente o el profesional, no los dos."
+    },
+    "acoes": {
+      "baixar": "Registrar cobro",
+      "renegociar": "Renegociar",
+      "cancelarBaixa": "Cancelar cobro"
+    },
+    "status": {
+      "parcial": "Parcial",
+      "renegociado": "Renegociado"
+    },
+    "mensagens": {
+      "baixaRegistrada": "Cobro registrado.",
+      "baixaCancelada": "Cobro cancelado.",
+      "renegociada": "Cuenta renegociada."
+    },
+    "baixa": {
+      "titulo": "Registrar Cobro de Cuenta por Cobrar",
+      "descricao": "Registrar el cobro de {{descricao}}.",
+      "saldoEmAberto": "Saldo abierto: {{saldo}}",
+      "confirmar": "Confirmar Cobro",
+      "dataRecebimento": "Fecha de Cobro",
+      "valorRecebido": "Valor Cobrado",
+      "valorAjuda": "Menor que el saldo: la cuenta queda Parcial. Igual: Pagada.",
+      "formaPagamento": "Forma de Pago",
+      "contaBancaria": "Cuenta Bancaria",
+      "selecione": "Seleccione",
+      "documento": "Documento / Nº Comprobante",
+      "observacoes": "Observaciones"
+    },
+    "renegociar": {
+      "titulo": "Renegociar Cuenta por Cobrar",
+      "descricao": "El saldo de {{descricao}} se rehará en nuevos títulos.",
+      "confirmar": "Renegociar",
+      "parcela": "Cuota {{numero}}",
+      "valor": "Valor",
+      "vencimento": "Vencimiento",
+      "adicionarParcela": "Agregar cuota",
+      "removerParcela": "Quitar cuota {{numero}}",
+      "somaConfere": "Las cuotas cuadran con el saldo abierto.",
+      "somaFaltam": "Faltan {{diferenca}} para cuadrar el saldo abierto.",
+      "somaSobram": "Sobran {{diferenca}} respecto al saldo abierto.",
+      "observacoes": "Observaciones"
+    },
+    "detalhe": {
+      "profissional": "Profesional (arrendatario)",
+      "contrato": "Contrato",
+      "competencia": "Competencia",
+      "valorRecebido": "Valor Cobrado",
+      "saldo": "Saldo Abierto",
+      "renegociadoDe": "Renegociado del título",
+      "renegociadoPara": "Renegociado en los títulos",
+      "baixas": "Cobros",
+      "baixaData": "Fecha",
+      "baixaValor": "Valor Cobrado",
+      "baixaForma": "Forma de Pago",
+      "baixaConta": "Cuenta Bancaria",
+      "baixaRegistrada": "Registrado el"
+    }
+  },
   "contasPagar": {
     "competencia": "Competencia",
     "centroCusto": "Centro de Costo",
@@ -2109,6 +2196,27 @@
       "cadastrar": "Registrar",
       "editar": "Editar",
       "excluir": "Eliminar"
+    },
+    "aprovacao": {
+      "coluna": "Aprobación",
+      "filtro": "Aprobación",
+      "todas": "Todas",
+      "situacoes": {
+        "LANCADA": "Pendiente de aprobación",
+        "APROVADA": "Aprobada",
+        "RECUSADA": "Rechazada"
+      },
+      "aprovar": "Aprobar",
+      "recusar": "Rechazar",
+      "aprovarTitulo": "Aprobar Cuenta por Pagar",
+      "aprovarDescricao": "¿Aprobar la cuenta \"{{descricao}}\"? Después podrá registrarse el pago.",
+      "recusarTitulo": "Rechazar Cuenta por Pagar",
+      "recusarDescricao": "La cuenta \"{{descricao}}\" no se pagará. Indique el motivo del rechazo.",
+      "motivo": "Motivo del rechazo",
+      "motivoPlaceholder": "Ej.: boleto duplicado",
+      "aprovadaPor": "Aprobada por",
+      "recusadaPor": "Rechazada por",
+      "porEm": "{{nome}} el {{data}}"
     }
   },
   "modelosProntuario": {
@@ -2259,5 +2367,190 @@
     "todosProfissionais": "Todos los profesionales a los que tengo acceso",
     "incluirAnexos": "Incluir exámenes y adjuntos (genera un ZIP)",
     "exportar": "Exportar"
+  },
+  "cancelamento": {
+    "motivo": "Motivo",
+    "selecioneMotivo": "Seleccione el motivo",
+    "observacao": "Observación",
+    "observacaoPlaceholder": "Detalles de la cancelación (obligatorio en \"Otro\")",
+    "reagendou": "¿Reprogramó?",
+    "naoReagendou": "No reprogramó",
+    "reagendouAjuda": "Elija la nueva cita del paciente, si la hay.",
+    "voltar": "Volver",
+    "agenda": {
+      "acao": "Cancelar cita",
+      "titulo": "Cancelar cita #{{numero}}",
+      "descricao": "{{paciente}} con {{profissional}} el {{data}} a las {{hora}}. La cita no se elimina: queda cancelada, con quién, cuándo y por qué.",
+      "confirmar": "Cancelar cita",
+      "sucesso": "Cita cancelada.",
+      "novoAgendamento": "#{{numero}} - {{data}} a las {{hora}}"
+    },
+    "confirmacao": {
+      "descricao": "{{paciente}} con {{profissional}} el {{quando}}. La cita no se elimina: queda cancelada, con quién, cuándo y por qué, y el horario se libera."
+    },
+    "orcamento": {
+      "acao": "Cancelar",
+      "titulo": "Cancelar presupuesto #{{numero}}",
+      "descricao": "El presupuesto no se elimina: queda cancelado, con quién, cuándo y por qué.",
+      "confirmar": "Cancelar presupuesto",
+      "sucesso": "Presupuesto cancelado."
+    },
+    "contaReceber": {
+      "acao": "Cancelar",
+      "titulo": "Cancelar cuenta por cobrar",
+      "descricao": "{{descricao}}. La cuenta no se elimina: queda cancelada, con quién, cuándo y por qué.",
+      "confirmar": "Cancelar cuenta",
+      "sucesso": "Cuenta por cobrar cancelada."
+    },
+    "contaPagar": {
+      "acao": "Cancelar",
+      "titulo": "Cancelar cuenta por pagar",
+      "descricao": "{{descricao}}. La cuenta no se elimina: queda cancelada, con quién, cuándo y por qué.",
+      "confirmar": "Cancelar cuenta",
+      "sucesso": "Cuenta por pagar cancelada."
+    },
+    "contrato": {
+      "titulo": "Cancelar contrato (rescisión)",
+      "descricao": "Contrato: {{sala}} - {{locatario}}",
+      "data": "Fecha de cancelación",
+      "aviso": "Las cuotas pendientes posteriores a la fecha de cancelación se cancelarán automáticamente.",
+      "confirmar": "Cancelar contrato"
+    },
+    "tipos": {
+      "CONSULTA": "Cita",
+      "CONTRATO": "Contrato",
+      "COBRANCA": "Cobro",
+      "PERIODO": "Período",
+      "PROPOSTA": "Propuesta"
+    }
+  },
+  "motivosCancelamento": {
+    "titulo": "Motivos de Cancelación",
+    "descricao": "Listas de motivos usadas al cancelar citas, contratos, cobros, períodos y propuestas.",
+    "novo": "Nuevo motivo",
+    "buscar": "Buscar motivo...",
+    "vazio": "Ningún motivo registrado.",
+    "colunas": {
+      "tipo": "Tipo",
+      "nome": "Motivo",
+      "exigeTexto": "Exige observación",
+      "ativo": "Estado"
+    },
+    "sistema": "Sistema",
+    "filtroTipo": "Tipo",
+    "todosTipos": "Todos los tipos",
+    "acoes": {
+      "editar": "Editar",
+      "excluir": "Eliminar"
+    },
+    "excluir": {
+      "titulo": "Eliminar motivo",
+      "descricao": "¿Eliminar el motivo \"{{nome}}\"? Las cancelaciones ya registradas con él siguen en el historial.",
+      "confirmar": "Eliminar"
+    },
+    "modal": {
+      "tituloNovo": "Nuevo motivo de cancelación",
+      "tituloEditar": "Editar motivo de cancelación",
+      "tipo": "Tipo de cancelación",
+      "nome": "Nombre del motivo",
+      "exigeTexto": "Exige observación al elegir este motivo",
+      "ativo": "Activo",
+      "sistemaAviso": "Motivo usado por el sistema: no se puede renombrar, desactivar ni eliminar."
+    },
+    "sucesso": {
+      "criado": "Motivo creado.",
+      "atualizado": "Motivo actualizado.",
+      "excluido": "Motivo eliminado."
+    }
+  },
+  "inadimplencia": {
+    "titulo": "Morosidad",
+    "descricao": "Siga lo que está vencido y el calendario de cobro de los profesionales.",
+    "atualizar": "Actualizar",
+    "erroCarregar": "No se pudo cargar el panel de morosidad.",
+    "abas": {
+      "painel": "Panel",
+      "regua": "Calendario de cobro",
+      "historico": "Historial de cobros"
+    },
+    "indicadores": {
+      "titulo": "Indicadores del día",
+      "aReceberHoje": "A cobrar hoy",
+      "vencidos": "Vencidos",
+      "contratos": "Contratos morosos",
+      "profissionais": "Profesionales morosos",
+      "titulos_one": "{{count}} título",
+      "titulos_other": "{{count}} títulos"
+    },
+    "aging": {
+      "titulo": "Antigüedad de los vencidos",
+      "todas": "Todos los tramos",
+      "ATE_30": "0 a 30 días",
+      "DE_31_A_60": "31 a 60 días",
+      "ACIMA_60": "Más de 60 días"
+    },
+    "porProfissional": {
+      "titulo": "Profesionales morosos",
+      "vazio": "Ningún profesional moroso.",
+      "resumo": "{{valor}} en {{titulos}} título(s), con atraso de hasta {{dias}} día(s)"
+    },
+    "titulos": {
+      "titulo": "Títulos vencidos",
+      "vazio": "Ningún título vencido.",
+      "dias_one": "{{count}} día",
+      "dias_other": "{{count}} días",
+      "colunas": {
+        "descricao": "Descripción",
+        "sacado": "Deudor",
+        "contrato": "Contrato",
+        "vencimento": "Vencimiento",
+        "atraso": "Atraso",
+        "saldo": "Saldo pendiente",
+        "cobrancas": "Cobros enviados"
+      }
+    },
+    "regua": {
+      "descricao": "El calendario avisa al profesional por WhatsApp en los cuatro hitos, una sola vez por título. Los textos de abajo son sugerencias por confirmar con el cliente.",
+      "erroCarregar": "No se pudo cargar el calendario de cobro.",
+      "sucesso": "Calendario de cobro actualizado.",
+      "editarMensagem": "Editar mensaje",
+      "ativo": "Hito activo",
+      "whatsapp": "Enviar por WhatsApp",
+      "alertaInterno": "Alerta interna",
+      "marcos": {
+        "ANTES_3_DIAS": "3 días antes del vencimiento",
+        "NO_VENCIMENTO": "En el vencimiento",
+        "DEPOIS_3_DIAS": "3 días después del vencimiento",
+        "DEPOIS_7_DIAS": "7 días después del vencimiento"
+      },
+      "modal": {
+        "titulo": "Mensaje: {{marco}}",
+        "mensagem": "Mensaje",
+        "variaveis": "Variables disponibles: {{lista}}.",
+        "restaurar": "Restaurar texto predeterminado"
+      }
+    },
+    "historico": {
+      "vazio": "Aún no se envió ningún cobro.",
+      "todosMarcos": "Todos los hitos",
+      "doTitulo": "Cobros enviados",
+      "status": {
+        "ENVIADO": "Enviado",
+        "FALHA": "Fallo"
+      },
+      "erros": {
+        "SEM_TELEFONE": "Profesional sin teléfono",
+        "SEM_CANAL": "Sin canal de WhatsApp conectado"
+      },
+      "colunas": {
+        "titulo": "Título",
+        "profissional": "Profesional",
+        "marco": "Hito",
+        "situacao": "Situación",
+        "motivo": "Motivo del fallo",
+        "vencimento": "Vencimiento",
+        "enviadoEm": "Registrado el"
+      }
+    }
   }
 }

@@ -5,18 +5,38 @@ const HOJE = '2026-11-25';
 function criar(quantidade = 3) {
   const contaPagar = { count: jest.fn().mockResolvedValue(quantidade) };
   const contaReceber = { count: jest.fn().mockResolvedValue(quantidade) };
-  const regras = new FinanceiroAlertasRegras({ tx: { contaPagar, contaReceber } } as never);
+  const regua = { contarParaAlerta: jest.fn().mockResolvedValue(2) };
+  const regras = new FinanceiroAlertasRegras(
+    { tx: { contaPagar, contaReceber } } as never,
+    regua as never,
+  );
   const porTipo = Object.fromEntries(regras.regras().map((regra) => [regra.tipo, regra]));
-  return { porTipo, contaPagar, contaReceber };
+  return { porTipo, contaPagar, contaReceber, regua };
 }
 
 describe('FinanceiroAlertasRegras', () => {
-  it('expõe os três tipos do financeiro', () => {
+  it('expõe os tipos do financeiro', () => {
     expect(Object.keys(criar().porTipo)).toEqual([
       'CONTAS_PAGAR_VENCENDO',
       'CONTAS_PAGAR_VENCIDAS',
+      'CONTAS_PAGAR_AGUARDANDO_APROVACAO',
       'RECEBIVEIS_VENCIDOS',
+      'COBRANCAS_REGUA',
     ]);
+  });
+
+  it('cobranças da régua: delega a contagem do dia à régua (issue #166)', async () => {
+    const { porTipo, regua } = criar();
+    await expect(porTipo.COBRANCAS_REGUA?.contar(HOJE)).resolves.toBe(2);
+    expect(regua.contarParaAlerta).toHaveBeenCalledWith(HOJE);
+  });
+
+  it('contas a pagar aguardando aprovação: pendentes lançadas, não excluídas (issue #164)', async () => {
+    const { porTipo, contaPagar } = criar(4);
+    await expect(porTipo.CONTAS_PAGAR_AGUARDANDO_APROVACAO?.contar(HOJE)).resolves.toBe(4);
+    expect(contaPagar.count).toHaveBeenCalledWith({
+      where: { deletedAt: null, status: 'PENDENTE', aprovacao: 'LANCADA' },
+    });
   });
 
   it('contas a pagar que vencem hoje: pendentes, não excluídas, vencimento = hoje', async () => {
@@ -50,7 +70,7 @@ describe('FinanceiroAlertasRegras', () => {
       where: {
         deletedAt: null,
         profissionalId: null,
-        status: 'PENDENTE',
+        status: { in: ['PENDENTE', 'PARCIAL'] },
         dataVencimento: { lt: new Date('2026-11-25T00:00:00.000Z') },
       },
     });

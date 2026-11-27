@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { traduzirValidacao } from '../../i18n/validacao';
 import { dataSchemaOpcional } from '../comercial-atendimento/periodo-vendas';
 import { exportQuerySchema, listQuerySchema } from '../common/list-query';
-import { erroObrigatorio, textoObrigatorio } from '../common/obrigatorio';
+import { cancelarComMotivoSchema } from '../configuracoes-gestao/cancelamento';
+import { erroObrigatorio } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 import { abreviarDiaSemana } from './contrato-sala';
 import { adicionarDias, diaDaSemana } from './sala-painel';
@@ -215,10 +216,9 @@ export const createSalaBloqueioSchema = salaBloqueioInputSchema;
 export const updateSalaBloqueioSchema = salaBloqueioInputSchema;
 
 /** `POST /api/gestao-profissionais/salas-bloqueios/:id/cancelar`: o motivo é obrigatório. */
-export const cancelarSalaBloqueioSchema = z.strictObject({
-  motivo: textoObrigatorio('Motivo', { max: SALA_BLOQUEIO_MOTIVO_MAX }),
-});
+export const cancelarSalaBloqueioSchema = cancelarComMotivoSchema.omit({ reagendouParaId: true });
 export type CancelarSalaBloqueioInput = z.infer<typeof cancelarSalaBloqueioSchema>;
+export type CancelarSalaBloqueioFormulario = z.input<typeof cancelarSalaBloqueioSchema>;
 
 // --- Resposta ----------------------------------------------------------------------------
 

@@ -82,6 +82,7 @@ const GERENCIA: AcessosPorTela = {
   'financeiro.plano-contas': 'L',
   'financeiro.relatorios': 'L',
   'financeiro.indicadores': 'L',
+  'financeiro.inadimplencia': 'L',
   'patrimonio-pessoal.patrimonio': 'L',
   'patrimonio-pessoal.imoveis': 'L',
   'patrimonio-pessoal.veiculos': 'L',
@@ -180,6 +181,7 @@ const FINANCEIRO: AcessosPorTela = {
   'financeiro.plano-contas': 'T',
   'financeiro.relatorios': 'L',
   'financeiro.indicadores': 'L',
+  'financeiro.inadimplencia': 'T',
   'patrimonio-pessoal.patrimonio': 'L',
   'patrimonio-pessoal.imoveis': 'L',
   'patrimonio-pessoal.veiculos': 'L',
@@ -241,6 +243,8 @@ export const PERFIS_PADRAO: readonly PerfilPadrao[] = [
     extras: [
       'gestao-profissionais.profissionais-documentos.validar',
       'configuracoes-gestao.dados-pessoais.exportar',
+      // Quem lança e dá baixa (Financeiro) não aprova a conta (issue #164).
+      'financeiro.contas-pagar.aprovar',
     ],
   },
   {
@@ -278,6 +282,8 @@ export const PERFIS_PADRAO: readonly PerfilPadrao[] = [
 export const TELAS_SOMENTE_ADMINISTRADOR: readonly TelaId[] = [
   /** Consulta da trilha de auditoria (issue #155). */
   'configuracoes-gestao.auditoria',
+  /** Cadastro dos motivos de cancelamento (issue #162). */
+  'configuracoes-gestao.motivos-cancelamento',
 ];
 
 /** Perfis que nunca recebem permissão clínica (R §14). */

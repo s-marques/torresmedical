@@ -140,25 +140,44 @@ export class IndicadoresFinanceirosService {
       ate.slice(0, 7),
     );
     const intervalo = { gte: dia(de), lte: dia(ate) };
-    const whereFaturamento: Prisma.ContaReceberWhereInput =
-      base === 'competencia'
-        ? { ...DO_TORRES, status: { not: 'CANCELADO' }, dataVencimento: intervalo }
-        : { ...DO_TORRES, status: 'RECEBIDO', dataRecebimento: intervalo };
-    const whereRecebido: Prisma.ContaReceberWhereInput = {
-      ...DO_TORRES,
-      status: 'RECEBIDO',
-      dataRecebimento: intervalo,
+    // Cobrança renegociada continua recorrente: vale o título original e os novos dele.
+    const daCobranca: Prisma.ContaReceberWhereInput = {
+      OR: [{ id: { in: idsRecorrentes } }, { renegociadoDeId: { in: idsRecorrentes } }],
     };
-
-    const somaReceber = async (where: Prisma.ContaReceberWhereInput) =>
+    const somaCompetencia = async (extra: Prisma.ContaReceberWhereInput) =>
       Number(
-        (await this.txHost.tx.contaReceber.aggregate({ where, _sum: { valor: true } }))._sum
-          .valor ?? 0,
+        (
+          await this.txHost.tx.contaReceber.aggregate({
+            // Renegociado fora: o valor em aberto está nos títulos novos.
+            where: {
+              ...DO_TORRES,
+              status: { notIn: ['CANCELADO', 'RENEGOCIADO'] },
+              dataVencimento: intervalo,
+              ...extra,
+            },
+            _sum: { valor: true },
+          })
+        )._sum.valor ?? 0,
       );
+    // Base caixa e "recebido": soma das baixas do período, inclusive as parciais (issue #165).
+    const somaBaixas = async (extra: Prisma.ContaReceberWhereInput) =>
+      Number(
+        (
+          await this.txHost.tx.contaReceberBaixa.aggregate({
+            where: {
+              ...NAO_EXCLUIDAS,
+              dataRecebimento: intervalo,
+              contaReceber: { ...DO_TORRES, ...extra },
+            },
+            _sum: { valorRecebido: true },
+          })
+        )._sum.valorRecebido ?? 0,
+      );
+    const somaFaturamento = base === 'competencia' ? somaCompetencia : somaBaixas;
     const [faturamento, recorrente, recebido, despesas] = await Promise.all([
-      somaReceber(whereFaturamento),
-      somaReceber({ ...whereFaturamento, id: { in: idsRecorrentes } }),
-      somaReceber(whereRecebido),
+      somaFaturamento({}),
+      somaFaturamento(daCobranca),
+      somaBaixas({}),
       this.txHost.tx.contaPagarBaixa.aggregate({
         where: { ...NAO_EXCLUIDAS, dataPagamento: intervalo, contaPagar: { ...NAO_EXCLUIDAS } },
         _sum: { valorPago: true },

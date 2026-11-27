@@ -1,11 +1,12 @@
 import type { Permissao } from '@torres/shared';
-import { PencilIcon, SearchIcon, Trash2Icon } from 'lucide-react';
+import { PencilIcon, SearchIcon, Trash2Icon, XCircleIcon } from 'lucide-react';
 import type {
   AcaoLinha,
   ColunaGrid,
   FiltroGrid,
   FiltroStatus,
 } from '@/components/shared/data-grid/tipos';
+import { i18next } from '@/lib/i18n';
 import { formatarData } from '@/lib/formatar';
 import { formatarMoeda } from '@/lib/forms/mascaras';
 import { StatusContaFinanceira } from './StatusContaFinanceira';
@@ -50,6 +51,7 @@ export function colunasContaFinanceira<C extends ContaFinanceiraGrid>(
     {
       id: 'descricao',
       titulo: 'Descricao',
+      tituloCartao: true,
       ordenavel: true,
       exportavel: true,
       ocultavel: false,
@@ -87,9 +89,11 @@ export interface AcoesContaFinanceira {
   permissaoExcluir: Permissao;
   /** Ações próprias da tela, entre "Detalhar" e "Editar" (ex.: Baixa). */
   extras?: AcaoLinha[];
+  /** "Cancelar" com motivo (issue #162): abre o modal de cancelamento. Usa `permissaoEditar`. */
+  cancelamento?: { onCancelar: () => void; desabilitada: boolean };
 }
 
-/** Menu da linha: Detalhar, as ações próprias da tela, Editar e Excluir. */
+/** Menu da linha: Detalhar, as ações próprias da tela, Editar, Cancelar e Excluir. */
 export function acoesContaFinanceira({
   onDetalhar,
   onEditar,
@@ -97,11 +101,23 @@ export function acoesContaFinanceira({
   permissaoEditar,
   permissaoExcluir,
   extras = [],
+  cancelamento,
 }: AcoesContaFinanceira): AcaoLinha[] {
   return [
     { rotulo: 'Detalhar', icone: SearchIcon, onSelect: onDetalhar },
     ...extras,
     { rotulo: 'Editar', icone: PencilIcon, permissao: permissaoEditar, onSelect: onEditar },
+    ...(cancelamento
+      ? [
+          {
+            rotulo: i18next.t('comum.cancelar'),
+            icone: XCircleIcon,
+            permissao: permissaoEditar,
+            desabilitada: cancelamento.desabilitada,
+            onSelect: cancelamento.onCancelar,
+          },
+        ]
+      : []),
     {
       rotulo: 'Excluir',
       icone: Trash2Icon,

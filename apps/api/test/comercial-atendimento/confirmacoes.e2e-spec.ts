@@ -15,6 +15,7 @@ import { comUsuario, criarUsuarioTeste, type UsuarioTeste } from '../utils/auth'
 import { createE2eApp } from '../utils/create-e2e-app';
 import { truncateAll } from '../utils/database';
 import { expectAudit, expectNoAudit } from '../utils/expect-audit';
+import { criarMotivo, criarMotivoOutro } from '../utils/motivos-cancelamento';
 
 const BASE = '/api/comercial-atendimento/confirmacoes';
 const PERMISSOES = [
@@ -258,13 +259,60 @@ describe('Confirmações (e2e)', () => {
         after: { status: 'CONFIRMADO' },
         userId: usuario.id,
       });
+      const motivo = await criarMotivo(prisma, 'CONSULTA', { nome: 'Paciente desistiu' });
       const cancelada = confirmacaoSchema.parse(
-        (await http().post(`${BASE}/${a.id}/cancelar`).expect(200)).body,
+        (
+          await http()
+            .post(`${BASE}/${a.id}/cancelar`)
+            .send({ motivoId: motivo.id, observacao: 'Viagem' })
+            .expect(200)
+        ).body,
       );
       expect(cancelada.status).toBe('CANCELADO');
       expect((await prisma.agendamento.findUniqueOrThrow({ where: { id: a.id } })).status).toBe(
         'CANCELADO',
       );
+      // Issue #162: o cancelamento da consulta guarda quem, quando e o motivo da lista.
+      const [registro] = await prisma.cancelamento.findMany({ where: { entidadeId: a.id } });
+      expect(registro).toMatchObject({
+        tipo: 'CONSULTA',
+        entidade: 'Agendamento',
+        motivoId: motivo.id,
+        motivoNome: 'Paciente desistiu',
+        observacao: 'Viagem',
+        canceladoPorId: usuario.id,
+        profissionalId,
+      });
+    });
+
+    it('Cancelar sem o motivo da lista, com motivo de outro tipo ou "Outro" sem observação: 400', async () => {
+      const a = await agendar();
+      const url = `${BASE}/${a.id}/cancelar`;
+      const vazio = await http().post(url).send({}).expect(400);
+      expect(vazio.body.details).toEqual([
+        expect.objectContaining({ field: 'motivoId', message: 'Motivo é obrigatório.' }),
+      ]);
+      const outroTipo = await criarMotivo(prisma, 'PROPOSTA', { nome: 'Valor' });
+      await http().post(url).send({ motivoId: outroTipo.id }).expect(400);
+      const outro = await criarMotivoOutro(prisma, 'CONSULTA');
+      const semTexto = await http().post(url).send({ motivoId: outro.id }).expect(400);
+      expect(semTexto.body.details).toEqual([
+        { field: 'observacao', message: 'Observação é obrigatória.' },
+      ]);
+
+      expect((await prisma.agendamento.findUniqueOrThrow({ where: { id: a.id } })).status).toBe(
+        'AGENDADO',
+      );
+      expect(await prisma.cancelamento.count()).toBe(0);
+      await expectNoAudit(prisma, { entity: 'Agendamento', action: 'UPDATE' });
+    });
+
+    it('Cancelar um agendamento já cancelado não duplica o histórico', async () => {
+      const a = await agendar();
+      const motivo = await criarMotivo(prisma, 'CONSULTA');
+      await http().post(`${BASE}/${a.id}/cancelar`).send({ motivoId: motivo.id }).expect(200);
+      await http().post(`${BASE}/${a.id}/cancelar`).send({ motivoId: motivo.id }).expect(200);
+      expect(await prisma.cancelamento.count()).toBe(1);
     });
 
     it('422 em status que não aceita a ação; 404 inexistente; 400 id inválido; 403', async () => {
@@ -272,10 +320,14 @@ describe('Confirmações (e2e)', () => {
       expect((await http().post(`${BASE}/${atendido.id}/confirmar`).expect(422)).body.code).toBe(
         'STATUS_INVALIDO',
       );
-      await http().post(`${BASE}/${atendido.id}/cancelar`).expect(422);
+      const motivo = await criarMotivo(prisma, 'CONSULTA');
+      await http()
+        .post(`${BASE}/${atendido.id}/cancelar`)
+        .send({ motivoId: motivo.id })
+        .expect(422);
       await http().post(`${BASE}/${atendido.id}/enviar`).expect(422);
       await http().post(`${BASE}/${INEXISTENTE}/confirmar`).expect(404);
-      await http().post(`${BASE}/nao-e-uuid/cancelar`).expect(400);
+      await http().post(`${BASE}/nao-e-uuid/cancelar`).send({ motivoId: motivo.id }).expect(400);
       const sem = await criarUsuarioTeste(app, {
         permissoes: ['comercial-atendimento.confirmacoes.ver'],
       });

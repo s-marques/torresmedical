@@ -15,6 +15,7 @@ import {
   type SalaBloqueioExportColumn,
   type UpdateSalaBloqueioInput,
 } from '@torres/shared';
+import { CancelamentosService } from '../../../common/cancelamentos/cancelamentos.service';
 import { EscopoDadosService, semPermissao } from '../../../common/auth/escopo-dados.service';
 import { isUuid } from '../../../common/auth/tokens';
 import { RequestContextService } from '../../../common/context/request-context.service';
@@ -87,6 +88,7 @@ export class SalasBloqueiosService {
     private readonly exportService: ExportService,
     private readonly escopo: EscopoDadosService,
     private readonly contexto: RequestContextService,
+    private readonly cancelamentos: CancelamentosService,
   ) {}
 
   async list(query: ListSalaBloqueiosQuery): Promise<Page<SalaBloqueioDto>> {
@@ -171,12 +173,21 @@ export class SalasBloqueiosService {
     this.garantirAdministracao();
     const atual = await this.buscar(id);
     this.garantirAtivo(atual);
+    // O motivo da lista é obrigatório; o histórico geral guarda quem, quando e por quê (#162).
+    const registro = await this.cancelamentos.registrar({
+      tipo: 'PERIODO',
+      entidade: 'SalaBloqueio',
+      entidadeId: id,
+      motivoId: input.motivoId,
+      observacao: input.observacao,
+      profissionalId: atual.profissionalId,
+    });
     const cancelado = await this.txHost.tx.salaBloqueio.update({
       where: { id },
       data: {
         canceladoEm: new Date(),
         canceladoPorId: this.usuarioAtual(),
-        motivoCancelamento: input.motivo,
+        motivoCancelamento: input.observacao ?? registro.motivo,
       },
       include: INCLUDE,
     });

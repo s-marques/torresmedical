@@ -29,3 +29,7 @@ auth.json
 .pnpm-store/
 # arquivos do driver local de storage (STORAGE_DRIVER=local)
 /apps/api/storage/
+
+# Testes de layout no celular (Playwright)
+/apps/web/test-results/
+/apps/web/playwright-report/

@@ -59,6 +59,7 @@ describe('Contas a Pagar (e2e)', () => {
       status: 'PENDENTE' | 'PAGO' | 'CANCELADO';
       fornecedorId: string;
       deletedAt: Date;
+      aprovacao: 'LANCADA' | 'APROVADA' | 'RECUSADA';
     }> = {},
   ) {
     return prisma.contaPagar.create({
@@ -66,6 +67,8 @@ describe('Contas a Pagar (e2e)', () => {
         descricao,
         valor: '100.00',
         dataVencimento: new Date('2026-12-10'),
+        // As contas já nascem aprovadas aqui; a aprovação tem o e2e próprio (contas-pagar-aprovacao).
+        aprovacao: 'APROVADA',
         ...extra,
       },
     });

@@ -2,6 +2,7 @@ import { Module, RequestMethod } from '@nestjs/common';
 import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
 import { resolveRequestId } from '../context/request-id';
 import { REDACT_CENSOR, REDACT_PATHS } from './redact';
+import { serializarRequisicao } from './serializar-requisicao';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -14,6 +15,8 @@ const isDev = process.env.NODE_ENV === 'development';
         level: process.env.LOG_LEVEL ?? 'info',
         genReqId: (req, res) => resolveRequestId(req, res),
         customAttributeKeys: { reqId: 'requestId' },
+        // A busca global (⌘K) leva o termo na query: nome, CPF ou telefone não vão para o log.
+        serializers: { req: serializarRequisicao },
         redact: { paths: REDACT_PATHS, censor: REDACT_CENSOR },
         // O health é chamado a cada poucos segundos pelo healthcheck do Docker.
         autoLogging: { ignore: (req) => req.url === '/api/health' },

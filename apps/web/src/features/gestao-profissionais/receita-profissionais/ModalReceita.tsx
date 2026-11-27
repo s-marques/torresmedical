@@ -17,7 +17,9 @@ function valoresIniciais(receita: ReceitaProfissional): ReceitaProfissionalFormu
     ...valoresIniciaisContaFinanceira(receita),
     profissionalId: receita.profissionalId,
     pacienteId: receita.pacienteId,
-    status: receita.status,
+    // Parcial e Renegociado só existem em Contas a Receber (issue #165): a receita não os usa.
+    status:
+      receita.status === 'RECEBIDO' || receita.status === 'CANCELADO' ? receita.status : 'PENDENTE',
     contaBancariaId: receita.contaBancariaId,
     dataRecebimento: receita.dataRecebimento ?? '',
   };

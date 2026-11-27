@@ -1,3 +1,4 @@
+import type { CancelamentosService } from '../../../common/cancelamentos/cancelamentos.service';
 import type { TransactionHost } from '@nestjs-cls/transactional';
 import { createSalaBloqueioSchema, type ListSalaBloqueiosQuery } from '@torres/shared';
 import { escopoFalso } from '../../../../test/utils/escopo-falso';
@@ -15,6 +16,7 @@ const OUTRO = '33333333-3333-4333-8333-333333333333';
 const PROF_A = '44444444-4444-4444-8444-444444444444';
 const PROF_B = '55555555-5555-4555-8555-555555555555';
 const USUARIO = '66666666-6666-4666-8666-666666666666';
+const MOTIVO = '77777777-7777-4777-8777-777777777777';
 
 /** Registro do banco com as relações do `INCLUDE`. */
 function registro(dados: Record<string, unknown> = {}) {
@@ -86,6 +88,7 @@ function setup({
   const profissionais = { garantirExiste: jest.fn().mockResolvedValue(undefined) };
   const usuarios = { nomesPorIds: jest.fn().mockResolvedValue(new Map([[USUARIO, 'Ana']])) };
   const contexto = { getUserId: () => USUARIO };
+  const cancelamentos = { registrar: jest.fn().mockResolvedValue({ motivo: 'Obra adiada' }) };
   const service = new SalasBloqueiosService(
     txHost,
     profissionais as unknown as ProfissionaisService,
@@ -93,8 +96,9 @@ function setup({
     {} as ExportService,
     escopoFalso(escopo),
     contexto as unknown as RequestContextService,
+    cancelamentos as unknown as CancelamentosService,
   );
-  return { service, tx, profissionais };
+  return { service, tx, profissionais, cancelamentos };
 }
 
 /** Query da listagem já validada (com os campos opcionais ausentes). */
@@ -168,8 +172,8 @@ describe('SalasBloqueiosService (issue #138)', () => {
   });
 
   it('cancela sem excluir, gravando quem, quando e o motivo', async () => {
-    const { service, tx } = setup();
-    const cancelado = await service.cancelar(BLOQ, { motivo: 'Obra adiada' });
+    const { service, tx, cancelamentos } = setup();
+    const cancelado = await service.cancelar(BLOQ, { motivoId: MOTIVO, observacao: 'Obra adiada' });
     expect(tx.salaBloqueio.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: {
@@ -179,12 +183,38 @@ describe('SalasBloqueiosService (issue #138)', () => {
         },
       }),
     );
+    expect(cancelamentos.registrar).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tipo: 'PERIODO',
+        entidade: 'SalaBloqueio',
+        entidadeId: BLOQ,
+        motivoId: MOTIVO,
+        observacao: 'Obra adiada',
+      }),
+    );
     expect(cancelado).toMatchObject({ status: 'CANCELADO', motivoCancelamento: 'Obra adiada' });
+  });
+
+  it('sem a observação, o motivo da lista fica como texto do cancelamento', async () => {
+    const { service, tx } = setup();
+    await service.cancelar(BLOQ, { motivoId: MOTIVO, observacao: undefined });
+    expect(tx.salaBloqueio.update.mock.calls[0]?.[0].data.motivoCancelamento).toBe('Obra adiada');
+  });
+
+  it('motivo inválido não cancela o bloqueio', async () => {
+    const { service, tx, cancelamentos } = setup();
+    cancelamentos.registrar.mockRejectedValue(new Error('motivo inválido'));
+    await expect(
+      service.cancelar(BLOQ, { motivoId: MOTIVO, observacao: undefined }),
+    ).rejects.toThrow('motivo inválido');
+    expect(tx.salaBloqueio.update).not.toHaveBeenCalled();
   });
 
   it('bloqueio cancelado não muda: 409', async () => {
     const { service } = setup({ atual: registro({ canceladoEm: new Date() }) });
-    await expect(service.cancelar(BLOQ, { motivo: 'x' })).rejects.toMatchObject({ status: 409 });
+    await expect(
+      service.cancelar(BLOQ, { motivoId: MOTIVO, observacao: undefined }),
+    ).rejects.toMatchObject({ status: 409 });
     await expect(service.update(BLOQ, ENTRADA)).rejects.toMatchObject({ status: 409 });
   });
 
@@ -199,7 +229,9 @@ describe('SalasBloqueiosService (issue #138)', () => {
       const { service } = setup({ escopo: [PROF_A] });
       await expect(service.create(ENTRADA)).rejects.toMatchObject({ status: 403 });
       await expect(service.update(BLOQ, ENTRADA)).rejects.toMatchObject({ status: 403 });
-      await expect(service.cancelar(BLOQ, { motivo: 'x' })).rejects.toMatchObject({ status: 403 });
+      await expect(
+        service.cancelar(BLOQ, { motivoId: MOTIVO, observacao: undefined }),
+      ).rejects.toMatchObject({ status: 403 });
     });
 
     it('bloqueio de outro profissional vem oculto', async () => {

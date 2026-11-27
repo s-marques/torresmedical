@@ -6,6 +6,7 @@ import {
   descreverValorContrato,
   valorTotalMensal,
   type ContratoExportColumn,
+  type ItemBusca,
   type ContratoSala as ContratoSalaDto,
   type CancelarContratoSalaInput,
   type CreateContratoSalaInput,
@@ -14,6 +15,7 @@ import {
   type ListContratosSalaQuery,
   type UpdateContratoSalaInput,
 } from '@torres/shared';
+import { CancelamentosService } from '../../../common/cancelamentos/cancelamentos.service';
 import { EscopoDadosService } from '../../../common/auth/escopo-dados.service';
 import { isUuid } from '../../../common/auth/tokens';
 import { BusinessException } from '../../../common/errors/api.exception';
@@ -33,6 +35,8 @@ import { competenciaAtual } from './competencia-cobranca';
 import type { SalaEmUsoVerificador } from './sala-em-uso';
 
 const NAO_EXCLUIDOS = { deletedAt: null } as const;
+/** Quantos dígitos cabem no `numero` (int4) sem estourar. */
+const NUMERO_CONTRATO_MAX_DIGITOS = 9;
 
 const INCLUDE = {
   sala: { select: { nome: true, numero: true } },
@@ -96,6 +100,7 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
     private readonly contasReceber: ContasReceberService,
     private readonly escopo: EscopoDadosService,
     private readonly acesso: AcessoProfissionalService,
+    private readonly cancelamentos: CancelamentosService,
   ) {}
 
   async emUso(ids: readonly string[]): Promise<ReadonlySet<string>> {
@@ -124,6 +129,48 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       this.semCobrancaIds(page.data),
     ]);
     return { ...page, data: page.data.map((c) => this.toDto(c, nomes, semCobranca)) };
+  }
+
+  /**
+   * Busca global do ⌘K (issue #159): nº do contrato ou dados do locatário (nome, CPF, telefone,
+   * CRM). Aplica o escopo: perfil restrito só vê contratos dos seus profissionais.
+   */
+  async buscaGlobal(termo: string, limite: number): Promise<ItemBusca[]> {
+    const digitos = termo.replaceAll(/\D/g, '');
+    const [profissionalIds, pacienteIds] = await Promise.all([
+      this.profissionais.idsPorBusca(termo),
+      this.pacientes.idsPorBusca(termo),
+    ]);
+    const contratos = await this.txHost.tx.contratoSala.findMany({
+      where: {
+        ...NAO_EXCLUIDOS,
+        sala: { deletedAt: null },
+        profissionalId: this.escopo.filtroProfissional(),
+        OR: [
+          ...(digitos.length > 0 && digitos.length <= NUMERO_CONTRATO_MAX_DIGITOS
+            ? [{ numero: Number(digitos) }]
+            : []),
+          { profissionalId: { in: profissionalIds } },
+          { pacienteId: { in: pacienteIds } },
+        ],
+      },
+      orderBy: [{ numero: 'desc' }],
+      take: limite,
+      include: INCLUDE,
+    });
+    const [nomes, semCobranca] = await Promise.all([
+      this.resolverNomes(contratos),
+      this.semCobrancaIds(contratos),
+    ]);
+    return contratos.map((c) => {
+      const dto = this.toDto(c, nomes, semCobranca);
+      return {
+        id: dto.id,
+        titulo: `Contrato nº ${dto.numero}`,
+        descricao: `${dto.locatarioNome} · ${dto.salaNome}`,
+        rota: `/salas?search=${dto.numero}`,
+      };
+    });
   }
 
   /**
@@ -268,7 +315,7 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
 
   /** Rescisão: o contrato ativo passa a "cancelado" na data informada, com o motivo. */
   cancelar(id: string, input: CancelarContratoSalaInput): Promise<ContratoSalaDto> {
-    return this.fechar(id, 'CANCELADO', input.data, input.motivo);
+    return this.fechar(id, 'CANCELADO', input.data, input.observacao ?? null, input.motivoId);
   }
 
   /**
@@ -280,7 +327,8 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
     id: string,
     status: ContratoSalaStatus,
     data: string,
-    motivo: string | null,
+    observacao: string | null,
+    motivoId?: string,
   ): Promise<ContratoSalaDto> {
     const contrato = await this.buscar(id);
     if (contrato.status !== 'ATIVO') {
@@ -290,9 +338,25 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
         { status: 409 },
       );
     }
+    // Rescisão: o motivo da lista é obrigatório e o histórico guarda quem, quando e por quê (#162).
+    const cancelamento =
+      status === 'CANCELADO' && motivoId
+        ? await this.cancelamentos.registrar({
+            tipo: 'CONTRATO',
+            entidade: 'ContratoSala',
+            entidadeId: id,
+            motivoId,
+            observacao,
+            profissionalId: contrato.profissionalId,
+          })
+        : null;
     const alterado = await this.txHost.tx.contratoSala.update({
       where: { id },
-      data: { status, encerradoEm: paraData(data), motivoEncerramento: motivo },
+      data: {
+        status,
+        encerradoEm: paraData(data),
+        motivoEncerramento: observacao ?? cancelamento?.motivo ?? null,
+      },
       include: INCLUDE,
     });
     const cobrancas = await this.txHost.tx.contratoSalaCobranca.findMany({
@@ -510,6 +574,7 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
       contrato.quantidadeMensal === null ? null : Number(contrato.quantidadeMensal);
     return {
       id: contrato.id,
+      numero: contrato.numero,
       modalidade: contrato.modalidade,
       salaId: contrato.salaId,
       salaNome: contrato.sala.nome,

@@ -53,10 +53,22 @@ describe('Financeiro: Indicadores (e2e)', () => {
     const profissional = await prisma.profissional.create({
       data: { nome: 'Profissional Teste' },
     });
-    const conta = (extra: Record<string, unknown>) =>
-      prisma.contaReceber.create({
+    const conta = async (extra: Record<string, unknown>) => {
+      const criada = await prisma.contaReceber.create({
         data: { descricao: 'Receita teste', valor: '100.00', ...extra } as never,
       });
+      // O recebido soma as baixas (issue #165): conta RECEBIDO ganha a baixa total.
+      if (extra.status === 'RECEBIDO') {
+        await prisma.contaReceberBaixa.create({
+          data: {
+            contaReceberId: criada.id,
+            dataRecebimento: extra.dataRecebimento as Date,
+            valorRecebido: (extra.valor as string | undefined) ?? '100.00',
+          },
+        });
+      }
+      return criada;
+    };
     // Outubro: 100 recebida + 200 pendente + 50 cancelada (fora) + 999 de profissional (fora).
     await conta({
       dataVencimento: new Date('2026-10-05'),

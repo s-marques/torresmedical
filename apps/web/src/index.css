@@ -166,4 +166,13 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+  /*
+   * Uso pelo celular (issue #161): um `grid` sem colunas declaradas tem uma trilha `auto`, que cresce
+   * até a largura mínima do conteúdo (uma tabela, por exemplo) e estica a página inteira. Com
+   * `minmax(0, 1fr)` a trilha respeita o espaço disponível e o conteúdo largo rola dentro do próprio
+   * container. Qualquer utilitário `grid-cols-*`, `grid-rows-*` ou `grid-flow-*` continua mandando.
+   */
+  .grid:not([class*='grid-cols'], [class*='grid-rows'], [class*='grid-flow']) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

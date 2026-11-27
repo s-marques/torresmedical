@@ -10,6 +10,8 @@ export const TIPOS_ALERTA = [
   'CONTAS_PAGAR_VENCENDO',
   'CONTAS_PAGAR_VENCIDAS',
   'RECEBIVEIS_VENCIDOS',
+  'CONTAS_PAGAR_AGUARDANDO_APROVACAO',
+  'COBRANCAS_REGUA',
 ] as const;
 export type TipoAlerta = (typeof TIPOS_ALERTA)[number];
 export const tipoAlertaSchema = z.enum(TIPOS_ALERTA, { error: 'Tipo de alerta inválido' });
@@ -33,6 +35,16 @@ export const DEFINICAO_ALERTA: Readonly<Record<TipoAlerta, DefinicaoAlerta>> = {
     permissao: 'financeiro.contas-pagar.ver',
     dadoPorProfissional: false,
     rota: () => '/pagar?status=VENCIDO',
+  },
+  CONTAS_PAGAR_AGUARDANDO_APROVACAO: {
+    permissao: 'financeiro.contas-pagar.aprovar',
+    dadoPorProfissional: false,
+    rota: () => '/pagar?status=PENDENTE&aprovacao=LANCADA',
+  },
+  COBRANCAS_REGUA: {
+    permissao: 'financeiro.inadimplencia.ver',
+    dadoPorProfissional: false,
+    rota: () => '/financeiro/inadimplencia',
   },
   RECEBIVEIS_VENCIDOS: {
     permissao: 'financeiro.contas-receber.ver',

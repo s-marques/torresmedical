@@ -166,6 +166,14 @@
     "buscarTelaDescricao": "Type the name of a screen to go to it",
     "buscarTelaPlaceholder": "Search screen…",
     "nenhumaTela": "No screen found.",
+    "buscando": "Searching…",
+    "buscaTipos": {
+      "PACIENTE": "Patients",
+      "PROFISSIONAL": "Professionals",
+      "CONTRATO": "Contracts",
+      "FORNECEDOR": "Suppliers",
+      "LEAD": "Leads"
+    },
     "tema": "Theme",
     "notificacoes": "Notifications",
     "nenhumaNotificacao": "No notifications",
@@ -188,7 +196,9 @@
       "CONTAS_PAGAR_VENCIDAS_one": "{{count}} overdue bill",
       "CONTAS_PAGAR_VENCIDAS_other": "{{count}} overdue bills",
       "RECEBIVEIS_VENCIDOS_one": "{{count}} overdue receivable",
-      "RECEBIVEIS_VENCIDOS_other": "{{count}} overdue receivables"
+      "RECEBIVEIS_VENCIDOS_other": "{{count}} overdue receivables",
+      "COBRANCAS_REGUA_one": "{{count}} collection reminder today",
+      "COBRANCAS_REGUA_other": "{{count}} collection reminders today"
     }
   },
   "temas": {
@@ -318,7 +328,8 @@
         "formas-pagamento": "Payment Methods",
         "plano-contas": "Chart of Accounts",
         "relatorios": "Reports",
-        "indicadores": "Indicators"
+        "indicadores": "Indicators",
+        "inadimplencia": "Delinquency"
       },
       "patrimonio-pessoal": {
         "patrimonio": "Assets",
@@ -355,6 +366,7 @@
         "base-conhecimento": "Knowledge Base",
         "bypass-agente": "Agent Bypass",
         "tipos-agendamento": "Appointment Types",
+        "motivos-cancelamento": "Cancellation Reasons",
         "respostas-rapidas": "Quick Replies",
         "configuracoes": "Settings",
         "minha-empresa": "My Company",
@@ -951,8 +963,6 @@
     "cancelar": {
       "titulo": "Cancel block",
       "descricao": "{{tipo}} of {{sala}} on {{periodo}}. The record is not deleted: it stays as canceled, with who, when and the reason.",
-      "motivo": "Cancellation reason",
-      "placeholder": "Why was the block canceled?",
       "voltar": "Back",
       "confirmar": "Cancel block"
     },
@@ -1248,6 +1258,13 @@
     "descricao": "Expirations, losses, stock position, movements, purchases, ABC curve, consumption and purchase forecast.",
     "painel": "Dashboard",
     "modulo": "Purchasing / Inventory",
+    "relatorios": "Reports"
+  },
+  "relatoriosFinanceiro": {
+    "titulo": "Financial Reports",
+    "descricao": "Delinquency, revenue, accounts payable and receivable, income statement, statements and expenses by cost center.",
+    "painel": "Dashboard",
+    "modulo": "Finance",
     "relatorios": "Reports"
   },
   "relatoriosReceitaProfissionais": {
@@ -2032,6 +2049,76 @@
       "filtros": "Filters"
     }
   },
+  "contasReceber": {
+    "colunas": {
+      "contrato": "Contract",
+      "saldo": "Balance"
+    },
+    "campos": {
+      "competencia": "Competence month",
+      "competenciaAjuda": "Empty: the due date month.",
+      "profissional": "Professional (tenant)",
+      "profissionalPlaceholder": "Search professional...",
+      "sacadoAjuda": "For room contract charges. Use the client or the professional, not both."
+    },
+    "acoes": {
+      "baixar": "Record payment",
+      "renegociar": "Renegotiate",
+      "cancelarBaixa": "Cancel payment"
+    },
+    "status": {
+      "parcial": "Partial",
+      "renegociado": "Renegotiated"
+    },
+    "mensagens": {
+      "baixaRegistrada": "Payment recorded.",
+      "baixaCancelada": "Payment cancelled.",
+      "renegociada": "Receivable renegotiated."
+    },
+    "baixa": {
+      "titulo": "Record Receivable Payment",
+      "descricao": "Record a payment received for {{descricao}}.",
+      "saldoEmAberto": "Open balance: {{saldo}}",
+      "confirmar": "Confirm Payment",
+      "dataRecebimento": "Payment Date",
+      "valorRecebido": "Amount Received",
+      "valorAjuda": "Less than the balance: the receivable becomes Partial. Equal: Paid.",
+      "formaPagamento": "Payment Method",
+      "contaBancaria": "Bank Account",
+      "selecione": "Select",
+      "documento": "Document / Receipt No.",
+      "observacoes": "Notes"
+    },
+    "renegociar": {
+      "titulo": "Renegotiate Receivable",
+      "descricao": "The balance of {{descricao}} will be rebuilt into new receivables.",
+      "confirmar": "Renegotiate",
+      "parcela": "Installment {{numero}}",
+      "valor": "Amount",
+      "vencimento": "Due date",
+      "adicionarParcela": "Add installment",
+      "removerParcela": "Remove installment {{numero}}",
+      "somaConfere": "The installments match the open balance.",
+      "somaFaltam": "{{diferenca}} missing to match the open balance.",
+      "somaSobram": "{{diferenca}} over the open balance.",
+      "observacoes": "Notes"
+    },
+    "detalhe": {
+      "profissional": "Professional (tenant)",
+      "contrato": "Contract",
+      "competencia": "Competence month",
+      "valorRecebido": "Amount Received",
+      "saldo": "Open Balance",
+      "renegociadoDe": "Renegotiated from",
+      "renegociadoPara": "Renegotiated into",
+      "baixas": "Payments",
+      "baixaData": "Date",
+      "baixaValor": "Amount Received",
+      "baixaForma": "Payment Method",
+      "baixaConta": "Bank Account",
+      "baixaRegistrada": "Recorded on"
+    }
+  },
   "contasPagar": {
     "competencia": "Accounting period",
     "centroCusto": "Cost Center",
@@ -2109,6 +2196,27 @@
       "cadastrar": "Register",
       "editar": "Edit",
       "excluir": "Delete"
+    },
+    "aprovacao": {
+      "coluna": "Approval",
+      "filtro": "Approval",
+      "todas": "All",
+      "situacoes": {
+        "LANCADA": "Awaiting approval",
+        "APROVADA": "Approved",
+        "RECUSADA": "Rejected"
+      },
+      "aprovar": "Approve",
+      "recusar": "Reject",
+      "aprovarTitulo": "Approve Payable",
+      "aprovarDescricao": "Approve \"{{descricao}}\"? It can be paid afterwards.",
+      "recusarTitulo": "Reject Payable",
+      "recusarDescricao": "\"{{descricao}}\" will not be paid. Enter the reason for rejecting it.",
+      "motivo": "Reason for rejection",
+      "motivoPlaceholder": "E.g. duplicate bill",
+      "aprovadaPor": "Approved by",
+      "recusadaPor": "Rejected by",
+      "porEm": "{{nome}} on {{data}}"
     }
   },
   "modelosProntuario": {
@@ -2259,5 +2367,190 @@
     "todosProfissionais": "All professionals I have access to",
     "incluirAnexos": "Include exams and attachments (generates a ZIP)",
     "exportar": "Export"
+  },
+  "cancelamento": {
+    "motivo": "Reason",
+    "selecioneMotivo": "Select the reason",
+    "observacao": "Note",
+    "observacaoPlaceholder": "Details of the cancellation (required for \"Other\")",
+    "reagendou": "Rescheduled?",
+    "naoReagendou": "Not rescheduled",
+    "reagendouAjuda": "Choose the patient's new appointment, if any.",
+    "voltar": "Back",
+    "agenda": {
+      "acao": "Cancel appointment",
+      "titulo": "Cancel appointment #{{numero}}",
+      "descricao": "{{paciente}} with {{profissional}} on {{data}} at {{hora}}. The appointment is not deleted: it stays cancelled, with who, when and why.",
+      "confirmar": "Cancel appointment",
+      "sucesso": "Appointment cancelled.",
+      "novoAgendamento": "#{{numero}} - {{data}} at {{hora}}"
+    },
+    "confirmacao": {
+      "descricao": "{{paciente}} with {{profissional}} on {{quando}}. The appointment is not deleted: it stays cancelled, with who, when and why, and the time slot is released."
+    },
+    "orcamento": {
+      "acao": "Cancel",
+      "titulo": "Cancel quote #{{numero}}",
+      "descricao": "The quote is not deleted: it stays cancelled, with who, when and why.",
+      "confirmar": "Cancel quote",
+      "sucesso": "Quote cancelled."
+    },
+    "contaReceber": {
+      "acao": "Cancel",
+      "titulo": "Cancel account receivable",
+      "descricao": "{{descricao}}. The account is not deleted: it stays cancelled, with who, when and why.",
+      "confirmar": "Cancel account",
+      "sucesso": "Account receivable cancelled."
+    },
+    "contaPagar": {
+      "acao": "Cancel",
+      "titulo": "Cancel account payable",
+      "descricao": "{{descricao}}. The account is not deleted: it stays cancelled, with who, when and why.",
+      "confirmar": "Cancel account",
+      "sucesso": "Account payable cancelled."
+    },
+    "contrato": {
+      "titulo": "Cancel contract (termination)",
+      "descricao": "Contract: {{sala}} - {{locatario}}",
+      "data": "Cancellation date",
+      "aviso": "Pending installments after the cancellation date will be cancelled automatically.",
+      "confirmar": "Cancel contract"
+    },
+    "tipos": {
+      "CONSULTA": "Appointment",
+      "CONTRATO": "Contract",
+      "COBRANCA": "Charge",
+      "PERIODO": "Period",
+      "PROPOSTA": "Proposal"
+    }
+  },
+  "motivosCancelamento": {
+    "titulo": "Cancellation Reasons",
+    "descricao": "Reason lists used when cancelling appointments, contracts, charges, periods and proposals.",
+    "novo": "New reason",
+    "buscar": "Search reason...",
+    "vazio": "No reasons registered.",
+    "colunas": {
+      "tipo": "Type",
+      "nome": "Reason",
+      "exigeTexto": "Requires note",
+      "ativo": "Status"
+    },
+    "sistema": "System",
+    "filtroTipo": "Type",
+    "todosTipos": "All types",
+    "acoes": {
+      "editar": "Edit",
+      "excluir": "Delete"
+    },
+    "excluir": {
+      "titulo": "Delete reason",
+      "descricao": "Delete the reason \"{{nome}}\"? Cancellations already recorded with it stay in the history.",
+      "confirmar": "Delete"
+    },
+    "modal": {
+      "tituloNovo": "New cancellation reason",
+      "tituloEditar": "Edit cancellation reason",
+      "tipo": "Cancellation type",
+      "nome": "Reason name",
+      "exigeTexto": "Requires a note when this reason is chosen",
+      "ativo": "Active",
+      "sistemaAviso": "Reason used by the system: it cannot be renamed, deactivated or deleted."
+    },
+    "sucesso": {
+      "criado": "Reason created.",
+      "atualizado": "Reason updated.",
+      "excluido": "Reason deleted."
+    }
+  },
+  "inadimplencia": {
+    "titulo": "Delinquency",
+    "descricao": "Track what is overdue and the collection schedule for professionals.",
+    "atualizar": "Refresh",
+    "erroCarregar": "Could not load the delinquency panel.",
+    "abas": {
+      "painel": "Panel",
+      "regua": "Collection schedule",
+      "historico": "Collection history"
+    },
+    "indicadores": {
+      "titulo": "Indicators of the day",
+      "aReceberHoje": "Receivable today",
+      "vencidos": "Overdue",
+      "contratos": "Delinquent contracts",
+      "profissionais": "Delinquent professionals",
+      "titulos_one": "{{count}} invoice",
+      "titulos_other": "{{count}} invoices"
+    },
+    "aging": {
+      "titulo": "Overdue aging",
+      "todas": "All ranges",
+      "ATE_30": "0 to 30 days",
+      "DE_31_A_60": "31 to 60 days",
+      "ACIMA_60": "Over 60 days"
+    },
+    "porProfissional": {
+      "titulo": "Delinquent professionals",
+      "vazio": "No delinquent professionals.",
+      "resumo": "{{valor}} in {{titulos}} invoice(s), up to {{dias}} day(s) late"
+    },
+    "titulos": {
+      "titulo": "Overdue invoices",
+      "vazio": "No overdue invoices.",
+      "dias_one": "{{count}} day",
+      "dias_other": "{{count}} days",
+      "colunas": {
+        "descricao": "Description",
+        "sacado": "Debtor",
+        "contrato": "Contract",
+        "vencimento": "Due date",
+        "atraso": "Days late",
+        "saldo": "Open balance",
+        "cobrancas": "Reminders sent"
+      }
+    },
+    "regua": {
+      "descricao": "The schedule notifies the professional by WhatsApp at the four milestones, once per invoice. The texts below are suggestions to be confirmed with the client.",
+      "erroCarregar": "Could not load the collection schedule.",
+      "sucesso": "Collection schedule updated.",
+      "editarMensagem": "Edit message",
+      "ativo": "Milestone active",
+      "whatsapp": "Send by WhatsApp",
+      "alertaInterno": "Internal alert",
+      "marcos": {
+        "ANTES_3_DIAS": "3 days before the due date",
+        "NO_VENCIMENTO": "On the due date",
+        "DEPOIS_3_DIAS": "3 days after the due date",
+        "DEPOIS_7_DIAS": "7 days after the due date"
+      },
+      "modal": {
+        "titulo": "Message: {{marco}}",
+        "mensagem": "Message",
+        "variaveis": "Available variables: {{lista}}.",
+        "restaurar": "Restore default text"
+      }
+    },
+    "historico": {
+      "vazio": "No reminders sent yet.",
+      "todosMarcos": "All milestones",
+      "doTitulo": "Reminders sent",
+      "status": {
+        "ENVIADO": "Sent",
+        "FALHA": "Failed"
+      },
+      "erros": {
+        "SEM_TELEFONE": "Professional has no phone",
+        "SEM_CANAL": "No connected WhatsApp channel"
+      },
+      "colunas": {
+        "titulo": "Invoice",
+        "profissional": "Professional",
+        "marco": "Milestone",
+        "situacao": "Status",
+        "motivo": "Failure reason",
+        "vencimento": "Due date",
+        "enviadoEm": "Recorded at"
+      }
+    }
   }
 }

@@ -28,8 +28,8 @@ function Secao({
 function Linha({ rotulo, valor }: Readonly<{ rotulo: string; valor: string | null }>) {
   return (
     <div className="flex justify-between gap-4 border-b py-1.5 text-sm last:border-b-0">
-      <dt className="text-muted-foreground">{rotulo}:</dt>
-      <dd className="truncate text-right">{valor || '-'}</dd>
+      <dt className="shrink-0 text-muted-foreground">{rotulo}:</dt>
+      <dd className="min-w-0 text-right break-words">{valor || '-'}</dd>
     </div>
   );
 }

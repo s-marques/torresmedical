@@ -1,3 +1,4 @@
+import type { CancelamentosService } from '../../../common/cancelamentos/cancelamentos.service';
 import type { TransactionHost } from '@nestjs-cls/transactional';
 import { Prisma } from '../../../generated/prisma/client';
 import type { ExportService } from '../../../common/export/export.service';
@@ -69,6 +70,8 @@ function setup() {
     findMany: jest.fn().mockResolvedValue([ORCAMENTO]),
     count: jest.fn().mockResolvedValue(1),
     create: jest.fn().mockResolvedValue(ORCAMENTO),
+    findFirst: jest.fn().mockResolvedValue(ORCAMENTO),
+    update: jest.fn().mockResolvedValue(ORCAMENTO),
   };
   const txHost = { tx: { orcamento } } as unknown as TransactionHost<PrismaAdapter>;
   const exportService = {
@@ -98,6 +101,11 @@ function setup() {
       data: [{ id: ID, nome: 'M1', categoria: 'Emagrecimento', valorTotal: 900 }],
     }),
   };
+  const cancelamentos = {
+    registrar: jest.fn().mockResolvedValue({ motivo: 'Motivo fictício' }),
+    registrarContratoCancelado: jest.fn(),
+    registrarNegocioPerdido: jest.fn(),
+  };
   const service = new OrcamentosService(
     txHost,
     exportService as unknown as ExportService,
@@ -106,9 +114,11 @@ function setup() {
     servicos as unknown as ServicosProfissionaisService,
     protocolos as unknown as ProtocolosService,
     protocolosMae as unknown as ProtocolosMaeService,
+    cancelamentos as unknown as CancelamentosService,
   );
   return {
     service,
+    cancelamentos,
     orcamento,
     exportService,
     pacientes,
@@ -262,5 +272,54 @@ describe('OrcamentosService', () => {
     expect(valor('cliente')).toBe('-');
     expect(valor('status')).toBe('Pendente');
     expect(valor('id')).toBe(3);
+  });
+
+  describe('cancelar (issue #162)', () => {
+    const MOTIVO_ID = '5b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
+    const ENTRADA = { motivoId: MOTIVO_ID, observacao: undefined };
+
+    it.each(['PENDENTE', 'APROVADO'] as const)(
+      'cancela o orçamento %s e registra o motivo',
+      async (status) => {
+        const { service, orcamento, cancelamentos } = setup();
+        orcamento.findFirst.mockResolvedValue({ ...ORCAMENTO, status });
+        orcamento.update.mockResolvedValue({ ...ORCAMENTO, status: 'CANCELADO' });
+
+        const cancelado = await service.cancelar(ID, { ...ENTRADA, observacao: 'Sem retorno' });
+
+        expect(cancelamentos.registrar).toHaveBeenCalledWith({
+          tipo: 'PROPOSTA',
+          entidade: 'Orcamento',
+          entidadeId: ID,
+          motivoId: MOTIVO_ID,
+          observacao: 'Sem retorno',
+        });
+        expect(orcamento.update).toHaveBeenCalledWith(
+          expect.objectContaining({ where: { id: ID }, data: { status: 'CANCELADO' } }),
+        );
+        expect(cancelado.status).toBe('CANCELADO');
+      },
+    );
+
+    it.each(['CONCLUIDO', 'CANCELADO'] as const)(
+      'orçamento %s não pode ser cancelado (409)',
+      async (status) => {
+        const { service, orcamento, cancelamentos } = setup();
+        orcamento.findFirst.mockResolvedValue({ ...ORCAMENTO, status });
+
+        await expect(service.cancelar(ID, ENTRADA)).rejects.toMatchObject({ status: 409 });
+        expect(cancelamentos.registrar).not.toHaveBeenCalled();
+        expect(orcamento.update).not.toHaveBeenCalled();
+      },
+    );
+
+    it('404 para id inválido ou inexistente, sem registrar', async () => {
+      const { service, orcamento, cancelamentos } = setup();
+      orcamento.findFirst.mockResolvedValue(null);
+
+      await expect(service.cancelar(ID, ENTRADA)).rejects.toMatchObject({ status: 404 });
+      await expect(service.cancelar('x', ENTRADA)).rejects.toMatchObject({ status: 404 });
+      expect(cancelamentos.registrar).not.toHaveBeenCalled();
+    });
   });
 });

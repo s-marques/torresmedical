@@ -1,3 +1,4 @@
+import type { CancelamentosService } from '../../../common/cancelamentos/cancelamentos.service';
 import type { TransactionHost } from '@nestjs-cls/transactional';
 import { Prisma } from '../../../generated/prisma/client';
 import type { AuditService } from '../../../common/audit/audit.service';
@@ -22,6 +23,15 @@ const CONTA = {
   paciente: { nome: 'Maria Teste' },
   profissionalId: null as string | null,
   profissional: null as { nome: string } | null,
+  profissionalSacadoId: null as string | null,
+  profissionalSacado: null as { nome: string } | null,
+  contratoSalaId: null as string | null,
+  contratoSala: null as { numero: number } | null,
+  renegociadoDeId: null as string | null,
+  renegociadoDe: null as { numero: number } | null,
+  renegociacoes: [] as { numero: number }[],
+  competencia: null as string | null,
+  baixas: [] as { valorRecebido: Prisma.Decimal }[],
   valor: new Prisma.Decimal('150.5'),
   dataVencimento: new Date('2026-10-10T00:00:00.000Z'),
   formaPagamentoId: null,
@@ -30,7 +40,7 @@ const CONTA = {
   planoConta: null,
   documento: null,
   totalParcelas: 1,
-  status: 'PENDENTE' as 'PENDENTE' | 'RECEBIDO' | 'CANCELADO',
+  status: 'PENDENTE' as 'PENDENTE' | 'RECEBIDO' | 'CANCELADO' | 'PARCIAL' | 'RENEGOCIADO',
   contaBancariaId: null as string | null,
   contaBancaria: null as { nome: string } | null,
   dataRecebimento: null as Date | null,
@@ -49,20 +59,45 @@ function setup() {
     update: jest.fn().mockResolvedValue(CONTA),
     groupBy: jest.fn().mockResolvedValue([]),
   };
-  const txHost = { tx: { contaReceber } } as unknown as TransactionHost<PrismaAdapter>;
+  const contaReceberBaixa = {
+    create: jest.fn().mockResolvedValue({}),
+    findMany: jest.fn().mockResolvedValue([]),
+    findFirst: jest.fn().mockResolvedValue(null),
+    update: jest.fn().mockResolvedValue({}),
+    updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+  };
+  const formaPagamento = { findFirst: jest.fn().mockResolvedValue({ id: 'fp' }) };
+  const txHost = {
+    tx: { contaReceber, contaReceberBaixa, formaPagamento },
+  } as unknown as TransactionHost<PrismaAdapter>;
   const exportService = {
     ensureWithinLimit: jest.fn(),
     export: jest.fn().mockResolvedValue({ filename: 'contas-receber.xlsx' }),
   };
   const audit = { record: jest.fn() };
   const contasBancarias = { garantirExiste: jest.fn().mockResolvedValue(undefined) };
+  const cancelamentos = {
+    registrar: jest.fn().mockResolvedValue({ motivo: 'Motivo fictício' }),
+    registrarContratoCancelado: jest.fn(),
+    registrarNegocioPerdido: jest.fn(),
+  };
   const service = new ContasReceberService(
     txHost,
     exportService as unknown as ExportService,
     audit as unknown as AuditService,
     contasBancarias as unknown as ContasBancariasService,
+    cancelamentos as unknown as CancelamentosService,
   );
-  return { service, contaReceber, exportService, audit, contasBancarias };
+  return {
+    service,
+    contaReceber,
+    contaReceberBaixa,
+    formaPagamento,
+    exportService,
+    audit,
+    contasBancarias,
+    cancelamentos,
+  };
 }
 
 const ENTRADA = {
@@ -78,9 +113,9 @@ const ENTRADA = {
 };
 const CONTA_BANCARIA_ID = '2d9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 
-describe('ContasReceberService: conta bancária e data do recebimento (#46)', () => {
-  it('com status Recebido grava a conta (validada) e a data informada', async () => {
-    const { service, contaReceber, contasBancarias } = setup();
+describe('ContasReceberService: status Pago pelo modal grava a baixa total (#46, #165)', () => {
+  it('com status Pago cria a conta A vencer e grava a baixa com conta (validada) e data', async () => {
+    const { service, contaReceber, contaReceberBaixa, contasBancarias } = setup();
     await service.create({
       ...ENTRADA,
       status: 'RECEBIDO',
@@ -88,39 +123,23 @@ describe('ContasReceberService: conta bancária e data do recebimento (#46)', ()
       dataRecebimento: '2026-10-05',
     });
     expect(contasBancarias.garantirExiste).toHaveBeenCalledWith(CONTA_BANCARIA_ID);
-    const data = contaReceber.create.mock.calls[0][0].data;
-    expect(data.contaBancariaId).toBe(CONTA_BANCARIA_ID);
-    expect(data.dataRecebimento).toEqual(new Date('2026-10-05'));
+    expect(contaReceber.create.mock.calls[0][0].data.status).toBe('PENDENTE');
+    const baixa = contaReceberBaixa.create.mock.calls[0][0].data;
+    expect(baixa.contaBancariaId).toBe(CONTA_BANCARIA_ID);
+    expect(baixa.dataRecebimento).toEqual(new Date('2026-10-05'));
+    expect(String(baixa.valorRecebido)).toBe('150.5');
   });
 
-  it('com status Recebido sem data usa a de hoje', async () => {
-    const { service, contaReceber } = setup();
+  it('com status Pago sem data usa a de hoje', async () => {
+    const { service, contaReceberBaixa } = setup();
     await service.create({ ...ENTRADA, status: 'RECEBIDO' });
-    const data = contaReceber.create.mock.calls[0][0].data;
-    expect(data.contaBancariaId).toBeNull();
-    expect(data.dataRecebimento).toEqual(new Date(new Date().toISOString().slice(0, 10)));
+    const baixa = contaReceberBaixa.create.mock.calls[0][0].data;
+    expect(baixa.contaBancariaId).toBeNull();
+    expect(baixa.dataRecebimento).toEqual(new Date(new Date().toISOString().slice(0, 10)));
   });
 
-  it('na edição sem data mantém a data de recebimento já gravada', async () => {
-    const { service, contaReceber } = setup();
-    contaReceber.findFirst.mockResolvedValue({
-      ...CONTA,
-      status: 'RECEBIDO',
-      dataRecebimento: new Date('2026-09-20'),
-    });
-    await service.update(ID, {
-      ...ENTRADA,
-      status: 'RECEBIDO',
-      contaBancariaId: null,
-      dataRecebimento: null,
-    });
-    expect(contaReceber.update.mock.calls[0][0].data.dataRecebimento).toEqual(
-      new Date('2026-09-20'),
-    );
-  });
-
-  it('fora de Recebido limpa conta e data, sem validar a conta', async () => {
-    const { service, contaReceber, contasBancarias } = setup();
+  it('fora de Pago não grava baixa nem valida a conta bancária', async () => {
+    const { service, contaReceberBaixa, contasBancarias } = setup();
     await service.create({
       ...ENTRADA,
       status: 'PENDENTE',
@@ -128,9 +147,36 @@ describe('ContasReceberService: conta bancária e data do recebimento (#46)', ()
       dataRecebimento: '2026-10-05',
     });
     expect(contasBancarias.garantirExiste).not.toHaveBeenCalled();
-    const data = contaReceber.create.mock.calls[0][0].data;
-    expect(data.contaBancariaId).toBeNull();
-    expect(data.dataRecebimento).toBeNull();
+    expect(contaReceberBaixa.create).not.toHaveBeenCalled();
+  });
+
+  it('a competência padrão é o mês do vencimento e a informada prevalece', async () => {
+    const { service, contaReceber } = setup();
+    await service.create({ ...ENTRADA, status: 'PENDENTE' });
+    expect(contaReceber.create.mock.calls[0][0].data.competencia).toBe('2026-10');
+    await service.create({ ...ENTRADA, status: 'PENDENTE', competencia: '2026-09' });
+    expect(contaReceber.create.mock.calls[1][0].data.competencia).toBe('2026-09');
+  });
+
+  it('na edição para Pago baixa só o saldo em aberto', async () => {
+    const { service, contaReceber, contaReceberBaixa } = setup();
+    contaReceber.findFirst.mockResolvedValue({
+      ...CONTA,
+      status: 'PARCIAL',
+      baixas: [{ valorRecebido: new Prisma.Decimal('50') }],
+    });
+    await service.update(ID, {
+      ...ENTRADA,
+      profissionalSacadoId: null,
+      competencia: null,
+      valor: 150.5,
+      status: 'RECEBIDO',
+      contaBancariaId: null,
+      dataRecebimento: '2026-10-07',
+    });
+    const baixa = contaReceberBaixa.create.mock.calls[0][0].data;
+    expect(String(baixa.valorRecebido)).toBe('100.5');
+    expect(baixa.dataRecebimento).toEqual(new Date('2026-10-07'));
   });
 
   it('toContaReceber traz a conta bancária e a data do recebimento', () => {
@@ -184,13 +230,15 @@ describe('ContasReceberService', () => {
     await service.update(ID, {
       descricao: 'X',
       pacienteId: null,
+      profissionalSacadoId: null,
+      competencia: null,
       valor: 10,
       dataVencimento: '2026-11-01',
       formaPagamentoId: null,
       planoContaId: null,
       documento: null,
       totalParcelas: 1,
-      status: 'RECEBIDO',
+      status: 'PENDENTE',
       observacoes: null,
       contaBancariaId: null,
       dataRecebimento: null,
@@ -219,17 +267,17 @@ describe('ContasReceberService', () => {
       pageSize: 10,
       sort: { field: 'cliente', direction: 'asc' },
       search: 'maria',
-      status: 'PENDENTE',
+      status: 'PARCIAL',
       vencimentoDe: '2026-10-01',
       vencimentoAte: '2026-10-31',
     });
     const args = contaReceber.findMany.mock.calls[0][0];
-    expect(args.where).toMatchObject({ status: 'PENDENTE', deletedAt: null });
+    expect(args.where).toMatchObject({ status: 'PARCIAL', deletedAt: null });
     expect(args.where.dataVencimento).toEqual({
       gte: new Date('2026-10-01'),
       lte: new Date('2026-10-31'),
     });
-    expect(args.where.OR).toHaveLength(3);
+    expect(args.where.OR).toHaveLength(4);
     expect(args.orderBy[0]).toEqual({ paciente: { nome: 'asc' } });
     expect(page.data[0]?.numero).toBe(12);
   });
@@ -245,7 +293,21 @@ describe('ContasReceberService', () => {
     });
     const args = contaReceber.findMany.mock.calls[0][0];
     expect(args.where.status).toBe('PENDENTE');
-    expect(args.where.dataVencimento.lt).toBeInstanceOf(Date);
+    expect(args.where.AND[0].dataVencimento.lt).toBeInstanceOf(Date);
+  });
+
+  it('list com status A_VENCER filtra Pendentes com vencimento de hoje em diante', async () => {
+    const { service, contaReceber } = setup();
+    await service.list({
+      page: 1,
+      pageSize: 10,
+      sort: { field: 'dataVencimento', direction: 'asc' },
+      search: undefined,
+      status: 'A_VENCER',
+    });
+    const args = contaReceber.findMany.mock.calls[0][0];
+    expect(args.where.status).toBe('PENDENTE');
+    expect(args.where.AND[0].dataVencimento.gte).toBeInstanceOf(Date);
   });
 
   it('list ordena a coluna # pelo número', async () => {
@@ -556,5 +618,55 @@ describe('ContasReceberService: Receita Profissionais', () => {
     contaReceber.update.mockResolvedValue(RECEITA);
     await service.removerReceita(ID);
     expect(contaReceber.update.mock.calls[0][0].data.deletedAt).toBeInstanceOf(Date);
+  });
+
+  describe('cancelar (issue #162)', () => {
+    const MOTIVO_ID = '5b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
+    const ENTRADA = { motivoId: MOTIVO_ID, observacao: undefined };
+
+    it('cancela a conta pendente e registra o motivo (cobrança)', async () => {
+      const { service, contaReceber, cancelamentos } = setup();
+      contaReceber.update.mockResolvedValue({ ...CONTA, status: 'CANCELADO' });
+
+      const cancelada = await service.cancelar(ID, ENTRADA);
+
+      expect(cancelamentos.registrar).toHaveBeenCalledWith({
+        tipo: 'COBRANCA',
+        entidade: 'ContaReceber',
+        entidadeId: ID,
+        motivoId: MOTIVO_ID,
+        observacao: undefined,
+      });
+      expect(contaReceber.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: ID }, data: { status: 'CANCELADO' } }),
+      );
+      expect(cancelada.status).toBe('CANCELADO');
+    });
+
+    it.each(['RECEBIDO', 'CANCELADO'] as const)(
+      'conta %s não pode ser cancelada (409)',
+      async (status) => {
+        const { service, contaReceber, cancelamentos } = setup();
+        contaReceber.findFirst.mockResolvedValue({ ...CONTA, status });
+
+        await expect(service.cancelar(ID, ENTRADA)).rejects.toMatchObject({
+          code: 'CONTA_RECEBER_NAO_PENDENTE',
+        });
+        expect(cancelamentos.registrar).not.toHaveBeenCalled();
+        expect(contaReceber.update).not.toHaveBeenCalled();
+      },
+    );
+
+    it('cancelamento em cascata do contrato registra o motivo de sistema em cada parcela', async () => {
+      const { service, contaReceber, audit, cancelamentos } = setup();
+      contaReceber.findMany.mockResolvedValue([CONTA]);
+      contaReceber.update.mockResolvedValue({ ...CONTA, status: 'CANCELADO' });
+
+      const total = await service.cancelarPendentesComVencimentoApos([ID], '2026-10-01');
+
+      expect(total).toBe(1);
+      expect(cancelamentos.registrarContratoCancelado).toHaveBeenCalledWith('ContaReceber', ID);
+      expect(audit.record).toHaveBeenCalledTimes(1);
+    });
   });
 });

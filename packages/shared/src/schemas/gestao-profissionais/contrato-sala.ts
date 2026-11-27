@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { exportQuerySchema, listQuerySchema } from '../common/list-query';
+import { cancelarComMotivoSchema } from '../configuracoes-gestao/cancelamento';
 import { erroObrigatorio, mensagemObrigatoria } from '../common/obrigatorio';
 import { paginatedResponseSchema } from '../common/pagination';
 import { DIAS_SEMANA } from './profissional-agenda';
@@ -288,10 +289,9 @@ export type EncerrarContratoSalaInput = z.output<typeof encerrarContratoSalaSche
  * Corpo de `POST /api/gestao-profissionais/contratos-sala/:id/cancelar` (modal "Cancelar
  * Contrato (Rescisão)"): o contrato passa a "cancelado" na data informada.
  */
-export const cancelarContratoSalaSchema = z.strictObject({
-  data: dataEncerramento('Data de cancelamento'),
-  motivo: motivoSchema,
-});
+export const cancelarContratoSalaSchema = cancelarComMotivoSchema
+  .omit({ reagendouParaId: true })
+  .extend({ data: dataEncerramento('Data de cancelamento') });
 export type CancelarContratoSalaFormulario = z.input<typeof cancelarContratoSalaSchema>;
 export type CancelarContratoSalaInput = z.output<typeof cancelarContratoSalaSchema>;
 
@@ -334,6 +334,8 @@ export type ExportContratosSalaQuery = z.infer<typeof exportContratosSalaQuerySc
 
 export const contratoSalaSchema = z.object({
   id: z.uuid(),
+  /** Número do contrato (busca global, issue #159). */
+  numero: z.number().int().positive(),
   modalidade: contratoModalidadeSchema,
   salaId: z.uuid(),
   salaNome: z.string(),

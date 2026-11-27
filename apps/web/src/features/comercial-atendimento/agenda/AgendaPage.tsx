@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { hojeISO } from '@/lib/datas';
 import { cn } from '@/lib/utils';
 import {
@@ -34,6 +35,7 @@ import { MatrizAgenda } from './MatrizAgenda';
 import { MODO_MATRIZ } from './matriz-filtros';
 import { CalendarioAgenda } from './CalendarioAgenda';
 import { colunasDaSemana, colunasDoDia } from './colunas-agenda';
+import { ModalCancelarAgendamento } from './ModalCancelarAgendamento';
 import { ModalDetalheAgendamento } from './ModalDetalheAgendamento';
 import { ModalEditarAgendamento } from './ModalEditarAgendamento';
 import { ModalNovoAgendamento } from './ModalNovoAgendamento';
@@ -45,11 +47,14 @@ const TODOS = 'todos';
 function AgendaCalendario({ seletor }: Readonly<{ seletor: ReactNode }>) {
   const [hoje] = useState(() => hojeISO());
   const [dataBase, setDataBase] = useState(hoje);
-  const [visao, setVisao] = useState<VisaoAgenda>('semana');
+  // No celular a semana de 7 colunas não cabe: a visão inicial é o dia (issue #161).
+  const celular = useIsMobile();
+  const [visao, setVisao] = useState<VisaoAgenda>(celular ? 'dia' : 'semana');
   const [profissionalId, setProfissionalId] = useState<string | null>(null);
   const [criando, setCriando] = useState(false);
   const [selecionado, setSelecionado] = useState<Agendamento | null>(null);
   const [editando, setEditando] = useState<Agendamento | null>(null);
+  const [cancelando, setCancelando] = useState<Agendamento | null>(null);
 
   const periodo = periodoDaVisao(dataBase, visao);
   const agendamentos = useAgendamentos(periodo, profissionalId);
@@ -194,6 +199,17 @@ function AgendaCalendario({ seletor }: Readonly<{ seletor: ReactNode }>) {
             setSelecionado(null);
             setEditando(agendamento);
           }}
+          onCancelar={(agendamento) => {
+            setSelecionado(null);
+            setCancelando(agendamento);
+          }}
+        />
+      )}
+      {cancelando && (
+        <ModalCancelarAgendamento
+          agendamento={cancelando}
+          agendamentos={lista}
+          onFechar={() => setCancelando(null)}
         />
       )}
       {editando && (

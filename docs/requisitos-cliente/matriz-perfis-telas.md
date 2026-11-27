@@ -92,6 +92,7 @@
 | Plano de Contas | T | L | — | — | T | — |
 | Relatórios | T | L | — | — | L | — |
 | Indicadores | T | L | — | — | L | — |
+| Inadimplência | T | L | — | — | T | — |
 
 ### PATRIMÔNIO & PESSOAL
 
@@ -140,6 +141,7 @@
 | Base de Conhecimento | T | V | — | — | — | — |
 | Bypass Agente | T | V | — | — | — | — |
 | Tipos de Agendamento | T | E | V | — | — | — |
+| Motivos de Cancelamento | T | — | — | — | — | — |
 | Respostas Rápidas | T | E | V | — | — | E |
 | Configurações | T | V | — | — | — | — |
 | Minha Empresa | T | E | — | — | — | — |
@@ -152,3 +154,4 @@
 | `gestao-profissionais.profissionais-documentos.validar` | ✔ | ✔ | — | — | — | — |
 | `consultorio-assistencial.prontuarios-acessos.ver` | ✔ | — | — | — | — | — |
 | `configuracoes-gestao.dados-pessoais.exportar` | ✔ | ✔ | — | — | ✔ | — |
+| `financeiro.contas-pagar.aprovar` | ✔ | ✔ | — | — | — | — |

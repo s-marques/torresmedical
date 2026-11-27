@@ -1,3 +1,4 @@
+import type { CancelamentosService } from '../../../common/cancelamentos/cancelamentos.service';
 import { escopoFalso } from '../../../../test/utils/escopo-falso';
 import { txHostFalso } from '../../../../test/utils/tx-host-falso';
 import type { TiposAgendamentoService } from '../../configuracoes-gestao/tipos-agendamento/tipos-agendamento.service';
@@ -43,6 +44,11 @@ function criar(profissionaisDoEscopo?: string[], registro: Record<string, unknow
     sugerirDoProfissional: jest.fn().mockResolvedValue({ id: ID_SALA, nome: 'Sala Fictícia' }),
   };
   const conflitos = { garantirLivre: jest.fn().mockResolvedValue(undefined) };
+  const cancelamentos = {
+    registrar: jest.fn().mockResolvedValue({ motivo: 'Motivo fictício' }),
+    registrarContratoCancelado: jest.fn(),
+    registrarNegocioPerdido: jest.fn(),
+  };
   const service = new AgendaService(
     txHost,
     pacientes as unknown as PacientesService,
@@ -51,8 +57,9 @@ function criar(profissionaisDoEscopo?: string[], registro: Record<string, unknow
     escopoFalso(profissionaisDoEscopo),
     salas as unknown as SalasService,
     conflitos as unknown as AgendaConflitosService,
+    cancelamentos as unknown as CancelamentosService,
   );
-  return { service, delegate, pacientes, profissionais, tipos, salas, conflitos };
+  return { service, delegate, pacientes, profissionais, tipos, salas, conflitos, cancelamentos };
 }
 
 const ENTRADA = {
@@ -67,6 +74,16 @@ const ENTRADA = {
   convenio: false,
   observacoes: null,
 };
+
+/** Status HTTP do erro da promessa (200 quando resolve). */
+async function status(promessa: Promise<unknown>): Promise<number | undefined> {
+  try {
+    await promessa;
+    return 200;
+  } catch (erro) {
+    return (erro as { getStatus?: () => number }).getStatus?.();
+  }
+}
 
 describe('AgendaService', () => {
   it('instanteDeInicio: 16:00 no fuso da clínica (UTC-3) é 19:00 UTC', () => {
@@ -240,6 +257,97 @@ describe('AgendaService', () => {
     });
   });
 
+  describe('cancelar (issue #162)', () => {
+    const MOTIVO = '5b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
+    const NOVO = '6b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
+    const ATUAL = { ...REGISTRO, status: 'AGENDADO' };
+
+    it('registra o motivo na consulta e muda o status para Cancelado', async () => {
+      const { service, delegate, cancelamentos } = criar(undefined, ATUAL);
+
+      await service.cancelar(ID, { motivoId: MOTIVO, observacao: 'Paciente viajou' });
+
+      expect(cancelamentos.registrar).toHaveBeenCalledWith({
+        tipo: 'CONSULTA',
+        entidade: 'Agendamento',
+        entidadeId: ID,
+        motivoId: MOTIVO,
+        observacao: 'Paciente viajou',
+        profissionalId: ID_PROF,
+        reagendouParaId: undefined,
+      });
+      expect(delegate.update).toHaveBeenCalledWith({
+        where: { id: ID },
+        data: { status: 'CANCELADO' },
+      });
+    });
+
+    it('liga ao novo agendamento quando reagendou', async () => {
+      const { service, delegate, cancelamentos } = criar(undefined, ATUAL);
+      delegate.findFirst
+        .mockResolvedValueOnce(ATUAL)
+        .mockResolvedValueOnce({ ...ATUAL, id: NOVO })
+        .mockResolvedValue(ATUAL);
+
+      await service.cancelar(ID, {
+        motivoId: MOTIVO,
+        observacao: undefined,
+        reagendouParaId: NOVO,
+      });
+
+      expect(cancelamentos.registrar).toHaveBeenCalledWith(
+        expect.objectContaining({ reagendouParaId: NOVO }),
+      );
+    });
+
+    it('o novo agendamento precisa existir e ser outro (400), sem gravar', async () => {
+      const { service, delegate, cancelamentos } = criar(undefined, ATUAL);
+
+      expect(
+        await status(
+          service.cancelar(ID, { motivoId: MOTIVO, observacao: undefined, reagendouParaId: ID }),
+        ),
+      ).toBe(400);
+      expect(cancelamentos.registrar).not.toHaveBeenCalled();
+      expect(delegate.update).not.toHaveBeenCalled();
+    });
+
+    it.each(['CANCELADO', 'ATENDIDO', 'FALTOU', 'CHECK_IN'])(
+      'agendamento %s não pode ser cancelado (409)',
+      async (situacao) => {
+        const { service, delegate, cancelamentos } = criar(undefined, {
+          ...ATUAL,
+          status: situacao,
+        });
+        expect(
+          await status(service.cancelar(ID, { motivoId: MOTIVO, observacao: undefined })),
+        ).toBe(409);
+        expect(cancelamentos.registrar).not.toHaveBeenCalled();
+        expect(delegate.update).not.toHaveBeenCalled();
+      },
+    );
+
+    it('404 para id inválido', async () => {
+      const { service, cancelamentos } = criar(undefined, ATUAL);
+      expect(await status(service.cancelar('x', { motivoId: MOTIVO, observacao: undefined }))).toBe(
+        404,
+      );
+      expect(cancelamentos.registrar).not.toHaveBeenCalled();
+    });
+
+    it('agendamento de outro profissional dá 403 sem registrar', async () => {
+      const { service, delegate, cancelamentos } = criar(
+        ['9b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f'],
+        ATUAL,
+      );
+      expect(await status(service.cancelar(ID, { motivoId: MOTIVO, observacao: undefined }))).toBe(
+        403,
+      );
+      expect(cancelamentos.registrar).not.toHaveBeenCalled();
+      expect(delegate.update).not.toHaveBeenCalled();
+    });
+  });
+
   describe('sugerirSala', () => {
     it('devolve a sala do contrato do profissional', async () => {
       const { service, salas } = criar();
@@ -262,15 +370,6 @@ describe('AgendaService', () => {
 
   describe('escopo de dados (issue #153)', () => {
     const OUTRO = '3b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
-
-    async function status(promessa: Promise<unknown>): Promise<number | undefined> {
-      try {
-        await promessa;
-        return 200;
-      } catch (erro) {
-        return (erro as { getStatus?: () => number }).getStatus?.();
-      }
-    }
 
     it('list: restrito sem filtro lista só os vinculados', async () => {
       const { service, delegate } = criar([ID_PROF]);

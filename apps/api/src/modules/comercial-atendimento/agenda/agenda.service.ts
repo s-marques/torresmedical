@@ -1,9 +1,11 @@
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { Injectable } from '@nestjs/common';
 import {
+  AGENDAMENTO_STATUS_CANCELAVEIS,
   mensagemObrigatoria,
   type Agendamento as AgendamentoDto,
   type AgendaProfissional,
+  type CancelarComMotivoInput,
   type CreateAgendamentoInput,
   type ListAgendamentosQuery,
   type ProfissionalCor,
@@ -12,6 +14,7 @@ import {
   type UpdateAgendamentoInput,
 } from '@torres/shared';
 import type { Agendamento, Prisma } from '../../../generated/prisma/client';
+import { CancelamentosService } from '../../../common/cancelamentos/cancelamentos.service';
 import { EscopoDadosService } from '../../../common/auth/escopo-dados.service';
 import { isUuid } from '../../../common/auth/tokens';
 import { BusinessException } from '../../../common/errors/api.exception';
@@ -70,6 +73,7 @@ export class AgendaService {
     private readonly escopo: EscopoDadosService,
     private readonly salas: SalasService,
     private readonly conflitos: AgendaConflitosService,
+    private readonly cancelamentos: CancelamentosService,
   ) {}
 
   /** Agendamentos do período (dias inteiros, inclusive), por data e hora. Cancelados continuam (legenda). */
@@ -195,6 +199,59 @@ export class AgendaService {
       data: { salaId, inicio, duracaoMinutos },
     });
     return this.findById(atual.id);
+  }
+
+  /**
+   * Cancela o agendamento (issue #162): só Agendado, Confirmado ou Reagendar. O motivo da lista é
+   * obrigatório; reagendouParaId liga ao novo agendamento. Cancelado não ocupa sala nem horário.
+   */
+  async cancelar(id: string, input: CancelarComMotivoInput): Promise<AgendamentoDto> {
+    const atual = isUuid(id)
+      ? await this.txHost.tx.agendamento.findFirst({ where: { id, deletedAt: null } })
+      : null;
+    if (!atual) {
+      throw new BusinessException(ErrorCode.NOT_FOUND, 'Agendamento não encontrado', {
+        status: 404,
+      });
+    }
+    this.escopo.garantirProfissional(atual.profissionalId);
+    if (!AGENDAMENTO_STATUS_CANCELAVEIS.includes(atual.status)) {
+      throw new BusinessException(
+        'AGENDAMENTO_NAO_CANCELAVEL',
+        'Só é possível cancelar um agendamento agendado, confirmado ou a reagendar.',
+        { status: 409 },
+      );
+    }
+    if (input.reagendouParaId) await this.garantirNovoAgendamento(atual.id, input.reagendouParaId);
+
+    await this.cancelamentos.registrar({
+      tipo: 'CONSULTA',
+      entidade: 'Agendamento',
+      entidadeId: atual.id,
+      motivoId: input.motivoId,
+      observacao: input.observacao,
+      profissionalId: atual.profissionalId,
+      reagendouParaId: input.reagendouParaId,
+    });
+    await this.txHost.tx.agendamento.update({
+      where: { id: atual.id },
+      data: { status: 'CANCELADO' },
+    });
+    return this.findById(atual.id);
+  }
+
+  /** O novo agendamento existe, é outro e está no escopo do usuário. */
+  private async garantirNovoAgendamento(canceladoId: string, novoId: string): Promise<void> {
+    const novo = isUuid(novoId)
+      ? await this.txHost.tx.agendamento.findFirst({ where: { id: novoId, deletedAt: null } })
+      : null;
+    if (!novo || novo.id === canceladoId) {
+      throw new BusinessException(ErrorCode.VALIDATION_ERROR, 'Novo agendamento inválido', {
+        status: 400,
+        details: [{ field: 'reagendouParaId', message: 'Novo agendamento inválido' }],
+      });
+    }
+    this.escopo.garantirProfissional(novo.profissionalId);
   }
 
   /** Sala do contrato do profissional para o dia e a hora, ou `null` (o usuário escolhe). */

@@ -1,6 +1,7 @@
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { Injectable } from '@nestjs/common';
 import {
+  mensagemObrigatoria,
   situacaoProximaAcao,
   type AtividadeNegocio,
   type ColunaQuadro,
@@ -13,9 +14,11 @@ import {
   type Quadro,
   type QuadroQuery,
   type Responsavel,
+  type ItemBusca,
 } from '@torres/shared';
 import { Prisma } from '../../../generated/prisma/client';
 import type { EstagioPipeline } from '../../../generated/prisma/client';
+import { CancelamentosService } from '../../../common/cancelamentos/cancelamentos.service';
 import { isUuid } from '../../../common/auth/tokens';
 import { BusinessException } from '../../../common/errors/api.exception';
 import { ErrorCode } from '../../../common/errors/error-codes';
@@ -151,6 +154,7 @@ export class NegociosService {
     private readonly profissionais: ProfissionaisService,
     private readonly usuarios: UsuariosService,
     private readonly origens: OrigensClienteService,
+    private readonly cancelamentos: CancelamentosService,
   ) {}
 
   /** Colunas do pipeline com os negócios abertos (filtrados pela busca) e o resumo por status. */
@@ -247,6 +251,7 @@ export class NegociosService {
     const estagio = await this.estagioDaTela(input, atual);
     await this.validarReferencias(input);
     const agora = new Date();
+    await this.registrarPerdaDaEdicao(id, input, atual);
     const alterado = await this.txHost.tx.negocio.update({
       where: { id },
       data: {
@@ -259,6 +264,27 @@ export class NegociosService {
       include: INCLUDE,
     });
     return this.toDto(alterado);
+  }
+
+  /**
+   * Ao marcar como perdido pela edição, o motivo da lista é obrigatório (issue #162) e a perda
+   * entra no histórico de cancelamentos. Já perdido, nada muda.
+   */
+  private async registrarPerdaDaEdicao(
+    id: string,
+    input: NegocioTelaInput,
+    atual: NegocioCompleto,
+  ): Promise<void> {
+    if (input.status !== 'PERDIDO' || atual.status === 'PERDIDO') return;
+    if (!input.motivoPerdaId) {
+      const message = mensagemObrigatoria('Motivo da perda');
+      throw new BusinessException(ErrorCode.VALIDATION_ERROR, message, {
+        status: 400,
+        details: [{ field: 'motivoPerdaId', message }],
+      });
+    }
+    const motivo = await this.config.buscarMotivoPerda(input.motivoPerdaId);
+    await this.cancelamentos.registrarNegocioPerdido(id, motivo.nome, atual.profissionalId);
   }
 
   /**
@@ -342,8 +368,9 @@ export class NegociosService {
 
   /** "Perdido": exige o motivo de perda; sai do quadro e entra no total de perdidos. */
   async perder(id: string, input: PerderNegocioInput): Promise<Negocio> {
-    await this.buscarAberto(id);
-    await this.config.buscarMotivoPerda(input.motivoPerdaId);
+    const atual = await this.buscarAberto(id);
+    const motivo = await this.config.buscarMotivoPerda(input.motivoPerdaId);
+    await this.cancelamentos.registrarNegocioPerdido(id, motivo.nome, atual.profissionalId);
     const perdido = await this.txHost.tx.negocio.update({
       where: { id },
       data: { status: 'PERDIDO', fechadoEm: new Date(), motivoPerdaId: input.motivoPerdaId },
@@ -439,6 +466,25 @@ export class NegociosService {
     }
     if (input.responsavelId) await this.usuarios.garantirAtivo(input.responsavelId, 'Responsável');
     if (input.origemClienteId) await this.origens.findById(input.origemClienteId);
+  }
+
+  /**
+   * Busca global do ⌘K (issue #159): negócios em aberto (leads) pelo título ou pelo contato
+   * (nome, CPF, telefone, CRM). Não aplica o escopo: quem chama já o aplicou.
+   */
+  async buscaGlobal(termo: string, limite: number): Promise<ItemBusca[]> {
+    const negocios = await this.txHost.tx.negocio.findMany({
+      where: { ...NAO_EXCLUIDOS, status: 'ABERTO', ...(await this.whereBusca(termo)) },
+      orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+      take: limite,
+      select: { id: true, titulo: true },
+    });
+    return negocios.map((n) => ({
+      id: n.id,
+      titulo: n.titulo,
+      descricao: null,
+      rota: `/negocios?search=${encodeURIComponent(termo)}`,
+    }));
   }
 
   /** "Buscar cliente (nome, tel, CPF, CNPJ)": título do negócio ou contato (paciente/profissional). */

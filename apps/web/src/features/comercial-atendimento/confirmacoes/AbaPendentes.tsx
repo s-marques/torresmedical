@@ -19,6 +19,7 @@ import { StatusBadge, type TomStatus } from '@/components/shared/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { formatarDataHoraCurta, formatarHora } from './formatar';
+import { ModalCancelarConfirmacao } from './ModalCancelarConfirmacao';
 import { URL_CONFIRMACOES, useAcaoConfirmacao } from './use-confirmacoes';
 
 const PERMISSAO_EDITAR = 'comercial-atendimento.confirmacoes.editar' as const;
@@ -80,7 +81,6 @@ export function AbaPendentes({ dataEnvio }: Readonly<{ dataEnvio: string }>) {
   const [alvo, setAlvo] = useState<AlvoAcao | null>(null);
   const enviar = useAcaoConfirmacao('enviar');
   const confirmar = useAcaoConfirmacao('confirmar');
-  const cancelar = useAcaoConfirmacao('cancelar');
 
   // O grid recria as linhas quando o array de colunas muda: memoizado.
   const { mutate: enviarConfirmacao, isPending: enviando } = enviar;
@@ -189,8 +189,9 @@ export function AbaPendentes({ dataEnvio }: Readonly<{ dataEnvio: string }>) {
     [enviarConfirmacao, enviando],
   );
 
-  const descricao = alvo
-    ? `${alvo.acao === 'confirmar' ? 'Confirmar' : 'Cancelar'} o agendamento de ${alvo.confirmacao.paciente} em ${formatarDataHoraCurta(alvo.confirmacao.inicio)}?`
+  const confirmando = alvo?.acao === 'confirmar' ? alvo.confirmacao : null;
+  const descricao = confirmando
+    ? `Confirmar o agendamento de ${confirmando.paciente} em ${formatarDataHoraCurta(confirmando.inicio)}?`
     : undefined;
 
   return (
@@ -206,18 +207,16 @@ export function AbaPendentes({ dataEnvio }: Readonly<{ dataEnvio: string }>) {
         mensagemVazio="Nenhum agendamento para esta data."
       />
       <ConfirmDialog
-        aberto={alvo !== null}
+        aberto={confirmando !== null}
         onAbertoChange={(aberto) => aberto || setAlvo(null)}
-        titulo={alvo?.acao === 'confirmar' ? 'Confirmar Agendamento' : 'Cancelar Agendamento'}
+        titulo="Confirmar Agendamento"
         descricao={descricao}
-        rotuloConfirmar={alvo?.acao === 'confirmar' ? 'Confirmar' : 'Cancelar'}
-        destrutivo={alvo?.acao !== 'confirmar'}
-        onConfirmar={() => {
-          if (!alvo) return undefined;
-          const mutation = alvo.acao === 'confirmar' ? confirmar : cancelar;
-          return mutation.mutateAsync(alvo.confirmacao.id);
-        }}
+        rotuloConfirmar="Confirmar"
+        onConfirmar={() => (confirmando ? confirmar.mutateAsync(confirmando.id) : undefined)}
       />
+      {alvo?.acao === 'cancelar' && (
+        <ModalCancelarConfirmacao confirmacao={alvo.confirmacao} onFechar={() => setAlvo(null)} />
+      )}
     </>
   );
 }

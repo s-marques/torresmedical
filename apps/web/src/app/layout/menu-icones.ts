@@ -2,6 +2,7 @@ import type { TelaId } from '@torres/shared';
 import {
   ArrowRightLeft,
   BadgeCheck,
+  BellRing,
   BookOpenText,
   Bot,
   Boxes,
@@ -31,6 +32,7 @@ import {
   Landmark,
   LayoutDashboard,
   Library,
+  ListX,
   ListChecks,
   ListTree,
   type LucideIcon,
@@ -119,6 +121,7 @@ export const ICONES_TELA: Record<TelaId, LucideIcon> = {
   'financeiro.plano-contas': ListTree,
   'financeiro.relatorios': ChartColumn,
   'financeiro.indicadores': Gauge,
+  'financeiro.inadimplencia': BellRing,
 
   'patrimonio-pessoal.patrimonio': Landmark,
   'patrimonio-pessoal.imoveis': Building2,
@@ -151,6 +154,7 @@ export const ICONES_TELA: Record<TelaId, LucideIcon> = {
   'configuracoes-gestao.base-conhecimento': Library,
   'configuracoes-gestao.bypass-agente': Waypoints,
   'configuracoes-gestao.tipos-agendamento': CalendarCog,
+  'configuracoes-gestao.motivos-cancelamento': ListX,
   'configuracoes-gestao.respostas-rapidas': Zap,
   'configuracoes-gestao.configuracoes': Settings,
   'configuracoes-gestao.minha-empresa': Building,

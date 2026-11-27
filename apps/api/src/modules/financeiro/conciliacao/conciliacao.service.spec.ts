@@ -29,14 +29,26 @@ const PAGAR = {
   competencia: null,
   centroCustoId: null,
   documentoArquivoId: null,
+  aprovacao: 'APROVADA' as const,
+  lancadoPorId: null,
+  aprovadoPorId: null,
+  aprovadoEm: null,
+  recusadoPorId: null,
+  recusadoEm: null,
+  motivoRecusa: null,
   baixas: [{ dataPagamento: new Date('2026-10-05T00:00:00.000Z') }],
 };
 const RECEBER = {
   ...BASE,
   pacienteId: null,
   profissionalId: null,
+  profissionalSacadoId: null,
+  contratoSalaId: null,
+  renegociadoDeId: null,
+  competencia: null,
   paciente: { nome: 'Cliente Teste' },
-  status: 'RECEBIDO' as 'RECEBIDO' | 'PENDENTE' | 'CANCELADO',
+  profissionalSacado: null as { nome: string } | null,
+  status: 'RECEBIDO' as 'RECEBIDO' | 'PENDENTE' | 'CANCELADO' | 'PARCIAL' | 'RENEGOCIADO',
   contaBancariaId: null,
   dataRecebimento: new Date('2026-10-03T00:00:00.000Z') as Date | null,
 };
@@ -51,15 +63,23 @@ function setup() {
   const contaReceber = {
     findMany: jest.fn().mockResolvedValue([RECEBER]),
     count: jest.fn().mockResolvedValue(1),
-    aggregate: jest.fn().mockResolvedValue({ _sum: { valor: new Prisma.Decimal('9070') } }),
+  };
+  const contaReceberBaixa = {
+    aggregate: jest.fn().mockResolvedValue({ _sum: { valorRecebido: new Prisma.Decimal('9070') } }),
   };
   const contaPagarBaixa = {
     aggregate: jest.fn().mockResolvedValue({ _sum: { valorPago: new Prisma.Decimal('14679.45') } }),
   };
   const txHost = {
-    tx: { contaPagar, contaReceber, contaPagarBaixa },
+    tx: { contaPagar, contaReceber, contaPagarBaixa, contaReceberBaixa },
   } as unknown as TransactionHost<PrismaAdapter>;
-  return { service: new ConciliacaoService(txHost), contaPagar, contaReceber, contaPagarBaixa };
+  return {
+    service: new ConciliacaoService(txHost),
+    contaPagar,
+    contaReceber,
+    contaPagarBaixa,
+    contaReceberBaixa,
+  };
 }
 
 describe('ConciliacaoService', () => {
@@ -87,6 +107,17 @@ describe('ConciliacaoService', () => {
       expect(
         lancamentoDeReceber({ ...RECEBER, status: 'CANCELADO', dataRecebimento: null }),
       ).toMatchObject({ data: '2026-10-10' });
+    });
+
+    it('A Receber parcial aparece como pendente; sacado profissional vira o nome da pessoa', () => {
+      expect(
+        lancamentoDeReceber({
+          ...RECEBER,
+          status: 'PARCIAL',
+          paciente: null as unknown as { nome: string },
+          profissionalSacado: { nome: 'Dra. Locatária' },
+        }),
+      ).toMatchObject({ status: 'PENDENTE', pessoaNome: 'Dra. Locatária', data: '2026-10-10' });
     });
   });
 
@@ -122,16 +153,16 @@ describe('ConciliacaoService', () => {
     const where = contaReceber.findMany.mock.calls[0][0].where;
     expect(where).toMatchObject({
       deletedAt: null,
-      contaBancariaId: CONTA_BANCARIA_ID,
+      baixas: { some: { deletedAt: null, contaBancariaId: CONTA_BANCARIA_ID } },
       OR: [
         { status: 'RECEBIDO', dataRecebimento: PERIODO },
-        { status: { not: 'RECEBIDO' }, dataVencimento: PERIODO },
+        { status: { notIn: ['RECEBIDO', 'RENEGOCIADO'] }, dataVencimento: PERIODO },
       ],
     });
   });
 
   it('resumo: Recebido − Pago no período (valores do print)', async () => {
-    const { service, contaPagarBaixa } = setup();
+    const { service, contaPagarBaixa, contaReceberBaixa } = setup();
     await expect(service.resumo({ de: QUERY.de, ate: QUERY.ate })).resolves.toEqual({
       recebido: '9070.00',
       pago: '14679.45',
@@ -142,11 +173,17 @@ describe('ConciliacaoService', () => {
       dataPagamento: PERIODO,
       contaPagar: { deletedAt: null },
     });
+    // O recebido soma as baixas do período (inclusive as parciais), só de contas do Torres.
+    expect(contaReceberBaixa.aggregate.mock.calls[0][0].where).toEqual({
+      deletedAt: null,
+      dataRecebimento: PERIODO,
+      contaReceber: { deletedAt: null, profissionalId: null },
+    });
   });
 
   it('resumo sem movimentos devolve zeros', async () => {
-    const { service, contaReceber, contaPagarBaixa } = setup();
-    contaReceber.aggregate.mockResolvedValue({ _sum: { valor: null } });
+    const { service, contaReceberBaixa, contaPagarBaixa } = setup();
+    contaReceberBaixa.aggregate.mockResolvedValue({ _sum: { valorRecebido: null } });
     contaPagarBaixa.aggregate.mockResolvedValue({ _sum: { valorPago: null } });
     await expect(service.resumo({ de: QUERY.de, ate: QUERY.ate })).resolves.toEqual({
       recebido: '0.00',

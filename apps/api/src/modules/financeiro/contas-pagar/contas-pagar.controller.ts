@@ -13,6 +13,9 @@ import { ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
 import { z } from 'zod';
 import {
   baixarContaPagarSchema,
+  recusarContaPagarSchema,
+  type RecusarContaPagarInput,
+  cancelarSemReagendamentoSchema,
   contaPagarBaixaSchema,
   contaPagarDivergenciaPageSchema,
   contaPagarPageSchema,
@@ -26,6 +29,7 @@ import {
   verificacaoDuplicidadeContaPagarSchema,
   verificarDuplicidadeContaPagarSchema,
   type BaixarContaPagarInput,
+  type CancelarSemReagendamentoInput,
   type ContaPagar,
   type ContaPagarBaixa,
   type ContaPagarDivergencia,
@@ -212,6 +216,35 @@ export class ContasPagarController {
     return this.contasPagar.baixar(id, body);
   }
 
+  @Post(':id/aprovar')
+  @RequirePermission('financeiro.contas-pagar.aprovar')
+  @HttpCode(200)
+  @Audit({ entity: ENTITY, action: 'UPDATE' })
+  @ApiOperation({
+    summary:
+      'Aprova a conta aguardando aprovação (libera a baixa). Quem lançou não aprova a própria',
+  })
+  @ApiZodResponse(200, contaPagarSchema)
+  @ApiErrorResponses(400, 401, 403, 404, 422)
+  aprovar(@IdParam() id: string): Promise<ContaPagar> {
+    return this.contasPagar.aprovar(id);
+  }
+
+  @Post(':id/recusar')
+  @RequirePermission('financeiro.contas-pagar.aprovar')
+  @HttpCode(200)
+  @Audit({ entity: ENTITY, action: 'UPDATE' })
+  @ApiOperation({ summary: 'Recusa a conta aguardando aprovação, com motivo obrigatório' })
+  @ApiZodBody(recusarContaPagarSchema)
+  @ApiZodResponse(200, contaPagarSchema)
+  @ApiErrorResponses(400, 401, 403, 404, 422)
+  recusar(
+    @IdParam() id: string,
+    @Body(new ZodValidationPipe(recusarContaPagarSchema)) body: RecusarContaPagarInput,
+  ): Promise<ContaPagar> {
+    return this.contasPagar.recusar(id, body);
+  }
+
   @Post(':id/cancelar-baixa')
   @RequirePermission('financeiro.contas-pagar.editar')
   @HttpCode(200)
@@ -221,6 +254,22 @@ export class ContasPagarController {
   @ApiErrorResponses(400, 401, 403, 404, 422)
   cancelarBaixa(@IdParam() id: string): Promise<ContaPagar> {
     return this.contasPagar.cancelarBaixa(id);
+  }
+
+  @Post(':id/cancelar')
+  @RequirePermission('financeiro.contas-pagar.editar')
+  @HttpCode(200)
+  @Audit({ entity: ENTITY, action: 'UPDATE' })
+  @ApiOperation({ summary: 'Cancela a conta pendente e sem baixa, com o motivo da lista (#162)' })
+  @ApiZodBody(cancelarSemReagendamentoSchema)
+  @ApiZodResponse(200, contaPagarSchema)
+  @ApiErrorResponses(400, 401, 403, 404, 409)
+  cancelar(
+    @IdParam() id: string,
+    @Body(new ZodValidationPipe(cancelarSemReagendamentoSchema))
+    body: CancelarSemReagendamentoInput,
+  ): Promise<ContaPagar> {
+    return this.contasPagar.cancelar(id, body);
   }
 
   @Delete(':id')

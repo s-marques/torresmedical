@@ -100,6 +100,8 @@ export function AbaContratos({ criando, onFecharCriar }: Readonly<AbaContratosPr
       ocultavel: false,
       celula: (c) => <span className="font-medium">{c.salaNome}</span>,
     },
+    // Número do contrato: também é achado pela busca global do ⌘K (issue #159).
+    { id: 'numero', titulo: 'Nº', celula: (c) => c.numero },
     { id: 'locatario', titulo: 'Locatário', exportavel: true, celula: (c) => c.locatarioNome },
     {
       id: 'modalidade',

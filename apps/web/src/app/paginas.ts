@@ -119,6 +119,12 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   'financeiro.caixas': lazy(() => import('@/features/financeiro/caixas/CaixasPage')),
   'financeiro.conciliacao': lazy(() => import('@/features/financeiro/conciliacao/ConciliacaoPage')),
   'financeiro.indicadores': lazy(() => import('@/features/financeiro/indicadores/IndicadoresPage')),
+  'financeiro.relatorios': lazy(
+    () => import('@/features/financeiro/relatorios/RelatoriosFinanceiroPage'),
+  ),
+  'financeiro.inadimplencia': lazy(
+    () => import('@/features/financeiro/inadimplencia/InadimplenciaPage'),
+  ),
   'financeiro.contas-pagar': lazy(
     () => import('@/features/financeiro/contas-pagar/ContasPagarPage'),
   ),
@@ -183,6 +189,9 @@ export const PAGINAS: Partial<Record<TelaId, ComponentType>> = {
   ),
   'configuracoes-gestao.tipos-agendamento': lazy(
     () => import('@/features/configuracoes-gestao/tipos-agendamento/TiposAgendamentoPage'),
+  ),
+  'configuracoes-gestao.motivos-cancelamento': lazy(
+    () => import('@/features/configuracoes-gestao/motivos-cancelamento/MotivosCancelamentoPage'),
   ),
   'configuracoes-gestao.agentes-ia': lazy(
     () => import('@/features/configuracoes-gestao/agentes-ia/AgentesIaPage'),

@@ -357,6 +357,14 @@ describe('Negócios (e2e)', () => {
         before: { titulo: 'Sala 10 - Clínica geral', observacoes: 'Antes' },
         after: { titulo: 'Editado', status: 'PERDIDO' },
       });
+      // Marcar como perdido pela edição também entra no histórico de cancelamentos (issue #162).
+      const historico = await prisma.cancelamento.findMany({ where: { entidadeId: id } });
+      expect(historico).toHaveLength(1);
+      expect(historico[0]).toMatchObject({
+        tipo: 'PROPOSTA',
+        entidade: 'Negocio',
+        motivoNome: 'Preço',
+      });
     });
 
     it('reabrir o negócio limpa data de fechamento e motivo; ganho mantém a data original', async () => {

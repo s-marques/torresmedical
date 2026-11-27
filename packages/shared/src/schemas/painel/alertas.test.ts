@@ -21,13 +21,34 @@ describe('catálogo de alertas', () => {
     );
     expect(rotaAlerta('CONTAS_PAGAR_VENCIDAS', '2026-11-25')).toBe('/pagar?status=VENCIDO');
     expect(rotaAlerta('RECEBIVEIS_VENCIDOS', '2026-11-25')).toBe('/receber?status=VENCIDO');
+    expect(rotaAlerta('CONTAS_PAGAR_AGUARDANDO_APROVACAO', '2026-11-25')).toBe(
+      '/pagar?status=PENDENTE&aprovacao=LANCADA',
+    );
   });
 });
 
 describe('tiposVisiveis', () => {
   it('mostra cada tipo só a quem vê a tela de origem', () => {
     const financeiro = new Set(['financeiro.contas-pagar.ver', 'financeiro.contas-receber.ver']);
-    expect(tiposVisiveis(financeiro, false)).toEqual([...TIPOS_ALERTA]);
+    // Aguardando aprovação é do aprovador (permissão própria), não de quem só vê a tela.
+    expect(tiposVisiveis(financeiro, false)).toEqual(
+      TIPOS_ALERTA.filter(
+        (tipo) => tipo !== 'CONTAS_PAGAR_AGUARDANDO_APROVACAO' && tipo !== 'COBRANCAS_REGUA',
+      ),
+    );
+    expect(
+      tiposVisiveis(
+        new Set([...financeiro, 'financeiro.contas-pagar.aprovar', 'financeiro.inadimplencia.ver']),
+        false,
+      ),
+    ).toEqual([...TIPOS_ALERTA]);
+    // As cobranças da régua são de quem vê a tela de Inadimplência (issue #166).
+    expect(tiposVisiveis(new Set(['financeiro.inadimplencia.ver']), false)).toEqual([
+      'COBRANCAS_REGUA',
+    ]);
+    expect(tiposVisiveis(new Set(['financeiro.contas-pagar.aprovar']), false)).toEqual([
+      'CONTAS_PAGAR_AGUARDANDO_APROVACAO',
+    ]);
     expect(tiposVisiveis(new Set(['financeiro.contas-receber.ver']), false)).toEqual([
       'RECEBIVEIS_VENCIDOS',
     ]);

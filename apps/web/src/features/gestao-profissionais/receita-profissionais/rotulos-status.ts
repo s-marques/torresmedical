@@ -5,9 +5,12 @@ import { useTranslation } from 'react-i18next';
 export function useRotulosStatusReceita(): Record<ContaReceberStatusExibicao, string> {
   const { t } = useTranslation();
   return {
-    PENDENTE: t('receitaProfissionais.status.pendente'),
+    A_VENCER: t('receitaProfissionais.status.pendente'),
     RECEBIDO: t('receitaProfissionais.status.recebido'),
     CANCELADO: t('receitaProfissionais.status.cancelado'),
+    // Parcial e Renegociado só existem em Contas a Receber (issue #165); a receita não os usa.
+    PARCIAL: t('contasReceber.status.parcial'),
+    RENEGOCIADO: t('contasReceber.status.renegociado'),
     VENCIDO: t('receitaProfissionais.status.vencido'),
   };
 }

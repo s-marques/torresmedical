@@ -3,6 +3,8 @@ import { PERMISSOES, PREFERENCIAS_PADRAO } from '@torres/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { matchMediaStub } from '@/test/match-media';
+import { MOTIVO_ID, rotaMotivosCancelamento } from '@/test/motivos-cancelamento';
 import { apiFalsa, chamadasPara, json, renderApp, USUARIO_TESTE } from '@/test/render-app';
 
 const API = '/api/comercial-atendimento/agendamentos';
@@ -91,6 +93,7 @@ function api(rotas: Parameters<typeof apiFalsa>[0] = {}) {
       [`/api/lookups/salas/${ID_SALA_A}`]: () =>
         json({ id: ID_SALA_A, label: 'Sala Azul', descricao: null }),
       [SALA_SUGERIDA]: () => json({ salaId: null, salaNome: null }),
+      ...rotaMotivosCancelamento,
       ...rotas.rotas,
     },
   });
@@ -208,6 +211,16 @@ describe('Agenda: visão Semana', () => {
     falhar = false;
     await user.click(screen.getByRole('button', { name: 'Tentar de novo' }));
     expect(await screen.findByRole('button', { name: /Ana Paciente Teste/ })).toBeVisible();
+  });
+});
+
+describe('Agenda no celular (issue #161)', () => {
+  it('abre na visão Dia, porque a semana de 7 colunas não cabe', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => matchMediaStub(query, true));
+    renderTela();
+
+    expect(await screen.findByRole('heading', { name: '22 de outubro de 2026' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Dia' })).toHaveAttribute('aria-pressed', 'true');
   });
 });
 
@@ -590,6 +603,141 @@ describe('Agenda: sala no agendamento (issue #136)', () => {
 
       const detalhe = await screen.findByRole('dialog', { name: 'Agendamento #1224' });
       expect(within(detalhe).queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Cancelar agendamento (issue #162)', { timeout: 20_000 }, () => {
+    const ROTA_CANCELAR = `${API}/${ID_AG}/cancelar`;
+
+    async function abrirCancelamento(fetchMock = api()) {
+      const { user } = renderTela(fetchMock);
+      await user.click(await screen.findByRole('button', { name: /Ana Paciente Teste/ }));
+      const detalhe = await screen.findByRole('dialog', { name: 'Agendamento #1224' });
+      await user.click(within(detalhe).getByRole('button', { name: 'Cancelar agendamento' }));
+      const modal = await screen.findByRole('dialog', { name: 'Cancelar agendamento #1224' });
+      return { user, modal, fetchMock };
+    }
+
+    it('pede o motivo da lista, liga ao novo agendamento do paciente e envia', async () => {
+      let corpo: Record<string, unknown> | null = null;
+      const fetchMock = api({
+        rotas: {
+          [ROTA_CANCELAR]: (init) => {
+            corpo = corpoDe(init);
+            return json({ ...AGENDAMENTOS[0], status: 'CANCELADO' });
+          },
+        },
+      });
+      const { user, modal } = await abrirCancelamento(fetchMock);
+      expect(within(modal).getByText(/Ana Paciente Teste com Dr. Bruno Teste/)).toBeVisible();
+
+      await user.click(within(modal).getByRole('button', { name: 'Cancelar agendamento' }));
+      expect(await within(modal).findByText('Motivo é obrigatório.')).toBeVisible();
+      expect(corpo).toBeNull();
+
+      await user.click(within(modal).getByRole('combobox', { name: /Motivo/ }));
+      await user.click(await screen.findByRole('option', { name: 'Paciente desistiu' }));
+      await user.click(within(modal).getByRole('combobox', { name: /Reagendou/ }));
+      const opcoes = await screen.findAllByRole('option');
+      expect(opcoes.map((o) => o.textContent)).toEqual(
+        expect.arrayContaining(['#1231 - 22/10/2026 às 09:00', '#1232 - 22/10/2026 às 09:30']),
+      );
+      expect(opcoes.map((o) => o.textContent)).not.toContain('#1224 - 21/10/2026 às 09:00');
+      await user.click(await screen.findByRole('option', { name: /#1231/ }));
+      await user.click(within(modal).getByRole('button', { name: 'Cancelar agendamento' }));
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(corpo).toEqual({ motivoId: MOTIVO_ID, reagendouParaId: ID_AG_2 });
+    });
+
+    it('sem reagendamento, envia só o motivo e a observação', async () => {
+      let corpo: Record<string, unknown> | null = null;
+      const fetchMock = api({
+        rotas: {
+          [ROTA_CANCELAR]: (init) => {
+            corpo = corpoDe(init);
+            return json({ ...AGENDAMENTOS[0], status: 'CANCELADO' });
+          },
+        },
+      });
+      const { user, modal } = await abrirCancelamento(fetchMock);
+
+      await user.click(within(modal).getByRole('combobox', { name: /Motivo/ }));
+      await user.click(await screen.findByRole('option', { name: 'Paciente desistiu' }));
+      await user.type(within(modal).getByLabelText('Observação'), 'Viagem');
+      await user.click(within(modal).getByRole('button', { name: 'Cancelar agendamento' }));
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(corpo).toEqual({ motivoId: MOTIVO_ID, observacao: 'Viagem' });
+    });
+
+    it('o erro do servidor (409) aparece no modal e não fecha', async () => {
+      const fetchMock = api({
+        rotas: {
+          [ROTA_CANCELAR]: () =>
+            json(
+              {
+                statusCode: 409,
+                code: 'AGENDAMENTO_NAO_CANCELAVEL',
+                message:
+                  'Só é possível cancelar um agendamento agendado, confirmado ou a reagendar.',
+              },
+              409,
+            ),
+        },
+      });
+      const { user, modal } = await abrirCancelamento(fetchMock);
+
+      await user.click(within(modal).getByRole('combobox', { name: /Motivo/ }));
+      await user.click(await screen.findByRole('option', { name: 'Paciente desistiu' }));
+      await user.click(within(modal).getByRole('button', { name: 'Cancelar agendamento' }));
+
+      expect(await within(modal).findByText(/Só é possível cancelar um agendamento/)).toBeVisible();
+      expect(screen.getByRole('dialog', { name: 'Cancelar agendamento #1224' })).toBeVisible();
+    });
+
+    it.each(['CANCELADO', 'ATENDIDO', 'FALTOU'] as const)(
+      'agendamento %s não tem o botão Cancelar',
+      async (status) => {
+        const { user } = renderTela(
+          api({ rotas: { [API]: () => json({ data: [agendamento({ status })] }) } }),
+        );
+
+        await user.click(await screen.findByRole('button', { name: /Ana Paciente Teste/ }));
+
+        const detalhe = await screen.findByRole('dialog', { name: 'Agendamento #1224' });
+        expect(
+          within(detalhe).queryByRole('button', { name: 'Cancelar agendamento' }),
+        ).not.toBeInTheDocument();
+      },
+    );
+
+    it('sem a permissão editar, o detalhe não tem o botão Cancelar', async () => {
+      const semEditar = PERMISSOES.filter((p) => p !== 'comercial-atendimento.agenda.editar');
+      const { user } = renderTela(api({ usuario: { ...USUARIO_TESTE, permissoes: semEditar } }));
+
+      await user.click(await screen.findByRole('button', { name: /Ana Paciente Teste/ }));
+
+      const detalhe = await screen.findByRole('dialog', { name: 'Agendamento #1224' });
+      expect(
+        within(detalhe).queryByRole('button', { name: 'Cancelar agendamento' }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('em inglês, o botão e o modal usam os textos traduzidos', async () => {
+      const { user } = renderTela(
+        api({
+          usuario: { ...USUARIO_TESTE, preferencias: { ...PREFERENCIAS_PADRAO, idioma: 'en' } },
+        }),
+      );
+
+      await user.click(await screen.findByRole('button', { name: /Ana Paciente Teste/ }));
+      const detalhe = await screen.findByRole('dialog', { name: 'Agendamento #1224' });
+      await user.click(within(detalhe).getByRole('button', { name: 'Cancel appointment' }));
+
+      const modal = await screen.findByRole('dialog', { name: 'Cancel appointment #1224' });
+      expect(within(modal).getByRole('combobox', { name: /Reason/ })).toBeVisible();
+      expect(within(modal).getByRole('combobox', { name: /Rescheduled/ })).toBeVisible();
     });
   });
 

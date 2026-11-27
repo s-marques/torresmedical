@@ -31,6 +31,7 @@ const INCLUDE_PAGAR = {
 
 const INCLUDE_RECEBER = {
   paciente: { select: { nome: true } },
+  profissionalSacado: { select: { nome: true } },
 } satisfies Prisma.ContaReceberInclude;
 
 type ContaPagarLancamento = Prisma.ContaPagarGetPayload<{ include: typeof INCLUDE_PAGAR }>;
@@ -62,10 +63,12 @@ export function lancamentoDeReceber(conta: ContaReceberLancamento): LancamentoCo
     id: conta.id,
     tipo: 'RECEBER',
     descricao: conta.descricao,
-    pessoaNome: conta.paciente?.nome ?? null,
+    pessoaNome: conta.paciente?.nome ?? conta.profissionalSacado?.nome ?? null,
     valor: conta.valor.toString(),
     data: dia(data),
-    status: conta.status,
+    // Parcial ainda tem saldo em aberto; Renegociado nem chega aqui (ver `lancamentosReceber`).
+    status:
+      conta.status === 'PARCIAL' || conta.status === 'RENEGOCIADO' ? 'PENDENTE' : conta.status,
   };
 }
 
@@ -89,16 +92,17 @@ export class ConciliacaoService {
   async resumo(query: ResumoConciliacaoQuery): Promise<ResumoConciliacao> {
     const periodo = intervalo(query);
     const [recebido, pago] = await Promise.all([
-      this.txHost.tx.contaReceber.aggregate({
-        _sum: { valor: true },
-        where: { ...DO_TORRES, status: 'RECEBIDO', dataRecebimento: periodo },
+      // Recebido = soma das baixas do período (inclui as parciais), issue #165.
+      this.txHost.tx.contaReceberBaixa.aggregate({
+        _sum: { valorRecebido: true },
+        where: { ...NAO_EXCLUIDAS, dataRecebimento: periodo, contaReceber: DO_TORRES },
       }),
       this.txHost.tx.contaPagarBaixa.aggregate({
         _sum: { valorPago: true },
         where: { ...NAO_EXCLUIDAS, dataPagamento: periodo, contaPagar: NAO_EXCLUIDAS },
       }),
     ]);
-    const totalRecebido = recebido._sum.valor ?? new Prisma.Decimal(0);
+    const totalRecebido = recebido._sum.valorRecebido ?? new Prisma.Decimal(0);
     const totalPago = pago._sum.valorPago ?? new Prisma.Decimal(0);
     return {
       recebido: totalRecebido.toFixed(2),
@@ -142,9 +146,12 @@ export class ConciliacaoService {
       ...DO_TORRES,
       OR: [
         { status: 'RECEBIDO', dataRecebimento: periodo },
-        { status: { not: 'RECEBIDO' }, dataVencimento: periodo },
+        // Renegociado fica fora: o saldo está nos títulos novos.
+        { status: { notIn: ['RECEBIDO', 'RENEGOCIADO'] }, dataVencimento: periodo },
       ],
-      ...(query.contaBancariaId && { contaBancariaId: query.contaBancariaId }),
+      ...(query.contaBancariaId && {
+        baixas: { some: { ...NAO_EXCLUIDAS, contaBancariaId: query.contaBancariaId } },
+      }),
     };
     const page = await paginate(query, {
       findMany: (p) =>

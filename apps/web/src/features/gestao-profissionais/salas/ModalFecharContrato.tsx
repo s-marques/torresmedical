@@ -5,8 +5,10 @@ import {
   type ContratoSala,
   type EncerrarContratoSalaFormulario,
 } from '@torres/shared';
-import { BanIcon, Loader2Icon, XCircleIcon } from 'lucide-react';
+import { BanIcon, Loader2Icon } from 'lucide-react';
 import { useFormState } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import { ModalCancelamento } from '@/components/shared/cancelamento/ModalCancelamento';
 import { FormField } from '@/components/shared/form/FormField';
 import { FormLayout } from '@/components/shared/form/FormLayout';
 import { useFormulario } from '@/components/shared/form/use-formulario';
@@ -72,49 +74,42 @@ function ModalEncerrar({ contrato, onFechar }: Readonly<Omit<ModalFecharContrato
   );
 }
 
+/** Rescisão: data e motivo da lista de contratos (issue #162); parcelas futuras são canceladas. */
 function ModalCancelar({ contrato, onFechar }: Readonly<Omit<ModalFecharContratoProps, 'tipo'>>) {
+  const { t } = useTranslation();
   const cancelar = useCancelarContrato(contrato.id);
   const form = useFormulario<
     CancelarContratoSalaFormulario,
     ReturnType<typeof cancelarContratoSalaSchema.parse>
-  >(cancelarContratoSalaSchema, { defaultValues: { data: hojeISO(), motivo: '' } });
+  >(cancelarContratoSalaSchema, {
+    defaultValues: { data: hojeISO(), motivoId: '', observacao: '' },
+  });
   return (
-    <Corpo
-      contrato={contrato}
-      titulo="Cancelar Contrato (Rescisão)"
-      tituloDestrutivo
-      rotuloVoltar="Voltar"
-      rotuloConfirmar="Cancelar Contrato"
-      icone={XCircleIcon}
-      aviso={AVISO.replace('{acao}', 'cancelamento')}
-      avisoDestrutivo
-      onFechar={onFechar}
+    <ModalCancelamento
+      tipo="CONTRATO"
+      titulo={t('cancelamento.contrato.titulo')}
+      descricao={t('cancelamento.contrato.descricao', {
+        sala: contrato.salaNome,
+        locatario: contrato.locatarioNome,
+      })}
+      rotuloConfirmar={t('cancelamento.contrato.confirmar')}
+      aviso={t('cancelamento.contrato.aviso')}
       form={form}
-      onSubmit={async (valores) => {
-        await cancelar.mutateAsync(valores);
-        onFechar();
-      }}
+      onConfirmar={(valores) => cancelar.mutateAsync(valores)}
+      onFechar={onFechar}
     >
-      <FormField name="data" label="Data de Cancelamento" tipo="data" obrigatorio />
-      <FormField
-        name="motivo"
-        label="Motivo da Rescisão"
-        tipo="textarea"
-        placeholder="Motivo do cancelamento/rescisão..."
-      />
-    </Corpo>
+      <FormField name="data" label={t('cancelamento.contrato.data')} tipo="data" obrigatorio />
+    </ModalCancelamento>
   );
 }
 
 interface CorpoProps<TIn extends Record<string, unknown>, TOut extends Record<string, unknown>> {
   contrato: ContratoSala;
   titulo: string;
-  tituloDestrutivo?: boolean;
   rotuloVoltar: string;
   rotuloConfirmar: string;
   icone: typeof BanIcon;
   aviso: string;
-  avisoDestrutivo?: boolean;
   onFechar: () => void;
   form: ReturnType<typeof useFormulario<TIn, TOut>>;
   onSubmit: (valores: TOut) => Promise<void>;
@@ -124,12 +119,10 @@ interface CorpoProps<TIn extends Record<string, unknown>, TOut extends Record<st
 function Corpo<TIn extends Record<string, unknown>, TOut extends Record<string, unknown>>({
   contrato,
   titulo,
-  tituloDestrutivo,
   rotuloVoltar,
   rotuloConfirmar,
   icone: Icone,
   aviso,
-  avisoDestrutivo,
   onFechar,
   form,
   onSubmit,
@@ -142,7 +135,6 @@ function Corpo<TIn extends Record<string, unknown>, TOut extends Record<string, 
       onAbertoChange={(aberto) => aberto || onFechar()}
       titulo={titulo}
       tamanho="md"
-      className={cn(tituloDestrutivo && '[&_h2]:text-destructive')}
       rodape={
         <div className="flex flex-wrap justify-end gap-2">
           <Button type="button" variant="outline" onClick={onFechar}>
@@ -171,11 +163,7 @@ function Corpo<TIn extends Record<string, unknown>, TOut extends Record<string, 
       </p>
       <FormLayout id={ID_FORMULARIO} form={form} acoes={null} onSubmit={onSubmit}>
         {children}
-        <p
-          className={cn('text-xs', avisoDestrutivo ? 'text-destructive' : 'text-muted-foreground')}
-        >
-          {aviso}
-        </p>
+        <p className="text-xs text-muted-foreground">{aviso}</p>
       </FormLayout>
     </Modal>
   );

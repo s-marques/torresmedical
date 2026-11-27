@@ -72,6 +72,7 @@ function profissional(parcial: Partial<Profissional>): Profissional {
 function contrato(parcial: Partial<ContratoSala>): ContratoSala {
   return {
     id: '00000000-0000-4000-8000-0000000000d1',
+    numero: 1,
     modalidade: 'MENSAL',
     salaId: '00000000-0000-4000-8000-0000000000d2',
     salaNome: 'Sala Azul',

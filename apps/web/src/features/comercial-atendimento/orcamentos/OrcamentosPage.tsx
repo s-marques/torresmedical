@@ -5,8 +5,9 @@ import {
   orcamentoPageSchema,
   type Orcamento,
 } from '@torres/shared';
-import { PlusIcon } from 'lucide-react';
+import { PlusIcon, XCircleIcon } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DataGrid } from '@/components/shared/data-grid/DataGrid';
 import type { ColunaGrid, ExportacaoGrid, FiltroStatus } from '@/components/shared/data-grid/tipos';
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -15,6 +16,7 @@ import { StatusBadge, type TomStatus } from '@/components/shared/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { formatarMoeda } from '@/lib/forms/mascaras';
 import { formatarData } from '@/lib/formatar';
+import { ModalCancelarOrcamento } from './ModalCancelarOrcamento';
 import { ModalNovoOrcamento } from './ModalNovoOrcamento';
 import { URL_ORCAMENTOS } from './use-orcamentos';
 
@@ -70,11 +72,13 @@ const COLUNAS: ColunaGrid<Orcamento>[] = [
 
 /**
  * Orçamentos (`/orcamentos`, docs/inventario/telas/comercial-atendimento-orcamentos.md):
- * listagem e criação. Aprovar, cancelar, concluir e o detalhe ficam fora: o inventário não
- * traz print dessas ações.
+ * listagem e criação. Aprovar, concluir e o detalhe ficam fora: o inventário não traz print
+ * dessas ações. O "Cancelar" (menu da linha) pede o motivo da lista (issue #162).
  */
 export default function OrcamentosPage() {
+  const { t } = useTranslation();
   const [criando, setCriando] = useState(false);
+  const [cancelando, setCancelando] = useState<Orcamento | null>(null);
 
   return (
     <div className="grid gap-6">
@@ -99,8 +103,24 @@ export default function OrcamentosPage() {
         status={STATUS}
         exportacao={EXPORTACAO}
         mensagemVazio="Nenhum resultado."
+        acoes={(orcamento) =>
+          orcamento.status === 'PENDENTE' || orcamento.status === 'APROVADO'
+            ? [
+                {
+                  rotulo: t('cancelamento.orcamento.acao'),
+                  icone: XCircleIcon,
+                  destrutiva: true,
+                  permissao: 'comercial-atendimento.orcamentos.editar',
+                  onSelect: () => setCancelando(orcamento),
+                },
+              ]
+            : []
+        }
       />
       {criando && <ModalNovoOrcamento onFechar={() => setCriando(false)} />}
+      {cancelando && (
+        <ModalCancelarOrcamento orcamento={cancelando} onFechar={() => setCancelando(null)} />
+      )}
     </div>
   );
 }

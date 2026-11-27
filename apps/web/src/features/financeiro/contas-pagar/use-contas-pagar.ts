@@ -3,13 +3,16 @@ import {
   contaPagarSchema,
   verificacaoDuplicidadeContaPagarSchema,
   type BaixarContaPagarInput,
+  type CancelarSemReagendamentoInput,
   type ContaPagarPossivelDuplicada,
   type CreateContaPagarInput,
+  type RecusarContaPagarInput,
   type UpdateContaPagarInput,
   type VerificarDuplicidadeContaPagarInput,
 } from '@torres/shared';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/client';
+import { i18next } from '@/lib/i18n';
 import { useMutationContaFinanceira } from '../contas-financeiras/use-mutation-conta';
 
 export const URL_CONTAS_PAGAR = '/api/financeiro/contas-pagar';
@@ -47,11 +50,38 @@ export function useExcluirContaPagar() {
   });
 }
 
+/** Cancela a conta pendente e sem baixa, com o motivo da lista (issue #162). */
+export function useCancelarContaPagar(id: string) {
+  return useMutationContaFinanceira(
+    URL_CONTAS_PAGAR,
+    (dados: CancelarSemReagendamentoInput) => chamar(`/${id}/cancelar`, 'POST', dados),
+    { formulario: true, sucesso: i18next.t('cancelamento.contaPagar.sucesso') },
+  );
+}
+
 export function useBaixarContaPagar(id: string) {
   return useMutationContaFinanceira(
     URL_CONTAS_PAGAR,
     (dados: BaixarContaPagarInput) => chamar(`/${id}/baixar`, 'POST', dados),
     { formulario: true, sucesso: 'Pagamento registrado.' },
+  );
+}
+
+/** Aprova a conta aguardando aprovação (issue #164). */
+export function useAprovarContaPagar() {
+  return useMutationContaFinanceira(
+    URL_CONTAS_PAGAR,
+    (id: string) => chamar(`/${id}/aprovar`, 'POST'),
+    { sucesso: 'Conta a pagar aprovada.' },
+  );
+}
+
+/** Recusa a conta aguardando aprovação, com motivo. */
+export function useRecusarContaPagar(id: string) {
+  return useMutationContaFinanceira(
+    URL_CONTAS_PAGAR,
+    (dados: RecusarContaPagarInput) => chamar(`/${id}/recusar`, 'POST', dados),
+    { formulario: true, sucesso: 'Conta a pagar recusada.' },
   );
 }
 

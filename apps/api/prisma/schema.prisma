@@ -575,7 +575,8 @@ model Profissional {
   classificacoes          ProfissionalClassificacao[]
 
   baixasInsumos BaixaInsumo[]
-  receitas      ContaReceber[]
+  receitas      ContaReceber[] @relation("ReceitaProfissional")
+  contasReceberSacado ContaReceber[] @relation("SacadoProfissional")
   bloqueiosSala SalaBloqueio[]
 
   @@index([especialidadeId])
@@ -1331,6 +1332,7 @@ model FormaPagamento {
   contasPagar             ContaPagar[]
   baixasContaPagar        ContaPagarBaixa[]
   contasReceber           ContaReceber[]
+  baixasContaReceber      ContaReceberBaixa[]
   recebimentosAgendamento AgendamentoRecebimento[]
   mensalidades            Mensalidade[]
 
@@ -1923,6 +1925,8 @@ enum ContratoSalaStatus {
 /// Exclusão lógica, pois cobranças futuras apontam para o contrato.
 model ContratoSala {
   id                 String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Número do contrato exibido ao usuário e buscado no ⌘K (issue #159).
+  numero             Int                        @unique @default(autoincrement())
   salaId             String                     @map("sala_id") @db.Uuid
   modalidade         ContratoSalaModalidade
   locatarioTipo      ContratoSalaLocatarioTipo  @map("locatario_tipo")
@@ -1960,6 +1964,7 @@ model ContratoSala {
   dias         ContratoSalaDia[]
   horas        ContratoSalaHora[]
   cobrancas    ContratoSalaCobranca[]
+  contasReceber ContaReceber[]
   onboardings  ProfissionalOnboarding[]
 
   @@index([salaId])
@@ -2473,12 +2478,15 @@ model PlanoConta {
   @@map("planos_contas")
 }
 
-/// "Vencido" não é gravado: é calculado (PENDENTE com dataVencimento no passado), conforme
-/// o sistema real (print do dev, issue #48).
+/// "A vencer" e "Vencido" não são gravados: são calculados sobre PENDENTE (vencimento futuro ou
+/// no passado). RECEBIDO é exibido como "Pago". PARCIAL: há baixa, mas o saldo não zerou.
+/// RENEGOCIADO: o saldo foi refeito em novos títulos (`renegociadoDeId`), issue #165.
 enum ContaReceberStatus {
   PENDENTE
   RECEBIDO
   CANCELADO
+  PARCIAL
+  RENEGOCIADO
 
   @@map("conta_receber_status")
 }
@@ -2499,6 +2507,15 @@ model ContaReceber {
   /// Receita do profissional (tela Receita Profissionais, #55). Preenchido: a conta é do
   /// profissional e fica fora de Contas a Receber, Conciliação e saldos do Torres.
   profissionalId   String?            @map("profissional_id") @db.Uuid
+  /// Sacado profissional (locatário de contrato de sala, issue #165). Diferente de
+  /// `profissionalId`: a conta continua sendo do Torres e aparece em Contas a Receber.
+  profissionalSacadoId String?        @map("profissional_sacado_id") @db.Uuid
+  /// Contrato de sala que originou a cobrança.
+  contratoSalaId   String?            @map("contrato_sala_id") @db.Uuid
+  /// Título original, quando esta conta nasceu de uma renegociação.
+  renegociadoDeId  String?            @map("renegociado_de_id") @db.Uuid
+  /// Competência (`AAAA-MM`) para o relatório de provisão.
+  competencia      String?            @db.VarChar(7)
   documento        String?
   totalParcelas    Int                @default(1) @map("total_parcelas")
   status           ContaReceberStatus @default(PENDENTE)
@@ -2514,17 +2531,51 @@ model ContaReceber {
   formaPagamento FormaPagamento? @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
   planoConta     PlanoConta?     @relation(fields: [planoContaId], references: [id], onDelete: Restrict)
   contaBancaria  ContaBancaria?  @relation(fields: [contaBancariaId], references: [id], onDelete: Restrict)
-  profissional   Profissional?   @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+  profissional   Profissional?   @relation("ReceitaProfissional", fields: [profissionalId], references: [id], onDelete: Restrict)
+  profissionalSacado Profissional? @relation("SacadoProfissional", fields: [profissionalSacadoId], references: [id], onDelete: Restrict)
+  contratoSala   ContratoSala?   @relation(fields: [contratoSalaId], references: [id], onDelete: Restrict)
+  renegociadoDe  ContaReceber?   @relation("Renegociacao", fields: [renegociadoDeId], references: [id], onDelete: Restrict)
+  renegociacoes  ContaReceber[]  @relation("Renegociacao")
+  baixas         ContaReceberBaixa[]
+  cobrancas      CobrancaEnvio[]
 
   @@index([pacienteId])
   @@index([formaPagamentoId])
   @@index([planoContaId])
   @@index([profissionalId])
+  @@index([profissionalSacadoId])
+  @@index([contratoSalaId])
+  @@index([renegociadoDeId])
+  @@index([competencia])
   @@index([status])
   @@index([dataVencimento])
   @@index([contaBancariaId])
   @@index([dataRecebimento])
   @@map("contas_receber")
+}
+
+/// Dono: financeiro. Baixa (recebimento total ou parcial) de uma conta a receber (issue #165).
+/// "Cancelar baixa" exclui logicamente a mais recente e recalcula o status.
+model ContaReceberBaixa {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contaReceberId   String    @map("conta_receber_id") @db.Uuid
+  dataRecebimento  DateTime  @map("data_recebimento") @db.Date
+  valorRecebido    Decimal   @map("valor_recebido") @db.Decimal(12, 2)
+  formaPagamentoId String?   @map("forma_pagamento_id") @db.Uuid
+  contaBancariaId  String?   @map("conta_bancaria_id") @db.Uuid
+  documento        String?
+  observacoes      String?
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  contaReceber   ContaReceber    @relation(fields: [contaReceberId], references: [id], onDelete: Cascade)
+  formaPagamento FormaPagamento? @relation(fields: [formaPagamentoId], references: [id], onDelete: Restrict)
+  contaBancaria  ContaBancaria?  @relation(fields: [contaBancariaId], references: [id], onDelete: Restrict)
+
+  @@index([contaReceberId])
+  @@index([dataRecebimento])
+  @@index([contaBancariaId])
+  @@map("contas_receber_baixas")
 }
 
 enum ContaBancariaTipo {
@@ -2556,6 +2607,7 @@ model ContaBancaria {
 
   baixas        ContaPagarBaixa[]
   contasReceber ContaReceber[]
+  baixasReceber ContaReceberBaixa[]
 
   @@map("contas_bancarias")
 }
@@ -2573,6 +2625,15 @@ enum ContaPagarStatus {
   CANCELADO
 
   @@map("conta_pagar_status")
+}
+
+/// Aprovação financeira antes da baixa (issue #164): só conta APROVADA recebe baixa.
+enum ContaPagarAprovacao {
+  LANCADA
+  APROVADA
+  RECUSADA
+
+  @@map("conta_pagar_aprovacao")
 }
 
 /// Dono: financeiro. Conta a pagar (tela Contas a Pagar, `/pagar`). O beneficiário é um
@@ -2596,6 +2657,14 @@ model ContaPagar {
   documento          String?
   totalParcelas      Int                        @default(1) @map("total_parcelas")
   status             ContaPagarStatus           @default(PENDENTE)
+  aprovacao          ContaPagarAprovacao        @default(LANCADA)
+  /// Usuário que lançou (sem FK). Não pode aprovar nem recusar a própria conta.
+  lancadoPorId       String?                    @map("lancado_por_id") @db.Uuid
+  aprovadoPorId      String?                    @map("aprovado_por_id") @db.Uuid
+  aprovadoEm         DateTime?                  @map("aprovado_em") @db.Timestamptz(3)
+  recusadoPorId      String?                    @map("recusado_por_id") @db.Uuid
+  recusadoEm         DateTime?                  @map("recusado_em") @db.Timestamptz(3)
+  motivoRecusa       String?                    @map("motivo_recusa")
   observacoes        String?
   /// Competência contábil (`AAAA-MM`).
   competencia        String?                    @db.VarChar(7)
@@ -2617,6 +2686,7 @@ model ContaPagar {
   @@index([planoContaId])
   @@index([centroCustoId])
   @@index([status])
+  @@index([aprovacao])
   @@index([dataVencimento])
   @@map("contas_pagar")
 }
@@ -4186,4 +4256,126 @@ model ExportacaoLote {
   @@index([solicitadaEm])
   @@index([entidade, status])
   @@map("exportacoes_lote")
+}
+
+/// Tipo de cancelamento (issue #162): define a lista de motivos e o relatório.
+enum TipoCancelamento {
+  CONSULTA
+  CONTRATO
+  COBRANCA
+  PERIODO
+  PROPOSTA
+
+  @@map("tipo_cancelamento")
+}
+
+/// Dono: configuracoes-gestao. Lista padronizada de motivos de cancelamento por tipo (issue #162,
+/// R §35). `sistema`: motivo que o código usa ("Outro", "Contrato cancelado"); não sai da lista.
+/// Exclusão lógica: cancelamentos antigos continuam apontando para o motivo.
+model MotivoCancelamento {
+  id         String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipo       TipoCancelamento
+  nome       String
+  /// Gerado a partir do nome (único por tipo entre os motivos não excluídos).
+  codigo     String
+  /// O motivo exige a observação ("Outro").
+  exigeTexto Boolean          @default(false) @map("exige_texto")
+  sistema    Boolean          @default(false)
+  ordem      Int
+  ativo      Boolean          @default(true)
+  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt  DateTime?        @map("deleted_at") @db.Timestamptz(3)
+
+  cancelamentos Cancelamento[]
+
+  @@index([tipo, ordem])
+  @@map("motivos_cancelamento")
+}
+
+/// Dono: configuracoes-gestao. Histórico de cancelamentos (issue #162, R §34): quem, quando, por quê
+/// e se reagendou. Só recebe inserções: nada é apagado. A entidade cancelada (`entidade` + `entidade_id`)
+/// é de outro módulo, então não há FK; usuário e profissional também não. `motivo_nome` guarda o
+/// texto do motivo na data (negócio perdido usa `MotivoPerda`, sem `motivo_id`).
+model Cancelamento {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipo            TipoCancelamento
+  /// Nome da entidade (`ENTIDADES_CANCELAMENTO` em packages/shared).
+  entidade        String
+  entidadeId      String           @map("entidade_id") @db.Uuid
+  motivoId        String?          @map("motivo_id") @db.Uuid
+  motivoNome      String           @map("motivo_nome")
+  observacao      String?
+  /// Usuário que cancelou (configuracoes-gestao), sem FK; nulo quando o sistema cancelou.
+  canceladoPorId  String?          @map("cancelado_por_id") @db.Uuid
+  canceladoEm     DateTime         @default(now()) @map("cancelado_em") @db.Timestamptz(3)
+  /// Profissional da consulta, do contrato ou do período, quando há (sem FK).
+  profissionalId  String?          @map("profissional_id") @db.Uuid
+  /// Novo agendamento criado no lugar do cancelado (só na consulta), sem FK.
+  reagendouParaId String?          @map("reagendou_para_id") @db.Uuid
+
+  motivo MotivoCancelamento? @relation(fields: [motivoId], references: [id], onDelete: Restrict)
+
+  @@index([tipo, canceladoEm])
+  @@index([profissionalId, canceladoEm])
+  @@index([entidade, entidadeId])
+  @@index([motivoId])
+  @@index([canceladoEm])
+  @@map("cancelamentos")
+}
+
+enum MarcoCobranca {
+  ANTES_3_DIAS
+  NO_VENCIMENTO
+  DEPOIS_3_DIAS
+  DEPOIS_7_DIAS
+
+  @@map("marco_cobranca")
+}
+
+enum CobrancaEnvioStatus {
+  ENVIADO
+  FALHA
+
+  @@map("cobranca_envio_status")
+}
+
+/// Dono: financeiro. Régua de cobrança (issue #166, R §18): uma linha por marco (3 dias antes, no
+/// vencimento, 3 e 7 dias depois), criadas pela migration. Os dias do marco são fixos no código;
+/// a tela só liga/desliga, escolhe os canais e edita o texto.
+model ReguaCobranca {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  marco          MarcoCobranca @unique
+  ativo          Boolean       @default(true)
+  enviarWhatsapp Boolean       @default(true) @map("enviar_whatsapp")
+  /// Entra na contagem do alerta interno (central de notificações) do dia.
+  alertaInterno  Boolean       @default(true) @map("alerta_interno")
+  /// Texto com as variáveis {nome}, {valor}, {vencimento} e {titulo}.
+  mensagem       String
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("regua_cobranca")
+}
+
+/// Dono: financeiro. Histórico das cobranças da régua, por título e marco (issue #166). A restrição
+/// única garante o aviso uma única vez; falha (sem telefone ou canal) também fica registrada e não
+/// é repetida sozinha. O vínculo com a mensagem do WhatsApp não tem FK (outro módulo).
+model CobrancaEnvio {
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contaReceberId     String              @map("conta_receber_id") @db.Uuid
+  marco              MarcoCobranca
+  canal              String              @default("WHATSAPP")
+  status             CobrancaEnvioStatus
+  /// Código da falha (SEM_TELEFONE, SEM_CANAL); nulo quando enviado.
+  erro               String?
+  mensagemWhatsappId String?             @map("mensagem_whatsapp_id") @db.Uuid
+  /// Vencimento do título na hora do envio.
+  vencimento         DateTime            @db.Date
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  contaReceber ContaReceber @relation(fields: [contaReceberId], references: [id], onDelete: Restrict)
+
+  @@unique([contaReceberId, marco])
+  @@index([createdAt])
+  @@map("cobrancas_envios")
 }

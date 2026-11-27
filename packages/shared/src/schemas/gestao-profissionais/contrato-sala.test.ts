@@ -13,6 +13,7 @@ import {
 
 const SALA = '00000000-0000-4000-8000-0000000000a1';
 const LOCATARIO = '00000000-0000-4000-8000-0000000000a2';
+const ID = '00000000-0000-4000-8000-0000000000e1';
 const BASE = {
   salaId: SALA,
   locatarioId: LOCATARIO,
@@ -185,18 +186,40 @@ describe('encerrarContratoSalaSchema e cancelarContratoSalaSchema', () => {
     ).toBe('Data de encerramento inválida');
   });
 
-  it('cancelar: data obrigatória e motivo opcional', () => {
-    expect(cancelarContratoSalaSchema.parse({ data: '2026-10-22', motivo: ' Rescisão ' })).toEqual({
-      data: '2026-10-22',
-      motivo: 'Rescisão',
-    });
+  it('cancelar: data e motivo da lista obrigatórios, observação opcional (issue #162)', () => {
+    expect(
+      cancelarContratoSalaSchema.parse({
+        data: '2026-10-22',
+        motivoId: ID,
+        observacao: ' Rescisão ',
+      }),
+    ).toEqual({ data: '2026-10-22', motivoId: ID, observacao: 'Rescisão' });
     const vazio = cancelarContratoSalaSchema.safeParse({});
-    expect(vazio.error?.issues[0]?.message).toBe('Data de cancelamento é obrigatória.');
+    const mensagens = vazio.error?.issues.map((i) => i.message) ?? [];
+    expect(mensagens).toEqual(
+      expect.arrayContaining(['Data de cancelamento é obrigatória.', 'Motivo é obrigatório.']),
+    );
   });
 
-  it('limita o texto e rejeita campo fora do formulário', () => {
+  it('limita a observação e rejeita campo fora do formulário', () => {
     expect(
-      cancelarContratoSalaSchema.safeParse({ data: '2026-10-22', motivo: 'x'.repeat(501) }).success,
+      cancelarContratoSalaSchema.safeParse({
+        data: '2026-10-22',
+        motivoId: ID,
+        observacao: 'x'.repeat(501),
+      }).success,
+    ).toBe(false);
+    // O texto livre antigo (`motivo`) e o reagendamento não existem no cancelamento de contrato.
+    expect(
+      cancelarContratoSalaSchema.safeParse({ data: '2026-10-22', motivoId: ID, motivo: 'x' })
+        .success,
+    ).toBe(false);
+    expect(
+      cancelarContratoSalaSchema.safeParse({
+        data: '2026-10-22',
+        motivoId: ID,
+        reagendouParaId: ID,
+      }).success,
     ).toBe(false);
     expect(encerrarContratoSalaSchema.safeParse({ data: '2026-10-22', motivo: 'x' }).success).toBe(
       false,
