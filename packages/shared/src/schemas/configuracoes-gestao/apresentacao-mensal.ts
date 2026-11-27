@@ -21,9 +21,9 @@ export const INDICADORES_APRESENTACAO = [
 export const indicadorApresentacaoSchema = z.enum(INDICADORES_APRESENTACAO);
 export type IndicadorApresentacaoId = z.infer<typeof indicadorApresentacaoSchema>;
 
-export const FORMATOS_INDICADOR = ['moeda', 'numero', 'percentual', 'nps'] as const;
-export const formatoIndicadorSchema = z.enum(FORMATOS_INDICADOR);
-export type FormatoIndicador = z.infer<typeof formatoIndicadorSchema>;
+export const FORMATOS_INDICADOR_APRESENTACAO = ['moeda', 'numero', 'percentual', 'nps'] as const;
+export const formatoIndicadorApresentacaoSchema = z.enum(FORMATOS_INDICADOR_APRESENTACAO);
+export type FormatoIndicadorApresentacao = z.infer<typeof formatoIndicadorApresentacaoSchema>;
 
 /**
  * - `tendencia`: a série são os últimos meses, em ordem (o último é o mês escolhido);
@@ -71,14 +71,19 @@ export const indicadorApresentacaoDadosSchema = z.object({
   id: indicadorApresentacaoSchema,
   /** Posição na apresentação (1 a 10, como na issue). */
   numero: z.number().int().min(1).max(10),
-  formato: formatoIndicadorSchema,
+  formato: formatoIndicadorApresentacaoSchema,
   grafico: z.enum(GRAFICOS_INDICADOR),
   comparacao: z.enum(COMPARACOES_INDICADOR),
   valor: z.number().nullable(),
   anterior: z.number().nullable(),
-  /** Variação percentual de `valor` sobre `anterior`; nula sem base de cálculo. */
+  /**
+   * Variação de `valor` sobre `anterior`; nula sem base de cálculo. Em moeda e número é o
+   * percentual; em percentual e NPS é a diferença em pontos.
+   */
   variacao: z.number().nullable(),
   serie: z.array(pontoIndicadorSchema),
+  /** Lista de apoio (ex.: os médicos que receberam visita), do maior para o menor. */
+  detalhe: z.array(pontoIndicadorSchema),
   avisos: z.array(avisoApresentacaoSchema),
 });
 export type IndicadorApresentacao = z.infer<typeof indicadorApresentacaoDadosSchema>;

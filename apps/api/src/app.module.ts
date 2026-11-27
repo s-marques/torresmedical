@@ -18,6 +18,7 @@ import { HealthModule } from './health/health.module';
 import { ComercialAtendimentoModule } from './modules/comercial-atendimento/comercial-atendimento.module';
 import { ComprasEstoqueModule } from './modules/compras-estoque/compras-estoque.module';
 import { ConfiguracoesGestaoModule } from './modules/configuracoes-gestao/configuracoes-gestao.module';
+import { ApresentacaoMensalModule } from './modules/configuracoes-gestao/apresentacao-mensal/apresentacao-mensal.module';
 import { ConsultorioAssistencialModule } from './modules/consultorio-assistencial/consultorio-assistencial.module';
 import { FinanceiroModule } from './modules/financeiro/financeiro.module';
 import { GestaoProfissionaisModule } from './modules/gestao-profissionais/gestao-profissionais.module';
@@ -51,6 +52,7 @@ import { RegulatorioQualidadeModule } from './modules/regulatorio-qualidade/regu
     ComprasEstoqueModule,
     RegulatorioQualidadeModule,
     ConfiguracoesGestaoModule,
+    ApresentacaoMensalModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],
 })

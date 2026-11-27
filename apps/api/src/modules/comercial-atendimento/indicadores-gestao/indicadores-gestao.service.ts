@@ -2,6 +2,7 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { Injectable } from '@nestjs/common';
 import { EscopoDadosService, semPermissao } from '../../../common/auth/escopo-dados.service';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
+import { ProfissionaisService } from '../../gestao-profissionais/profissionais/profissionais.service';
 
 export const SEM_ORIGEM_VENDA = 'Sem origem';
 
@@ -15,6 +16,19 @@ export interface TicketMedioOrigem {
   vendas: number;
   total: number;
   ticketMedio: number;
+}
+
+export interface LeadsOrigem {
+  origem: string;
+  leads: number;
+}
+
+export interface VisitasPeriodo {
+  /** Visitas marcadas no período, as canceladas não contam. */
+  agendadas: number;
+  realizadas: number;
+  /** Médicos (contato do negócio) com visita realizada, do mais visitado ao menos. */
+  medicosVisitados: Array<{ medico: string; visitas: number }>;
 }
 
 export interface LtvPaciente {
@@ -37,7 +51,60 @@ export class IndicadoresGestaoService {
   constructor(
     private readonly txHost: TransactionHost<PrismaAdapter>,
     private readonly escopo: EscopoDadosService,
+    private readonly profissionais: ProfissionaisService,
   ) {}
+
+  /** Relatório mensal da gestão (#171, R §27 item 7): negócios criados no período, por origem. */
+  async leadsPorOrigem(intervalo: Intervalo): Promise<LeadsOrigem[]> {
+    if (this.escopo.restrito()) throw semPermissao();
+    const [grupos, origens] = await Promise.all([
+      this.txHost.tx.negocio.groupBy({
+        by: ['origemClienteId'],
+        where: { deletedAt: null, createdAt: intervalo },
+        _count: { _all: true },
+      }),
+      this.txHost.tx.origemCliente.findMany({ select: { id: true, nome: true } }),
+    ]);
+    const nomes = new Map(origens.map((o) => [o.id, o.nome]));
+    return grupos.map((g) => ({
+      origem: (g.origemClienteId && nomes.get(g.origemClienteId)) || SEM_ORIGEM_VENDA,
+      leads: g._count._all,
+    }));
+  }
+
+  /**
+   * Relatório mensal da gestão (#171, R §27 item 8): atividades de visita do CRM no período, as
+   * marcadas e as concluídas, e os médicos que receberam visita.
+   */
+  async visitasDoPeriodo(intervalo: Intervalo): Promise<VisitasPeriodo> {
+    if (this.escopo.restrito()) throw semPermissao();
+    const atividades = await this.txHost.tx.atividadeNegocio.findMany({
+      where: {
+        deletedAt: null,
+        tipo: 'VISITA',
+        status: { not: 'CANCELADA' },
+        dataHora: intervalo,
+      },
+      select: {
+        status: true,
+        negocio: { select: { contatoTipo: true, contatoId: true } },
+      },
+    });
+    const realizadas = atividades.filter((a) => a.status === 'CONCLUIDA');
+    const porMedico = new Map<string, number>();
+    for (const { negocio } of realizadas) {
+      if (negocio?.contatoTipo !== 'PROFISSIONAL' || !negocio.contatoId) continue;
+      porMedico.set(negocio.contatoId, (porMedico.get(negocio.contatoId) ?? 0) + 1);
+    }
+    const nomes = await this.profissionais.nomesPorIds([...porMedico.keys()]);
+    const medicosVisitados = [...porMedico]
+      .flatMap(([id, visitas]) => {
+        const medico = nomes.get(id);
+        return medico ? [{ medico, visitas }] : [];
+      })
+      .sort((a, b) => b.visitas - a.visitas || a.medico.localeCompare(b.medico, 'pt-BR'));
+    return { agendadas: atividades.length, realizadas: realizadas.length, medicosVisitados };
+  }
 
   /** GES-02: vendas finalizadas no período, agrupadas pela origem do cliente. */
   async ticketMedioPorOrigem(intervalo: Intervalo): Promise<TicketMedioOrigem[]> {
