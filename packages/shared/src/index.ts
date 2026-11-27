@@ -26,6 +26,7 @@ export * from './schemas/comercial-atendimento/paciente';
 export * from './schemas/comercial-atendimento/paciente-duplicidade';
 export * from './schemas/comercial-atendimento/conversa-whatsapp';
 export * from './schemas/configuracoes-gestao/cancelamento';
+export * from './schemas/configuracoes-gestao/apresentacao-mensal';
 export * from './schemas/configuracoes-gestao/backup';
 export * from './schemas/configuracoes-gestao/exportacao-lote';
 export * from './schemas/configuracoes-gestao/canal-whatsapp';
