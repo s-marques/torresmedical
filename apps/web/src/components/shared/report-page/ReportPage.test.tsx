@@ -49,6 +49,9 @@ const LINHAS: Record<string, Record<string, unknown>[]> = {
   'EX-02': [{ valor: '1234.5' }],
 };
 
+/** Linha de totais devolvida pela API falsa, por relatório. */
+const TOTAIS: Record<string, Record<string, unknown>> = {};
+
 /** Query strings recebidas pela API falsa, por caminho. */
 let pedidos: Record<string, Record<string, string>[]>;
 
@@ -67,6 +70,7 @@ function responder(catalogo: CatalogoRelatorios = CATALOGO) {
       return HttpResponse.json({
         data,
         meta: { page: 1, pageSize: 10, total: data.length, totalPages: 1 },
+        ...(TOTAIS[id] && { totais: TOTAIS[id] }),
       });
     }),
   );
@@ -111,11 +115,29 @@ async function escolher(user: ReturnType<typeof userEvent.setup>, nome: string, 
 
 beforeEach(() => {
   pedidos = {};
+  for (const id of Object.keys(TOTAIS)) delete TOTAIS[id];
   sessao.permissoes = PERMISSOES;
   responder();
 });
 
 describe('ReportPage', () => {
+  it('mostra a linha de total no rodapé, com o rótulo na 1ª coluna e o valor formatado', async () => {
+    TOTAIS['EX-01'] = { createdAt: '2026-10-05T15:30:00.000Z' };
+    renderizar(comPeriodo('EX-01'));
+
+    const rodape = (await screen.findByText('Total')).closest('tr') as HTMLElement;
+    const celulas = within(rodape).getAllByRole('cell');
+    expect(celulas).toHaveLength(2);
+    expect(celulas[1]?.textContent).toMatch(/^05\/10\/2026/);
+  });
+
+  it('sem totais na resposta, não mostra rodapé', async () => {
+    renderizar(comPeriodo('EX-02'));
+
+    expect(await screen.findByText(/1\.234,50/)).toBeInTheDocument();
+    expect(screen.queryByText('Total')).not.toBeInTheDocument();
+  });
+
   it('sem relatório: cabeçalho, seletor, período padrão e estado vazio, sem consultar', async () => {
     renderizar();
 

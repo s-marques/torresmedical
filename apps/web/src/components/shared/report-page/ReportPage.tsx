@@ -18,7 +18,7 @@ import { DataGrid } from '../data-grid/DataGrid';
 import { FormField } from '../form/FormField';
 import { FormLayout } from '../form/FormLayout';
 import { useFormulario } from '../form/use-formulario';
-import { colunasDoRelatorio } from './colunas-relatorio';
+import { colunasDoRelatorio, filtrosDoRelatorio, rodapeDoRelatorio } from './colunas-relatorio';
 import { useSelecaoRelatorio } from './use-selecao-relatorio';
 
 export interface ReportPageProps {
@@ -121,6 +121,10 @@ function Resultado({
 }>) {
   const colunas = useMemo(() => relatorio && colunasDoRelatorio(relatorio), [relatorio]);
   const { t } = useTranslation();
+  const filtros = useMemo(
+    () => relatorio && filtrosDoRelatorio(relatorio, t('comum.todos')),
+    [relatorio, t],
+  );
   if (carregando)
     return <Skeleton className="h-40 w-full" aria-label={t('relatorio.carregandoRelatorios')} />;
   if (!relatorio || !colunas) {
@@ -143,7 +147,8 @@ function Resultado({
       idLinha={(_linha, indice) => String(indice)}
       consultaFixa={periodo}
       busca={false}
-      filtros={relatorio.filtros}
+      filtros={filtros}
+      rodape={rodapeDoRelatorio(relatorio, t('relatorio.total'))}
       exportacao={{
         permissao: `${tela}.exportar`,
         nomeArquivo: `relatorio-${relatorio.id.toLowerCase()}`,

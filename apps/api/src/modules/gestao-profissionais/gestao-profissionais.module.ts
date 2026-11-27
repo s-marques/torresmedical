@@ -7,6 +7,7 @@ import { ComprasEstoqueModule } from '../compras-estoque/compras-estoque.module'
 import { ConfiguracoesGestaoModule } from '../configuracoes-gestao/configuracoes-gestao.module';
 import { FinanceiroModule } from '../financeiro/financeiro.module';
 import { criarLookupController } from '../../common/lookups/lookup.controller';
+import { criarRelatoriosController } from '../../common/relatorios/relatorios.controller';
 import { EspecialidadesController } from './especialidades/especialidades.controller';
 import { EspecialidadesService } from './especialidades/especialidades.service';
 import { ContratosSalaAssinaturaController } from './salas/contratos-sala-assinatura.controller';
@@ -42,6 +43,7 @@ import { ProfissionaisHistoricoController } from './profissionais/profissionais-
 import { ProfissionaisHistoricoService } from './profissionais/profissionais-historico.service';
 import { ProfissionaisOnboardingController } from './profissionais/profissionais-onboarding.controller';
 import { ProfissionaisOnboardingService } from './profissionais/profissionais-onboarding.service';
+import { RelatoriosReceitaProfissionais } from './relatorios/relatorios-receita-profissionais';
 import { ProfissionalAgendaService } from './profissionais/profissional-agenda.service';
 import { AcessoProfissionalAgendador } from './profissionais/acesso-profissional.agendador';
 import { AcessoProfissionalService } from './profissionais/acesso-profissional.service';
@@ -82,6 +84,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ContratosSalaHorasController,
     ReceitaProfissionaisController,
     SalasBloqueiosController,
+    criarRelatoriosController('gestao-profissionais.relatorios', RelatoriosReceitaProfissionais),
   ],
   providers: [
     ProfissionaisLoteFonte,
@@ -106,6 +109,7 @@ import { ProfissionaisService } from './profissionais/profissionais.service';
     ContratosSalaAssinaturaService,
     ContratosSalaHorasService,
     ReceitaProfissionaisService,
+    RelatoriosReceitaProfissionais,
     SalasBloqueiosService,
     // Sala com contrato não pode ser excluída.
     {

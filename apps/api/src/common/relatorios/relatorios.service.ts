@@ -68,16 +68,21 @@ export class RelatoriosService {
   }
 
   /** Página do resultado no contrato `{ data, meta }`. Query inválida → 400. */
-  async consultar(definicao: ReportDefinition, query: unknown): Promise<Page<LinhaRelatorio>> {
+  async consultar(
+    definicao: ReportDefinition,
+    query: unknown,
+  ): Promise<Page<LinhaRelatorio> & { totais?: LinhaRelatorio }> {
     const { page, pageSize, ...valores } = this.schemasDe(definicao).consulta.transform(query);
     const consulta = consultaDe(definicao, valores);
-    const [linhas, total] = await Promise.all([
+    const [linhas, total, totais] = await Promise.all([
       definicao.buscar(consulta, { skip: (page - 1) * pageSize, take: pageSize }),
       definicao.contar(consulta),
+      definicao.totais?.(consulta),
     ]);
     return {
       data: linhas.map((linha) => linhaDe(definicao, linha)),
       meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
+      ...(totais && { totais: linhaDe(definicao, totais) }),
     };
   }
 
@@ -87,12 +92,14 @@ export class RelatoriosService {
     const consulta = consultaDe(definicao, valores);
     this.exportService.ensureWithinLimit(await definicao.contar(consulta));
     const { de, ate } = consulta.periodo;
+    const linhas = await definicao.buscar(consulta);
+    const totais = await definicao.totais?.(consulta);
     return this.exportService.export({
       format: format as ExportFormat,
       title: `${definicao.id} — ${definicao.nome} (${formatarDia(de)} a ${formatarDia(ate)})`,
       filename: `relatorio-${definicao.id.toLowerCase()}`,
       columns: selectColumns(definicao.colunas, columns),
-      rows: await definicao.buscar(consulta),
+      rows: totais ? [...linhas, linhaDeTotais(definicao, totais)] : linhas,
     });
   }
 
@@ -158,6 +165,14 @@ function consultaDe(
     sort: sort as Sort | undefined,
     filtros,
   };
+}
+
+/** Texto da primeira coluna da linha de totais na exportação (a API e os arquivos são em português). */
+export const ROTULO_TOTAL = 'Total';
+
+function linhaDeTotais(definicao: ReportDefinition, totais: unknown): unknown {
+  const [primeira] = definicao.colunas;
+  return { ...(totais as object), [primeira?.key ?? '']: ROTULO_TOTAL };
 }
 
 function linhaDe(definicao: ReportDefinition, linha: unknown): LinhaRelatorio {

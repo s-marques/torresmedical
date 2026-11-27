@@ -82,7 +82,8 @@
     "carregandoRelatorios": "Cargando informes",
     "selecione": "Seleccione un informe",
     "selecioneDescricao": "Elija el informe y el período para ver el resultado.",
-    "nenhumRegistro": "Ningún registro en el período."
+    "nenhumRegistro": "Ningún registro en el período.",
+    "total": "Total"
   },
   "erros": {
     "semPermissao": "Sin permiso",
@@ -1264,6 +1265,13 @@
     "descricao": "Morosidad, facturación, cuentas por pagar y por cobrar, estado de resultados, extractos y gastos por centro de costo.",
     "painel": "Panel",
     "modulo": "Finanzas",
+    "relatorios": "Informes"
+  },
+  "relatoriosReceitaProfissionais": {
+    "titulo": "Informes - Ingresos de Profesionales",
+    "descricao": "Rendición de cuentas: ingresos por profesional, forma de pago, morosidad y más.",
+    "painel": "Panel",
+    "modulo": "Gestión de Profesionales",
     "relatorios": "Informes"
   },
   "relatoriosGestao": {

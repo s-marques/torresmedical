@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { traduzirPtBr, traduzirValidacao } from '../../i18n/validacao';
 import type { TelaId } from '../../menu/menu';
+import { LOOKUP_ENTIDADES } from '../lookups/lookup';
 import {
   exportColumnsSchema,
   exportFormatSchema,
@@ -11,6 +12,8 @@ import { paginationMetaSchema, paginationQuerySchema } from '../common/paginatio
 
 /** Tela de Relatórios de um módulo, ex.: `financeiro.relatorios`. */
 export type TelaRelatorios = Extract<TelaId, `${string}.relatorios`>;
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Data do calendário (`AAAA-MM-DD`), sem hora. */
 const DATA = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -90,13 +93,24 @@ export type ColunaRelatorio = z.infer<typeof colunaRelatorioSchema>;
 
 const opcaoSchema = z.object({ valor: z.string(), rotulo: z.string() });
 
-/** Filtro extra do relatório, além do período. */
-export const filtroRelatorioSchema = z.object({
-  tipo: z.literal('select'),
-  parametro: z.string(),
-  rotulo: z.string(),
-  opcoes: z.array(opcaoSchema),
-});
+/**
+ * Filtro extra do relatório, além do período: `select` com opções fixas ou `entidade`, uma lista
+ * grande (ex.: profissionais) buscada na API de lookups.
+ */
+export const filtroRelatorioSchema = z.discriminatedUnion('tipo', [
+  z.object({
+    tipo: z.literal('select'),
+    parametro: z.string(),
+    rotulo: z.string(),
+    opcoes: z.array(opcaoSchema),
+  }),
+  z.object({
+    tipo: z.literal('entidade'),
+    parametro: z.string(),
+    rotulo: z.string(),
+    entidade: z.enum(LOOKUP_ENTIDADES),
+  }),
+]);
 
 export type FiltroRelatorio = z.infer<typeof filtroRelatorioSchema>;
 
@@ -124,6 +138,8 @@ export type LinhaRelatorio = z.infer<typeof linhaRelatorioSchema>;
 export const paginaRelatorioSchema = z.object({
   data: z.array(linhaRelatorioSchema),
   meta: paginationMetaSchema,
+  /** Linha de totais do relatório inteiro (não só da página), pelo `id` das colunas. */
+  totais: linhaRelatorioSchema.optional(),
 });
 
 export type PaginaRelatorio = z.infer<typeof paginaRelatorioSchema>;
@@ -142,6 +158,15 @@ export interface OpcoesConsultaRelatorio {
 function filtrosShape(filtros: readonly FiltroRelatorio[]) {
   return Object.fromEntries(
     filtros.map((filtro) => {
+      if (filtro.tipo === 'entidade') {
+        return [
+          filtro.parametro,
+          z
+            .string()
+            .regex(UUID, { error: `${filtro.rotulo} inválido` })
+            .optional(),
+        ];
+      }
       const valores = filtro.opcoes.map((opcao) => opcao.valor);
       const schema = z
         .string()

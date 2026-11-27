@@ -129,6 +129,34 @@ describe('RelatoriosService', () => {
     );
   });
 
+  it('consultar: `totais` do relatório inteiro vai na resposta, só com as colunas informadas', async () => {
+    const totais = jest.fn(() => Promise.resolve({ valor: 3 }));
+    const { definicao } = relatorio({ totais });
+
+    const pagina = await service.consultar(definicao, { ...PERIODO, pageSize: '1' });
+
+    expect(pagina.data).toHaveLength(1);
+    expect(pagina.totais).toEqual({ nome: undefined, valor: 3 });
+    expect(totais).toHaveBeenCalledWith(expect.objectContaining({ periodo: PERIODO }));
+  });
+
+  it('consultar: sem `totais` a resposta não tem a chave', async () => {
+    const pagina = await service.consultar(relatorio().definicao, PERIODO);
+
+    expect(pagina).not.toHaveProperty('totais');
+  });
+
+  it('exportar: com `totais`, a última linha é o total, com "Total" na primeira coluna', async () => {
+    const { definicao } = relatorio({ totais: () => Promise.resolve({ valor: 3 }) });
+    const exportar = jest.spyOn(exportService, 'export');
+
+    await service.exportar(definicao, { ...PERIODO, format: 'xlsx' });
+
+    expect(exportar).toHaveBeenLastCalledWith(
+      expect.objectContaining({ rows: [...LINHAS, { nome: 'Total', valor: 3 }] }),
+    );
+  });
+
   it('relatório sem colunas é erro de programação', async () => {
     const { definicao } = relatorio({ colunas: [] });
 

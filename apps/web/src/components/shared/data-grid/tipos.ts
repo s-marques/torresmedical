@@ -106,7 +106,12 @@ interface IssueConsulta {
   message: string;
 }
 
-export type RespostaPaginada<T> = { data: T[]; meta: PaginationMeta };
+export type RespostaPaginada<T> = {
+  data: T[];
+  meta: PaginationMeta;
+  /** Totais do conjunto inteiro (não só da página), pelo id da coluna. Usados pelo `rodape`. */
+  totais?: Readonly<Record<string, unknown>>;
+};
 
 export interface DataGridProps<T> {
   /** Listagem no contrato padrão, ex.: `/api/configuracoes-gestao/unidades`. */
@@ -152,4 +157,12 @@ export interface DataGridProps<T> {
    * `(meta) => \`${meta.total} atendimento(s)\``.
    */
   resumo?: (meta: PaginationMeta) => ReactNode;
+  /**
+   * Linha de totais no fim da tabela, a partir de `totais` da resposta (ex.: relatórios). `celulas`
+   * devolve o conteúdo por id de coluna; `rotulo` aparece na primeira coluna visível.
+   */
+  rodape?: {
+    rotulo: string;
+    celulas: (totais: Readonly<Record<string, unknown>>) => Readonly<Record<string, ReactNode>>;
+  };
 }

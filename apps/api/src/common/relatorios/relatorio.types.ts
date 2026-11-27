@@ -53,6 +53,11 @@ export interface ReportDefinition<T = unknown> {
   /** Linhas do relatório; sem `pagina`, todas (exportação). */
   buscar(consulta: ConsultaRelatorio, pagina?: PaginaConsulta): Promise<T[]>;
   contar(consulta: ConsultaRelatorio): Promise<number>;
+  /**
+   * Linha de totais do relatório inteiro (todas as páginas), com os valores das colunas somadas.
+   * Aparece no rodapé do grid e como a última linha da exportação ("Total" na primeira coluna).
+   */
+  totais?(consulta: ConsultaRelatorio): Promise<Partial<T>>;
 }
 
 /** Fornece os relatórios de um módulo (provider Nest, para usar os services do módulo). */

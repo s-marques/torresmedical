@@ -82,7 +82,8 @@
     "carregandoRelatorios": "Loading reports",
     "selecione": "Select a report",
     "selecioneDescricao": "Choose the report and the period to see the result.",
-    "nenhumRegistro": "No records in the period."
+    "nenhumRegistro": "No records in the period.",
+    "total": "Total"
   },
   "erros": {
     "semPermissao": "No permission",
@@ -1264,6 +1265,13 @@
     "descricao": "Delinquency, revenue, accounts payable and receivable, income statement, statements and expenses by cost center.",
     "painel": "Dashboard",
     "modulo": "Finance",
+    "relatorios": "Reports"
+  },
+  "relatoriosReceitaProfissionais": {
+    "titulo": "Reports - Professional Revenue",
+    "descricao": "Accountability: revenue by professional, payment method, delinquency and more.",
+    "painel": "Dashboard",
+    "modulo": "Professional Management",
     "relatorios": "Reports"
   },
   "relatoriosGestao": {
