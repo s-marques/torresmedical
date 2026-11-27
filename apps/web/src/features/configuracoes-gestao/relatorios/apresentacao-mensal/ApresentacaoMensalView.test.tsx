@@ -19,7 +19,11 @@ const ponto = (
   chave: string | null = null,
 ) => ({ rotulo, chave, valor, anterior });
 
-const base = { variacao: null, detalhe: [], avisos: [] } as const;
+const base: Pick<IndicadorApresentacao, 'variacao' | 'detalhe' | 'avisos'> = {
+  variacao: null,
+  detalhe: [],
+  avisos: [],
+};
 
 const INDICADORES: IndicadorApresentacao[] = [
   {

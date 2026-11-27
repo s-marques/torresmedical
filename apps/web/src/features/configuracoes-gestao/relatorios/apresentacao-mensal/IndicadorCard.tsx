@@ -2,7 +2,8 @@ import type { IndicadorApresentacao } from '@torres/shared';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatarValorIndicador, formatarVariacao, mesPorExtenso } from './formatar-apresentacao';
-import { GraficoComparativo, GraficoTendencia, useRotuloDoPonto } from './GraficoIndicador';
+import { GraficoComparativo, GraficoTendencia } from './GraficoIndicador';
+import { useRotuloDoPonto } from './use-rotulo-do-ponto';
 
 const ROTULO_COMPARACAO = {
   MES_ANTERIOR: 'apresentacao.mesAnterior',

@@ -1,6 +1,7 @@
 import type { FormatoIndicadorApresentacao, PontoIndicador } from '@torres/shared';
 import { useTranslation } from 'react-i18next';
 import { formatarValorIndicador, mesCurto } from './formatar-apresentacao';
+import { useRotuloDoPonto } from './use-rotulo-do-ponto';
 
 const LARGURA = 600;
 const ALTURA = 200;
@@ -13,15 +14,6 @@ interface GraficoProps {
   serie: readonly PontoIndicador[];
   /** Descrição do gráfico para leitores de tela. */
   descricao: string;
-}
-
-/** Rótulo do ponto: o fixo do sistema, traduzido, ou o nome vindo dos dados. */
-export function useRotuloDoPonto() {
-  const { t } = useTranslation();
-  return (ponto: PontoIndicador): string =>
-    ponto.chave
-      ? t(`apresentacao.series.${ponto.chave}`, { defaultValue: ponto.rotulo })
-      : ponto.rotulo;
 }
 
 /** Barras por mês (o último, o mês escolhido, em destaque), a partir da linha do zero. */
