@@ -134,7 +134,7 @@ function graficoTendencia(
   const maximo = Math.max(0, ...valores);
   const minimo = Math.min(0, ...valores);
   const amplitude = maximo - minimo || 1;
-  const areaBarras = altura - 40;
+  const areaBarras = altura - 56;
   const zero = topo + 16 + (maximo / amplitude) * areaBarras;
   const passo = largura / Math.max(serie.length, 1);
   const barra = Math.min(passo * 0.6, 70);
@@ -176,6 +176,12 @@ function graficoTendencia(
     .stroke();
 }
 
+/** Quadradinho colorido e o texto (a Helvetica padrão não tem o glifo "■"). */
+function legenda(doc: Doc, x: number, y: number, cor: string, texto: string): void {
+  doc.rect(x, y + 1, 7, 7).fill(cor);
+  doc.font('Helvetica').fontSize(8).fillColor(cor).text(texto, x + 11, y, { lineBreak: false });
+}
+
 /** Uma linha por item: barra do mês e, abaixo, a de comparação. */
 function graficoComparativo(
   doc: Doc,
@@ -193,10 +199,8 @@ function graficoComparativo(
     ...serie.flatMap((p) => [p.valor ?? 0, p.anterior ?? 0].map((v) => Math.abs(v))),
   );
 
-  doc.font('Helvetica').fontSize(8).fillColor(COR_ATUAL).text(`■ ${rotuloAtual}`, x0, topo);
-  if (rotuloComparacao) {
-    doc.fillColor(COR_ANTERIOR).text(`■ ${rotuloComparacao}`, x0 + 120, topo);
-  }
+  legenda(doc, x0, topo, COR_ATUAL, rotuloAtual);
+  if (rotuloComparacao) legenda(doc, x0 + 130, topo, COR_ANTERIOR, rotuloComparacao);
   let y = topo + 16;
   for (const ponto of serie) {
     doc

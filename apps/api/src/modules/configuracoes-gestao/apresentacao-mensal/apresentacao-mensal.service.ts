@@ -128,6 +128,11 @@ function juntarPorRotulo(
   }));
 }
 
+/** Mês sem nenhuma resposta não tem NPS (o score vem 0): é "sem dado", não nota zero. */
+function scoreOuNulo({ score, avaliacoes }: { score: number; avaliacoes: number }): number | null {
+  return avaliacoes === 0 ? null : score;
+}
+
 interface Dados {
   id: IndicadorApresentacaoId;
   numero: number;
@@ -516,7 +521,7 @@ export class ApresentacaoMensalService {
       'nps-medicos',
       9,
       meses,
-      resultados.map((r) => r.score),
+      resultados.map((r) => scoreOuNulo(r)),
       mes,
       mesAnterior,
       [],
@@ -536,7 +541,7 @@ export class ApresentacaoMensalService {
       'nps-pacientes',
       10,
       meses,
-      resultados.map((r) => r.score),
+      resultados.map((r) => scoreOuNulo(r)),
       mes,
       mesAnterior,
       ['NPS_PACIENTES_TODOS'],
