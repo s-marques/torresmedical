@@ -25,6 +25,15 @@ const STATUS_ATENDIMENTO: Readonly<Record<string, string>> = {
 
 const DIA_MS = 86_400_000;
 
+/** Faixas de atraso do RP-09 (inferência a confirmar com o dev): limite superior em dias. */
+export const FAIXAS_VENCIMENTO = [
+  { rotulo: 'A vencer', ate: 0 },
+  { rotulo: '1 a 30 dias', ate: 30 },
+  { rotulo: '31 a 60 dias', ate: 60 },
+  { rotulo: '61 a 90 dias', ate: 90 },
+  { rotulo: 'Mais de 90 dias', ate: Number.POSITIVE_INFINITY },
+] as const;
+
 const FILTRO_PROFISSIONAL: FiltroRelatorio = {
   tipo: 'entidade',
   parametro: 'profissionalId',
@@ -136,6 +145,30 @@ export interface LinhaResumoPendentes {
   valorPendente: number | null;
 }
 
+export interface LinhaInadimplencia {
+  vencimento: Date;
+  profissional: string;
+  paciente: string;
+  descricao: string;
+  valor: number;
+  diasAtraso: number;
+}
+
+export interface LinhaFaixaVencimento {
+  faixa: string;
+  quantidade: number;
+  valor: number;
+}
+
+export interface LinhaPagamentoEmAndamento {
+  paciente: string;
+  profissional: string;
+  total: number;
+  recebido: number;
+  saldo: number;
+  parcelas: string;
+}
+
 export interface LinhaConsultasPorForma {
   profissional: string;
   forma: string;
@@ -177,10 +210,11 @@ const porNome = (a: string, b: string): number => a.localeCompare(b, 'pt-BR');
 
 /**
  * Relatórios da tela Relatórios de Receita Profissionais (`/receita-profissionais/relatorios`):
- * RP-01 a RP-07 e RP-11 a RP-13. Recebido e pendente vêm das contas a receber do profissional
+ * RP-01 a RP-13. Recebido e pendente vêm das contas a receber do profissional
  * (tela Receita Profissionais); "sem registro" são os atendimentos realizados sem nenhum
  * recebimento da consulta. Todos aplicam o escopo por profissional (issue #153).
- * RP-08, RP-09 e RP-10 aguardam o print e a regra do dev.
+ * RP-08, RP-09 e RP-10 não têm dados de referência no legado: as regras foram propostas por nós
+ * e aprovadas pelo dev (ver a descrição do PR #264).
  */
 @Injectable()
 export class RelatoriosReceitaProfissionais implements ProvedorRelatorios {
@@ -198,6 +232,9 @@ export class RelatoriosReceitaProfissionais implements ProvedorRelatorios {
       this.atendimentosPorProfissional(),
       this.faturamentoPorPeriodo(),
       this.receitaPorPaciente(),
+      this.inadimplencia(),
+      this.contasPorFaixaDeVencimento(),
+      this.pagamentosEmAndamento(),
       this.agendamentosSemRecebimento(),
       this.resumoPendentesPorProfissional(),
       this.consultasPorProfissionalEForma(),
@@ -602,6 +639,168 @@ export class RelatoriosReceitaProfissionais implements ProvedorRelatorios {
       totais: async (consulta) => ({
         valor: somar((await this.linhasReceitaPorPaciente(consulta)).map((l) => l.valor)),
       }),
+    });
+  }
+
+  // ---------------------------------------------------------------- RP-08 a RP-10
+
+  private diasDeAtraso(vencimento: Date, hoje: string): number {
+    const dia = vencimento.toISOString().slice(0, 10);
+    return Math.round((diaUtc(hoje).getTime() - diaUtc(dia).getTime()) / DIA_MS);
+  }
+
+  /** RP-08: parcelas pendentes já vencidas, de qualquer data (não usa o período). */
+  async linhasInadimplencia(
+    consulta: ConsultaRelatorio,
+    hoje = hojeNaClinica(),
+  ): Promise<LinhaInadimplencia[]> {
+    const parcelas = await this.lancamentos(consulta, 'PENDENTE', { periodo: false, forma: false });
+    return parcelas
+      .map((p) => ({ p, atraso: this.diasDeAtraso(p.data, hoje) }))
+      .filter(({ atraso }) => atraso > 0)
+      .map(({ p, atraso }) => ({
+        vencimento: p.data,
+        profissional: p.profissional,
+        paciente: p.paciente,
+        descricao: p.descricao,
+        valor: p.valor,
+        diasAtraso: atraso,
+      }));
+  }
+
+  private inadimplencia(): ReportDefinition {
+    return definirRelatorio<LinhaInadimplencia>({
+      id: 'RP-08',
+      nome: 'Inadimplência',
+      permissao: 'gestao-profissionais.receita-profissionais.ver',
+      colunas: [
+        coluna('vencimento', 'Vencimento', { type: 'date' }),
+        coluna('profissional', 'Profissional', { width: 3 }),
+        coluna('paciente', 'Paciente', { width: 3 }),
+        coluna('descricao', 'Descrição', { width: 3, ordenavel: false }),
+        coluna('valor', 'Valor', { type: 'currency' }),
+        coluna('diasAtraso', 'Dias Atraso', { type: 'number' }),
+      ],
+      ordenacaoPadrao: 'vencimento:asc',
+      filtros: [FILTRO_PROFISSIONAL],
+      buscar: async (consulta, pagina) =>
+        ordenarEPaginar(await this.linhasInadimplencia(consulta), consulta.sort, pagina),
+      contar: async (consulta) => (await this.linhasInadimplencia(consulta)).length,
+      totais: async (consulta) => ({
+        valor: somar((await this.linhasInadimplencia(consulta)).map((l) => l.valor)),
+      }),
+    });
+  }
+
+  /** RP-09: parcelas pendentes por faixa de vencimento (a vencer até mais de 90 dias de atraso). */
+  async linhasFaixasVencimento(
+    consulta: ConsultaRelatorio,
+    hoje = hojeNaClinica(),
+  ): Promise<LinhaFaixaVencimento[]> {
+    const parcelas = await this.lancamentos(consulta, 'PENDENTE', { periodo: false, forma: false });
+    return FAIXAS_VENCIMENTO.map((faixa, indice) => {
+      const anterior = FAIXAS_VENCIMENTO[indice - 1]?.ate ?? Number.NEGATIVE_INFINITY;
+      const itens = parcelas.filter((p) => {
+        const atraso = this.diasDeAtraso(p.data, hoje);
+        return atraso <= faixa.ate && atraso > anterior;
+      });
+      return {
+        faixa: faixa.rotulo,
+        quantidade: itens.length,
+        valor: somar(itens.map((i) => i.valor)),
+      };
+    });
+  }
+
+  private contasPorFaixaDeVencimento(): ReportDefinition {
+    return definirRelatorio<LinhaFaixaVencimento>({
+      id: 'RP-09',
+      nome: 'Contas por Faixa de Vencimento',
+      permissao: 'gestao-profissionais.receita-profissionais.ver',
+      colunas: [
+        coluna('faixa', 'Faixa', { width: 4, ordenavel: false }),
+        coluna('quantidade', 'Quantidade', { type: 'number', ordenavel: false }),
+        coluna('valor', 'Valor', { type: 'currency', ordenavel: false }),
+      ],
+      buscar: async (consulta, pagina) =>
+        ordenarEPaginar(await this.linhasFaixasVencimento(consulta), undefined, pagina),
+      contar: async (consulta) => (await this.linhasFaixasVencimento(consulta)).length,
+      totais: async (consulta) => ({
+        quantidade: (await this.linhasFaixasVencimento(consulta)).reduce(
+          (soma, l) => soma + l.quantidade,
+          0,
+        ),
+        valor: somar((await this.linhasFaixasVencimento(consulta)).map((l) => l.valor)),
+      }),
+    });
+  }
+
+  /**
+   * RP-10: receitas parceladas (mais de uma parcela) que ainda têm parcela pendente. As parcelas
+   * de uma receita são agrupadas por profissional, paciente e documento (ou descrição, sem
+   * documento), já que não há outro vínculo entre elas. Não usa o período.
+   */
+  async linhasPagamentosEmAndamento(
+    consulta: ConsultaRelatorio,
+  ): Promise<LinhaPagamentoEmAndamento[]> {
+    const contas = await this.txHost.tx.contaReceber.findMany({
+      where: {
+        deletedAt: null,
+        status: { in: ['PENDENTE', 'RECEBIDO'] },
+        totalParcelas: { gt: 1 },
+        profissionalId: this.filtroProfissional(consulta) ?? { not: null },
+      },
+      include: {
+        profissional: { select: { nome: true } },
+        paciente: { select: { nome: true } },
+      },
+    });
+    const grupos = agrupar(
+      contas,
+      (c) => `${c.profissionalId}|${c.pacienteId}|${c.documento ?? c.descricao}`,
+    );
+    return [...grupos.values()]
+      .filter((itens) => itens.some((c) => c.status === 'PENDENTE'))
+      .map((itens) => {
+        const recebidas = itens.filter((c) => c.status === 'RECEBIDO');
+        const pendentes = itens.filter((c) => c.status === 'PENDENTE');
+        return {
+          paciente: itens[0]?.paciente?.nome ?? SEM_PACIENTE,
+          profissional: itens[0]?.profissional?.nome ?? '',
+          total: somar(itens.map((c) => num(c.valor))),
+          recebido: somar(recebidas.map((c) => num(c.valor))),
+          saldo: somar(pendentes.map((c) => num(c.valor))),
+          parcelas: `${recebidas.length}/${Math.max(...itens.map((c) => c.totalParcelas))}`,
+        };
+      })
+      .sort((a, b) => b.saldo - a.saldo || porNome(a.paciente, b.paciente));
+  }
+
+  private pagamentosEmAndamento(): ReportDefinition {
+    return definirRelatorio<LinhaPagamentoEmAndamento>({
+      id: 'RP-10',
+      nome: 'Pagamentos em Andamento',
+      permissao: 'gestao-profissionais.receita-profissionais.ver',
+      colunas: [
+        coluna('paciente', 'Paciente', { width: 3 }),
+        coluna('profissional', 'Profissional', { width: 3 }),
+        coluna('total', 'Total', { type: 'currency' }),
+        coluna('recebido', 'Recebido', { type: 'currency' }),
+        coluna('saldo', 'Saldo', { type: 'currency' }),
+        coluna('parcelas', 'Parcelas Pagas', { ordenavel: false }),
+      ],
+      ordenacaoPadrao: 'saldo:desc',
+      buscar: async (consulta, pagina) =>
+        ordenarEPaginar(await this.linhasPagamentosEmAndamento(consulta), consulta.sort, pagina),
+      contar: async (consulta) => (await this.linhasPagamentosEmAndamento(consulta)).length,
+      totais: async (consulta) => {
+        const linhas = await this.linhasPagamentosEmAndamento(consulta);
+        return {
+          total: somar(linhas.map((l) => l.total)),
+          recebido: somar(linhas.map((l) => l.recebido)),
+          saldo: somar(linhas.map((l) => l.saldo)),
+        };
+      },
     });
   }
 

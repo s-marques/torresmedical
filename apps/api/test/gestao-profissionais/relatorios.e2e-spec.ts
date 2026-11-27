@@ -156,6 +156,9 @@ describe('Relatórios de Receita Profissionais (e2e)', () => {
         'RP-05',
         'RP-06',
         'RP-07',
+        'RP-08',
+        'RP-09',
+        'RP-10',
         'RP-11',
         'RP-12',
         'RP-13',
@@ -326,14 +329,96 @@ describe('Relatórios de Receita Profissionais (e2e)', () => {
     });
   });
 
+  describe('RP-08 a RP-10 (não usam o período)', () => {
+    const DIA_MS = 86_400_000;
+    const venc = (dias: number) => new Date(Date.now() + dias * DIA_MS);
+    const parcela = (dias: number, valor: string, extra: Record<string, unknown> = {}) =>
+      prisma.contaReceber.create({
+        data: {
+          descricao: 'Parcela',
+          profissionalId: ana,
+          pacienteId: paciente1,
+          valor,
+          dataVencimento: venc(dias),
+          status: 'PENDENTE',
+          ...extra,
+        },
+      });
+
+    it('RP-08: só parcelas pendentes já vencidas, com os dias de atraso e o total', async () => {
+      await parcela(-45, '100.00');
+      await parcela(-5, '40.00', { profissionalId: beto });
+      await parcela(10, '999.00');
+      await parcela(-45, '7.00', { status: 'RECEBIDO', dataRecebimento: venc(-40) });
+
+      const { data, totais } = await corpo('RP-08');
+
+      expect(data.map((l) => [l.profissional, l.valor, l.diasAtraso])).toEqual([
+        ['Dra. Ana Teste', 100, 45],
+        ['Dr. Beto Teste', 40, 5],
+      ]);
+      expect(totais).toEqual({ valor: 140 });
+      const doBeto = await corpo('RP-08', { profissionalId: beto });
+      expect(doBeto.data).toHaveLength(1);
+    });
+
+    it('RP-09: pendentes por faixa de vencimento, com as 5 faixas e o total', async () => {
+      await parcela(10, '1.00');
+      await parcela(-5, '2.00');
+      await parcela(-45, '4.00');
+      await parcela(-75, '8.00');
+      await parcela(-200, '16.00');
+      await parcela(-200, '32.00');
+
+      const { data, totais } = await corpo('RP-09');
+
+      expect(data).toEqual([
+        { faixa: 'A vencer', quantidade: 1, valor: 1 },
+        { faixa: '1 a 30 dias', quantidade: 1, valor: 2 },
+        { faixa: '31 a 60 dias', quantidade: 1, valor: 4 },
+        { faixa: '61 a 90 dias', quantidade: 1, valor: 8 },
+        { faixa: 'Mais de 90 dias', quantidade: 2, valor: 48 },
+      ]);
+      expect(totais).toEqual({ quantidade: 6, valor: 63 });
+    });
+
+    it('RP-10: receitas parceladas com parcela pendente, com recebido, saldo e parcelas pagas', async () => {
+      const parcelada = (dias: number, status: 'PENDENTE' | 'RECEBIDO', documento: string) =>
+        parcela(dias, '100.00', {
+          status,
+          documento,
+          totalParcelas: 3,
+          ...(status === 'RECEBIDO' && { dataRecebimento: venc(dias) }),
+        });
+      await parcelada(-60, 'RECEBIDO', 'DOC-1');
+      await parcelada(-30, 'RECEBIDO', 'DOC-1');
+      await parcelada(30, 'PENDENTE', 'DOC-1');
+      // Quitada e à vista: ficam de fora.
+      await parcelada(-60, 'RECEBIDO', 'DOC-2');
+      await parcela(-5, '50.00');
+
+      const { data, totais } = await corpo('RP-10');
+
+      expect(data).toEqual([
+        {
+          paciente: 'Paciente Um',
+          profissional: 'Dra. Ana Teste',
+          total: 300,
+          recebido: 200,
+          saldo: 100,
+          parcelas: '2/3',
+        },
+      ]);
+      expect(totais).toEqual({ total: 300, recebido: 200, saldo: 100 });
+    });
+  });
+
   describe('validação e escopo', () => {
     it('400 com período invertido, filtro inválido e sort fora da lista; 404 e 403', async () => {
       await http().get(`${BASE}/RP-01`).query({ de: '2026-10-31', ate: '2026-10-01' }).expect(400);
       await consultar('RP-02', { profissionalId: 'nao-e-uuid' }).expect(400);
       await consultar('RP-01', { sort: 'inexistente:asc' }).expect(400);
       await http().get(`${BASE}/RP-99`).query(PERIODO).expect(404);
-      // RP-08, RP-09 e RP-10 ainda não existem (aguardam a regra do dev).
-      await http().get(`${BASE}/RP-08`).query(PERIODO).expect(404);
     });
 
     it('perfil restrito vê só os profissionais vinculados; fora do escopo é 403', async () => {
