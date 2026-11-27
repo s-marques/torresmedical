@@ -26,9 +26,9 @@ describe('meses', () => {
 });
 
 describe('filtros na URL', () => {
-  it('sem parâmetros: aba executivo, por mês, mês atual, recebimento', () => {
+  it('sem parâmetros: aba hoje, por mês, mês atual, recebimento', () => {
     expect(filtrosDaUrl(new URLSearchParams(), HOJE)).toEqual({
-      aba: 'executivo',
+      aba: 'hoje',
       modo: 'mes',
       mes: '2026-10',
       de: '',
@@ -40,7 +40,7 @@ describe('filtros na URL', () => {
   it('valores inválidos voltam ao padrão', () => {
     const filtros = filtrosDaUrl(new URLSearchParams('aba=x&modo=y&mes=2026-99&base=z'), HOJE);
     expect(filtros).toMatchObject({
-      aba: 'executivo',
+      aba: 'hoje',
       modo: 'mes',
       mes: '2026-10',
       base: 'recebimento',

@@ -139,4 +139,112 @@ describe('Painel: dashboard (e2e)', () => {
       expect(apiErrorSchema.parse(res.body).statusCode).toBe(403);
     });
   });
+
+  describe('aba hoje (#170)', () => {
+    const PERMISSOES = ['painel.painel.ver'] as const;
+    const kpis = (res: { body: unknown }) =>
+      Object.fromEntries(
+        dashboardPainelSchema
+          .parse(res.body)
+          .secoes.flatMap((s) => s.blocos)
+          .flatMap((b) => (b.tipo === 'kpi' ? [[b.id, b]] : [])),
+      );
+
+    async function cenario() {
+      const paciente = await prisma.paciente.create({
+        data: { nome: faker.person.fullName(), documento: faker.string.numeric(11) },
+      });
+      const ana = await prisma.profissional.create({ data: { nome: faker.person.fullName() } });
+      const beto = await prisma.profissional.create({ data: { nome: faker.person.fullName() } });
+      const sala1 = await prisma.sala.create({ data: { nome: 'Sala 1' } });
+      await prisma.sala.create({ data: { nome: 'Sala 2' } });
+      const agora = Date.now();
+      const criar = (minutos: number, extra: Record<string, unknown>) =>
+        prisma.agendamento.create({
+          data: {
+            pacienteId: paciente.id,
+            profissionalId: ana.id,
+            inicio: new Date(agora + minutos * 60_000),
+            ...extra,
+          },
+        });
+      await criar(-5, { salaId: sala1.id, status: 'CONFIRMADO', duracaoMinutos: 30 });
+      await criar(1, { status: 'AGENDADO' });
+      await criar(2, { profissionalId: beto.id, status: 'FALTOU' });
+      await criar(3, { status: 'CANCELADO' });
+      await criar(-24 * 60, { status: 'FALTOU' }); // ontem: fora do dia
+
+      await prisma.contaReceber.create({
+        data: { descricao: 'Título', valor: 1000, dataVencimento: new Date('2026-10-20') },
+      });
+      const pago = await prisma.contaReceber.create({
+        data: {
+          descricao: 'Título pago',
+          valor: 500,
+          dataVencimento: new Date('2026-10-10'),
+          status: 'RECEBIDO',
+        },
+      });
+      await prisma.contaReceberBaixa.create({
+        data: {
+          contaReceberId: pago.id,
+          valorRecebido: 500,
+          dataRecebimento: new Date('2026-10-10'),
+        },
+      });
+      return { ana, beto };
+    }
+
+    it('confere os números do dia, do mês e os links com o período do filtro', async () => {
+      const usuarioGerente = await criarUsuarioTeste(app, { permissoes: PERMISSOES });
+      await cenario();
+
+      const res = await http(usuarioGerente)
+        .get(`${BASE}/hoje`)
+        .query({ mes: '2026-10' })
+        .expect(200);
+      const k = kpis(res);
+
+      expect(k['pacientes-agendados']?.valor).toBe(3);
+      expect(k['confirmados']?.valor).toBe(1);
+      expect(k['faltas']?.valor).toBe(1);
+      expect(k['cancelamentos']?.valor).toBe(1);
+      expect(k['profissionais-atendendo-hoje']?.valor).toBe(2);
+      expect(k['salas-ocupadas']?.valor).toBe(1);
+      expect(k['salas-disponiveis']?.valor).toBe(1);
+      expect(k['receita-contratada']?.valor).toBe(1500);
+      expect(k['recebido']?.valor).toBe(500);
+      expect(k['a-receber']?.valor).toBe(1000);
+      expect(k['receita-contratada']?.link).toBe(
+        '/receber?vencimentoDe=2026-10-01&vencimentoAte=2026-10-31',
+      );
+    });
+
+    it('perfil restrito: só a agenda dos seus profissionais, sem salas, financeiro e comercial', async () => {
+      const { beto } = await cenario();
+      const restrito = await criarUsuarioTeste(app, {
+        permissoes: PERMISSOES,
+        escopoDados: 'PROFISSIONAIS_VINCULADOS',
+        profissionalIds: [beto.id],
+      });
+
+      const res = await http(restrito).get(`${BASE}/hoje`).expect(200);
+      const k = kpis(res);
+
+      expect(k['pacientes-agendados']?.valor).toBe(1);
+      expect(k['faltas']?.valor).toBe(1);
+      expect(k['salas-ocupadas']).toBeUndefined();
+      expect(k['receita-contratada']).toBeUndefined();
+      expect(k['leads-ativos']).toBeUndefined();
+    });
+
+    it('403 sem a permissão do painel', async () => {
+      const sem = await criarUsuarioTeste(app, { permissoes: [] });
+      await http(sem).get(`${BASE}/hoje`).expect(403);
+    });
+
+    it('400 para período inválido', async () => {
+      await http().get(`${BASE}/hoje`).query({ mes: '2026-13' }).expect(400);
+    });
+  });
 });

@@ -6,6 +6,8 @@ import type {
   SecaoPainel,
 } from '@torres/shared';
 import { TriangleAlertIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -21,8 +23,9 @@ import { formatarValor } from './formatar-painel';
 import { TabelaPainelCard } from './TabelaPainelCard';
 
 function KpiCard({ kpi }: Readonly<{ kpi: KpiPainel }>) {
-  return (
-    <Card className="gap-1 py-4">
+  const { t } = useTranslation();
+  const cartao = (
+    <Card className={cn('gap-1 py-4', kpi.link && 'transition-colors hover:bg-accent')}>
       <CardHeader className="px-4">
         <CardTitle className="text-sm font-medium">{kpi.rotulo}</CardTitle>
       </CardHeader>
@@ -33,6 +36,17 @@ function KpiCard({ kpi }: Readonly<{ kpi: KpiPainel }>) {
         {kpi.detalhe && <p className="text-xs text-muted-foreground">{kpi.detalhe}</p>}
       </CardContent>
     </Card>
+  );
+  if (!kpi.link) return cartao;
+  // O link já traz o período e o filtro do indicador (calculados na API): a lista abre igual ao número.
+  return (
+    <Link
+      to={kpi.link}
+      aria-label={t('painel.hoje.verLista', { indicador: kpi.rotulo })}
+      className="block rounded-xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+    >
+      {cartao}
+    </Link>
   );
 }
 

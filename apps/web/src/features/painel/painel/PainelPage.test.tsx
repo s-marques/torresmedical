@@ -137,6 +137,60 @@ const COMERCIAL = dashboard('comercial', [
   },
 ]);
 
+const LINK_JUNHO = '/receber?vencimentoDe=2026-06-01&vencimentoAte=2026-06-30';
+
+/** Aba Hoje: um indicador do dia com lista própria, um do mês com o período no link e um sem link. */
+const HOJE = dashboard('hoje', [
+  {
+    id: 'operacao',
+    titulo: 'OPERAÇÃO — HOJE',
+    blocos: [
+      {
+        tipo: 'kpi',
+        id: 'faltas',
+        rotulo: 'Faltas',
+        valor: 2,
+        formato: 'inteiro',
+        detalhe: null,
+        link: '/recepcao?status=FALTOU',
+      },
+    ],
+  },
+  {
+    id: 'financeiro',
+    titulo: 'FINANCEIRO',
+    blocos: [
+      {
+        tipo: 'kpi',
+        id: 'receita-contratada',
+        rotulo: 'Receita contratada',
+        valor: 1500,
+        formato: 'moeda',
+        detalhe: null,
+        link: LINK_JUNHO,
+      },
+      {
+        tipo: 'kpi',
+        id: 'sem-lista',
+        rotulo: 'Indicador sem lista',
+        valor: 7,
+        formato: 'inteiro',
+        detalhe: null,
+      },
+    ],
+  },
+]);
+
+const ALERTA_HOJE = {
+  id: '00000000-0000-4000-8000-000000000009',
+  tipo: 'RECEBIVEIS_VENCIDOS',
+  data: '2026-11-27',
+  quantidade: 3,
+  rota: '/receber?status=VENCIDO',
+  lido: false,
+  resolvido: false,
+};
+
 const OCUPACAO = dashboard('ocupacao', [
   {
     id: 'indicadores',
@@ -155,7 +209,7 @@ const OCUPACAO = dashboard('ocupacao', [
 ]);
 
 function api(extra: Partial<Record<AbaPainel, DashboardPainel>> = {}) {
-  const abas = { executivo: EXECUTIVO, comercial: COMERCIAL, ...extra };
+  const abas = { hoje: HOJE, executivo: EXECUTIVO, comercial: COMERCIAL, ...extra };
   return apiFalsa({
     rotas: Object.fromEntries(
       Object.entries(abas).map(([aba, corpo]) => [API(aba as AbaPainel), () => json(corpo)]),
@@ -169,15 +223,94 @@ function consulta(fetchMock: ReturnType<typeof api>, aba: AbaPainel, indice = -1
   return Object.fromEntries(new URL(url, 'http://x').searchParams);
 }
 
-describe('Painel (/)', () => {
-  it('abre na aba Executivo, com o mês atual, e mostra indicadores, meta, alerta e tabelas', async () => {
-    const fetchMock = api();
+describe('aba Hoje (#170)', () => {
+  const comAlerta = () =>
+    apiFalsa({
+      rotas: {
+        [API('hoje')]: () => json(HOJE),
+        '/api/painel/alertas': () => json({ data: [ALERTA_HOJE], naoLidos: 1 }),
+      },
+    });
+
+  it('é a aba padrão, mostra os blocos do dia e os alertas da central com o link da lista', async () => {
+    const fetchMock = comAlerta();
     renderApp('/', fetchMock);
+
+    expect(await screen.findByRole('tab', { name: 'Hoje', selected: true })).toBeInTheDocument();
+    expect(await screen.findByTestId('kpi-faltas')).toHaveTextContent('2');
+    expect(screen.getByText('OPERAÇÃO — HOJE')).toBeVisible();
+    expect(screen.getByTestId('kpi-receita-contratada')).toHaveTextContent('R$ 1.500,00');
+
+    const alertas = within(screen.getByRole('region', { name: 'Alertas do dia' }));
+    expect(await alertas.findByRole('link', { name: '3 recebíveis vencidos' })).toHaveAttribute(
+      'href',
+      '/receber?status=VENCIDO',
+    );
+  });
+
+  it('sem alertas no dia, avisa em vez de esconder o bloco', async () => {
+    renderApp('/', api());
+
+    expect(await screen.findByText('Nenhum alerta para hoje.')).toBeVisible();
+  });
+
+  it('só os indicadores com lista própria são clicáveis', async () => {
+    renderApp('/', api());
+    await screen.findByTestId('kpi-faltas');
+
+    expect(screen.getByRole('link', { name: 'Ver a lista de Faltas' })).toHaveAttribute(
+      'href',
+      '/recepcao?status=FALTOU',
+    );
+    expect(screen.queryByRole('link', { name: /Indicador sem lista/ })).not.toBeInTheDocument();
+  });
+
+  it('falhas C3/C5 do DrIntelli: clicar num indicador de junho abre a lista de junho, não de outro mês', async () => {
+    const user = userEvent.setup();
+    const fetchMock = api();
+    const { router } = renderApp('/?aba=hoje&mes=2026-06', fetchMock);
+
+    await screen.findByTestId('kpi-receita-contratada');
+    // O período escolhido é o que a API recebe para montar o link...
+    expect(consulta(fetchMock, 'hoje')).toMatchObject({ modo: 'mes', mes: '2026-06' });
+
+    await user.click(screen.getByRole('link', { name: 'Ver a lista de Receita contratada' }));
+
+    // ...e a lista abre com esse mesmo período.
+    await waitFor(() => expect(router.state.location.pathname).toBe('/receber'));
+    expect(router.state.location.search).toBe('?vencimentoDe=2026-06-01&vencimentoAte=2026-06-30');
+  });
+
+  it('em inglês traduz os textos próprios da aba', async () => {
+    const usuario = {
+      ...USUARIO_TESTE,
+      preferencias: { ...PREFERENCIAS_PADRAO, idioma: 'en' as const },
+    };
+    const fetchMock = apiFalsa({
+      usuario,
+      rotas: {
+        [API('hoje')]: () => json(HOJE),
+        '/api/painel/alertas': () => json({ data: [ALERTA_HOJE], naoLidos: 1 }),
+      },
+    });
+    renderApp('/', fetchMock);
+
+    const alertas = within(await screen.findByRole('region', { name: "Today's alerts" }));
+    expect(await alertas.findByRole('link', { name: '3 overdue receivables' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'View the Faltas list' })).toBeVisible();
+  });
+});
+
+describe('Painel (/)', () => {
+  it('na aba Executivo, com o mês atual, e mostra indicadores, meta, alerta e tabelas', async () => {
+    const fetchMock = api();
+    renderApp('/?aba=executivo', fetchMock);
 
     expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
     expect(screen.getByText('Torres Medical Center — Visão completa')).toBeVisible();
     expect(screen.getByRole('tab', { name: 'Executivo', selected: true })).toBeInTheDocument();
     expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual([
+      'Hoje',
       'Executivo',
       'Comercial',
       'Ocupação',
@@ -204,7 +337,7 @@ describe('Painel (/)', () => {
   it('trocar de aba busca só a aba aberta e guarda a escolha na URL', async () => {
     const user = userEvent.setup();
     const fetchMock = api();
-    const { router } = renderApp('/', fetchMock);
+    const { router } = renderApp('/?aba=executivo', fetchMock);
     await screen.findByTestId('kpi-faturamento-total');
 
     await user.click(screen.getByRole('tab', { name: 'Comercial' }));
@@ -220,7 +353,7 @@ describe('Painel (/)', () => {
   it('mês e base só valem ao clicar em Buscar', async () => {
     const user = userEvent.setup();
     const fetchMock = api();
-    const { router } = renderApp('/', fetchMock);
+    const { router } = renderApp('/?aba=executivo', fetchMock);
     await screen.findByTestId('kpi-faturamento-total');
 
     await user.click(screen.getByRole('combobox', { name: 'Mês' }));
@@ -247,7 +380,7 @@ describe('Painel (/)', () => {
     async () => {
       const user = userEvent.setup();
       const fetchMock = api();
-      renderApp('/', fetchMock);
+      renderApp('/?aba=executivo', fetchMock);
       await screen.findByTestId('kpi-faturamento-total');
 
       await user.click(screen.getByRole('combobox', { name: 'Tipo de período' }));
@@ -359,7 +492,7 @@ describe('Painel (/)', () => {
   describe('tabela com alternância de visualização', () => {
     async function abrir() {
       const user = userEvent.setup();
-      renderApp('/', api());
+      renderApp('/?aba=executivo', api());
       const titulo = await screen.findByText('Ocupação por Sala');
       const card = titulo.closest('[data-slot="card"]') as HTMLElement;
       return { user, card: within(card) };
@@ -403,7 +536,7 @@ describe('Painel (/)', () => {
           json({ statusCode: 500, code: 'INTERNAL_ERROR', message: 'Erro interno' }, 500),
       },
     });
-    renderApp('/', fetchMock);
+    renderApp('/?aba=executivo', fetchMock);
 
     expect(await screen.findByText(/Não foi possível carregar o dashboard/)).toBeVisible();
   });
@@ -414,7 +547,7 @@ describe('Painel (/)', () => {
       permissoes: PERMISSOES.filter((p) => p !== 'painel.painel.ver'),
     };
     const fetchMock = apiFalsa({ usuario });
-    renderApp('/', fetchMock);
+    renderApp('/?aba=executivo', fetchMock);
 
     expect(await screen.findByRole('heading', { name: 'Sem permissão' })).toBeInTheDocument();
     expect(chamadasPara(fetchMock, API('executivo'))).toHaveLength(0);

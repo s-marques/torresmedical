@@ -194,6 +194,9 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     NegociosHistoricoService,
     // Leads (negócios em aberto) na busca global do ⌘K (#159).
     NegociosService,
+    // Painel "Hoje" (#170): resumo do dia e negócios abertos por marco.
+    RecepcaoService,
+    NegociosListaService,
     // Mensagens automáticas por WhatsApp: régua de cobrança do Financeiro (#166).
     MensagensSaidaWhatsappService,
   ],

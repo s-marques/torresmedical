@@ -9,8 +9,32 @@ import type {
   TabelaPainel,
   VisualizacaoPainel,
 } from '@torres/shared';
+import type { ResumoDoDia } from '../../comercial-atendimento/recepcao/recepcao.service';
+import type { MarcoContagem } from '../../comercial-atendimento/pipeline/negocios-lista.service';
 import type { OcupacaoPainel } from '../ocupacao/ocupacao.service';
-import type { ReceitasEDespesas } from '../../financeiro/indicadores/indicadores.service';
+import type {
+  ReceitasEDespesas,
+  ResumoReceber,
+} from '../../financeiro/indicadores/indicadores.service';
+
+/**
+ * Dados da aba Hoje (#170). Os blocos de visão geral da clínica vêm `null` para o perfil restrito
+ * a profissionais (#153): ele vê só o resumo da agenda dos seus profissionais.
+ */
+export interface DadosHoje {
+  /** Período do filtro, usado nos blocos do mês e nos links deles. */
+  periodo: { de: string; ate: string };
+  atendimento: ResumoDoDia;
+  geral: { profissionaisAtivos: number; salasTotal: number; salasOcupadas: number } | null;
+  financeiro: {
+    receber: ResumoReceber;
+    vencido: { valor: number; quantidade: number };
+  } | null;
+  comercial: {
+    porMarco: Record<MarcoContagem, number>;
+    contratosAguardandoAssinatura: number;
+  } | null;
+}
 
 /** Dados reais já disponíveis para o painel. O que depende de módulos ainda não criados vem vazio. */
 export interface DadosPainel {
@@ -24,6 +48,8 @@ export interface DadosPainel {
   ocupacao: OcupacaoPainel | null;
   /** Classificação dos parceiros (issue #143); só carregada para a aba Executivo. */
   parceiros: ResumoParceiros | null;
+  /** Aba Hoje (#170); só carregada para ela. */
+  hoje: DadosHoje | null;
 }
 
 export type ConstrutorAba = (dados: DadosPainel) => SecaoPainel[];
@@ -35,8 +61,9 @@ export function kpi(
   formato: FormatoPainel,
   valor: number | null = null,
   detalhe: string | null = null,
+  link?: string,
 ): KpiPainel {
-  return { tipo: 'kpi', id, rotulo, valor, formato, detalhe };
+  return { tipo: 'kpi', id, rotulo, valor, formato, detalhe, ...(link && { link }) };
 }
 
 export function coluna(

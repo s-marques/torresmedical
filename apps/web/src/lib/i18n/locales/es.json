@@ -2552,5 +2552,12 @@
         "enviadoEm": "Registrado el"
       }
     }
+  },
+  "painel": {
+    "hoje": {
+      "alertas": "Alertas del día",
+      "semAlertas": "Ningún alerta para hoy.",
+      "verLista": "Ver la lista de {{indicador}}"
+    }
   }
 }

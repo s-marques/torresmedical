@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { dashboardPainelSchema, filtrosPainelSchema, PERIODO_PAINEL_INVALIDO } from './dashboard';
+import {
+  ABAS_PAINEL,
+  dashboardPainelSchema,
+  filtrosPainelSchema,
+  PERIODO_PAINEL_INVALIDO,
+} from './dashboard';
 
 function erros(entrada: unknown): Record<string, string> {
   const resultado = filtrosPainelSchema.safeParse(entrada);
@@ -92,5 +97,34 @@ describe('dashboardPainelSchema', () => {
     };
     expect(dashboardPainelSchema.safeParse(dashboard).success).toBe(true);
     expect(dashboardPainelSchema.safeParse({ ...dashboard, aba: 'outra' }).success).toBe(false);
+  });
+});
+
+describe('aba Hoje e link do indicador (#170)', () => {
+  it('Hoje é a primeira aba e o link do KPI é opcional', () => {
+    expect(ABAS_PAINEL[0]).toBe('hoje');
+    const base = {
+      aba: 'hoje',
+      periodo: { de: '2026-10-01', ate: '2026-10-31' },
+      base: 'recebimento',
+    };
+    const kpi = {
+      tipo: 'kpi',
+      id: 'faltas',
+      rotulo: 'Faltas',
+      valor: 1,
+      formato: 'inteiro',
+      detalhe: null,
+    };
+    const comLink = {
+      ...base,
+      secoes: [{ id: 's', titulo: null, blocos: [{ ...kpi, link: '/recepcao?status=FALTOU' }] }],
+    };
+    const semLink = { ...base, secoes: [{ id: 's', titulo: null, blocos: [kpi] }] };
+
+    expect(dashboardPainelSchema.parse(comLink).secoes[0]?.blocos[0]).toMatchObject({
+      link: '/recepcao?status=FALTOU',
+    });
+    expect(dashboardPainelSchema.parse(semLink)).toBeTruthy();
   });
 });

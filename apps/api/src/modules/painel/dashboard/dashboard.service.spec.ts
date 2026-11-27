@@ -6,6 +6,13 @@ import type { ProfissionaisService } from '../../gestao-profissionais/profission
 import type { IndicadoresFinanceirosService } from '../../financeiro/indicadores/indicadores.service';
 import { calcularOcupacao } from '../../../common/ocupacao/calculo-ocupacao';
 import type { OcupacaoPainel, OcupacaoService } from '../ocupacao/ocupacao.service';
+import { escopoFalso } from '../../../../test/utils/escopo-falso';
+import type { AgendaOcupacaoService } from '../../comercial-atendimento/agenda/agenda-ocupacao.service';
+import type { NegociosListaService } from '../../comercial-atendimento/pipeline/negocios-lista.service';
+import type { RecepcaoService } from '../../comercial-atendimento/recepcao/recepcao.service';
+import type { InadimplenciaService } from '../../financeiro/inadimplencia/inadimplencia.service';
+import type { ContratosSalaService } from '../../gestao-profissionais/salas/contratos-sala.service';
+import type { SalasService } from '../../gestao-profissionais/salas/salas.service';
 import { DashboardService } from './dashboard.service';
 
 const SEM_DADOS = calcularOcupacao({
@@ -40,10 +47,10 @@ const PARCEIROS: ResumoParceiros = {
 
 const FILTROS = { modo: 'mes', mes: '2026-10', base: 'recebimento' } as const;
 
-function setup() {
+function setup(profissionalIds?: readonly string[]) {
   const profissionais = { contarAtivos: jest.fn().mockResolvedValue(14) };
   const pacientes = { contar: jest.fn().mockResolvedValue(1284) };
-  const indicadores = {
+  const indicadores: Record<string, jest.Mock> = {
     calcular: jest.fn().mockResolvedValue({
       faturamentoTotal: 9070,
       receitaRecorrente: 7910,
@@ -54,14 +61,64 @@ function setup() {
   };
   const ocupacao = { calcular: jest.fn().mockResolvedValue(OCUPACAO) };
   const classificacao = { resumo: jest.fn().mockResolvedValue(PARCEIROS) };
+  const recepcao = {
+    resumoDoDia: jest.fn().mockResolvedValue({
+      porStatus: {
+        AGENDADO: 2,
+        CONFIRMADO: 3,
+        AGUARDANDO: 1,
+        ATENDIDO: 4,
+        FALTOU: 1,
+        CANCELADO: 2,
+      },
+      profissionaisComAtendimento: 5,
+    }),
+  };
+  const salas = {
+    listarParaMatriz: jest.fn().mockResolvedValue([{ id: 's1' }, { id: 's2' }, { id: 's3' }]),
+  };
+  const agendaOcupacao = { salasOcupadasEm: jest.fn().mockResolvedValue(new Set(['s1', 'x'])) };
+  const contratosSala = { contarAguardandoAssinatura: jest.fn().mockResolvedValue(2) };
+  const negocios = {
+    contarAbertosPorMarco: jest.fn().mockResolvedValue({
+      PRIMEIRO_CONTATO: 4,
+      VISITA: 3,
+      PROPOSTA: 2,
+      CONTRATO: 1,
+      SEM_MARCO: 1,
+    }),
+  };
+  const inadimplencia = {
+    painel: jest.fn().mockResolvedValue({ vencidos: { valor: '350.50', quantidade: 3 } }),
+  };
+  indicadores.resumoReceber = jest
+    .fn()
+    .mockResolvedValue({ contratada: 1000, recebido: 600, aReceber: 400 });
   const service = new DashboardService(
     profissionais as unknown as ProfissionaisService,
     pacientes as unknown as PacientesService,
     indicadores as unknown as IndicadoresFinanceirosService,
     ocupacao as unknown as OcupacaoService,
     classificacao as unknown as ProfissionaisClassificacaoService,
+    recepcao as unknown as RecepcaoService,
+    agendaOcupacao as unknown as AgendaOcupacaoService,
+    salas as unknown as SalasService,
+    contratosSala as unknown as ContratosSalaService,
+    negocios as unknown as NegociosListaService,
+    inadimplencia as unknown as InadimplenciaService,
+    indicadores as unknown as IndicadoresFinanceirosService,
+    escopoFalso(profissionalIds),
   );
-  return { service, profissionais, pacientes, indicadores, ocupacao, classificacao };
+  return {
+    service,
+    profissionais,
+    pacientes,
+    indicadores,
+    ocupacao,
+    classificacao,
+    recepcao,
+    inadimplencia,
+  };
 }
 
 function valorDoKpi(secoes: SecaoPainel[], id: string): number | null | undefined {
@@ -228,5 +285,56 @@ describe('DashboardService', () => {
       meta?.tipo === 'meta-vs-atual' &&
         Object.fromEntries(meta.indicadores.filter((i) => i.meta).map((i) => [i.id, i.meta])),
     ).toEqual({ 'taxa-ocupacao': '≥85%', vacancia: '≤15%', cancelamentos: '0', nps: '≥40' });
+  });
+
+  describe('aba hoje (#170)', () => {
+    const kpis = (secoes: SecaoPainel[]) =>
+      Object.fromEntries(
+        secoes.flatMap((s) => s.blocos).flatMap((b) => (b.tipo === 'kpi' ? [[b.id, b]] : [])),
+      );
+
+    it('confere os números com os dados conhecidos e traz o período nos links do mês', async () => {
+      const { service } = setup();
+
+      const { secoes } = await service.obter('hoje', FILTROS);
+      const k = kpis(secoes);
+
+      expect(k['profissionais-ativos']?.valor).toBe(14);
+      expect(k['profissionais-atendendo-hoje']?.valor).toBe(5);
+      expect(k['salas-ocupadas']?.valor).toBe(1);
+      expect(k['salas-disponiveis']?.valor).toBe(2);
+      // 2 agendados + 3 confirmados + 1 aguardando + 4 atendidos + 1 falta (cancelados ficam fora).
+      expect(k['pacientes-agendados']?.valor).toBe(11);
+      expect(k['confirmados']?.valor).toBe(3);
+      expect(k['faltas']?.valor).toBe(1);
+      expect(k['cancelamentos']?.valor).toBe(2);
+      expect(k['receita-contratada']?.valor).toBe(1000);
+      expect(k['recebido']?.valor).toBe(600);
+      expect(k['a-receber']?.valor).toBe(400);
+      expect(k['inadimplencia']?.valor).toBe(350.5);
+      expect(k['leads-ativos']?.valor).toBe(5);
+      expect(k['visitas-agendadas']?.valor).toBe(3);
+      expect(k['propostas-abertas']?.valor).toBe(2);
+      expect(k['negociacoes']?.valor).toBe(1);
+      expect(k['contratos-aguardando-assinatura']?.valor).toBe(2);
+      // C3/C5 do DrIntelli: o clique mantém o período escolhido (outubro), não abre outro mês.
+      const periodo = 'vencimentoDe=2026-10-01&vencimentoAte=2026-10-31';
+      expect(k['receita-contratada']?.link).toBe(`/receber?${periodo}`);
+      expect(k['recebido']?.link).toBe(`/receber?${periodo}`);
+      expect(k['faltas']?.link).toBe('/recepcao?status=FALTOU');
+    });
+
+    it('perfil restrito vê só a agenda dos seus profissionais, sem salas, financeiro e comercial', async () => {
+      const { service, inadimplencia } = setup(['11111111-1111-4111-8111-111111111111']);
+
+      const { secoes } = await service.obter('hoje', FILTROS);
+      const k = kpis(secoes);
+
+      expect(secoes.map((s) => s.id)).toEqual(['operacao']);
+      expect(k['salas-ocupadas']).toBeUndefined();
+      expect(k['profissionais-ativos']).toBeUndefined();
+      expect(k['pacientes-agendados']?.valor).toBe(11);
+      expect(inadimplencia.painel).not.toHaveBeenCalled();
+    });
   });
 });

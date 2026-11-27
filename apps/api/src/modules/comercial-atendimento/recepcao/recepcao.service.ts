@@ -2,6 +2,7 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { Injectable } from '@nestjs/common';
 import {
   RECEPCAO_STATUS_NA_CLINICA,
+  type AgendamentoStatus,
   recepcaoPodeAlterar,
   type ListRecepcaoQuery,
   type RecepcaoItem,
@@ -48,6 +49,28 @@ function intervaloDeHoje(): { gte: Date; lt: Date } {
   return intervaloDoPeriodo(hoje, hoje);
 }
 
+/** Atendimentos de hoje por status e profissionais com atendimento no dia (Painel "Hoje", #170). */
+export interface ResumoDoDia {
+  porStatus: Partial<Record<AgendamentoStatus, number>>;
+  /** Profissionais com ao menos um atendimento que não saiu do dia (cancelado/reagendar ficam fora). */
+  profissionaisComAtendimento: number;
+}
+
+/** Cancelado e "reagendar" saem do dia: o paciente não está mais agendado para hoje. */
+const STATUS_FORA_DO_DIA: readonly AgendamentoStatus[] = ['CANCELADO', 'REAGENDAR'];
+
+export function resumirDia(
+  grupos: ReadonlyArray<{ profissionalId: string; status: AgendamentoStatus; quantidade: number }>,
+): ResumoDoDia {
+  const porStatus: ResumoDoDia['porStatus'] = {};
+  const profissionais = new Set<string>();
+  for (const { profissionalId, status, quantidade } of grupos) {
+    porStatus[status] = (porStatus[status] ?? 0) + quantidade;
+    if (!STATUS_FORA_DO_DIA.includes(status)) profissionais.add(profissionalId);
+  }
+  return { porStatus, profissionaisComAtendimento: profissionais.size };
+}
+
 /**
  * Tela Recepção (`/recepcao`, #147): atendimentos de hoje, fila de espera e status rápidos.
  * Agendamento é deste módulo (comercial-atendimento). A escrita é auditada pelo `@Audit` do
@@ -76,6 +99,26 @@ export class RecepcaoService {
       count: () => this.txHost.tx.agendamento.count({ where }),
     });
     return { ...pagina, data: pagina.data.map(toRecepcaoItem) };
+  }
+
+  /** Resumo do dia para o Painel (#170). Respeita o escopo: perfil restrito conta só os seus. */
+  async resumoDoDia(): Promise<ResumoDoDia> {
+    const grupos = await this.txHost.tx.agendamento.groupBy({
+      by: ['profissionalId', 'status'],
+      where: {
+        deletedAt: null,
+        inicio: intervaloDeHoje(),
+        profissionalId: this.escopo.filtroProfissional(),
+      },
+      _count: { _all: true },
+    });
+    return resumirDia(
+      grupos.map((g) => ({
+        profissionalId: g.profissionalId,
+        status: g.status,
+        quantidade: g._count._all,
+      })),
+    );
   }
 
   /** Fila de espera: quem já chegou e ainda não entrou, do que chegou há mais tempo. */
