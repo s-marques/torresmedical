@@ -2552,5 +2552,12 @@
         "enviadoEm": "Recorded at"
       }
     }
+  },
+  "painel": {
+    "hoje": {
+      "alertas": "Today's alerts",
+      "semAlertas": "No alerts for today.",
+      "verLista": "View the {{indicador}} list"
+    }
   }
 }

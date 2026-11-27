@@ -11,6 +11,7 @@ import {
 } from '@torres/shared';
 
 export const ROTULOS_ABA: Record<AbaPainel, string> = {
+  hoje: 'Hoje',
   executivo: 'Executivo',
   comercial: 'Comercial',
   ocupacao: 'Ocupação',
@@ -80,7 +81,7 @@ export function filtrosDaUrl(params: URLSearchParams, hoje = new Date()): Filtro
   const turno = MATRIZ_TURNOS.find((t) => t === params.get('turno'));
   const dia = params.get('diaSemana');
   return {
-    aba: escolher(params.get('aba'), ABAS_PAINEL, 'executivo'),
+    aba: escolher(params.get('aba'), ABAS_PAINEL, 'hoje'),
     modo: escolher(params.get('modo'), MODOS_PERIODO, 'mes'),
     mes: mes && /^\d{4}-(0[1-9]|1[0-2])$/.test(mes) ? mes : mesDe(hoje),
     de: params.get('de') ?? '',

@@ -70,6 +70,25 @@ function compararNomes(a: string | null, b: string | null, direcao: 'asc' | 'des
 }
 
 /** Tela Negócios (`/negocios`): listagem paginada, resumo dos cartões e exportação. */
+export type MarcoContagem = 'PRIMEIRO_CONTATO' | 'VISITA' | 'PROPOSTA' | 'CONTRATO' | 'SEM_MARCO';
+
+export function somarPorMarco(
+  marcoDoEstagio: ReadonlyMap<string, Exclude<MarcoContagem, 'SEM_MARCO'> | null>,
+  grupos: ReadonlyArray<{ estagioId: string; quantidade: number }>,
+): Record<MarcoContagem, number> {
+  const total: Record<MarcoContagem, number> = {
+    PRIMEIRO_CONTATO: 0,
+    VISITA: 0,
+    PROPOSTA: 0,
+    CONTRATO: 0,
+    SEM_MARCO: 0,
+  };
+  for (const { estagioId, quantidade } of grupos) {
+    total[marcoDoEstagio.get(estagioId) ?? 'SEM_MARCO'] += quantidade;
+  }
+  return total;
+}
+
 @Injectable()
 export class NegociosListaService {
   constructor(
@@ -122,6 +141,28 @@ export class NegociosListaService {
       ganhos: deStatus('GANHO'),
       perdidos: deStatus('PERDIDO'),
     };
+  }
+
+  /**
+   * Negócios em aberto por marco do estágio (Painel "Hoje", #170). Estágio sem marco entra em
+   * `SEM_MARCO`.
+   */
+  async contarAbertosPorMarco(): Promise<Record<MarcoContagem, number>> {
+    const [estagios, grupos] = await Promise.all([
+      this.txHost.tx.estagioPipeline.findMany({
+        where: { deletedAt: null },
+        select: { id: true, marco: true },
+      }),
+      this.txHost.tx.negocio.groupBy({
+        by: ['estagioId'],
+        where: { deletedAt: null, status: 'ABERTO' },
+        _count: { _all: true },
+      }),
+    ]);
+    return somarPorMarco(
+      new Map(estagios.map((e) => [e.id, e.marco])),
+      grupos.map((g) => ({ estagioId: g.estagioId, quantidade: g._count._all })),
+    );
   }
 
   async export(query: ExportNegociosQuery): Promise<ExportFile> {

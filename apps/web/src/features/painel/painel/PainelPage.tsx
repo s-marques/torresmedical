@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { AlertasHoje } from './AlertasHoje';
 import { SecaoPainelView } from './BlocosPainel';
 import {
   filtrosDaUrl,
@@ -81,6 +82,7 @@ export default function PainelPage() {
             Não foi possível carregar o dashboard. Tente novamente.
           </p>
         )}
+        {filtros.aba === 'hoje' && <AlertasHoje />}
         {dashboard.data?.secoes.map((secao) => (
           <SecaoPainelView key={secao.id} secao={secao} />
         ))}

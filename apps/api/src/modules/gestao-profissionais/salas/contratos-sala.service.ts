@@ -112,6 +112,13 @@ export class ContratosSalaService implements SalaEmUsoVerificador {
     return new Set(contratos.map((c) => c.salaId));
   }
 
+  /** Contratos que aguardam a assinatura do profissional (Painel "Hoje", #170). */
+  contarAguardandoAssinatura(): Promise<number> {
+    return this.txHost.tx.contratoSala.count({
+      where: { ...NAO_EXCLUIDOS, status: 'AGUARDANDO_ASSINATURA' },
+    });
+  }
+
   async list(query: ListContratosSalaQuery): Promise<Page<ContratoSalaDto>> {
     const where = this.where(query);
     const page = await paginate(query, {

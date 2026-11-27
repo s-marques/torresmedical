@@ -1,7 +1,13 @@
 import type { TransactionHost } from '@nestjs-cls/transactional';
 import type { PrismaAdapter } from '../../../common/prisma/prisma-transaction';
 import type { ContratosSalaCobrancaService } from '../../gestao-profissionais/salas/contratos-sala-cobranca.service';
-import { IndicadoresFinanceirosService, limitesDoMes, mesAnteriorDe } from './indicadores.service';
+import {
+  IndicadoresFinanceirosService,
+  limitesDoMes,
+  mesAnteriorDe,
+  somarReceber,
+} from './indicadores.service';
+import { Prisma } from '../../../generated/prisma/client';
 
 const ID_RECORRENTE = '0b9c1f7e-1a2b-4c3d-8e9f-0a1b2c3d4e5f';
 
@@ -141,5 +147,24 @@ describe('IndicadoresFinanceirosService', () => {
     const r = await service.obter({});
 
     expect(r.mes).toMatch(/^\d{4}-\d{2}$/);
+  });
+});
+
+describe('somarReceber (Painel "Hoje", #170)', () => {
+  const d = (v: number) => new Prisma.Decimal(v);
+
+  it('contratada é a soma dos títulos; recebido, as baixas; a receber, o saldo dos abertos', () => {
+    const resumo = somarReceber([
+      { valor: d(1000), status: 'PENDENTE', baixas: [] },
+      { valor: d(500), status: 'RECEBIDO', baixas: [{ valorRecebido: d(500) }] },
+      { valor: d(300), status: 'PARCIAL', baixas: [{ valorRecebido: d(100) }] },
+    ]);
+
+    expect(resumo).toEqual({ contratada: 1800, recebido: 600, aReceber: 1200 });
+    expect(resumo.contratada).toBe(resumo.recebido + resumo.aReceber);
+  });
+
+  it('sem títulos: zero', () => {
+    expect(somarReceber([])).toEqual({ contratada: 0, recebido: 0, aReceber: 0 });
   });
 });

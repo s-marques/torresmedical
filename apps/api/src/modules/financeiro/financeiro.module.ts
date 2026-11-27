@@ -90,6 +90,8 @@ import { RelatoriosFinanceiro } from './relatorios/relatorios-financeiro';
     PlanoContasService,
     ContasReceberService,
     IndicadoresFinanceirosService,
+    // Painel "Hoje" (#170): total vencido.
+    InadimplenciaService,
   ],
 })
 export class FinanceiroModule {}

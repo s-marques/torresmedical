@@ -3,6 +3,7 @@ import { matrizTurnoSchema } from '../comercial-atendimento/agenda-matriz';
 
 /** Abas do dashboard, na ordem da tela (docs/inventario/telas/painel-painel.md). */
 export const ABAS_PAINEL = [
+  'hoje',
   'executivo',
   'comercial',
   'ocupacao',
@@ -105,6 +106,11 @@ export const kpiPainelSchema = z.object({
   formato: formatoSchema,
   /** Texto pequeno abaixo do valor (ex.: "profissionais ativos"). */
   detalhe: z.string().nullable(),
+  /**
+   * Rota da lista que o indicador resume, já com o período e o filtro dele na query. Ausente =
+   * indicador sem lista própria (não é clicável).
+   */
+  link: z.string().optional(),
 });
 
 export const VISUALIZACOES_PAINEL = ['tabela', 'barras', 'pizza', 'linha'] as const;

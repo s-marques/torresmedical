@@ -48,7 +48,7 @@ async function abrir(nome = 'Notificações') {
 
 describe('MenuAlertas (central de notificações)', () => {
   it('mostra o contador de não lidos e os alertas do dia', async () => {
-    renderApp('/', api());
+    renderApp('/?aba=executivo', api());
     expect(await screen.findByLabelText('2 notificações não lidas')).toBeInTheDocument();
 
     await abrir();
@@ -58,7 +58,7 @@ describe('MenuAlertas (central de notificações)', () => {
 
   it('clicar no alerta abre a lista já filtrada e marca como lido', async () => {
     const fetchMock = api();
-    const { router } = renderApp('/', fetchMock);
+    const { router } = renderApp('/?aba=executivo', fetchMock);
     await screen.findByLabelText('2 notificações não lidas');
     await userEvent.click(screen.getByRole('button', { name: /^Notificações/ }));
 
@@ -80,7 +80,7 @@ describe('MenuAlertas (central de notificações)', () => {
 
   it('marca como resolvida pelo botão do alerta', async () => {
     const fetchMock = api();
-    renderApp('/', fetchMock);
+    renderApp('/?aba=executivo', fetchMock);
     await screen.findByLabelText('2 notificações não lidas');
     await userEvent.click(screen.getByRole('button', { name: /^Notificações/ }));
 
@@ -94,7 +94,7 @@ describe('MenuAlertas (central de notificações)', () => {
 
   it('"Mostrar resolvidos" pede os resolvidos à API', async () => {
     const fetchMock = api();
-    renderApp('/', fetchMock);
+    renderApp('/?aba=executivo', fetchMock);
     await screen.findByLabelText('2 notificações não lidas');
     await userEvent.click(screen.getByRole('button', { name: /^Notificações/ }));
 
@@ -111,7 +111,7 @@ describe('MenuAlertas (central de notificações)', () => {
   });
 
   it('sem alertas mostra "Nenhuma notificação" e sem contador', async () => {
-    renderApp('/', api([]));
+    renderApp('/?aba=executivo', api([]));
     await userEvent.click(await screen.findByRole('button', { name: 'Notificações' }));
     expect(await screen.findByText('Nenhuma notificação')).toBeInTheDocument();
   });
@@ -121,7 +121,7 @@ describe('MenuAlertas (central de notificações)', () => {
       ...USUARIO_TESTE,
       preferencias: { ...PREFERENCIAS_PADRAO, idioma: 'en' as const },
     };
-    renderApp('/', api([VENCENDO, alerta({})], usuario));
+    renderApp('/?aba=executivo', api([VENCENDO, alerta({})], usuario));
     await screen.findByLabelText('2 unread notifications');
     await userEvent.click(screen.getByRole('button', { name: /^Notifications/ }));
 
@@ -133,7 +133,7 @@ describe('MenuAlertas (central de notificações)', () => {
   it('sem acesso ao Painel não consulta a API de alertas', async () => {
     const usuario = { ...USUARIO_TESTE, permissoes: ['financeiro.contas-pagar.ver' as const] };
     const fetchMock = api([VENCENDO], usuario);
-    renderApp('/', fetchMock);
+    renderApp('/?aba=executivo', fetchMock);
     await screen.findByRole('button', { name: 'Menu do usuário' });
     expect(chamadasPara(fetchMock, URL_ALERTAS)).toHaveLength(0);
   });

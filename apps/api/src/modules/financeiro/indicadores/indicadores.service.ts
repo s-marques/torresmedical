@@ -22,6 +22,16 @@ export interface ReceitasEDespesas {
   despesasPagas: number;
 }
 
+/** Títulos com vencimento no período: o que o Painel "Hoje" (#170) mostra e a lista de Contas a Receber filtra. */
+export interface ResumoReceber {
+  /** Soma dos títulos (cancelado e renegociado ficam fora). */
+  contratada: number;
+  /** Soma das baixas desses títulos. */
+  recebido: number;
+  /** Saldo em aberto dos títulos Pendente e Parcial. */
+  aReceber: number;
+}
+
 const MES = /^\d{4}-\d{2}$/;
 
 /** Mês atual (`AAAA-MM`) no fuso da clínica. */
@@ -88,6 +98,32 @@ function semFonte(
  * - Despesas Pagas: baixas de contas a pagar no período;
  * - Resultado Operacional: recebido no período menos despesas pagas.
  */
+export function somarReceber(
+  titulos: ReadonlyArray<{
+    valor: Prisma.Decimal;
+    status: string;
+    baixas: ReadonlyArray<{ valorRecebido: Prisma.Decimal }>;
+  }>,
+): ResumoReceber {
+  let contratada = 0;
+  let recebido = 0;
+  let aReceber = 0;
+  for (const titulo of titulos) {
+    const valor = Number(titulo.valor);
+    const baixado = titulo.baixas.reduce((total, b) => total + Number(b.valorRecebido), 0);
+    contratada += valor;
+    recebido += baixado;
+    if (titulo.status === 'PENDENTE' || titulo.status === 'PARCIAL') {
+      aReceber += Math.max(valor - baixado, 0);
+    }
+  }
+  return {
+    contratada: arredondar(contratada),
+    recebido: arredondar(recebido),
+    aReceber: arredondar(aReceber),
+  };
+}
+
 @Injectable()
 export class IndicadoresFinanceirosService {
   constructor(
@@ -131,6 +167,26 @@ export class IndicadoresFinanceirosService {
         moeda('despesas-pagas', 'clientes', atual.despesasPagas, anterior.despesasPagas),
       ],
     };
+  }
+
+  /**
+   * Receita contratada, recebido e a receber dos títulos com vencimento no período (`AAAA-MM-DD`),
+   * do caixa do Torres. A lista de Contas a Receber com o mesmo vencimento soma o mesmo valor.
+   */
+  async resumoReceber(de: string, ate: string): Promise<ResumoReceber> {
+    const titulos = await this.txHost.tx.contaReceber.findMany({
+      where: {
+        ...DO_TORRES,
+        status: { notIn: ['CANCELADO', 'RENEGOCIADO'] },
+        dataVencimento: { gte: dia(de), lte: dia(ate) },
+      },
+      select: {
+        valor: true,
+        status: true,
+        baixas: { where: NAO_EXCLUIDAS, select: { valorRecebido: true } },
+      },
+    });
+    return somarReceber(titulos);
   }
 
   /** Números de receita e despesa de um período (`AAAA-MM-DD`). O Painel usa o mesmo cálculo. */
