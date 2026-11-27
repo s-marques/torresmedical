@@ -53,7 +53,10 @@ const MES = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 export const apresentacaoMensalQuerySchema = z.object({
   /** Mês do relatório, `AAAA-MM`. */
-  mes: z.string().trim().regex(MES, { error: () => traduzirValidacao('validacao.formatoInvalido') }),
+  mes: z
+    .string()
+    .trim()
+    .regex(MES, { error: () => traduzirValidacao('validacao.formatoInvalido') }),
 });
 export type ApresentacaoMensalQuery = z.infer<typeof apresentacaoMensalQuerySchema>;
 

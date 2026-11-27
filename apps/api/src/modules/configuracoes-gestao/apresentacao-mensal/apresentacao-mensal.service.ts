@@ -17,10 +17,7 @@ import { IndicadoresGestaoService } from '../../comercial-atendimento/indicadore
 import { PesquisaNpsService } from '../../comercial-atendimento/pesquisa-nps/pesquisa-nps.service';
 import { PesquisaProfissionalService } from '../../comercial-atendimento/pesquisa-profissional/pesquisa-profissional.service';
 import { RelatoriosEstoque } from '../../compras-estoque/relatorios/relatorios-estoque';
-import {
-  limitesDoMes,
-  mesAnteriorDe,
-} from '../../financeiro/indicadores/indicadores.service';
+import { limitesDoMes, mesAnteriorDe } from '../../financeiro/indicadores/indicadores.service';
 import { RelatoriosFinanceiro } from '../../financeiro/relatorios/relatorios-financeiro';
 import { OcupacaoService } from '../../painel/ocupacao/ocupacao.service';
 
@@ -325,9 +322,9 @@ export class ApresentacaoMensalService {
   }: Contexto): Promise<IndicadorApresentacao> {
     const porModalidade = async (m: string) =>
       new Map(
-        (await this.financeiro.linhasProvisaoResumo(consultaDoMes(m, { agrupar: 'modalidade' }))).map(
-          (l) => [l.grupo, l.gerado],
-        ),
+        (
+          await this.financeiro.linhasProvisaoResumo(consultaDoMes(m, { agrupar: 'modalidade' }))
+        ).map((l) => [l.grupo, l.gerado]),
       );
     const [atual, anterior] = await Promise.all([porModalidade(mes), porModalidade(mesAnterior)]);
     const itens = juntarPorRotulo(atual, anterior);

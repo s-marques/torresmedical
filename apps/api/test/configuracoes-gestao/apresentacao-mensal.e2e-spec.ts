@@ -110,7 +110,12 @@ describe('Relatório mensal de apresentação da gestão (e2e)', () => {
     const limpeza = await prisma.centroCusto.create({ data: { nome: 'Limpeza' } });
     const pagar = (vencimento: string, valor: number, centroCustoId?: string) =>
       prisma.contaPagar.create({
-        data: { descricao: 'Conta', valor, dataVencimento: dia(vencimento), centroCustoId } as never,
+        data: {
+          descricao: 'Conta',
+          valor,
+          dataVencimento: dia(vencimento),
+          centroCustoId,
+        } as never,
       });
     await pagar('2026-10-05', 300, limpeza.id);
     await pagar('2026-10-06', 100);
@@ -140,7 +145,13 @@ describe('Relatório mensal de apresentação da gestão (e2e)', () => {
     });
     const negocio = (createdAt: Date, extra: Record<string, unknown> = {}) =>
       prisma.negocio.create({
-        data: { titulo: 'Sala 10', pipelineId: pipeline.id, estagioId: estagio.id, createdAt, ...extra },
+        data: {
+          titulo: 'Sala 10',
+          pipelineId: pipeline.id,
+          estagioId: estagio.id,
+          createdAt,
+          ...extra,
+        },
       });
     const visitado = await negocio(emSaoPaulo('2026-10-02T10:00:00'), {
       origemClienteId: origem.id,
@@ -354,7 +365,11 @@ describe('Relatório mensal de apresentação da gestão (e2e)', () => {
 
       const lista = await indicadores(financeiro);
 
-      expect([...lista.keys()]).toEqual(['faturamento', 'faturamento-futuro', 'faturamento-produto']);
+      expect([...lista.keys()]).toEqual([
+        'faturamento',
+        'faturamento-futuro',
+        'faturamento-produto',
+      ]);
     });
 
     it('400 para mês ausente ou inválido', async () => {

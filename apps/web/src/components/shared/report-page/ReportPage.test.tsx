@@ -3,6 +3,7 @@ import { PERIODO_INVALIDO, PERMISSOES, type CatalogoRelatorios } from '@torres/s
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
+import type { ReactNode } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { servidorMsw, usarMsw } from '../../../test/msw';
@@ -76,7 +77,7 @@ function responder(catalogo: CatalogoRelatorios = CATALOGO) {
   );
 }
 
-function renderizar(inicial = '/gestao/relatorios') {
+function renderizar(inicial = '/gestao/relatorios', acoes?: ReactNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createMemoryRouter(
     [
@@ -87,6 +88,7 @@ function renderizar(inicial = '/gestao/relatorios') {
             tela="configuracoes-gestao.relatorios"
             titulo="Relatórios de Gestão"
             descricao="Log de acesso, ticket médio, ocupação de sala e LTV."
+            acoes={acoes}
           />
         ),
       },
@@ -136,6 +138,19 @@ describe('ReportPage', () => {
 
     expect(await screen.findByText(/1\.234,50/)).toBeInTheDocument();
     expect(screen.queryByText('Total')).not.toBeInTheDocument();
+  });
+
+  it('mostra as ações informadas à direita do título', async () => {
+    renderizar('/gestao/relatorios', <button type="button">Outra visão</button>);
+
+    expect(await screen.findByRole('button', { name: 'Outra visão' })).toBeVisible();
+  });
+
+  it('sem ações informadas, o cabeçalho não tem botões', async () => {
+    renderizar();
+
+    await screen.findByRole('heading', { name: 'Relatórios de Gestão' });
+    expect(screen.queryByRole('button', { name: 'Outra visão' })).not.toBeInTheDocument();
   });
 
   it('sem relatório: cabeçalho, seletor, período padrão e estado vazio, sem consultar', async () => {

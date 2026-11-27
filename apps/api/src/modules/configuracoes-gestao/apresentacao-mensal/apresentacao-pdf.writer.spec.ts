@@ -87,7 +87,9 @@ describe('apresentacao-pdf.writer', () => {
       ],
     });
 
-    const pdf = await escreverApresentacaoPdf(relatorio([indicador(), comparativo, semDados, negativo]));
+    const pdf = await escreverApresentacaoPdf(
+      relatorio([indicador(), comparativo, semDados, negativo]),
+    );
 
     expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
     expect(paginas(pdf)).toBe(4);

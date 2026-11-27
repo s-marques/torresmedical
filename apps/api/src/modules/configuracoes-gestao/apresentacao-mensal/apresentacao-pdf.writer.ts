@@ -103,7 +103,10 @@ function cabecalho(doc: Doc, mes: string): void {
 function destaque(doc: Doc, indicador: IndicadorApresentacao, y: number): number {
   const { formato, valor, anterior, variacao, comparacao, serie } = indicador;
   const semNada = valor === null && serie.every((p) => p.valor === null);
-  doc.font('Helvetica-Bold').fontSize(30).fillColor(semNada ? COR_SUAVE : COR_ATUAL);
+  doc
+    .font('Helvetica-Bold')
+    .fontSize(30)
+    .fillColor(semNada ? COR_SUAVE : COR_ATUAL);
   if (valor !== null || semNada) {
     doc.text(formatarValor(formato, valor), MARGIN, y);
   }
@@ -155,10 +158,15 @@ function graficoTendencia(
         .font('Helvetica')
         .fontSize(8)
         .fillColor(COR_TEXTO)
-        .text(formatarValor(formato, ponto.valor), MARGIN + i * passo, ponto.valor >= 0 ? y - 11 : y + h + 2, {
-          width: passo,
-          align: 'center',
-        });
+        .text(
+          formatarValor(formato, ponto.valor),
+          MARGIN + i * passo,
+          ponto.valor >= 0 ? y - 11 : y + h + 2,
+          {
+            width: passo,
+            align: 'center',
+          },
+        );
     }
     doc
       .font('Helvetica')
@@ -179,7 +187,11 @@ function graficoTendencia(
 /** Quadradinho colorido e o texto (a Helvetica padrão não tem o glifo "■"). */
 function legenda(doc: Doc, x: number, y: number, cor: string, texto: string): void {
   doc.rect(x, y + 1, 7, 7).fill(cor);
-  doc.font('Helvetica').fontSize(8).fillColor(cor).text(texto, x + 11, y, { lineBreak: false });
+  doc
+    .font('Helvetica')
+    .fontSize(8)
+    .fillColor(cor)
+    .text(texto, x + 11, y, { lineBreak: false });
 }
 
 /** Uma linha por item: barra do mês e, abaixo, a de comparação. */
@@ -268,7 +280,11 @@ function rodapeAvisos(doc: Doc, avisos: readonly AvisoApresentacao[]): void {
     });
 }
 
-function paginaDoIndicador(doc: Doc, relatorio: ApresentacaoMensal, i: IndicadorApresentacao): void {
+function paginaDoIndicador(
+  doc: Doc,
+  relatorio: ApresentacaoMensal,
+  i: IndicadorApresentacao,
+): void {
   cabecalho(doc, relatorio.mes);
   doc
     .font('Helvetica-Bold')

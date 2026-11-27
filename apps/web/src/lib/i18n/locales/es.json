@@ -1281,6 +1281,58 @@
     "modulo": "Gestión",
     "relatorios": "Informes"
   },
+  "apresentacao": {
+    "titulo": "Presentación mensual",
+    "descricao": "Indicadores del edificio para la reunión mensual de la gestión.",
+    "abrir": "Presentación mensual",
+    "voltar": "Volver a los informes",
+    "selecao": "Selección del mes",
+    "mes": "Mes",
+    "exportarPdf": "Exportar PDF",
+    "gerandoPdf": "Generando PDF…",
+    "carregando": "Cargando indicadores",
+    "vazio": "Ningún indicador disponible",
+    "vazioDescricao": "Su perfil no tiene acceso a las pantallas de origen de los indicadores.",
+    "indisponivel": "Dato no disponible",
+    "mesAnterior": "Mes anterior",
+    "media90Dias": "Promedio de los 90 días anteriores",
+    "variacao": "Variación",
+    "pontos": "p.p.",
+    "graficoTendencia": "Gráfico de {{indicador}} en los últimos meses",
+    "graficoComparativo": "Gráfico de {{indicador}} con la comparación",
+    "indicadores": {
+      "faturamento": "Facturación",
+      "faturamento-futuro": "Facturación futura (según los contratos)",
+      "faturamento-produto": "Facturación por producto",
+      "ocupacao": "Ocupación × vacancia de los períodos",
+      "despesas-centro-custo": "Gastos por centro de costo",
+      "estoque": "Inventario: consumo por categoría",
+      "leads": "Leads que nos contactaron, por origen",
+      "visitas": "Visitas a médicos",
+      "nps-medicos": "NPS de los médicos clientes",
+      "nps-pacientes": "NPS de los pacientes de los médicos atendidos"
+    },
+    "series": {
+      "ocupacao": "Ocupación",
+      "vacancia": "Vacancia",
+      "ocupacao-prevista": "Ocupación prevista (mes siguiente)",
+      "visitas-agendadas": "Visitas programadas",
+      "visitas-realizadas": "Visitas realizadas",
+      "visitas-recebidas": "Visitas recibidas en la clínica",
+      "outros": "Otros"
+    },
+    "detalhe": {
+      "visitas": "Médicos que recibieron visita en el mes"
+    },
+    "avisos": {
+      "PRODUTO_POR_MODALIDADE": "Producto = modalidad del contrato de sala (mensual, turno u hora) mientras no exista el catálogo de productos. Títulos generados en el mes.",
+      "ESTOQUE_POR_CATEGORIA": "Salidas del mes por categoría, frente a lo esperado por el promedio de los 90 días anteriores. Las unidades varían entre categorías, por eso no hay total.",
+      "LEADS_POR_ORIGEM": "Leads = negocios creados en el mes, agrupados por el origen del cliente.",
+      "VISITAS_RECEBIDAS_INDISPONIVEL": "Visitas recibidas en la clínica: dato no disponible, el sistema no tiene ese registro.",
+      "NPS_PACIENTES_TODOS": "NPS de todos los pacientes encuestados en el mes: la encuesta no distingue si los atendió la recepción o la secretaria.",
+      "OCUPACAO_PREVISAO_CONTRATOS": "Previsión del mes siguiente = períodos ya contratados, sin estimación."
+    }
+  },
   "treinamentos": {
     "titulo": "Capacitaciones",
     "descricao": "Control de capacitaciones y certificaciones de los empleados.",

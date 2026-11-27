@@ -10,7 +10,11 @@ import { Audit } from '../../../common/audit/audit.decorator';
 import { CurrentUser, RequirePermission } from '../../../common/auth/auth.decorators';
 import type { UsuarioAutenticado } from '../../../common/auth/usuario-autenticado';
 import { toStreamableFile } from '../../../common/export/export-response';
-import { ApiErrorResponses, ApiZodQuery, ApiZodResponse } from '../../../common/swagger/zod-openapi';
+import {
+  ApiErrorResponses,
+  ApiZodQuery,
+  ApiZodResponse,
+} from '../../../common/swagger/zod-openapi';
 import { ZodValidationPipe } from '../../../common/validation/zod-validation.pipe';
 import { escreverApresentacaoPdf } from './apresentacao-pdf.writer';
 import { ApresentacaoMensalService } from './apresentacao-mensal.service';
@@ -59,4 +63,3 @@ export class ApresentacaoMensalController {
     });
   }
 }
-

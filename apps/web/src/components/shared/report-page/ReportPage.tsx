@@ -8,7 +8,7 @@ import {
 } from '@torres/shared';
 import type { TFunction } from 'i18next';
 import { BarChart3Icon } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiFetch } from '@/lib/api/client';
@@ -28,6 +28,8 @@ export interface ReportPageProps {
   descricao?: string;
   /** Padrão: "Painel > <título>". Os prints usam "Painel > <Módulo> > Relatorios". */
   breadcrumb?: ItemBreadcrumb[];
+  /** Ações principais à direita do título (ex.: link para outra visão dos relatórios). */
+  acoes?: ReactNode;
 }
 
 const SUFIXO = '.relatorios';
@@ -39,7 +41,13 @@ const SUFIXO = '.relatorios';
  * filtrados pelas permissões do usuário. O resultado carrega ao escolher o relatório ou mudar
  * o período, sem botão; relatório e período ficam na URL.
  */
-export function ReportPage({ tela, titulo, descricao, breadcrumb }: Readonly<ReportPageProps>) {
+export function ReportPage({
+  tela,
+  titulo,
+  descricao,
+  breadcrumb,
+  acoes,
+}: Readonly<ReportPageProps>) {
   const { t } = useTranslation();
   const url = `/api/${tela.slice(0, -SUFIXO.length)}/relatorios`;
   const catalogo = useQuery({
@@ -72,7 +80,7 @@ export function ReportPage({ tela, titulo, descricao, breadcrumb }: Readonly<Rep
 
   return (
     <div className="grid gap-6">
-      <PageHeader titulo={titulo} descricao={descricao} breadcrumb={breadcrumb} />
+      <PageHeader titulo={titulo} descricao={descricao} breadcrumb={breadcrumb} acoes={acoes} />
       <section
         aria-label={t('relatorio.selecao')}
         className="rounded-xl border bg-card p-4 shadow-xs"
