@@ -69,5 +69,7 @@
   "CONTA_PAGAR_NAO_PENDENTE": "Solo se puede cancelar una cuenta por pagar pendiente",
   "CONTA_PAGAR_COM_BAIXA": "Esta cuenta tiene un pago registrado. Cancele el pago antes de cancelar la cuenta",
   "CONTA_RECEBER_BAIXA_EXCEDE_SALDO": "El valor cobrado es mayor que el saldo abierto",
-  "CONTA_RECEBER_RENEGOCIACAO_SOMA": "Las cuotas deben sumar el saldo abierto"
+  "CONTA_RECEBER_RENEGOCIACAO_SOMA": "Las cuotas deben sumar el saldo abierto",
+  "META_COMERCIAL_DUPLICADA": "Ya existe una meta de esta métrica en este período para el mismo responsable",
+  "META_COMERCIAL_PERIODO_INVALIDO": "Período no válido para el tipo elegido"
 }
