@@ -65,6 +65,8 @@ import { RelatoriosComercial } from './relatorios/relatorios-comercial';
 import { PacotesService } from './pacotes/pacotes.service';
 import { CrmConfigController } from './pipeline/crm-config.controller';
 import { CrmConfigService } from './pipeline/crm-config.service';
+import { MetasController } from './metas/metas.controller';
+import { MetasService } from './metas/metas.service';
 import { NegociosController } from './pipeline/negocios.controller';
 import { NegociosListaController } from './pipeline/negocios-lista.controller';
 import { NegociosListaService } from './pipeline/negocios-lista.service';
@@ -100,6 +102,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     RecepcaoController,
     AgendaMatrizController,
     AtividadesController,
+    MetasController,
     CampanhasController,
     ConfirmacoesController,
     GruposWhatsappController,
@@ -154,6 +157,7 @@ import { TagsAtendimentoService } from './whatsapp/tags-atendimento.service';
     NegociosListaService,
     NegociosLookupService,
     AtividadesService,
+    MetasService,
     MensagensSaidaWhatsappService,
     DestinatariosService,
     CampanhasService,

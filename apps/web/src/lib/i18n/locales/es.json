@@ -285,6 +285,7 @@
         "pipeline": "Pipeline",
         "negocios": "Negocios",
         "atividades": "Actividades",
+        "metas": "Metas",
         "pacientes": "Pacientes",
         "origens-cliente": "Orígenes de Cliente",
         "agenda": "Agenda",
@@ -2610,6 +2611,81 @@
       "alertas": "Alertas del día",
       "semAlertas": "Ningún alerta para hoy.",
       "verLista": "Ver la lista de {{indicador}}"
+    }
+  },
+  "metas": {
+    "titulo": "Metas",
+    "descricao": "Metas comerciales proyectadas × realizadas por período",
+    "nova": "Nueva Meta",
+    "abas": {
+      "acompanhamento": "Seguimiento",
+      "metas": "Metas"
+    },
+    "metricas": {
+      "LEADS": "Leads",
+      "VISITAS": "Visitas",
+      "PROPOSTAS": "Propuestas",
+      "CONTRATOS_FECHADOS": "Contratos cerrados",
+      "RECEITA_NOVA": "Ingresos nuevos"
+    },
+    "periodoTipos": {
+      "MES": "Mes",
+      "TRIMESTRE": "Trimestre"
+    },
+    "trimestre": "T{{n}} {{ano}}",
+    "campos": {
+      "metrica": "Métrica",
+      "periodoTipo": "Tipo de período",
+      "periodo": "Período",
+      "responsavel": "Responsable",
+      "responsavelEquipe": "Todo el equipo comercial",
+      "valor": "Meta proyectada",
+      "observacoes": "Observaciones",
+      "observacoesPlaceholder": "Ej.: campaña del mes"
+    },
+    "colunas": {
+      "metrica": "Métrica",
+      "periodo": "Período",
+      "responsavel": "Responsable",
+      "projetado": "Proyectado",
+      "realizado": "Realizado",
+      "atingido": "Alcanzado"
+    },
+    "filtros": {
+      "de": "Fecha inicial",
+      "ate": "Fecha final",
+      "responsavel": "Responsable",
+      "todosResponsaveis": "Todos los responsables",
+      "metrica": "Métrica",
+      "todasMetricas": "Todas las métricas",
+      "periodo": "Período"
+    },
+    "acoes": {
+      "editar": "Editar",
+      "excluir": "Eliminar"
+    },
+    "modal": {
+      "tituloNova": "Nueva Meta",
+      "tituloEditar": "Editar Meta",
+      "criar": "Crear Meta"
+    },
+    "sucesso": {
+      "criada": "Meta creada.",
+      "atualizada": "Meta actualizada.",
+      "excluida": "Meta eliminada."
+    },
+    "erroCarregar": "No se pudo cargar el seguimiento de las metas.",
+    "vazio": "No se encontraron metas.",
+    "excluir": {
+      "titulo": "Eliminar Meta",
+      "descricao": "¿Seguro que desea eliminar la meta de {{metrica}} ({{periodo}})? Esta acción no se puede deshacer."
+    },
+    "acompanhamento": {
+      "resumo": "Resumen por métrica",
+      "evolucao": "Evolución e historial por período",
+      "evolucaoDe": "Evolución de {{metrica}}",
+      "vazio": "No hay metas registradas en el período. Registre una en la pestaña Metas.",
+      "realizadoDeProjetado": "{{realizado}} de {{projetado}}"
     }
   }
 }

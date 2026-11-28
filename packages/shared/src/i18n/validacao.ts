@@ -103,6 +103,9 @@ export const VALIDACAO_PT_BR = {
     secaoSemCampos: 'Adicione ao menos um campo à seção',
     semSecoes: 'Adicione ao menos uma seção',
   },
+  metaComercial: {
+    periodoInvalido: 'Período inválido para o tipo escolhido',
+  },
 };
 
 /** Formato que os outros idiomas precisam seguir (mesmas chaves). */
