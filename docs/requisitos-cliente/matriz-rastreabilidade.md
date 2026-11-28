@@ -246,7 +246,7 @@ Vieram do inventário do DrIntelli e os documentos não falam deles. Ficam no bo
 | [#168] | [Gestão Profissionais] Contratos de sala: reajuste (periodicidade, percentual, histórico) e aviso de 30 dias | Fase 1 — Operação essencial | Backlog |
 | [#169] | [Compras / Estoque] Catálogo do coworking (SKU): locação mensal, período, hora, mídia indoor e eventos | Fase 2 — Gestão | Backlog |
 | [#170] | [Painel] Visão "Hoje" da gestão e da operação, com alertas | Fase 1 — Operação essencial | Backlog |
-| [#171] | [Configurações / Gestão] Relatório mensal de apresentação da gestão (indicadores do prédio) | Fase 2 — Gestão | Backlog |
+| [#171] | [Configurações / Gestão] Relatório mensal de apresentação da gestão (indicadores do prédio) | Fase 2 — Gestão | Em revisão |
 | [#172] | [Comercial / Atendimento] Metas comerciais: projetadas × realizadas por período | Fase 2 — Gestão | Backlog |
 | [#173] | [Configurações / Gestão] WhatsApp multinúmero: viabilidade e autorização do provedor (validação por número) | Fase 3 — Automação | Backlog |
 | [#174] | [Comercial / Atendimento] IA de primeiro atendimento no WhatsApp: conversa, intenção e qualificação | Fase 3 — Automação | Backlog |

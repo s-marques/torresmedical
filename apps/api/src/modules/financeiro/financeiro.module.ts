@@ -92,6 +92,8 @@ import { RelatoriosFinanceiro } from './relatorios/relatorios-financeiro';
     IndicadoresFinanceirosService,
     // Painel "Hoje" (#170): total vencido.
     InadimplenciaService,
+    // Receita, provisão e despesa por centro de custo no relatório mensal da gestão (#171).
+    RelatoriosFinanceiro,
   ],
 })
 export class FinanceiroModule {}

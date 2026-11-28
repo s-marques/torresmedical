@@ -1281,6 +1281,58 @@
     "modulo": "Management",
     "relatorios": "Reports"
   },
+  "apresentacao": {
+    "titulo": "Monthly presentation",
+    "descricao": "Building indicators for the monthly management meeting.",
+    "abrir": "Monthly presentation",
+    "voltar": "Back to reports",
+    "selecao": "Month selection",
+    "mes": "Month",
+    "exportarPdf": "Export PDF",
+    "gerandoPdf": "Generating PDF…",
+    "carregando": "Loading indicators",
+    "vazio": "No indicators available",
+    "vazioDescricao": "Your profile has no access to the screens these indicators come from.",
+    "indisponivel": "Data unavailable",
+    "mesAnterior": "Previous month",
+    "media90Dias": "Average of the previous 90 days",
+    "variacao": "Change",
+    "pontos": "pp",
+    "graficoTendencia": "Chart of {{indicador}} over the last months",
+    "graficoComparativo": "Chart of {{indicador}} with the comparison",
+    "indicadores": {
+      "faturamento": "Revenue",
+      "faturamento-futuro": "Future revenue (based on contracts)",
+      "faturamento-produto": "Revenue by product",
+      "ocupacao": "Occupancy × vacancy of the periods",
+      "despesas-centro-custo": "Expenses by cost center",
+      "estoque": "Stock: consumption by category",
+      "leads": "Leads who contacted us, by source",
+      "visitas": "Visits to doctors",
+      "nps-medicos": "NPS of client doctors",
+      "nps-pacientes": "NPS of patients of the doctors served"
+    },
+    "series": {
+      "ocupacao": "Occupancy",
+      "vacancia": "Vacancy",
+      "ocupacao-prevista": "Expected occupancy (next month)",
+      "visitas-agendadas": "Visits scheduled",
+      "visitas-realizadas": "Visits made",
+      "visitas-recebidas": "Visits received at the clinic",
+      "outros": "Others"
+    },
+    "detalhe": {
+      "visitas": "Doctors who received a visit this month"
+    },
+    "avisos": {
+      "PRODUTO_POR_MODALIDADE": "Product = room contract type (monthly, shift or hourly) until the product catalog exists. Invoices issued in the month.",
+      "ESTOQUE_POR_CATEGORIA": "Outgoing stock of the month by category, against the expected value from the average of the previous 90 days. Units differ between categories, so there is no total.",
+      "LEADS_POR_ORIGEM": "Leads = deals created in the month, grouped by customer source.",
+      "VISITAS_RECEBIDAS_INDISPONIVEL": "Visits received at the clinic: data unavailable, the system has no record of them.",
+      "NPS_PACIENTES_TODOS": "NPS of all patients surveyed in the month: the survey does not tell whether the front desk or the secretary handled them.",
+      "OCUPACAO_PREVISAO_CONTRATOS": "Next month's forecast = periods already contracted, with no estimate."
+    }
+  },
   "treinamentos": {
     "titulo": "Training",
     "descricao": "Track employee training and certifications.",

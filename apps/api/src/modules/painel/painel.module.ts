@@ -38,5 +38,7 @@ import { OcupacaoService } from './ocupacao/ocupacao.service';
       inject: [FinanceiroAlertasRegras],
     },
   ],
+  // Ocupação no relatório mensal da gestão (#171).
+  exports: [OcupacaoService],
 })
 export class PainelModule {}
