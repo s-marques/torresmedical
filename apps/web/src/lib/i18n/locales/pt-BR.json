@@ -2501,5 +2501,80 @@
       "semAlertas": "Nenhum alerta para hoje.",
       "verLista": "Ver a lista de {{indicador}}"
     }
+  },
+  "metas": {
+    "titulo": "Metas",
+    "descricao": "Metas comerciais projetadas × realizadas por período",
+    "nova": "Nova Meta",
+    "abas": {
+      "acompanhamento": "Acompanhamento",
+      "metas": "Metas"
+    },
+    "metricas": {
+      "LEADS": "Leads",
+      "VISITAS": "Visitas",
+      "PROPOSTAS": "Propostas",
+      "CONTRATOS_FECHADOS": "Contratos fechados",
+      "RECEITA_NOVA": "Receita nova"
+    },
+    "periodoTipos": {
+      "MES": "Mês",
+      "TRIMESTRE": "Trimestre"
+    },
+    "trimestre": "{{n}}º trimestre de {{ano}}",
+    "campos": {
+      "metrica": "Métrica",
+      "periodoTipo": "Tipo de período",
+      "periodo": "Período",
+      "responsavel": "Responsável",
+      "responsavelEquipe": "Equipe comercial toda",
+      "valor": "Meta projetada",
+      "observacoes": "Observações",
+      "observacoesPlaceholder": "Ex.: campanha do mês"
+    },
+    "colunas": {
+      "metrica": "Métrica",
+      "periodo": "Período",
+      "responsavel": "Responsável",
+      "projetado": "Projetado",
+      "realizado": "Realizado",
+      "atingido": "Atingido"
+    },
+    "filtros": {
+      "de": "Data inicial",
+      "ate": "Data final",
+      "responsavel": "Responsável",
+      "todosResponsaveis": "Todos os responsáveis",
+      "metrica": "Métrica",
+      "todasMetricas": "Todas as métricas",
+      "periodo": "Período"
+    },
+    "acoes": {
+      "editar": "Editar",
+      "excluir": "Excluir"
+    },
+    "modal": {
+      "tituloNova": "Nova Meta",
+      "tituloEditar": "Editar Meta",
+      "criar": "Criar Meta"
+    },
+    "sucesso": {
+      "criada": "Meta criada.",
+      "atualizada": "Meta atualizada.",
+      "excluida": "Meta excluída."
+    },
+    "erroCarregar": "Não foi possível carregar o acompanhamento das metas.",
+    "vazio": "Nenhuma meta encontrada.",
+    "excluir": {
+      "titulo": "Excluir Meta",
+      "descricao": "Tem certeza que deseja excluir a meta de {{metrica}} ({{periodo}})? Esta ação não pode ser desfeita."
+    },
+    "acompanhamento": {
+      "resumo": "Resumo por métrica",
+      "evolucao": "Evolução e histórico por período",
+      "evolucaoDe": "Evolução de {{metrica}}",
+      "vazio": "Nenhuma meta cadastrada no período. Cadastre uma na aba Metas.",
+      "realizadoDeProjetado": "{{realizado}} de {{projetado}}"
+    }
   }
 }

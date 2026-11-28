@@ -13,6 +13,7 @@ import {
   type MetaEvolucao,
   type MetaMetrica,
   type MetaResumo,
+  type Responsavel,
 } from '@torres/shared';
 import type { MetaComercial as MetaRow, Prisma } from '../../../generated/prisma/client';
 import { EscopoDadosService, semPermissao } from '../../../common/auth/escopo-dados.service';
@@ -148,6 +149,12 @@ export class MetasService {
       ];
     });
     return { resumo, evolucao: [...evolucao.values()] };
+  }
+
+  /** Usuários ativos, para escolher o responsável da meta. */
+  responsaveis(): Promise<Responsavel[]> {
+    this.garantirVisaoGeral();
+    return this.usuarios.responsaveis();
   }
 
   private garantirVisaoGeral(): void {

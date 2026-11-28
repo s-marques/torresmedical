@@ -7,11 +7,13 @@ import {
   metaComercialInputSchema,
   metaComercialPageSchema,
   metaComercialSchema,
+  responsavelListaSchema,
   type AcompanhamentoMetas,
   type AcompanhamentoMetasQuery,
   type ListMetasComerciaisQuery,
   type MetaComercial,
   type MetaComercialInput,
+  type Responsavel,
 } from '@torres/shared';
 import { Audit } from '../../../common/audit/audit.decorator';
 import { RequirePermission } from '../../../common/auth/auth.decorators';
@@ -59,6 +61,15 @@ export class MetasController {
     @Query(new ZodValidationPipe(acompanhamentoMetasQuerySchema)) query: AcompanhamentoMetasQuery,
   ): Promise<AcompanhamentoMetas> {
     return this.metas.acompanhamento(query);
+  }
+
+  @Get('responsaveis')
+  @RequirePermission('comercial-atendimento.metas.ver')
+  @ApiOperation({ summary: 'Usuários ativos para o campo e o filtro Responsável' })
+  @ApiZodResponse(200, responsavelListaSchema)
+  @ApiErrorResponses(401, 403)
+  responsaveis(): Promise<Responsavel[]> {
+    return this.metas.responsaveis();
   }
 
   @Get(':id')

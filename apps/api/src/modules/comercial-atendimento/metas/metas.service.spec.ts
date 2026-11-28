@@ -52,6 +52,7 @@ function criar({
     update: jest.fn(async ({ data }: { data: Linha }) => ({ ...meta(), ...data })),
   };
   const usuarios = {
+    responsaveis: jest.fn(async () => [{ id: ANA, nome: 'Ana Teste' }]),
     nomesPorIds: jest.fn(async () => new Map([[ANA, 'Ana Teste']])),
     garantirAtivo: jest.fn(async () => undefined),
   };
@@ -94,7 +95,10 @@ describe('MetasService', () => {
   });
 
   it('receita nova soma o valor dos negócios ganhos; sem negócios, zero', async () => {
-    const com = criar({ metas: [meta({ metrica: 'RECEITA_NOVA', valor: '2000' })], soma: '500.50' });
+    const com = criar({
+      metas: [meta({ metrica: 'RECEITA_NOVA', valor: '2000' })],
+      soma: '500.50',
+    });
     expect((await com.service.findById(ID)).realizado).toBe(500.5);
     const sem = criar({ metas: [meta({ metrica: 'RECEITA_NOVA' })], soma: null });
     expect((await sem.service.findById(ID)).realizado).toBe(0);
@@ -188,6 +192,7 @@ describe('MetasService', () => {
       () => service.update(ID, ENTRADA),
       () => service.remove(ID),
       () => service.acompanhamento({}),
+      () => service.responsaveis(),
     ];
     for (const chamar of chamadas) {
       await expect(chamar()).rejects.toMatchObject({ code: expect.any(String) });

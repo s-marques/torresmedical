@@ -21,6 +21,18 @@ describe('metaComercialInputSchema', () => {
     expect(r.observacoes).toBeNull();
   });
 
+  it('aceita responsável vazio do formulário como equipe toda', () => {
+    expect(
+      metaComercialInputSchema.parse({ ...valida, responsavelId: '' }).responsavelId,
+    ).toBeNull();
+    expect(
+      metaComercialInputSchema.parse({ ...valida, responsavelId: null }).responsavelId,
+    ).toBeNull();
+    expect(metaComercialInputSchema.safeParse({ ...valida, responsavelId: 'x' }).success).toBe(
+      false,
+    );
+  });
+
   it('aceita trimestre e responsável', () => {
     const r = metaComercialInputSchema.parse({
       ...valida,

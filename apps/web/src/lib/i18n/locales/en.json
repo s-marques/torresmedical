@@ -285,6 +285,7 @@
         "pipeline": "Pipeline",
         "negocios": "Deals",
         "atividades": "Activities",
+        "metas": "Goals",
         "pacientes": "Patients",
         "origens-cliente": "Customer Sources",
         "agenda": "Schedule",
@@ -2610,6 +2611,81 @@
       "alertas": "Today's alerts",
       "semAlertas": "No alerts for today.",
       "verLista": "View the {{indicador}} list"
+    }
+  },
+  "metas": {
+    "titulo": "Goals",
+    "descricao": "Projected × achieved sales goals by period",
+    "nova": "New Goal",
+    "abas": {
+      "acompanhamento": "Tracking",
+      "metas": "Goals"
+    },
+    "metricas": {
+      "LEADS": "Leads",
+      "VISITAS": "Visits",
+      "PROPOSTAS": "Proposals",
+      "CONTRATOS_FECHADOS": "Closed contracts",
+      "RECEITA_NOVA": "New revenue"
+    },
+    "periodoTipos": {
+      "MES": "Month",
+      "TRIMESTRE": "Quarter"
+    },
+    "trimestre": "Q{{n}} {{ano}}",
+    "campos": {
+      "metrica": "Metric",
+      "periodoTipo": "Period type",
+      "periodo": "Period",
+      "responsavel": "Owner",
+      "responsavelEquipe": "Whole sales team",
+      "valor": "Projected goal",
+      "observacoes": "Notes",
+      "observacoesPlaceholder": "E.g.: the month campaign"
+    },
+    "colunas": {
+      "metrica": "Metric",
+      "periodo": "Period",
+      "responsavel": "Owner",
+      "projetado": "Projected",
+      "realizado": "Achieved",
+      "atingido": "Reached"
+    },
+    "filtros": {
+      "de": "Start date",
+      "ate": "End date",
+      "responsavel": "Owner",
+      "todosResponsaveis": "All owners",
+      "metrica": "Metric",
+      "todasMetricas": "All metrics",
+      "periodo": "Period"
+    },
+    "acoes": {
+      "editar": "Edit",
+      "excluir": "Delete"
+    },
+    "modal": {
+      "tituloNova": "New Goal",
+      "tituloEditar": "Edit Goal",
+      "criar": "Create Goal"
+    },
+    "sucesso": {
+      "criada": "Goal created.",
+      "atualizada": "Goal updated.",
+      "excluida": "Goal deleted."
+    },
+    "erroCarregar": "Could not load the goals tracking.",
+    "vazio": "No goals found.",
+    "excluir": {
+      "titulo": "Delete Goal",
+      "descricao": "Are you sure you want to delete the {{metrica}} goal ({{periodo}})? This action cannot be undone."
+    },
+    "acompanhamento": {
+      "resumo": "Summary by metric",
+      "evolucao": "Evolution and history by period",
+      "evolucaoDe": "{{metrica}} evolution",
+      "vazio": "No goals registered in the period. Add one in the Goals tab.",
+      "realizadoDeProjetado": "{{realizado}} of {{projetado}}"
     }
   }
 }

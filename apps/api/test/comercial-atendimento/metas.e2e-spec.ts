@@ -106,7 +106,10 @@ describe('Metas comerciais (e2e)', () => {
     it('409: mesma métrica, período e responsável; outro responsável pode', async () => {
       const ana = await responsavel('Ana Teste');
       await criar({ responsavelId: ana });
-      const res = await http().post(BASE).send(corpo({ responsavelId: ana })).expect(409);
+      const res = await http()
+        .post(BASE)
+        .send(corpo({ responsavelId: ana }))
+        .expect(409);
       expect(res.body.code).toBe('META_COMERCIAL_DUPLICADA');
       await criar({ responsavelId: await responsavel('Bia Teste') });
       await criar();
@@ -114,7 +117,9 @@ describe('Metas comerciais (e2e)', () => {
     });
 
     it('recusa responsável inexistente', async () => {
-      const res = await http().post(BASE).send(corpo({ responsavelId: INEXISTENTE }));
+      const res = await http()
+        .post(BASE)
+        .send(corpo({ responsavelId: INEXISTENTE }));
       expect(res.status).toBeGreaterThanOrEqual(400);
       expect(res.status).toBeLessThan(500);
     });
@@ -208,7 +213,9 @@ describe('Metas comerciais (e2e)', () => {
       expect((await consulta({ de: '2026-12-01' })).data.map((m) => m.periodo)).toEqual([
         '2026-T4',
       ]);
-      expect((await consulta({ sort: 'valor:asc' })).data.map((m) => m.valor)).toEqual([10, 20, 30]);
+      expect((await consulta({ sort: 'valor:asc' })).data.map((m) => m.valor)).toEqual([
+        10, 20, 30,
+      ]);
       const pagina = await consulta({ pageSize: 2, page: 2, sort: 'valor:asc' });
       expect(pagina.data.map((m) => m.valor)).toEqual([30]);
       await http().get(BASE).query({ sort: 'realizado:asc' }).expect(400);
@@ -216,13 +223,36 @@ describe('Metas comerciais (e2e)', () => {
 
     it('não lista metas excluídas', async () => {
       const meta = await criar();
-      await prisma.metaComercial.update({ where: { id: meta.id }, data: { deletedAt: new Date() } });
+      await prisma.metaComercial.update({
+        where: { id: meta.id },
+        data: { deletedAt: new Date() },
+      });
       expect((await http().get(BASE).expect(200)).body.data).toEqual([]);
     });
 
     it('403 sem permissão de ver', async () => {
       const sem = await criarUsuarioTeste(app);
       await comUsuario(app, sem).get(BASE).expect(403);
+    });
+  });
+
+  describe('GET /responsaveis', () => {
+    it('200: usuários ativos por nome; 403 sem permissão ou com escopo restrito', async () => {
+      await responsavel('Zélia Teste');
+      await responsavel('Ana Teste');
+      const res = await http().get(`${BASE}/responsaveis`).expect(200);
+      const nomes = (res.body as { nome: string }[]).map((r) => r.nome);
+      expect(nomes).toEqual(expect.arrayContaining(['Ana Teste', 'Zélia Teste']));
+      expect(nomes.indexOf('Ana Teste')).toBeLessThan(nomes.indexOf('Zélia Teste'));
+
+      await comUsuario(app, await criarUsuarioTeste(app))
+        .get(`${BASE}/responsaveis`)
+        .expect(403);
+      const restrito = await criarUsuarioTeste(app, {
+        permissoes: PERMISSOES,
+        escopoDados: 'PROFISSIONAIS_VINCULADOS',
+      });
+      await comUsuario(app, restrito).get(`${BASE}/responsaveis`).expect(403);
     });
   });
 
@@ -330,13 +360,22 @@ describe('Metas comerciais (e2e)', () => {
     it('alterar para uma meta que já existe dá 409; a própria meta não conflita consigo', async () => {
       const a = await criar({ periodo: '2026-10' });
       await criar({ periodo: '2026-11' });
-      await http().patch(`${BASE}/${a.id}`).send(corpo({ periodo: '2026-11' })).expect(409);
-      await http().patch(`${BASE}/${a.id}`).send(corpo({ periodo: '2026-10', valor: 1 })).expect(200);
+      await http()
+        .patch(`${BASE}/${a.id}`)
+        .send(corpo({ periodo: '2026-11' }))
+        .expect(409);
+      await http()
+        .patch(`${BASE}/${a.id}`)
+        .send(corpo({ periodo: '2026-10', valor: 1 }))
+        .expect(200);
     });
 
     it('400 no corpo inválido, 404 inexistente ou excluída, 403 sem permissão', async () => {
       const meta = await criar();
-      await http().patch(`${BASE}/${meta.id}`).send(corpo({ valor: -5 })).expect(400);
+      await http()
+        .patch(`${BASE}/${meta.id}`)
+        .send(corpo({ valor: -5 }))
+        .expect(400);
       await http().get(`${BASE}/não-é-uuid`).expect(400);
       await http().get(`${BASE}/${INEXISTENTE}`).expect(404);
       await http().patch(`${BASE}/${INEXISTENTE}`).send(corpo()).expect(404);
@@ -367,7 +406,10 @@ describe('Metas comerciais (e2e)', () => {
       await h().get(BASE).expect(403);
       await h().get(`${BASE}/acompanhamento`).expect(403);
       await h().get(`${BASE}/${meta.id}`).expect(403);
-      await h().post(BASE).send(corpo({ periodo: '2026-12' })).expect(403);
+      await h()
+        .post(BASE)
+        .send(corpo({ periodo: '2026-12' }))
+        .expect(403);
       await h().patch(`${BASE}/${meta.id}`).send(corpo()).expect(403);
       await h().delete(`${BASE}/${meta.id}`).expect(403);
     });

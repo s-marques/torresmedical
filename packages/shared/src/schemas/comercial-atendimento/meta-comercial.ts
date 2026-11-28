@@ -67,14 +67,21 @@ export const metaComercialInputSchema = z
   .strictObject({
     metrica: z.enum(META_METRICAS, { error: opcaoInvalida }),
     periodoTipo: z.enum(META_PERIODO_TIPOS, { error: opcaoInvalida }),
-    periodo: z.string({ error: erroObrigatorio('Período') }).trim().min(1, {
-      error: erroObrigatorio('Período'),
-    }),
+    periodo: z
+      .string({ error: erroObrigatorio('Período') })
+      .trim()
+      .min(1, {
+        error: erroObrigatorio('Período'),
+      }),
     /** Sem responsável, a meta vale para a equipe comercial toda. */
     responsavelId: z
-      .uuid({ error: () => traduzirValidacao('validacao.formato.uuid') })
-      .nullish()
-      .transform((valor) => valor ?? null),
+      .union([
+        z.uuid({ error: () => traduzirValidacao('validacao.formato.uuid') }),
+        z.literal(''),
+        z.null(),
+      ])
+      .optional()
+      .transform((valor) => valor || null),
     valor: z
       .number({ error: erroObrigatorio('Valor') })
       .min(0, { error: () => traduzirValidacao('validacao.maiorOuIgual', { valor: 0 }) })
@@ -85,8 +92,7 @@ export const metaComercialInputSchema = z
       .string()
       .trim()
       .max(META_OBSERVACOES_MAX, {
-        error: () =>
-          traduzirValidacao('validacao.textoMax', { count: META_OBSERVACOES_MAX }),
+        error: () => traduzirValidacao('validacao.textoMax', { count: META_OBSERVACOES_MAX }),
       })
       .optional()
       .transform((valor) => valor || null),
