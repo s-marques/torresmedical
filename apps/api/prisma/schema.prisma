@@ -3208,6 +3208,49 @@ model AtividadeNegocio {
   @@map("atividades_negocio")
 }
 
+enum MetaComercialMetrica {
+  LEADS
+  VISITAS
+  PROPOSTAS
+  CONTRATOS_FECHADOS
+  RECEITA_NOVA
+
+  @@map("meta_comercial_metrica")
+}
+
+enum MetaComercialPeriodoTipo {
+  MES
+  TRIMESTRE
+
+  @@map("meta_comercial_periodo_tipo")
+}
+
+/// Dono: comercial-atendimento. Meta comercial projetada (issue #172): uma métrica do CRM, num
+/// período (mês `AAAA-MM` ou trimestre `AAAA-T1`..`AAAA-T4`), da equipe toda ou de um responsável.
+/// O realizado não é gravado: é calculado dos negócios no período. Exclusão lógica: histórico comercial.
+model MetaComercial {
+  id            String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  metrica       MetaComercialMetrica
+  periodoTipo   MetaComercialPeriodoTipo @map("periodo_tipo")
+  /// `AAAA-MM` ou `AAAA-T1`..`AAAA-T4`.
+  periodo       String                   @db.VarChar(7)
+  dataInicio    DateTime                 @map("data_inicio") @db.Date
+  dataFim       DateTime                 @map("data_fim") @db.Date
+  /// Usuário (configuracoes-gestao), sem FK. Nulo: meta da equipe comercial.
+  responsavelId String?                  @map("responsavel_id") @db.Uuid
+  /// Meta projetada: quantidade, ou reais na receita nova.
+  valor         Decimal                  @db.Decimal(14, 2)
+  observacoes   String?
+  createdAt     DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt     DateTime?                @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([dataInicio, dataFim])
+  @@index([responsavelId])
+  @@index([metrica])
+  @@map("metas_comercial")
+}
+
 enum CampanhaTipoEnvio {
   TEXTO
 

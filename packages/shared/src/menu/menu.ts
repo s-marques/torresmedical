@@ -23,6 +23,7 @@ const DEFINICAO = {
       pipeline: ['Pipeline', '/crm'],
       negocios: ['Negócios', '/negocios'],
       atividades: ['Atividades', '/atividades'],
+      metas: ['Metas', '/crm/metas'],
       pacientes: ['Pacientes', '/clientes'],
       origensCliente: ['Origens de Cliente', '/origens-cliente'],
       agenda: ['Agenda', '/agenda'],
@@ -173,6 +174,8 @@ export interface ModuloMenu {
 export const TELAS_FORA_DO_INVENTARIO: readonly TelaId[] = [
   /** Encaminhamento de pacientes entre profissionais (issue #146, R §26). */
   'consultorio-assistencial.encaminhamentos',
+  /** Metas comerciais projetadas × realizadas (issue #172, R §24). */
+  'comercial-atendimento.metas',
   /** Pesquisa de experiência do profissional (issue #145, R §36). */
   'comercial-atendimento.pesquisa-profissional',
   /** Atendimentos de hoje da recepção (issue #147, R §7 e §12). */

@@ -39,6 +39,7 @@
 | Pipeline | T | L | — | — | — | T |
 | Negócios | T | L | — | — | — | T |
 | Atividades | T | L | C | — | — | T |
+| Metas | T | L | — | — | — | V |
 | Pacientes | T | L | E | V | — | C |
 | Origens de Cliente | T | L | V | — | — | T |
 | Agenda | T | L | T | C | V | V |

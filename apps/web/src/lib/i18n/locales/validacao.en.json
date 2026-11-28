@@ -78,5 +78,8 @@
     "faixaInvalida": "The maximum must be greater than the minimum",
     "secaoSemCampos": "Add at least one field to the section",
     "semSecoes": "Add at least one section"
+  },
+  "metaComercial": {
+    "periodoInvalido": "Invalid period for the chosen type"
   }
 }
