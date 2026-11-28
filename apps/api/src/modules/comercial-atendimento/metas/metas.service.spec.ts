@@ -39,7 +39,7 @@ function criar({
   restrito?: boolean;
 } = {}) {
   const negocio = {
-    count: jest.fn(async () => contagem),
+    count: jest.fn(async (_args: Linha) => contagem),
     aggregate: jest.fn(async () => ({ _sum: { valor: soma } })),
   };
   const metaComercial = {
@@ -63,6 +63,8 @@ function criar({
   );
   return { service, negocio, metaComercial, usuarios };
 }
+
+const SEM_FILTRO = { de: undefined, ate: undefined };
 
 const ENTRADA = {
   metrica: 'LEADS' as const,
@@ -170,7 +172,7 @@ describe('MetasService', () => {
       contagem: 1,
     });
 
-    const { resumo, evolucao } = await service.acompanhamento({});
+    const { resumo, evolucao } = await service.acompanhamento(SEM_FILTRO);
 
     expect(evolucao).toHaveLength(2);
     expect(evolucao[0]).toMatchObject({
@@ -186,12 +188,19 @@ describe('MetasService', () => {
   it('perfil restrito a profissionais vinculados recebe 403 em todos os métodos', async () => {
     const { service } = criar({ restrito: true });
     const chamadas = [
-      () => service.list({ page: 1, pageSize: 10, sort: { field: 'valor', direction: 'asc' } }),
+      () =>
+        service.list({
+          page: 1,
+          pageSize: 10,
+          sort: { field: 'valor', direction: 'asc' },
+          search: undefined,
+          ...SEM_FILTRO,
+        }),
       () => service.findById(ID),
       () => service.create(ENTRADA),
       () => service.update(ID, ENTRADA),
       () => service.remove(ID),
-      () => service.acompanhamento({}),
+      () => service.acompanhamento(SEM_FILTRO),
       () => service.responsaveis(),
     ];
     for (const chamar of chamadas) {

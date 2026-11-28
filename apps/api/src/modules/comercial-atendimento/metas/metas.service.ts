@@ -152,7 +152,7 @@ export class MetasService {
   }
 
   /** Usuários ativos, para escolher o responsável da meta. */
-  responsaveis(): Promise<Responsavel[]> {
+  async responsaveis(): Promise<Responsavel[]> {
     this.garantirVisaoGeral();
     return this.usuarios.responsaveis();
   }
